@@ -284,14 +284,29 @@ function saveGameSoon() {
   saveGameTimer = setTimeout(saveGame, 300);
 }
 
-function loadGame() {
-  let raw;
-  try {
-    raw = localStorage.getItem(SAVE_KEY);
-  } catch (e) {
-    console.warn('SectorDefenseTD: localStorage unavailable, starting fresh', e);
-    return false;
+async function loadGame() {
+  let raw = null;
+
+  
+  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
+    try {
+      const { value } = await window.Capacitor.Plugins.Preferences.get({ key: SAVE_KEY });
+      if (value) raw = value;
+    } catch (e) {
+      console.warn('Capacitor load error:', e);
+    }
   }
+
+
+  if (!raw) {
+    try {
+      raw = localStorage.getItem(SAVE_KEY);
+    } catch (e) {
+      console.warn('SectorDefenseTD: localStorage unavailable, starting fresh', e);
+      return false;
+    }
+  }
+
   if (!raw) return false;
 
   let data;
@@ -301,6 +316,7 @@ function loadGame() {
     console.warn('SectorDefenseTD: save data corrupt, starting fresh', e);
     return false;
   }
+
   if (!data || typeof data !== 'object') return false;
 
   if (typeof data.noAdsPurchased === 'boolean') noAdsPurchased = data.noAdsPurchased;
@@ -330,7 +346,7 @@ function loadGame() {
   }
   if (data.settings && typeof data.settings === 'object') {
     Object.assign(settings, data.settings);
-    sfxSetEnabled(settings.sfxEnabled !== false);
+    if (typeof sfxSetEnabled === 'function') sfxSetEnabled(settings.sfxEnabled !== false);
   }
   if (data.tutorialSeen && typeof data.tutorialSeen === 'object') {
     if (typeof data.tutorialSeen.l1 === 'boolean') tutorialSeen.l1 = data.tutorialSeen.l1;

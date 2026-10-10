@@ -8,8 +8,7 @@ const MusicManager = (function () {
   const TRACKS = {
     menu: [
       'music/menu_01.ogg',
-      'music/menu_02.ogg',
-      'music/menu_03.ogg'
+      'music/menu_02.ogg'
     ],
     battle: [
       'music/battle_01.ogg',
