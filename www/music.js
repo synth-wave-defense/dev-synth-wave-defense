@@ -1,5 +1,5 @@
-// Synth Wave Defense -- music.js  v2.0
-// [MUS100] Background Music Engine Module: Manages streaming music tracks, category transitions, and Web Audio ducking/filtering.
+// Synth Wave Defense -- music.js  v1.36.11
+// [MUS100] Background Music Engine Module: Manages streaming music tracks, category transitions, Web Audio ducking/filtering, and real-time audio clipping diagnostics.
 
 const MusicManager = (function () {
   'use strict';
@@ -72,10 +72,13 @@ const MusicManager = (function () {
   }
   try { preloadTracks(); } catch (e) {}
 
-  // [MUS104] Web Audio Biquad Filter & Gain Node Graph Initialization
+  // [MUS104] Web Audio Biquad Filter, Gain Node & Analyser Peak Graph Initialization
   let audioCtx = null;
   let filterNode = null;
   let masterGain = null;
+  let analyserNode = null;
+  let clipCount = 0;
+  let maxPeakSample = 0;
 
   function ensureAudioCtx() {
     if (audioCtx) {
@@ -85,9 +88,16 @@ const MusicManager = (function () {
       return audioCtx;
     }
     try {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return null;
-      audioCtx = new AC();
+      // Reuse shared SFX AudioContext when available to avoid multiple AudioContext thread contention in Capacitor WebView
+      if (typeof SFX !== 'undefined' && SFX._ctx) {
+        audioCtx = SFX._ctx();
+      }
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        audioCtx = new AC();
+      }
+
       masterGain = audioCtx.createGain();
       masterGain.gain.value = 1.0;
 
@@ -95,13 +105,18 @@ const MusicManager = (function () {
       filterNode.type = 'lowpass';
       filterNode.frequency.setValueAtTime(ducked ? DUCK_FILTER_FREQ : NORMAL_FILTER_FREQ, audioCtx.currentTime);
 
+      analyserNode = audioCtx.createAnalyser();
+      analyserNode.fftSize = 512;
+
       filterNode.connect(masterGain);
-      masterGain.connect(audioCtx.destination);
+      masterGain.connect(analyserNode);
+      analyserNode.connect(audioCtx.destination);
       return audioCtx;
     } catch (e) {
       audioCtx = null;
       filterNode = null;
       masterGain = null;
+      analyserNode = null;
       return null;
     }
   }
@@ -156,7 +171,12 @@ const MusicManager = (function () {
 
       if (k >= 1) {
         if (f.stopAtEnd) {
-          try { f.el.pause(); } catch (e) { }
+          try {
+            if (f.gNode && f.gNode.gain && audioCtx) {
+              f.gNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            }
+            f.el.pause();
+          } catch (e) { }
         }
         fading.splice(i, 1);
       }
@@ -211,6 +231,7 @@ const MusicManager = (function () {
       try {
         const now = audioCtx.currentTime;
         filterNode.frequency.cancelScheduledValues(now);
+        filterNode.frequency.setValueAtTime(filterNode.frequency.value, now);
         filterNode.frequency.setTargetAtTime(Math.max(10, targetFreq), now, Math.max(0.01, duration / 3));
       } catch (e) {
         try { filterNode.frequency.value = targetFreq; } catch (err) {}
@@ -427,10 +448,63 @@ const MusicManager = (function () {
     _tracks: function () { return TRACKS; },
     _categories: function () { return CATEGORY; },
 
-    // [MUS107.01] Diagnostic Inspector Function
+    // [MUS107.01] Real-Time Peak & Clipping Metrics
+    getAudioMetrics: function () {
+      ensureAudioCtx();
+      if (!analyserNode) {
+        return { peakSample: 0, peakDb: -100, clipCount: 0, status: 'No AudioContext' };
+      }
+      const bufferLength = analyserNode.fftSize;
+      const dataArray = new Float32Array(bufferLength);
+      try {
+        analyserNode.getFloatTimeDomainData(dataArray);
+      } catch (e) {
+        const byteData = new Uint8Array(bufferLength);
+        analyserNode.getByteTimeDomainData(byteData);
+        for (let i = 0; i < bufferLength; i++) {
+          dataArray[i] = (byteData[i] - 128) / 128.0;
+        }
+      }
+
+      let framePeak = 0;
+      for (let i = 0; i < bufferLength; i++) {
+        const val = Math.abs(dataArray[i]);
+        if (val > framePeak) framePeak = val;
+        if (val >= 0.98) {
+          clipCount++;
+        }
+      }
+      if (framePeak > maxPeakSample) maxPeakSample = framePeak;
+
+      const peakDb = framePeak > 0.00001 ? 20 * Math.log10(framePeak) : -100;
+      const maxPeakDb = maxPeakSample > 0.00001 ? 20 * Math.log10(maxPeakSample) : -100;
+
+      let healthStatus = 'Clean (No Digital Clipping)';
+      if (clipCount > 0) healthStatus = 'Digital Clipping Detected (Peak >= 0.98)';
+      if (audioCtx && audioCtx.state === 'suspended') healthStatus = 'AudioContext Suspended';
+
+      return {
+        peakSample: Math.round(framePeak * 1000) / 1000,
+        peakDb: Math.round(peakDb * 10) / 10,
+        maxPeakSample: Math.round(maxPeakSample * 1000) / 1000,
+        maxPeakDb: Math.round(maxPeakDb * 10) / 10,
+        clipCount: clipCount,
+        sampleRate: audioCtx ? audioCtx.sampleRate : null,
+        contextState: audioCtx ? audioCtx.state : 'null',
+        status: healthStatus
+      };
+    },
+
+    resetClipCount: function () {
+      clipCount = 0;
+      maxPeakSample = 0;
+    },
+
+    // [MUS107.02] Diagnostic Inspector Function
     diagnose: function () {
       const counts = {};
       Object.keys(TRACKS).forEach(function (k) { counts[k] = (TRACKS[k] || []).length; });
+      const metrics = this.getAudioMetrics();
 
       const report = {
         enabled: enabled,
@@ -441,6 +515,7 @@ const MusicManager = (function () {
         requestedCategory: category,
         pendingCategory: pending,
         trackCounts: counts,
+        metrics: metrics,
         playing: null
       };
 
@@ -465,7 +540,8 @@ const MusicManager = (function () {
       if (category && !counts[category]) why.push('TRACKS.' + category + ' is empty');
       if (current && current.el.error) why.push('the current file failed to load -- check the path and its exact capitalisation');
       if (current && current.el.paused) why.push('the element is paused');
-      if (!why.length && current) why.push('nothing looks wrong -- if you still hear nothing, check device volume and the master trim');
+      if (metrics.clipCount > 0) why.push('Digital clipping detected (' + metrics.clipCount + ' clipped frames)');
+      if (!why.length && current) why.push('nothing looks wrong -- if you still hear clipping/popping, check CPU thread overhead or WebView audio buffering');
       report.why = why;
 
       try { console.log('[music] diagnose', report); } catch (e) { }

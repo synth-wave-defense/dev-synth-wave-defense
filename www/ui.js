@@ -514,6 +514,12 @@ function buildDiagnostics() {
     rows.push(probe('SFX.isEnabled()', () => SFX.isEnabled()));
     rows.push(probe('MUSIC.isEnabled()', () => MusicManager.isEnabled()));
     rows.push(probe('MUSIC.current()', () => MusicManager.current()));
+    rows.push(probe('Audio Metrics', () => {
+      if (typeof MusicManager !== 'undefined' && MusicManager.getAudioMetrics) {
+        return MusicManager.getAudioMetrics();
+      }
+      return 'Not available';
+    }));
     rows.push(probe('AudioContext state', () => {
       const c = SFX._ctx && SFX._ctx();
       return c ? c.state : 'no context yet (needs a tap)';
@@ -558,6 +564,16 @@ function buildDiagnostics() {
 
   diag.audio = function () { print('Audio', audioReport()); };
   diag.game = function () { print('Game', generalReport()); };
+  diag.audioClipCheck = function () {
+    if (typeof MusicManager !== 'undefined' && MusicManager.getAudioMetrics) {
+      const m = MusicManager.getAudioMetrics();
+      console.log('%cAudio Metrics Peak: ' + m.peakDb + ' dBFS (' + m.peakSample + ') | Max Peak: ' + m.maxPeakDb + ' dBFS | Clips: ' + m.clipCount + ' | Status: ' + m.status,
+        'color:' + (m.clipCount > 0 ? '#ff2a85' : '#8ef3ff'));
+      return m;
+    }
+    console.log('MusicManager.getAudioMetrics not available');
+    return null;
+  };
 
   diag.silent = function () {
     const reasons = [];
@@ -3627,7 +3643,7 @@ function drawSynthWaveTriangleLogo5C(w, horizonY, time) {
     ctx.globalAlpha = tier.alpha;
     ctx.strokeStyle = tier.color;
     ctx.lineWidth = tier.width;
-    if (tier.glow) {
+  if (tier.glow && perfMode !== 'low') {
       setGlow('#00e5ff', 8);
     }
     const curHalfW = halfW * tier.scaleSpread;
@@ -4392,6 +4408,12 @@ function render(now) {
         if (trackEl && typeof MusicManager !== 'undefined' && MusicManager.currentTrack) {
           trackEl.textContent = MusicManager.currentTrack();
         }
+    const metricsEl = document.getElementById('devAudioMetrics');
+    if (metricsEl && typeof MusicManager !== 'undefined' && MusicManager.getAudioMetrics) {
+      const m = MusicManager.getAudioMetrics();
+      metricsEl.textContent = `Peak: ${m.peakDb} dBFS | Clips: ${m.clipCount} | ${m.status}`;
+      metricsEl.style.color = m.clipCount > 0 ? '#ff2a6d' : '#00e5ff';
+    }
       }
     }
   }
