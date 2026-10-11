@@ -1,4 +1,4 @@
-// Synth Wave Defense -- music.js  v2.5 (1.36.18)
+// Synth Wave Defense -- music.js  v2.5 (1.36.19)
 // [MUS100] Background Music Engine Module: Manages buffer-based music tracks, category transitions, Web Audio graph routing, and ducking/filtering.
 
 window._activeMusicNode = null;

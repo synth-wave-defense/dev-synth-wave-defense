@@ -1,4 +1,4 @@
-// Synth Wave Defense -- audio.js  v2.5 (1.36.18)
+// Synth Wave Defense -- audio.js  v2.5 (1.36.19)
 // [AUD100] SFX Engine Module: Handles sound effect playback, custom synthesis, and dynamic throttling.
 
 window._audioCtxStateStalls = 0;
@@ -9,7 +9,7 @@ const SFX = (function () {
 
   // [AUD101] Core Audio Constants
   const MASTER_VOLUME = 0.45;
-  const MAX_VOICES = 32;
+  const MAX_VOICES = 128; // Increased to accommodate delayed node cleanup
   const BEAM_KEEPALIVE = 0.14;
 
   // [AUD101.01] Default Sound Throttling Configuration (minimum interval between duplicate sounds in seconds)
