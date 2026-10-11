@@ -75,6 +75,7 @@ const MusicManager = (function () {
         if (!preloadedAudio[path]) {
           try {
             const a = new Audio();
+            a.crossOrigin = "anonymous";
             attachStallListeners(a);
             a.src = path;
             a.preload = 'auto';
@@ -92,7 +93,32 @@ const MusicManager = (function () {
   let masterGain = null;
 
   function ensureAudioCtx() {
+    if (typeof SFX !== 'undefined' && SFX && typeof SFX._ctx === 'function') {
+      const sfxCtx = SFX._ctx();
+      if (sfxCtx) {
+        audioCtx = sfxCtx;
+        if (audioCtx.state === 'suspended') {
+          try { audioCtx.resume(); } catch (e) {}
+        }
+      }
+    }
     if (audioCtx) {
+      if (!filterNode && !masterGain) {
+        try {
+          masterGain = audioCtx.createGain();
+          masterGain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+
+          filterNode = audioCtx.createBiquadFilter();
+          filterNode.type = 'lowpass';
+          filterNode.frequency.setValueAtTime(ducked ? DUCK_FILTER_FREQ : NORMAL_FILTER_FREQ, audioCtx.currentTime);
+
+          filterNode.connect(masterGain);
+          masterGain.connect(audioCtx.destination);
+        } catch (e) {
+          filterNode = null;
+          masterGain = null;
+        }
+      }
       if (audioCtx.state === 'suspended') {
         try { audioCtx.resume(); } catch (e) {}
       }
@@ -125,12 +151,18 @@ const MusicManager = (function () {
     if (!ensureAudioCtx()) return null;
     if (el._gainNode) return el._gainNode;
     try {
-      const source = el._mediaSource || audioCtx.createMediaElementSource(el);
-      el._mediaSource = source;
+      if (!el._mediaSource) {
+        if (!window._musicSourceCreated) { window._musicSourceCreated = new WeakSet(); }
+        if (!window._musicSourceCreated.has(el)) {
+          el._mediaSource = audioCtx.createMediaElementSource(el);
+          window._musicSourceCreated.add(el);
+        }
+      }
+      const source = el._mediaSource;
+      if (!source) return null;
 
       const gNode = audioCtx.createGain();
-      const initVol = typeof el.volume === 'number' ? el.volume : 0;
-      gNode.gain.setValueAtTime(initVol, audioCtx.currentTime);
+      gNode.gain.setValueAtTime(0, audioCtx.currentTime);
 
       source.disconnect();
       source.connect(gNode);
@@ -244,12 +276,13 @@ const MusicManager = (function () {
         el.currentTime = 0;
       } else {
         el = new Audio();
+        el.crossOrigin = "anonymous";
         attachStallListeners(el);
         el.src = path;
       }
       el.loop = false;          // looping handled below so playlists can advance
       el.preload = 'auto';
-      el.volume = 0;
+      try { el.volume = 1.0; } catch (e) {}
     } catch (e) { return null; }
 
     const releaseTrack = function () {
