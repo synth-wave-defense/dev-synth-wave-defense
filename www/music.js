@@ -1,5 +1,8 @@
-// Synth Wave Defense -- music.js  v2.5 (1.36.15)
+// Synth Wave Defense -- music.js  v2.5 (1.36.16)
 // [MUS100] Background Music Engine Module: Manages buffer-based music tracks, category transitions, Web Audio graph routing, and ducking/filtering.
+
+window._activeMusicNode = null;
+window._activeMusicNodeCount = 0;
 
 const MusicManager = (function () {
   'use strict';
@@ -161,27 +164,43 @@ const MusicManager = (function () {
     return cfg.volume * volume * (ducked ? DUCK_FACTOR : 1.0);
   }
 
+  function decrementNodeCount(node) {
+    if (node && !node._hasEnded) {
+      node._hasEnded = true;
+      window._activeMusicNodeCount = Math.max(0, window._activeMusicNodeCount - 1);
+    }
+  }
+
+  function stopAndDisconnectNode(node) {
+    if (!node) return;
+    try { node.stop(); } catch (e) {}
+    try { node.disconnect(); } catch (e) {}
+    decrementNodeCount(node);
+    if (window._activeMusicNode === node) {
+      window._activeMusicNode = null;
+    }
+  }
+
   function fadeOutAndStop(track, duration) {
     if (!track || !track.gainNode || !track.sourceNode) return;
     const ctx = ensureAudioCtx();
     const dur = Math.max(0.02, duration != null ? duration : 0.5);
     const now = ctx ? ctx.currentTime : 0;
 
-    try {
-      track.sourceNode.onended = null; // prevents advancing when stopped manually
-      const currentVal = track.gainNode.gain.value;
-      track.gainNode.gain.cancelScheduledValues(now);
-      track.gainNode.gain.setValueAtTime(currentVal, now);
-      track.gainNode.gain.linearRampToValueAtTime(0.0001, now + dur);
-    } catch (e) {
-      try { track.gainNode.gain.value = 0.0001; } catch (err) {}
-    }
-
     const src = track.sourceNode;
     const gNode = track.gainNode;
+
+    try {
+      const currentVal = gNode.gain.value;
+      gNode.gain.cancelScheduledValues(now);
+      gNode.gain.setValueAtTime(currentVal, now);
+      gNode.gain.linearRampToValueAtTime(0.0001, now + dur);
+    } catch (e) {
+      try { gNode.gain.value = 0.0001; } catch (err) {}
+    }
+
     setTimeout(() => {
-      try { src.stop(); } catch (e) {}
-      try { src.disconnect(); } catch (e) {}
+      stopAndDisconnectNode(src);
       try { gNode.disconnect(); } catch (e) {}
     }, (dur + 0.05) * 1000);
   }
@@ -235,18 +254,31 @@ const MusicManager = (function () {
     loadTrackBuffer(path).then(audioBuffer => {
       if (category !== cat || !enabled) return;
 
+      if (window._activeMusicNode) {
+        stopAndDisconnectNode(window._activeMusicNode);
+      }
+      if (activeTrack && activeTrack.sourceNode) {
+        stopAndDisconnectNode(activeTrack.sourceNode);
+      }
+
       const now = ctx.currentTime;
       const source = ctx.createBufferSource();
       source.buffer = audioBuffer;
+
+      window._activeMusicNode = source;
 
       const catList = TRACKS[cat] || [];
       const isSingleTrackLoop = cfg && cfg.loop && catList.length === 1;
 
       if (isSingleTrackLoop) {
         source.loop = true;
+        source.onended = function () {
+          decrementNodeCount(source);
+        };
       } else {
         source.loop = false;
         source.onended = function () {
+          decrementNodeCount(source);
           if (activeTrack && activeTrack.sourceNode === source) {
             advance(cat, cfg);
           }
@@ -261,6 +293,7 @@ const MusicManager = (function () {
       source.connect(trackGain);
       trackGain.connect(filterNode);
 
+      window._activeMusicNodeCount++;
       source.start(now);
       trackGain.gain.linearRampToValueAtTime(Math.max(0.0001, targetVol), now + fadeInDur);
 
@@ -291,6 +324,8 @@ const MusicManager = (function () {
     if (activeTrack) {
       fadeOutAndStop(activeTrack, fadeOut != null ? fadeOut : 0.6);
       activeTrack = null;
+    } else if (window._activeMusicNode) {
+      stopAndDisconnectNode(window._activeMusicNode);
     }
   }
 
@@ -355,6 +390,9 @@ const MusicManager = (function () {
       category = null;
       pending = null;
       stopCurrent(fadeOut);
+      if (window._activeMusicNode) {
+        stopAndDisconnectNode(window._activeMusicNode);
+      }
     },
 
     setEnabled: function (on) {

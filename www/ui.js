@@ -2,7 +2,6 @@
 
 // [UI100.01] Thread Lag Monitor: High-frequency sampler tracking WebView thread freezes (>45ms).
 window._maxThreadLag = 0;
-window._audioStallEvents = 0;
 
 (function initThreadLagMonitor() {
   let lastTick = performance.now();
@@ -4435,7 +4434,7 @@ function render(now) {
         }
         const audioLogEl = document.getElementById('devAudioLog');
         if (audioLogEl) {
-          audioLogEl.textContent = `Thread Lag   : ${window._maxThreadLag || 0} ms\n\nMusic Stalls : ${window._audioStallEvents || 0}`;
+          audioLogEl.textContent = `Thread Lag   : ${window._maxThreadLag || 0} ms\nActive Nodes : ${window._activeMusicNodeCount || 0}\nCtx Suspends : ${window._audioCtxStateStalls || 0}`;
         }
       }
     }

@@ -1,5 +1,7 @@
-// Synth Wave Defense -- audio.js  v2.5 (1.36.15)
+// Synth Wave Defense -- audio.js  v2.5 (1.36.16)
 // [AUD100] SFX Engine Module: Handles sound effect playback, custom synthesis, and dynamic throttling.
+
+window._audioCtxStateStalls = 0;
 
 const SFX = (function () {
   'use strict';
@@ -62,6 +64,14 @@ const SFX = (function () {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return null;
       ctx = new AC();
+
+      ctx.addEventListener('statechange', () => {
+        if (ctx.state === 'suspended' || ctx.state === 'interrupted') {
+          if (typeof window._audioCtxStateStalls === 'number') {
+            window._audioCtxStateStalls++;
+          }
+        }
+      });
 
       // [AUD102.01] Dynamics Compressor Setup
       comp = ctx.createDynamicsCompressor();
