@@ -1,4 +1,4 @@
-// Synth Wave Defense -- audio.js  v2.5 (1.36.14)
+// Synth Wave Defense -- audio.js  v2.5 (1.36.15)
 // [AUD100] SFX Engine Module: Handles sound effect playback, custom synthesis, and dynamic throttling.
 
 const SFX = (function () {

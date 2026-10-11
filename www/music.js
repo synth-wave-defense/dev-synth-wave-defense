@@ -1,5 +1,5 @@
-// Synth Wave Defense -- music.js  v2.5 (1.36.14)
-// [MUS100] Background Music Engine Module: Manages streaming music tracks, category transitions, Web Audio graph routing, and ducking/filtering.
+// Synth Wave Defense -- music.js  v2.5 (1.36.15)
+// [MUS100] Background Music Engine Module: Manages buffer-based music tracks, category transitions, Web Audio graph routing, and ducking/filtering.
 
 const MusicManager = (function () {
   'use strict';
@@ -45,59 +45,59 @@ const MusicManager = (function () {
   const DUCK_FILTER_FREQ = 800;     // Hz low-pass cutoff when paused/ducked
   const NORMAL_FILTER_FREQ = 20000; // Hz low-pass cutoff during normal playback
 
-  let current = null;      // { el, category, cfg }
+  let activeTrack = null;  // { path, category, cfg, sourceNode, gainNode, startTime }
   let category = null;     // category currently requested
   let pending = null;      // category queued until the first user gesture
   let unlocked = false;
   let playlist = [];       // remaining shuffled tracks for a looping category
 
-  if (typeof window._audioStallEvents === 'undefined') window._audioStallEvents = 0;
+  // [MUS103] Buffer Caching & Preloading Pipeline
+  const bufferCache = Object.create(null);
+  const loadingPromises = Object.create(null);
 
-  // [MUS102.01] Attach stall/waiting/suspend listeners for music thread diagnostics
-  function attachStallListeners(el) {
-    if (!el || el._stallListenersAttached) return;
-    el._stallListenersAttached = true;
-    ['stalled', 'waiting', 'suspend'].forEach(evt => {
-      el.addEventListener(evt, () => {
-        window._audioStallEvents = (window._audioStallEvents || 0) + 1;
+  function loadTrackBuffer(url) {
+    if (bufferCache[url]) return Promise.resolve(bufferCache[url]);
+    if (loadingPromises[url]) return loadingPromises[url];
+
+    const ctx = ensureAudioCtx();
+    if (!ctx) return Promise.reject(new Error('No AudioContext available'));
+
+    loadingPromises[url] = fetch(url)
+      .then(res => {
+        if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + url);
+        return res.arrayBuffer();
+      })
+      .then(arrayBuffer => {
+        return new Promise((resolve, reject) => {
+          ctx.decodeAudioData(arrayBuffer, resolve, reject);
+        });
+      })
+      .then(audioBuffer => {
+        bufferCache[url] = audioBuffer;
+        delete loadingPromises[url];
+        return audioBuffer;
+      })
+      .catch(err => {
+        delete loadingPromises[url];
+        throw err;
       });
-    });
+
+    return loadingPromises[url];
   }
 
-  // [MUS103] Asset Preloading Pipeline
-  const preloadedAudio = Object.create(null);
   function preloadTracks() {
     Object.keys(TRACKS).forEach(cat => {
       (TRACKS[cat] || []).forEach(path => {
-        if (!preloadedAudio[path]) {
-          try {
-            const a = new Audio();
-            a.crossOrigin = "anonymous";
-            attachStallListeners(a);
-            a.src = path;
-            a.preload = 'auto';
-            preloadedAudio[path] = a;
-          } catch (e) {}
+        if (!bufferCache[path] && !loadingPromises[path]) {
+          loadTrackBuffer(path).catch(() => {});
         }
       });
     });
   }
-  try { preloadTracks(); } catch (e) {}
 
-  // [MUS104] Persistent Audio Element & Web Audio Graph Initialization
+  // [MUS104] Web Audio Graph Singleton Setup
   let audioCtx = null;
   let filterNode = null;
-
-  function getAudioElement() {
-    if (!window._musicAudioElement) {
-      const el = new Audio();
-      el.crossOrigin = "anonymous";
-      try { el.volume = 1.0; } catch (e) {}
-      attachStallListeners(el);
-      window._musicAudioElement = el;
-    }
-    return window._musicAudioElement;
-  }
 
   function ensureAudioCtx() {
     if (typeof SFX !== 'undefined' && SFX && typeof SFX._ctx === 'function') {
@@ -123,29 +123,16 @@ const MusicManager = (function () {
     return audioCtx;
   }
 
-  // [MUS104.01] Web Audio Graph Singleton Setup
+  // [MUS104.01] Audio Output Graph Configuration
   function setupAudioGraph() {
     const ctx = ensureAudioCtx();
     if (!ctx) return null;
 
-    const el = getAudioElement();
-    el.crossOrigin = "anonymous";
-    try { el.volume = 1.0; } catch (e) {}
-
-    if (!window._musicSourceNode) {
+    if (!filterNode) {
       try {
-        window._musicSourceNode = ctx.createMediaElementSource(el);
-        window._musicGainNode = ctx.createGain();
-
-        if (!filterNode) {
-          filterNode = ctx.createBiquadFilter();
-          filterNode.type = 'lowpass';
-          filterNode.frequency.setValueAtTime(ducked ? DUCK_FILTER_FREQ : NORMAL_FILTER_FREQ, ctx.currentTime);
-        }
-
-        // Route: HTML Audio -> Source -> Gain Node -> Filter Node -> Analyser/Destination
-        window._musicSourceNode.connect(window._musicGainNode);
-        window._musicGainNode.connect(filterNode);
+        filterNode = ctx.createBiquadFilter();
+        filterNode.type = 'lowpass';
+        filterNode.frequency.setValueAtTime(ducked ? DUCK_FILTER_FREQ : NORMAL_FILTER_FREQ, ctx.currentTime);
 
         const targetNode = (typeof SFX !== 'undefined' && SFX && typeof SFX._analyser === 'function' && SFX._analyser())
           ? SFX._analyser()
@@ -153,7 +140,7 @@ const MusicManager = (function () {
 
         filterNode.connect(targetNode);
       } catch (e) {
-        console.warn('[music] Web Audio graph routing error:', e);
+        console.warn('[music] Web Audio graph setup error:', e);
       }
     }
     return ctx;
@@ -174,31 +161,46 @@ const MusicManager = (function () {
     return cfg.volume * volume * (ducked ? DUCK_FACTOR : 1.0);
   }
 
-  function fadeToTarget(to, dur, stopAtEnd) {
+  function fadeOutAndStop(track, duration) {
+    if (!track || !track.gainNode || !track.sourceNode) return;
     const ctx = ensureAudioCtx();
-    setupAudioGraph();
+    const dur = Math.max(0.02, duration != null ? duration : 0.5);
+    const now = ctx ? ctx.currentTime : 0;
 
-    const targetVol = Math.max(0, Math.min(1, to));
-    const duration = Math.max(0.01, dur || 0.05);
-
-    if (window._musicGainNode && ctx) {
-      try {
-        const now = ctx.currentTime;
-        const currentVal = window._musicGainNode.gain.value;
-        window._musicGainNode.gain.cancelScheduledValues(now);
-        window._musicGainNode.gain.setValueAtTime(currentVal, now);
-        window._musicGainNode.gain.linearRampToValueAtTime(targetVol, now + duration);
-      } catch (e) {
-        try { window._musicGainNode.gain.value = targetVol; } catch (err) {}
-      }
+    try {
+      track.sourceNode.onended = null; // prevents advancing when stopped manually
+      const currentVal = track.gainNode.gain.value;
+      track.gainNode.gain.cancelScheduledValues(now);
+      track.gainNode.gain.setValueAtTime(currentVal, now);
+      track.gainNode.gain.linearRampToValueAtTime(0.0001, now + dur);
+    } catch (e) {
+      try { track.gainNode.gain.value = 0.0001; } catch (err) {}
     }
 
-    if (stopAtEnd) {
-      setTimeout(() => {
-        if (window._musicAudioElement && targetVol === 0) {
-          try { window._musicAudioElement.pause(); } catch (e) {}
-        }
-      }, (duration + 0.05) * 1000);
+    const src = track.sourceNode;
+    const gNode = track.gainNode;
+    setTimeout(() => {
+      try { src.stop(); } catch (e) {}
+      try { src.disconnect(); } catch (e) {}
+      try { gNode.disconnect(); } catch (e) {}
+    }, (dur + 0.05) * 1000);
+  }
+
+  function fadeActiveTrackTo(targetVol, duration) {
+    if (!activeTrack || !activeTrack.gainNode) return;
+    const ctx = ensureAudioCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const dur = Math.max(0.01, duration || 0.1);
+    const val = Math.max(0.0001, Math.min(1.0, targetVol));
+
+    try {
+      const currentVal = activeTrack.gainNode.gain.value;
+      activeTrack.gainNode.gain.cancelScheduledValues(now);
+      activeTrack.gainNode.gain.setValueAtTime(currentVal, now);
+      activeTrack.gainNode.gain.linearRampToValueAtTime(val, now + dur);
+    } catch (e) {
+      try { activeTrack.gainNode.gain.value = val; } catch (err) {}
     }
   }
 
@@ -221,84 +223,75 @@ const MusicManager = (function () {
       }
     }
 
-    if (current && current.cfg) fadeToTarget(levelFor(current.cfg), duration);
+    if (activeTrack && activeTrack.cfg) {
+      fadeActiveTrackTo(levelFor(activeTrack.cfg), duration);
+    }
   }
 
   function startTrack(path, cat, cfg) {
-    const el = getAudioElement();
-    setupAudioGraph();
+    const ctx = setupAudioGraph();
+    if (!ctx) return;
 
-    el.crossOrigin = "anonymous";
-    try { el.volume = 1.0; } catch (e) {}
+    loadTrackBuffer(path).then(audioBuffer => {
+      if (category !== cat || !enabled) return;
 
-    if (!el.src || !el.src.endsWith(path)) {
-      el.src = path;
-    }
-    el.loop = false;
-    el.preload = 'auto';
+      const now = ctx.currentTime;
+      const source = ctx.createBufferSource();
+      source.buffer = audioBuffer;
 
-    if (!el._musicEventsAttached) {
-      el._musicEventsAttached = true;
+      const catList = TRACKS[cat] || [];
+      const isSingleTrackLoop = cfg && cfg.loop && catList.length === 1;
 
-      el.addEventListener('ended', function () {
-        if (!current) return;
-        const cCat = current.category;
-        const cCfg = current.cfg;
-        if (cCfg && cCfg.loop) {
-          const catList = TRACKS[cCat] || [];
-          if (catList.length === 1) {
-            try {
-              el.currentTime = 0;
-              const p = el.play();
-              if (p && typeof p.catch === 'function') p.catch(function () {});
-              fadeToTarget(levelFor(cCfg), 0.1);
-            } catch (e) {
-              advance(cCat, cCfg);
-            }
-          } else {
-            advance(cCat, cCfg);
+      if (isSingleTrackLoop) {
+        source.loop = true;
+      } else {
+        source.loop = false;
+        source.onended = function () {
+          if (activeTrack && activeTrack.sourceNode === source) {
+            advance(cat, cfg);
           }
-        } else {
-          current = null;
-        }
-      });
+        };
+      }
 
-      el.addEventListener('error', function () {
-        if (!current) return;
-        const cCat = current.category;
-        const cCfg = current.cfg;
-        current = null;
-        if (playlist.length && cCfg && cCfg.loop) advance(cCat, cCfg);
-      });
-    }
+      const trackGain = ctx.createGain();
+      const targetVol = levelFor(cfg);
+      const fadeInDur = Math.max(0.02, cfg ? (cfg.fadeIn || 0.4) : 0.4);
 
-    current = { el: el, category: cat, cfg: cfg };
+      trackGain.gain.setValueAtTime(0.0001, now);
+      source.connect(trackGain);
+      trackGain.connect(filterNode);
 
-    const p = (function () { try { return el.play(); } catch (e) { return null; } })();
-    if (p && typeof p.catch === 'function') {
-      p.catch(function (err) {
-        if (!unlocked || (err && err.name === 'NotAllowedError')) {
-          pending = cat;
-        }
-      });
-    }
+      source.start(now);
+      trackGain.gain.linearRampToValueAtTime(Math.max(0.0001, targetVol), now + fadeInDur);
 
-    fadeToTarget(levelFor(cfg), cfg.fadeIn || 0.4);
-    return el;
+      activeTrack = {
+        path: path,
+        category: cat,
+        cfg: cfg,
+        sourceNode: source,
+        gainNode: trackGain,
+        startTime: now
+      };
+    }).catch(err => {
+      console.warn('[music] Failed to play track buffer:', path, err);
+      if (category === cat && cfg && cfg.loop && playlist.length) {
+        advance(cat, cfg);
+      }
+    });
   }
 
   function advance(cat, cfg) {
     if (!playlist.length) playlist = shuffle(TRACKS[cat] || []);
     const next = playlist.shift();
-    if (!next) { current = null; return; }
-    const el = startTrack(next, cat, cfg);
-    current = el ? { el: el, category: cat, cfg: cfg } : null;
+    if (!next) { activeTrack = null; return; }
+    startTrack(next, cat, cfg);
   }
 
   function stopCurrent(fadeOut) {
-    if (!current) return;
-    fadeToTarget(0, fadeOut == null ? 0.6 : fadeOut, true);
-    current = null;
+    if (activeTrack) {
+      fadeOutAndStop(activeTrack, fadeOut != null ? fadeOut : 0.6);
+      activeTrack = null;
+    }
   }
 
   // [MUS106.02] Category Playback Switcher
@@ -316,16 +309,8 @@ const MusicManager = (function () {
       setDucked(false, 0.08);
     }
 
-    if (category === cat && current && current.el) {
-      if (current.el.paused) {
-        const p = (function () { try { return current.el.play(); } catch (e) { return null; } })();
-        if (p && typeof p.catch === 'function') {
-          p.catch(function () {
-            startCategoryFresh(cat, cfg, list);
-          });
-        }
-      }
-      fadeToTarget(levelFor(cfg), cfg.fadeIn || 0.4);
+    if (category === cat && activeTrack) {
+      fadeActiveTrackTo(levelFor(cfg), cfg.fadeIn || 0.4);
       return;
     }
 
@@ -338,9 +323,9 @@ const MusicManager = (function () {
     if (!enabled) return;
     if (!unlocked) { pending = cat; return; }
 
-    const prev = current;
-    current = null;
-    if (prev) fadeToTarget(0, cfg.fadeIn * 0.8, false);
+    const prev = activeTrack;
+    activeTrack = null;
+    if (prev) fadeOutAndStop(prev, cfg.fadeOut != null ? cfg.fadeOut : 0.5);
 
     playlist = shuffle(list);
     advance(cat, cfg);
@@ -356,10 +341,9 @@ const MusicManager = (function () {
     play: playCategory,
     current: function () { return category; },
     currentTrack: function () {
-      if (!current || !current.el || !current.el.src) return 'None';
+      if (!activeTrack || !activeTrack.path) return 'None';
       try {
-        const src = current.el.src;
-        const parts = src.split('/');
+        const parts = activeTrack.path.split('/');
         return parts[parts.length - 1] || 'None';
       } catch (e) {
         return 'None';
@@ -382,7 +366,7 @@ const MusicManager = (function () {
         stopCurrent(0.35);
       } else if (category) {
         const want = category;
-        category = null;      // force playCategory to actually restart
+        category = null;      // force playCategory to restart
         playCategory(want);
       }
     },
@@ -391,10 +375,8 @@ const MusicManager = (function () {
 
     setVolume: function (v) {
       volume = Math.max(0, Math.min(1, v));
-      if (current && current.cfg) {
-        fadeToTarget(levelFor(current.cfg), 0.15);
-      } else {
-        fadeToTarget(levelFor(null), 0.15);
+      if (activeTrack && activeTrack.cfg) {
+        fadeActiveTrackTo(levelFor(activeTrack.cfg), 0.15);
       }
     },
 
@@ -404,11 +386,12 @@ const MusicManager = (function () {
       setupAudioGraph();
       if (!unlocked) {
         unlocked = true;
+        preloadTracks();
       }
       const want = pending || category;
       if (want && enabled) {
         pending = null;
-        if (!current || !window._musicAudioElement || window._musicAudioElement.paused) {
+        if (!activeTrack) {
           category = null;
           playCategory(want);
         }
@@ -419,20 +402,11 @@ const MusicManager = (function () {
       if (audioCtx && audioCtx.state === 'running') {
         try { audioCtx.suspend(); } catch (e) {}
       }
-      if (window._musicAudioElement) {
-        try { window._musicAudioElement.pause(); } catch (e) {}
-      }
     },
     resume: function () {
       ensureAudioCtx();
       if (audioCtx && audioCtx.state === 'suspended') {
         try { audioCtx.resume(); } catch (e) {}
-      }
-      if (current && enabled && window._musicAudioElement) {
-        if (window._musicAudioElement.paused) {
-          const p = (function () { try { return window._musicAudioElement.play(); } catch (e) { return null; } })();
-          if (p && typeof p.catch === 'function') p.catch(function () {});
-        }
       }
     },
 
@@ -450,25 +424,21 @@ const MusicManager = (function () {
         ducked: ducked,
         audioCtxState: audioCtx ? audioCtx.state : 'null',
         filterFreq: filterNode ? Math.round(filterNode.frequency.value) : null,
-        webAudioGain: window._musicGainNode ? Math.round(window._musicGainNode.gain.value * 100) / 100 : null,
         requestedCategory: category,
         pendingCategory: pending,
         trackCounts: counts,
         playing: null
       };
 
-      if (current && current.el) {
+      if (activeTrack) {
+        const pos = audioCtx ? Math.round((audioCtx.currentTime - activeTrack.startTime) * 10) / 10 : 0;
+        const dur = (activeTrack.sourceNode && activeTrack.sourceNode.buffer) ? activeTrack.sourceNode.buffer.duration : 0;
         report.playing = {
-          category: current.category,
-          src: current.el.src,
-          paused: current.el.paused,
-          volume: Math.round((window._musicGainNode ? window._musicGainNode.gain.value : 0) * 100) / 100,
-          elementVolume: current.el.volume,
-          position: Math.round((current.el.currentTime || 0) * 10) / 10,
-          duration: current.el.duration,
-          readyState: current.el.readyState,
-          networkState: current.el.networkState,
-          error: current.el.error ? current.el.error.code : null
+          category: activeTrack.category,
+          path: activeTrack.path,
+          volume: activeTrack.gainNode ? Math.round(activeTrack.gainNode.gain.value * 100) / 100 : null,
+          position: pos,
+          duration: dur
         };
       }
 
@@ -477,9 +447,7 @@ const MusicManager = (function () {
       if (!unlocked) why.push('no user gesture yet -- tap the screen once');
       if (!category) why.push('no category has been requested');
       if (category && !counts[category]) why.push('TRACKS.' + category + ' is empty');
-      if (current && current.el.error) why.push('the current file failed to load -- check the path and its exact capitalisation');
-      if (current && current.el.paused) why.push('the element is paused');
-      if (!why.length && current) why.push('nothing looks wrong -- if you still hear nothing, check device volume and the master trim');
+      if (!why.length && activeTrack) why.push('nothing looks wrong -- pure Web Audio buffer playing');
       report.why = why;
 
       try { console.log('[music] diagnose', report); } catch (e) { }
