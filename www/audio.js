@@ -1,7 +1,8 @@
-// Synth Wave Defense -- audio.js  v2.5 (1.36.16)
+// Synth Wave Defense -- audio.js  v2.5 (1.36.17)
 // [AUD100] SFX Engine Module: Handles sound effect playback, custom synthesis, and dynamic throttling.
 
 window._audioCtxStateStalls = 0;
+window._audioCtxState = 'closed';
 
 const SFX = (function () {
   'use strict';
@@ -66,12 +67,14 @@ const SFX = (function () {
       ctx = new AC();
 
       ctx.addEventListener('statechange', () => {
-        if (ctx.state === 'suspended' || ctx.state === 'interrupted') {
+        if (ctx) window._audioCtxState = ctx.state;
+        if (ctx && (ctx.state === 'suspended' || ctx.state === 'interrupted')) {
           if (typeof window._audioCtxStateStalls === 'number') {
             window._audioCtxStateStalls++;
           }
         }
       });
+      window._audioCtxState = ctx.state;
 
       // [AUD102.01] Dynamics Compressor Setup
       comp = ctx.createDynamicsCompressor();
@@ -429,8 +432,16 @@ const SFX = (function () {
 
   // [AUD110] Real-Time Audio Diagnostics Metrics
   function getAudioMetrics() {
+    if (ctx) window._audioCtxState = ctx.state;
     if (!ctx || !analyser) {
-      return { peakVolume: 0, dcOffset: 0, sampleRate: ctx ? ctx.sampleRate : 0, baseLatency: ctx ? (ctx.baseLatency || 0) : 0 };
+      return {
+        peakVolume: 0,
+        dcOffset: 0,
+        sampleRate: ctx ? ctx.sampleRate : 0,
+        baseLatency: ctx ? (ctx.baseLatency || 0) : 0,
+        outputLatency: (ctx && typeof ctx.outputLatency === 'number') ? ctx.outputLatency : null,
+        state: ctx ? ctx.state : (window._audioCtxState || 'closed')
+      };
     }
     if (!timeDomainData || timeDomainData.length !== analyser.fftSize) {
       timeDomainData = new Float32Array(analyser.fftSize);
@@ -450,7 +461,9 @@ const SFX = (function () {
       peakVolume: maxPeak,
       dcOffset: dcOffset,
       sampleRate: ctx.sampleRate || 0,
-      baseLatency: ctx.baseLatency !== undefined ? ctx.baseLatency : 0
+      baseLatency: ctx.baseLatency !== undefined ? ctx.baseLatency : 0,
+      outputLatency: (typeof ctx.outputLatency === 'number') ? ctx.outputLatency : null,
+      state: ctx.state
     };
   }
 
