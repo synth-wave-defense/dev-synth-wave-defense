@@ -54,6 +54,19 @@ const MusicManager = (function () {
   let fadeTimer = null;
   let playlist = [];       // remaining shuffled tracks for a looping category
 
+  if (typeof window._audioStallEvents === 'undefined') window._audioStallEvents = 0;
+
+  // [MUS102.01] Attach stall/waiting/suspend listeners for music thread diagnostics
+  function attachStallListeners(el) {
+    if (!el || el._stallListenersAttached) return;
+    el._stallListenersAttached = true;
+    ['stalled', 'waiting', 'suspend'].forEach(evt => {
+      el.addEventListener(evt, () => {
+        window._audioStallEvents = (window._audioStallEvents || 0) + 1;
+      });
+    });
+  }
+
   // [MUS103] Asset Preloading Pipeline
   const preloadedAudio = Object.create(null);
   function preloadTracks() {
@@ -62,6 +75,7 @@ const MusicManager = (function () {
         if (!preloadedAudio[path]) {
           try {
             const a = new Audio();
+            attachStallListeners(a);
             a.src = path;
             a.preload = 'auto';
             preloadedAudio[path] = a;
@@ -225,10 +239,12 @@ const MusicManager = (function () {
     try {
       if (preloadedAudio[path] && preloadedAudio[path].paused && !preloadedAudio[path]._inUse) {
         el = preloadedAudio[path];
+        attachStallListeners(el);
         el._inUse = true;
         el.currentTime = 0;
       } else {
         el = new Audio();
+        attachStallListeners(el);
         el.src = path;
       }
       el.loop = false;          // looping handled below so playlists can advance

@@ -1,5 +1,24 @@
 // [UI100] Presentation layer and rendering pipeline initialization.
 
+// [UI100.01] Thread Lag Monitor: High-frequency sampler tracking WebView thread freezes (>45ms).
+window._maxThreadLag = 0;
+window._audioStallEvents = 0;
+
+(function initThreadLagMonitor() {
+  let lastTick = performance.now();
+  setInterval(() => {
+    const now = performance.now();
+    const delta = now - lastTick;
+    lastTick = now;
+    if (delta > 45) {
+      const lag = Math.round(delta);
+      if (lag > window._maxThreadLag) {
+        window._maxThreadLag = lag;
+      }
+    }
+  }, 20);
+})();
+
 window.perfProfiler = {
   times: { sim: 0, towers: 0, drawMobs: 0, drawFx: 0, total: 0 },
   accum: { sim: 0, towers: 0, drawMobs: 0, drawFx: 0, frames: 0 },
@@ -4413,6 +4432,10 @@ function render(now) {
           if (latEl) {
             latEl.textContent = m.baseLatency ? m.baseLatency.toFixed(3) : '0.000';
           }
+        }
+        const audioLogEl = document.getElementById('devAudioLog');
+        if (audioLogEl) {
+          audioLogEl.textContent = `Thread Lag   : ${window._maxThreadLag || 0} ms\n\nMusic Stalls : ${window._audioStallEvents || 0}`;
         }
       }
     }

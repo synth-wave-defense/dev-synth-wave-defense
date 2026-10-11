@@ -2942,6 +2942,15 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   gap: 2px;
 }
 
+.dev-audio-log {
+  margin-top: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #ff9100;
+  font-family: monospace;
+  white-space: pre;
+}
+
 .dev-custom-spawner {
   position: fixed;
   top: max(212px, calc(env(safe-area-inset-top) + 200px));
