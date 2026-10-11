@@ -2932,6 +2932,16 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   word-break: break-all;
 }
 
+.dev-audio-metrics {
+  font-size: 10px;
+  font-weight: 700;
+  color: #00e5ff;
+  letter-spacing: 0.5px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .dev-custom-spawner {
   position: fixed;
   top: max(212px, calc(env(safe-area-inset-top) + 200px));

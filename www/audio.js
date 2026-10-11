@@ -28,6 +28,8 @@ const SFX = (function () {
   let master = null;
   let sfxBus = null;
   let comp = null;
+  let analyser = null;
+  let timeDomainData = null;
   let whiteNoiseBuffer = null;
   let brownNoiseBuffer = null;
   let distortionCurve = null;
@@ -69,17 +71,22 @@ const SFX = (function () {
       comp.attack.setValueAtTime(0.001, ctx.currentTime);
       comp.release.setValueAtTime(0.10, ctx.currentTime);
 
-      // [AUD102.02] Audio Gain Buses Configuration
+      // [AUD102.02] Audio Gain Buses Configuration & Analyser Setup
       master = ctx.createGain();
       master.gain.value = MASTER_VOLUME * volume;
 
       sfxBus = ctx.createGain();
       sfxBus.gain.value = 1;
 
-      // [AUD102.03] Master Signal Routing: sfxBus -> comp -> master -> destination
+      analyser = ctx.createAnalyser();
+      analyser.fftSize = 2048;
+      timeDomainData = new Float32Array(analyser.fftSize);
+
+      // [AUD102.03] Master Signal Routing: sfxBus -> comp -> master -> analyser -> destination
       sfxBus.connect(comp);
       comp.connect(master);
-      master.connect(ctx.destination);
+      master.connect(analyser);
+      analyser.connect(ctx.destination);
 
       // [AUD102.04] Audio Noise Buffer Generation
       const len = Math.floor(ctx.sampleRate * 2);
@@ -410,6 +417,33 @@ const SFX = (function () {
     return play('enemyDeath');
   }
 
+  // [AUD110] Real-Time Audio Diagnostics Metrics
+  function getAudioMetrics() {
+    if (!ctx || !analyser) {
+      return { peakVolume: 0, dcOffset: 0, sampleRate: ctx ? ctx.sampleRate : 0, baseLatency: ctx ? (ctx.baseLatency || 0) : 0 };
+    }
+    if (!timeDomainData || timeDomainData.length !== analyser.fftSize) {
+      timeDomainData = new Float32Array(analyser.fftSize);
+    }
+    analyser.getFloatTimeDomainData(timeDomainData);
+    let maxPeak = 0;
+    let sum = 0;
+    const len = timeDomainData.length;
+    for (let i = 0; i < len; i++) {
+      const val = timeDomainData[i];
+      const abs = Math.abs(val);
+      if (abs > maxPeak) maxPeak = abs;
+      sum += val;
+    }
+    const dcOffset = len > 0 ? sum / len : 0;
+    return {
+      peakVolume: maxPeak,
+      dcOffset: dcOffset,
+      sampleRate: ctx.sampleRate || 0,
+      baseLatency: ctx.baseLatency !== undefined ? ctx.baseLatency : 0
+    };
+  }
+
   function setEnabled(on) {
     enabled = !!on;
     if (enabled) { ensureCtx(); resume(); }
@@ -462,6 +496,7 @@ const SFX = (function () {
   return {
     play, beam, death,
     setEnabled, setVolume, isEnabled,
+    getAudioMetrics,
     installUiHooks,
     unlock() { ensureCtx(); resume(); },
     loadSamples, registerBuffer, clearSample, hasSample, sampleNames,
