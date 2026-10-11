@@ -1,22 +1,48 @@
 // [UI100] Presentation layer and rendering pipeline initialization.
 
-// [UI100.01] Thread Lag Monitor: High-frequency sampler tracking WebView thread freezes (>45ms).
+// [UI100.01] Thread Lag & Memory Monitor: High-frequency sampler tracking WebView thread freezes (>20ms).
 window._maxThreadLag = 0;
+window._lastThreadLag = 0;
 
 (function initThreadLagMonitor() {
   let lastTick = performance.now();
+  const lagSamples = [];
+
   setInterval(() => {
     const now = performance.now();
     const delta = now - lastTick;
     lastTick = now;
-    if (delta > 45) {
-      const lag = Math.round(delta);
+
+    const lag = Math.max(0, Math.round(delta - 20));
+
+    if (lag > 5) {
+      lagSamples.push({ time: now, lag: lag });
       if (lag > window._maxThreadLag) {
         window._maxThreadLag = lag;
       }
     }
+
+    const cutoff = now - 2000;
+    while (lagSamples.length > 0 && lagSamples[0].time < cutoff) {
+      lagSamples.shift();
+    }
+
+    let peakLast = 0;
+    for (let i = 0; i < lagSamples.length; i++) {
+      if (lagSamples[i].lag > peakLast) {
+        peakLast = lagSamples[i].lag;
+      }
+    }
+    window._lastThreadLag = peakLast;
   }, 20);
 })();
+
+function getJSHeapSizeMB() {
+  if (typeof performance !== 'undefined' && performance.memory && typeof performance.memory.usedJSHeapSize === 'number') {
+    return performance.memory.usedJSHeapSize / (1024 * 1024);
+  }
+  return null;
+}
 
 window.perfProfiler = {
   times: { sim: 0, towers: 0, drawMobs: 0, drawFx: 0, total: 0 },
@@ -1285,6 +1311,8 @@ let isDevExpanded = false;
 function openDevMode() {
   isDevModeActive = true;
   devMode = true;
+  window._maxThreadLag = 0;
+  window._lastThreadLag = 0;
   const bar = document.getElementById('devBar');
   if (bar) bar.classList.remove('hidden');
   
@@ -4412,29 +4440,42 @@ function render(now) {
         }
         if (typeof SFX !== 'undefined' && typeof SFX.getAudioMetrics === 'function') {
           const m = SFX.getAudioMetrics();
-          const peakEl = document.getElementById('devPeakVol');
-          const dcEl = document.getElementById('devDcOffset');
-          const srEl = document.getElementById('devSampleRate');
-          const latEl = document.getElementById('devBaseLatency');
+          const stateStr = m.state || window._audioCtxState || 'closed';
+          const suspendsStr = window._audioCtxStateStalls || 0;
+          const srStr = (m.sampleRate || 0) + ' Hz';
+          const baseLatStr = (m.baseLatency ? m.baseLatency.toFixed(3) : '0.000') + ' s';
+          const outLatStr = (typeof m.outputLatency === 'number' && m.outputLatency > 0)
+            ? m.outputLatency.toFixed(3) + ' s'
+            : 'N/A';
 
-          if (peakEl) {
-            peakEl.textContent = m.peakVolume.toFixed(3);
-            peakEl.style.color = m.peakVolume > 0.99 ? '#ff2a6d' : '#00e5ff';
+          const peakStr = m.peakVolume !== undefined ? m.peakVolume.toFixed(3) : '0.000';
+          const dcStr = m.dcOffset !== undefined ? m.dcOffset.toFixed(4) : '0.0000';
+          const activeNodesStr = window._activeMusicNodeCount || 0;
+
+          const maxLagStr = (window._maxThreadLag || 0) + ' ms';
+          const lastLagStr = (window._lastThreadLag || 0) + ' ms';
+
+          const heapMB = getJSHeapSizeMB();
+          const heapStr = heapMB !== null ? heapMB.toFixed(1) + ' MB' : 'N/A';
+
+          const audioLogEl = document.getElementById('devAudioLog');
+          if (audioLogEl) {
+            audioLogEl.textContent =
+              `--- AUDIO HARDWARE ---\n` +
+              `State      : ${stateStr}\n` +
+              `Suspends   : ${suspendsStr}\n` +
+              `Sample Rate: ${srStr}\n` +
+              `Base Lat.  : ${baseLatStr}\n` +
+              `Out Lat.   : ${outLatStr}\n\n` +
+              `--- DSP METRICS ---\n` +
+              `Peak Vol   : ${peakStr}\n` +
+              `DC Offset  : ${dcStr}\n` +
+              `Active Nodes: ${activeNodesStr}\n\n` +
+              `--- THREAD & MEMORY ---\n` +
+              `Max Lag    : ${maxLagStr}\n` +
+              `Last Lag   : ${lastLagStr}\n` +
+              `JS Heap    : ${heapStr}`;
           }
-          if (dcEl) {
-            dcEl.textContent = (m.dcOffset >= 0 ? '+' : '') + m.dcOffset.toFixed(4);
-            dcEl.style.color = Math.abs(m.dcOffset) > 0.05 ? '#ff2a6d' : '#00e5ff';
-          }
-          if (srEl) {
-            srEl.textContent = m.sampleRate ? m.sampleRate : '0';
-          }
-          if (latEl) {
-            latEl.textContent = m.baseLatency ? m.baseLatency.toFixed(3) : '0.000';
-          }
-        }
-        const audioLogEl = document.getElementById('devAudioLog');
-        if (audioLogEl) {
-          audioLogEl.textContent = `Thread Lag   : ${window._maxThreadLag || 0} ms\nActive Nodes : ${window._activeMusicNodeCount || 0}\nCtx Suspends : ${window._audioCtxStateStalls || 0}`;
         }
       }
     }
