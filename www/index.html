@@ -1,4 +1,4 @@
-<!-- [HTM100] Version: 1.36.10 - Synth Wave Defense HTML application layout and script bindings. -->
+<!-- [HTM100] Version: 1.36.11 - Synth Wave Defense HTML application layout and script bindings. -->
 <!DOCTYPE html>
 
 <html lang="en">
@@ -374,6 +374,16 @@
       <div class="dev-track-info" id="devTrackTitle">None</div>
     </div>
 
+    <div class="dev-spawner-sub" id="devAudioRow">
+      <div class="dev-sub-title">AUDIO MONITOR</div>
+      <div class="dev-audio-metrics" id="devAudioMetrics">
+        <div>Peak Vol: <span id="devPeakVol">0.000</span></div>
+        <div>DC Offset: <span id="devDcOffset">0.0000</span></div>
+        <div>Sample Rate: <span id="devSampleRate">0</span> Hz</div>
+        <div>Base Latency: <span id="devBaseLatency">0.000</span> s</div>
+      </div>
+    </div>
+
     <div class="dev-spawner-sub" id="devCustomSpawner">
       <div class="dev-sub-title">SPAWNER</div>
       <div class="dev-spawner-grid">
@@ -641,7 +651,7 @@
             <input type="range" class="vol-range" id="settingSfxVol" min="0" max="100" step="5" value="100"
                    oninput="setSfxVolume(this.value)">
           </div>
-          <div class="setting-version-label" id="settingsVersionLabel">Version: 1.36.10</div>
+          <div class="setting-version-label" id="settingsVersionLabel">Version: 1.36.11</div>
         </div>
       </div>
     </div>

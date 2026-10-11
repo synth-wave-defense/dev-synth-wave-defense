@@ -4392,6 +4392,28 @@ function render(now) {
         if (trackEl && typeof MusicManager !== 'undefined' && MusicManager.currentTrack) {
           trackEl.textContent = MusicManager.currentTrack();
         }
+        if (typeof SFX !== 'undefined' && typeof SFX.getAudioMetrics === 'function') {
+          const m = SFX.getAudioMetrics();
+          const peakEl = document.getElementById('devPeakVol');
+          const dcEl = document.getElementById('devDcOffset');
+          const srEl = document.getElementById('devSampleRate');
+          const latEl = document.getElementById('devBaseLatency');
+
+          if (peakEl) {
+            peakEl.textContent = m.peakVolume.toFixed(3);
+            peakEl.style.color = m.peakVolume > 0.99 ? '#ff2a6d' : '#00e5ff';
+          }
+          if (dcEl) {
+            dcEl.textContent = (m.dcOffset >= 0 ? '+' : '') + m.dcOffset.toFixed(4);
+            dcEl.style.color = Math.abs(m.dcOffset) > 0.05 ? '#ff2a6d' : '#00e5ff';
+          }
+          if (srEl) {
+            srEl.textContent = m.sampleRate ? m.sampleRate : '0';
+          }
+          if (latEl) {
+            latEl.textContent = m.baseLatency ? m.baseLatency.toFixed(3) : '0.000';
+          }
+        }
       }
     }
   }
