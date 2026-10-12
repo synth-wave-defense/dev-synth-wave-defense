@@ -65,3 +65,6 @@ When tasked with a production release or build sync, you MUST execute the build 
      "deadCodeInjection": false,
      "identifierNamesGenerator": "hexadecimal"
    }
+
+5. **Environment Isolation:**
+Do NOT transfer, modify, or overwrite capacitor.config.json, package.json, or the android/ directory during deployment. You must ONLY transfer game assets and scripts (HTML, JS, CSS, media) intended for the www folder.
