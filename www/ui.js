@@ -3660,7 +3660,7 @@ function drawCosmicNebulaBackground(w, h) {
   ctx.save();
   // Deep background nebulae
   const rad1 = ctx.createRadialGradient(w * 0.25, h * 0.15, 10, w * 0.25, h * 0.15, w * 0.65);
-  rad1.addColorStop(0, 'rgba(45, 55, 115, 0.35)');
+  rad1.addColorStop(0, 'rgba(30, 45, 95, 0.35)');
   rad1.addColorStop(1, 'transparent');
   ctx.fillStyle = rad1;
   ctx.fillRect(0, 0, w, h);
@@ -3671,46 +3671,41 @@ function drawCosmicNebulaBackground(w, h) {
   ctx.fillStyle = rad2;
   ctx.fillRect(0, 0, w, h);
 
-  const rad3 = ctx.createRadialGradient(w * 0.55, h * 0.45, 10, w * 0.55, h * 0.45, w * 0.50);
-  rad3.addColorStop(0, 'rgba(30, 45, 80, 0.22)');
-  rad3.addColorStop(1, 'transparent');
-  ctx.fillStyle = rad3;
-  ctx.fillRect(0, 0, w, h);
-
   // Upper light haze - Pink tint on the left
-  const upperPinkHaze = ctx.createRadialGradient(w * 0.18, h * 0.22, 5, w * 0.18, h * 0.22, w * 0.60);
-  upperPinkHaze.addColorStop(0, 'rgba(240, 95, 159, 0.28)');
-  upperPinkHaze.addColorStop(0.5, 'rgba(240, 95, 159, 0.12)');
+  const upperPinkHaze = ctx.createRadialGradient(w * 0.20, h * 0.20, 10, w * 0.20, h * 0.20, w * 0.55);
+  upperPinkHaze.addColorStop(0, 'rgba(240, 95, 159, 0.32)');
+  upperPinkHaze.addColorStop(0.6, 'rgba(240, 95, 159, 0.12)');
   upperPinkHaze.addColorStop(1, 'transparent');
   ctx.fillStyle = upperPinkHaze;
   ctx.fillRect(0, 0, w, h);
 
   // Upper light haze - Blue/Green (Cyan) tint on the right
-  const upperCyanHaze = ctx.createRadialGradient(w * 0.82, h * 0.22, 5, w * 0.82, h * 0.22, w * 0.60);
-  upperCyanHaze.addColorStop(0, 'rgba(0, 229, 255, 0.26)');
-  upperCyanHaze.addColorStop(0.5, 'rgba(0, 255, 204, 0.10)');
+  const upperCyanHaze = ctx.createRadialGradient(w * 0.80, h * 0.20, 10, w * 0.80, h * 0.20, w * 0.55);
+  upperCyanHaze.addColorStop(0, 'rgba(0, 229, 255, 0.30)');
+  upperCyanHaze.addColorStop(0.5, 'rgba(0, 255, 204, 0.14)');
   upperCyanHaze.addColorStop(1, 'transparent');
   ctx.fillStyle = upperCyanHaze;
   ctx.fillRect(0, 0, w, h);
 
-  // Rich glowing smoke / nebula cloud layers with vivid pink, purple, and cyan highlights
-  const smokePuffs = [
-    // Pink glowing smoke clouds on left
-    { cx: w * 0.15, cy: h * 0.35, rx: w * 0.32, ry: h * 0.20, color: 'rgba(240, 95, 159, 0.32)', innerColor: 'rgba(255, 120, 195, 0.45)' },
-    { cx: w * 0.28, cy: h * 0.26, rx: w * 0.24, ry: h * 0.16, color: 'rgba(220, 60, 160, 0.28)', innerColor: 'rgba(240, 130, 215, 0.40)' },
-    { cx: w * 0.38, cy: h * 0.36, rx: w * 0.26, ry: h * 0.15, color: 'rgba(162, 117, 223, 0.30)', innerColor: 'rgba(195, 140, 255, 0.42)' },
-    // Cyan/Blue glowing smoke clouds on right
-    { cx: w * 0.82, cy: h * 0.32, rx: w * 0.32, ry: h * 0.20, color: 'rgba(0, 229, 255, 0.30)', innerColor: 'rgba(120, 245, 255, 0.45)' },
-    { cx: w * 0.68, cy: h * 0.26, rx: w * 0.25, ry: h * 0.16, color: 'rgba(0, 255, 204, 0.26)', innerColor: 'rgba(140, 255, 225, 0.38)' },
-    { cx: w * 0.58, cy: h * 0.36, rx: w * 0.24, ry: h * 0.15, color: 'rgba(80, 140, 240, 0.25)', innerColor: 'rgba(150, 190, 255, 0.38)' },
-    // Center glowing smoke bank behind triangle base
-    { cx: w * 0.50, cy: h * 0.38, rx: w * 0.38, ry: h * 0.16, color: 'rgba(180, 100, 230, 0.24)', innerColor: 'rgba(230, 190, 255, 0.38)' }
+  // Organic cloud puffs (Pink on left, Cyan/Green on right - strictly NO purple in middle)
+  const cloudPuffs = [
+    // Left side - Pink glowing clouds
+    { cx: w * 0.12, cy: h * 0.32, rx: w * 0.28, ry: h * 0.18, color: 'rgba(240, 95, 159, 0.35)', innerColor: 'rgba(255, 170, 220, 0.55)' },
+    { cx: w * 0.22, cy: h * 0.24, rx: w * 0.22, ry: h * 0.15, color: 'rgba(230, 70, 145, 0.32)', innerColor: 'rgba(255, 150, 200, 0.50)' },
+    { cx: w * 0.32, cy: h * 0.35, rx: w * 0.24, ry: h * 0.16, color: 'rgba(240, 95, 159, 0.30)', innerColor: 'rgba(255, 180, 225, 0.48)' },
+    { cx: w * 0.40, cy: h * 0.28, rx: w * 0.18, ry: h * 0.12, color: 'rgba(240, 95, 159, 0.25)', innerColor: 'rgba(255, 190, 230, 0.42)' },
+
+    // Right side - Cyan/Green glowing clouds
+    { cx: w * 0.88, cy: h * 0.32, rx: w * 0.28, ry: h * 0.18, color: 'rgba(0, 229, 255, 0.35)', innerColor: 'rgba(160, 250, 255, 0.55)' },
+    { cx: w * 0.78, cy: h * 0.24, rx: w * 0.22, ry: h * 0.15, color: 'rgba(0, 255, 204, 0.32)', innerColor: 'rgba(180, 255, 230, 0.50)' },
+    { cx: w * 0.68, cy: h * 0.35, rx: w * 0.24, ry: h * 0.16, color: 'rgba(0, 229, 255, 0.30)', innerColor: 'rgba(170, 245, 255, 0.48)' },
+    { cx: w * 0.60, cy: h * 0.28, rx: w * 0.18, ry: h * 0.12, color: 'rgba(0, 255, 204, 0.25)', innerColor: 'rgba(190, 255, 235, 0.42)' }
   ];
 
-  smokePuffs.forEach(puff => {
+  cloudPuffs.forEach(puff => {
     const cloudRad = ctx.createRadialGradient(puff.cx, puff.cy, 5, puff.cx, puff.cy, puff.rx);
     cloudRad.addColorStop(0, puff.innerColor);
-    cloudRad.addColorStop(0.45, puff.color);
+    cloudRad.addColorStop(0.40, puff.color);
     cloudRad.addColorStop(1, 'transparent');
     ctx.fillStyle = cloudRad;
     ctx.beginPath();
@@ -3718,13 +3713,24 @@ function drawCosmicNebulaBackground(w, h) {
     ctx.fill();
   });
 
-  // Horizontal ambient atmospheric glow along top horizon zone
+  // Top ambient horizontal haze - Pink on left, Cyan on right (NO purple)
   const upperHorizHaze = ctx.createLinearGradient(0, 0, w, 0);
-  upperHorizHaze.addColorStop(0, 'rgba(240, 95, 159, 0.18)');
-  upperHorizHaze.addColorStop(0.5, 'rgba(162, 117, 223, 0.14)');
-  upperHorizHaze.addColorStop(1, 'rgba(0, 229, 255, 0.18)');
+  upperHorizHaze.addColorStop(0, 'rgba(240, 95, 159, 0.22)');
+  upperHorizHaze.addColorStop(0.45, 'rgba(240, 95, 159, 0.08)');
+  upperHorizHaze.addColorStop(0.55, 'rgba(0, 229, 255, 0.08)');
+  upperHorizHaze.addColorStop(1, 'rgba(0, 229, 255, 0.22)');
   ctx.fillStyle = upperHorizHaze;
   ctx.fillRect(0, 0, w, h * 0.48);
+
+  // Bottom of upper haze cloud bank glowing with WHITE near the white neon horizontal line
+  const horizonY = h * 0.44 + 25;
+  const bottomWhiteCloudGlow = ctx.createLinearGradient(0, horizonY - 120, 0, horizonY + 5);
+  bottomWhiteCloudGlow.addColorStop(0, 'transparent');
+  bottomWhiteCloudGlow.addColorStop(0.65, 'rgba(255, 255, 255, 0.22)');
+  bottomWhiteCloudGlow.addColorStop(0.90, 'rgba(255, 255, 255, 0.50)');
+  bottomWhiteCloudGlow.addColorStop(1, 'rgba(255, 255, 255, 0.05)');
+  ctx.fillStyle = bottomWhiteCloudGlow;
+  ctx.fillRect(0, horizonY - 120, w, 125);
 
   const vignette = ctx.createRadialGradient(w * 0.5, h * 0.45, w * 0.15, w * 0.5, h * 0.45, w * 0.85);
   vignette.addColorStop(0.4, 'transparent');
