@@ -3744,12 +3744,10 @@ function drawSynthWaveTriangleLogo5C(w, horizonY, time) {
   const height = tipY - topY;
   const centroidY = (2 * topY + tipY) / 3;
 
-  // Concentric nested triangles inside each other (matching icon_final.jpg)
+  // Concentric nested triangles inside each other (outer triangle + 1 inner nested line matching icon_final.jpg)
   const nestedLayers = [
-    { scale: 1.00, lineWidth: 4.2, glowSize: 22, leftColor: '#ff2a8d', midColor: '#e080ff', rightColor: '#00e5ff' },
-    { scale: 0.83, lineWidth: 3.2, glowSize: 16, leftColor: '#f05f9f', midColor: '#ffffff', rightColor: '#00ffcc' },
-    { scale: 0.66, lineWidth: 2.2, glowSize: 12, leftColor: '#e050c0', midColor: '#a0ffff', rightColor: '#00bfff' },
-    { scale: 0.49, lineWidth: 1.6, glowSize: 8,  leftColor: '#c040a0', midColor: '#80e0ff', rightColor: '#0099ff' }
+    { scale: 1.00, lineWidth: 4.5, glowSize: 22, leftColor: '#ff2a8d', midColor: '#e080ff', rightColor: '#00e5ff' },
+    { scale: 0.78, lineWidth: 3.2, glowSize: 16, leftColor: '#f05f9f', midColor: '#ffffff', rightColor: '#00ffcc' }
   ];
 
   ctx.save();
