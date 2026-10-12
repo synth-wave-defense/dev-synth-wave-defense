@@ -66,5 +66,17 @@ When tasked with a production release or build sync, you MUST execute the build 
      "identifierNamesGenerator": "hexadecimal"
    }
 
-5. **Environment Isolation:**
-Do NOT transfer, modify, or overwrite capacitor.config.json, package.json, or the android/ directory during deployment. You must ONLY transfer game assets and scripts (HTML, JS, CSS, media) intended for the www folder.
+## 5. Environment Isolation & File Transfer Protocol
+When transferring updates from the `dev` repository to the `prod` repository, you must ONLY transfer the core game assets. Do NOT overwrite the production environment's native container or system configurations.
+
+**INCLUDED (Files you MUST transfer):**
+- All contents of the `www/` directory (including `index.html`, `engine.js`, `ui.js`, `data.js`, `.css` files, and media assets like audio/images).
+- `AGENTS.md` (if updated).
+
+**EXCLUDED (Strictly DO NOT transfer, modify, or overwrite in the prod repo):**
+- `capacitor.config.json` (Contains environment-specific server hostnames and Package IDs).
+- `android/` directory (Contains environment-specific native Android builds and Gradle files).
+- `package.json` and `package-lock.json` (Node.js dependencies).
+- `node_modules/`
+- `.github/workflows/` (Unless explicitly asked to update the CI/CD pipeline).
+- `.git/` hidden folders.
