@@ -3679,25 +3679,50 @@ function drawCosmicNebulaBackground(w, h) {
 
   // Upper light haze - Pink tint on the left
   const upperPinkHaze = ctx.createRadialGradient(w * 0.18, h * 0.22, 5, w * 0.18, h * 0.22, w * 0.60);
-  upperPinkHaze.addColorStop(0, 'rgba(240, 95, 159, 0.24)');
-  upperPinkHaze.addColorStop(0.5, 'rgba(240, 95, 159, 0.08)');
+  upperPinkHaze.addColorStop(0, 'rgba(240, 95, 159, 0.28)');
+  upperPinkHaze.addColorStop(0.5, 'rgba(240, 95, 159, 0.12)');
   upperPinkHaze.addColorStop(1, 'transparent');
   ctx.fillStyle = upperPinkHaze;
   ctx.fillRect(0, 0, w, h);
 
   // Upper light haze - Blue/Green (Cyan) tint on the right
   const upperCyanHaze = ctx.createRadialGradient(w * 0.82, h * 0.22, 5, w * 0.82, h * 0.22, w * 0.60);
-  upperCyanHaze.addColorStop(0, 'rgba(0, 229, 255, 0.22)');
-  upperCyanHaze.addColorStop(0.5, 'rgba(0, 255, 204, 0.07)');
+  upperCyanHaze.addColorStop(0, 'rgba(0, 229, 255, 0.26)');
+  upperCyanHaze.addColorStop(0.5, 'rgba(0, 255, 204, 0.10)');
   upperCyanHaze.addColorStop(1, 'transparent');
   ctx.fillStyle = upperCyanHaze;
   ctx.fillRect(0, 0, w, h);
 
+  // Rich glowing smoke / nebula cloud layers with vivid pink, purple, and cyan highlights
+  const smokePuffs = [
+    // Pink glowing smoke clouds on left
+    { cx: w * 0.15, cy: h * 0.35, rx: w * 0.32, ry: h * 0.20, color: 'rgba(240, 95, 159, 0.32)', innerColor: 'rgba(255, 120, 195, 0.45)' },
+    { cx: w * 0.28, cy: h * 0.26, rx: w * 0.24, ry: h * 0.16, color: 'rgba(220, 60, 160, 0.28)', innerColor: 'rgba(240, 130, 215, 0.40)' },
+    { cx: w * 0.38, cy: h * 0.36, rx: w * 0.26, ry: h * 0.15, color: 'rgba(162, 117, 223, 0.30)', innerColor: 'rgba(195, 140, 255, 0.42)' },
+    // Cyan/Blue glowing smoke clouds on right
+    { cx: w * 0.82, cy: h * 0.32, rx: w * 0.32, ry: h * 0.20, color: 'rgba(0, 229, 255, 0.30)', innerColor: 'rgba(120, 245, 255, 0.45)' },
+    { cx: w * 0.68, cy: h * 0.26, rx: w * 0.25, ry: h * 0.16, color: 'rgba(0, 255, 204, 0.26)', innerColor: 'rgba(140, 255, 225, 0.38)' },
+    { cx: w * 0.58, cy: h * 0.36, rx: w * 0.24, ry: h * 0.15, color: 'rgba(80, 140, 240, 0.25)', innerColor: 'rgba(150, 190, 255, 0.38)' },
+    // Center glowing smoke bank behind triangle base
+    { cx: w * 0.50, cy: h * 0.38, rx: w * 0.38, ry: h * 0.16, color: 'rgba(180, 100, 230, 0.24)', innerColor: 'rgba(230, 190, 255, 0.38)' }
+  ];
+
+  smokePuffs.forEach(puff => {
+    const cloudRad = ctx.createRadialGradient(puff.cx, puff.cy, 5, puff.cx, puff.cy, puff.rx);
+    cloudRad.addColorStop(0, puff.innerColor);
+    cloudRad.addColorStop(0.45, puff.color);
+    cloudRad.addColorStop(1, 'transparent');
+    ctx.fillStyle = cloudRad;
+    ctx.beginPath();
+    ctx.ellipse(puff.cx, puff.cy, puff.rx, puff.ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
   // Horizontal ambient atmospheric glow along top horizon zone
   const upperHorizHaze = ctx.createLinearGradient(0, 0, w, 0);
-  upperHorizHaze.addColorStop(0, 'rgba(240, 95, 159, 0.15)');
-  upperHorizHaze.addColorStop(0.5, 'rgba(162, 117, 223, 0.10)');
-  upperHorizHaze.addColorStop(1, 'rgba(0, 229, 255, 0.15)');
+  upperHorizHaze.addColorStop(0, 'rgba(240, 95, 159, 0.18)');
+  upperHorizHaze.addColorStop(0.5, 'rgba(162, 117, 223, 0.14)');
+  upperHorizHaze.addColorStop(1, 'rgba(0, 229, 255, 0.18)');
   ctx.fillStyle = upperHorizHaze;
   ctx.fillRect(0, 0, w, h * 0.48);
 
@@ -3756,33 +3781,44 @@ function drawSynthWaveTriangleLogo5C(w, horizonY, time) {
     ctx.restore();
   });
 
-  // Main white big triangle with enhanced glow and dual pink/cyan outer edge aura
+  // Big Inverted Triangle with 3 distinct nested border lines and multi-colored glows
+  // Matching icon_final.jpg (Outer, Middle, and Inner glowing border lines)
   ctx.save();
   ctx.globalAlpha = 1.0;
 
-  // Dual outer glow aura for main triangle
-  setGlow('#00e5ff', 24);
-  const mainGrad = ctx.createLinearGradient(cx - halfW, 0, cx + halfW, 0);
-  mainGrad.addColorStop(0, '#f05f9f');  // Pink tint left
-  mainGrad.addColorStop(0.18, '#ffffff');
-  mainGrad.addColorStop(0.82, '#ffffff');
-  mainGrad.addColorStop(1, '#00e5ff');  // Cyan tint right
+  const borderLayers = [
+    { scale: 1.0,   lineWidth: 4.0, glowSize: 22, glowColor: '#f05f9f', leftColor: '#ff2a8d', midColor: '#e080ff', rightColor: '#00e5ff' },
+    { scale: 0.88,  lineWidth: 3.2, glowSize: 16, glowColor: '#a275df', leftColor: '#f05f9f', midColor: '#ffffff', rightColor: '#00ffcc' },
+    { scale: 0.76,  lineWidth: 2.5, glowSize: 12, glowColor: '#00e5ff', leftColor: '#e050c0', midColor: '#a0ffff', rightColor: '#00bfff' }
+  ];
 
-  ctx.strokeStyle = mainGrad;
-  ctx.lineWidth = 3.8;
+  borderLayers.forEach(layer => {
+    const layerHalfW = halfW * layer.scale;
+    const height = tipY - topY;
+    const layerTipY = tipY - height * (1 - layer.scale) * 0.15;
+    const layerTopY = topY + height * (1 - layer.scale) * 0.85;
 
-  ctx.beginPath();
-  ctx.moveTo(cx, tipY);
-  ctx.lineTo(cx - halfW, topY);
-  ctx.lineTo(cx + halfW, topY);
-  ctx.closePath();
-  ctx.stroke();
+    // First pass: colored glow pass
+    setGlow(layer.glowColor, layer.glowSize);
+    const grad = ctx.createLinearGradient(cx - layerHalfW, 0, cx + layerHalfW, 0);
+    grad.addColorStop(0, layer.leftColor);
+    grad.addColorStop(0.5, layer.midColor);
+    grad.addColorStop(1, layer.rightColor);
 
-  // Core white line pass for maximum brightness
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 2.2;
-  setGlow('#ffffff', 12);
-  ctx.stroke();
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = layer.lineWidth;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, layerTipY);
+    ctx.lineTo(cx - layerHalfW, layerTopY);
+    ctx.lineTo(cx + layerHalfW, layerTopY);
+    ctx.closePath();
+    ctx.stroke();
+
+    // Second pass: cyan secondary glow for right side balance
+    setGlow('#00e5ff', layer.glowSize * 0.75);
+    ctx.stroke();
+  });
 
   ctx.restore();
 }
