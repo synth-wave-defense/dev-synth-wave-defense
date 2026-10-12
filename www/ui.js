@@ -3741,66 +3741,29 @@ function drawSynthWaveTriangleLogo5C(w, horizonY, time) {
   const topY = Math.max(82, horizonY * 0.22) + floatOffset;
   const halfW = Math.min(w * 0.35, (tipY - topY) * 0.65);
 
-  // Expanded duplicating concentric triangle outline tiers (12 tiers)
-  const numTiers = 12;
-  const backTiers = [];
-  for (let i = numTiers; i >= 1; i--) {
-    const scale = 1.0 + i * 0.038;
-    const alpha = Math.max(0.12, 0.42 - i * 0.026);
-    backTiers.push({
-      width: 1.5,
-      alpha: alpha,
-      scaleSpread: scale,
-      isOuter: true
-    });
-  }
+  const height = tipY - topY;
+  const centroidY = (2 * topY + tipY) / 3;
 
-  // Draw duplicating concentric triangle outlines with dual-coloring (Pink on left, Cyan on right)
-  backTiers.forEach(tier => {
-    ctx.save();
-    ctx.globalAlpha = tier.alpha;
-    ctx.lineWidth = tier.width;
+  // Concentric nested triangles inside each other (matching icon_final.jpg)
+  const nestedLayers = [
+    { scale: 1.00, lineWidth: 4.2, glowSize: 22, leftColor: '#ff2a8d', midColor: '#e080ff', rightColor: '#00e5ff' },
+    { scale: 0.83, lineWidth: 3.2, glowSize: 16, leftColor: '#f05f9f', midColor: '#ffffff', rightColor: '#00ffcc' },
+    { scale: 0.66, lineWidth: 2.2, glowSize: 12, leftColor: '#e050c0', midColor: '#a0ffff', rightColor: '#00bfff' },
+    { scale: 0.49, lineWidth: 1.6, glowSize: 8,  leftColor: '#c040a0', midColor: '#80e0ff', rightColor: '#0099ff' }
+  ];
 
-    const curHalfW = halfW * tier.scaleSpread;
-    const curTopY = topY - (tier.scaleSpread - 1) * 14;
-
-    const triGrad = ctx.createLinearGradient(cx - curHalfW, 0, cx + curHalfW, 0);
-    triGrad.addColorStop(0, '#f05f9f');  // Pink on left
-    triGrad.addColorStop(0.5, '#eafcff'); // White/cyan center
-    triGrad.addColorStop(1, '#00e5ff');  // Blue/green (cyan) on right
-
-    ctx.strokeStyle = triGrad;
-    setGlow('#00e5ff', 6);
-
-    ctx.beginPath();
-    ctx.moveTo(cx, tipY);
-    ctx.lineTo(cx - curHalfW, curTopY);
-    ctx.lineTo(cx + curHalfW, curTopY);
-    ctx.closePath();
-    ctx.stroke();
-    ctx.restore();
-  });
-
-  // Big Inverted Triangle with 3 distinct nested border lines and multi-colored glows
-  // Matching icon_final.jpg (Outer, Middle, and Inner glowing border lines)
   ctx.save();
   ctx.globalAlpha = 1.0;
 
-  const borderLayers = [
-    { scale: 1.0,   lineWidth: 4.0, glowSize: 22, glowColor: '#f05f9f', leftColor: '#ff2a8d', midColor: '#e080ff', rightColor: '#00e5ff' },
-    { scale: 0.88,  lineWidth: 3.2, glowSize: 16, glowColor: '#a275df', leftColor: '#f05f9f', midColor: '#ffffff', rightColor: '#00ffcc' },
-    { scale: 0.76,  lineWidth: 2.5, glowSize: 12, glowColor: '#00e5ff', leftColor: '#e050c0', midColor: '#a0ffff', rightColor: '#00bfff' }
-  ];
+  nestedLayers.forEach(layer => {
+    const s = layer.scale;
+    const curHalfW = halfW * s;
+    const curTopY = centroidY - s * (height / 3);
+    const curTipY = centroidY + s * (2 * height / 3);
 
-  borderLayers.forEach(layer => {
-    const layerHalfW = halfW * layer.scale;
-    const height = tipY - topY;
-    const layerTipY = tipY - height * (1 - layer.scale) * 0.15;
-    const layerTopY = topY + height * (1 - layer.scale) * 0.85;
-
-    // First pass: colored glow pass
-    setGlow(layer.glowColor, layer.glowSize);
-    const grad = ctx.createLinearGradient(cx - layerHalfW, 0, cx + layerHalfW, 0);
+    // Glowing stroke pass
+    setGlow(layer.rightColor, layer.glowSize);
+    const grad = ctx.createLinearGradient(cx - curHalfW, 0, cx + curHalfW, 0);
     grad.addColorStop(0, layer.leftColor);
     grad.addColorStop(0.5, layer.midColor);
     grad.addColorStop(1, layer.rightColor);
@@ -3809,14 +3772,14 @@ function drawSynthWaveTriangleLogo5C(w, horizonY, time) {
     ctx.lineWidth = layer.lineWidth;
 
     ctx.beginPath();
-    ctx.moveTo(cx, layerTipY);
-    ctx.lineTo(cx - layerHalfW, layerTopY);
-    ctx.lineTo(cx + layerHalfW, layerTopY);
+    ctx.moveTo(cx, curTipY);
+    ctx.lineTo(cx - curHalfW, curTopY);
+    ctx.lineTo(cx + curHalfW, curTopY);
     ctx.closePath();
     ctx.stroke();
 
-    // Second pass: cyan secondary glow for right side balance
-    setGlow('#00e5ff', layer.glowSize * 0.75);
+    // Secondary pink glow pass for extra intensity
+    setGlow('#f05f9f', layer.glowSize * 0.75);
     ctx.stroke();
   });
 
