@@ -1751,10 +1751,17 @@ function initDevSpawnerSync() {
   syncFromMult();
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initDevSpawnerSync);
-} else {
+function onDomReady() {
   initDevSpawnerSync();
+  if (window.AppUpdater && typeof window.AppUpdater.init === 'function') {
+    window.AppUpdater.init();
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', onDomReady);
+} else {
+  onDomReady();
 }
 
 function injectCustomSpawn(type, count, interval, hpMult, speedMult) {

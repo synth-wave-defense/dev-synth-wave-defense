@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build:
@@ -17,13 +18,13 @@ jobs:
       - name: 🟢 Настройка Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '20'
 
-      - name: ☕ Настройка Java (JDK 21)
+      - name: ☕ Настройка Java (JDK 17)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '17'
 
       - name: 📦 Установка зависимостей
         run: npm install
@@ -35,7 +36,7 @@ jobs:
         working-directory: ./android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
 
       - name: 📤 Загрузка готового APK
         uses: actions/upload-artifact@v4

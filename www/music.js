@@ -1,5 +1,5 @@
-// Synth Wave Defense -- music.js  v2.5 (1.36.19)
-// [MUS100] Background Music Engine Module: Manages buffer-based music tracks, category transitions, Web Audio graph routing, and ducking/filtering.
+// Synth Wave Defense -- music.js  v2.6 (1.36.20)
+// [MUS100] Background Music Engine Module: Manages buffer-based music tracks, category transitions, Web Audio graph routing, and dynamic OTA asset resolution.
 
 window._activeMusicNode = null;
 window._activeMusicNodeCount = 0;
@@ -7,7 +7,7 @@ window._activeMusicNodeCount = 0;
 const MusicManager = (function () {
   'use strict';
 
-  // [MUS101] Track Playlist Registry (mapped by game screen state)
+// [MUS101] Track Playlist Registry (mapped by game screen state)
   const TRACKS = {
     menu: [
       'music/menu_01.ogg',
@@ -23,6 +23,7 @@ const MusicManager = (function () {
       'music/battle_07.ogg',
       'music/battle_08.ogg',
       'music/battle_09.ogg',
+      'music/battle_10.ogg'
     ],
     win: [
       'music/win.ogg'
@@ -58,16 +59,24 @@ const MusicManager = (function () {
   const bufferCache = Object.create(null);
   const loadingPromises = Object.create(null);
 
-  function loadTrackBuffer(url) {
-    if (bufferCache[url]) return Promise.resolve(bufferCache[url]);
-    if (loadingPromises[url]) return loadingPromises[url];
+  async function resolveUrl(path) {
+    if (window.MusicDownloader && typeof window.MusicDownloader.resolveTrackUrl === 'function') {
+      return await window.MusicDownloader.resolveTrackUrl(path);
+    }
+    return path;
+  }
+
+  function loadTrackBuffer(path) {
+    if (bufferCache[path]) return Promise.resolve(bufferCache[path]);
+    if (loadingPromises[path]) return loadingPromises[path];
 
     const ctx = ensureAudioCtx();
     if (!ctx) return Promise.reject(new Error('No AudioContext available'));
 
-    loadingPromises[url] = fetch(url)
+    loadingPromises[path] = resolveUrl(path)
+      .then(actualUrl => fetch(actualUrl))
       .then(res => {
-        if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + url);
+        if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + path);
         return res.arrayBuffer();
       })
       .then(arrayBuffer => {
@@ -76,16 +85,16 @@ const MusicManager = (function () {
         });
       })
       .then(audioBuffer => {
-        bufferCache[url] = audioBuffer;
-        delete loadingPromises[url];
+        bufferCache[path] = audioBuffer;
+        delete loadingPromises[path];
         return audioBuffer;
       })
       .catch(err => {
-        delete loadingPromises[url];
+        delete loadingPromises[path];
         throw err;
       });
 
-    return loadingPromises[url];
+    return loadingPromises[path];
   }
 
   function preloadTracks() {
@@ -217,7 +226,7 @@ const MusicManager = (function () {
       const currentVal = activeTrack.gainNode.gain.value;
       activeTrack.gainNode.gain.cancelScheduledValues(now);
       activeTrack.gainNode.gain.setValueAtTime(currentVal, now);
-      activeTrack.gainNode.gain.linearRampToValueAtTime(val, now + dur);
+      activeTrack.gainNode.linearRampToValueAtTime(val, now + dur);
     } catch (e) {
       try { activeTrack.gainNode.gain.value = val; } catch (err) {}
     }
