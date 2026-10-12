@@ -3560,18 +3560,31 @@ function createTeleportGhostFx(startX, startY, endX, endY, enemy) {
   }
 }
 
-const STAR_TINTS = ['#ffffff', '#cfe6ff', '#ffe2f5', '#d9fbff'];
+const STAR_TINTS = ['#ffffff', '#cfe6ff', '#ffe2f5', '#d9fbff', '#00e5ff', '#f05f9f'];
 let synthStars = [];
 let lastStarUpdateTime = performance.now();
 
 function createStar(randomizeLife = false) {
-  const maxLife = Math.random() * 13.0 + 9.0;
+  const maxLife = Math.random() * 14.0 + 8.0;
+  // Realistic distribution: mostly small/distant stars, some medium, few bright key stars with cross glints
+  const roll = Math.random();
+  let r, isBright = false;
+  if (roll < 0.60) {
+    r = Math.random() * 0.4 + 0.3; // Tiny distant point star
+  } else if (roll < 0.88) {
+    r = Math.random() * 0.6 + 0.7; // Medium star
+  } else {
+    r = Math.random() * 0.7 + 1.3; // Large prominent star
+    isBright = true;
+  }
+
   return {
     x: Math.random(),
-    y: Math.random(),
-    r: Math.random() * 1.5 + 0.6,
-    baseAlpha: Math.random() * 0.55 + 0.4,
-    twinkleSpeed: Math.random() * 0.9 + 0.4,
+    y: Math.random() * 0.85, // Keep stars in upper and middle sky
+    r: r,
+    isBright: isBright,
+    baseAlpha: isBright ? (Math.random() * 0.35 + 0.65) : (Math.random() * 0.5 + 0.35),
+    twinkleSpeed: Math.random() * 1.2 + 0.4,
     twinklePhase: Math.random() * Math.PI * 2,
     color: STAR_TINTS[Math.floor(Math.random() * STAR_TINTS.length)],
     life: randomizeLife ? Math.random() * maxLife : 0,
@@ -3581,7 +3594,7 @@ function createStar(randomizeLife = false) {
 
 function initSynthStars() {
   synthStars = [];
-  const starCount = 85;
+  const starCount = 240;
   for (let i = 0; i < starCount; i++) {
     synthStars.push(createStar(true));
   }
@@ -3608,11 +3621,29 @@ function updateAndDrawStars(w, h, now) {
     const alpha = star.baseAlpha * Math.max(0, twinkle) * fade;
 
     if (alpha > 0.01) {
+      const sx = star.x * w;
+      const sy = star.y * h;
+
       ctx.fillStyle = star.color;
       ctx.globalAlpha = alpha;
       ctx.beginPath();
-      ctx.arc(star.x * w, star.y * h, star.r, 0, Math.PI * 2);
+      ctx.arc(sx, sy, star.r, 0, Math.PI * 2);
       ctx.fill();
+
+      // Subtle cross glint flare for bright realistic stars
+      if (star.isBright && alpha > 0.35) {
+        ctx.strokeStyle = star.color;
+        ctx.lineWidth = 0.7;
+        ctx.globalAlpha = alpha * 0.55;
+        const glintLen = star.r * 2.8;
+
+        ctx.beginPath();
+        ctx.moveTo(sx - glintLen, sy);
+        ctx.lineTo(sx + glintLen, sy);
+        ctx.moveTo(sx, sy - glintLen);
+        ctx.lineTo(sx, sy + glintLen);
+        ctx.stroke();
+      }
     }
   }
   ctx.restore();
@@ -3627,6 +3658,7 @@ function drawCosmicNebulaBackground(w, h) {
   ctx.fillRect(0, 0, w, h);
 
   ctx.save();
+  // Deep background nebulae
   const rad1 = ctx.createRadialGradient(w * 0.25, h * 0.15, 10, w * 0.25, h * 0.15, w * 0.65);
   rad1.addColorStop(0, 'rgba(45, 55, 115, 0.35)');
   rad1.addColorStop(1, 'transparent');
@@ -3645,9 +3677,33 @@ function drawCosmicNebulaBackground(w, h) {
   ctx.fillStyle = rad3;
   ctx.fillRect(0, 0, w, h);
 
+  // Upper light haze - Pink tint on the left
+  const upperPinkHaze = ctx.createRadialGradient(w * 0.18, h * 0.22, 5, w * 0.18, h * 0.22, w * 0.60);
+  upperPinkHaze.addColorStop(0, 'rgba(240, 95, 159, 0.24)');
+  upperPinkHaze.addColorStop(0.5, 'rgba(240, 95, 159, 0.08)');
+  upperPinkHaze.addColorStop(1, 'transparent');
+  ctx.fillStyle = upperPinkHaze;
+  ctx.fillRect(0, 0, w, h);
+
+  // Upper light haze - Blue/Green (Cyan) tint on the right
+  const upperCyanHaze = ctx.createRadialGradient(w * 0.82, h * 0.22, 5, w * 0.82, h * 0.22, w * 0.60);
+  upperCyanHaze.addColorStop(0, 'rgba(0, 229, 255, 0.22)');
+  upperCyanHaze.addColorStop(0.5, 'rgba(0, 255, 204, 0.07)');
+  upperCyanHaze.addColorStop(1, 'transparent');
+  ctx.fillStyle = upperCyanHaze;
+  ctx.fillRect(0, 0, w, h);
+
+  // Horizontal ambient atmospheric glow along top horizon zone
+  const upperHorizHaze = ctx.createLinearGradient(0, 0, w, 0);
+  upperHorizHaze.addColorStop(0, 'rgba(240, 95, 159, 0.15)');
+  upperHorizHaze.addColorStop(0.5, 'rgba(162, 117, 223, 0.10)');
+  upperHorizHaze.addColorStop(1, 'rgba(0, 229, 255, 0.15)');
+  ctx.fillStyle = upperHorizHaze;
+  ctx.fillRect(0, 0, w, h * 0.48);
+
   const vignette = ctx.createRadialGradient(w * 0.5, h * 0.45, w * 0.15, w * 0.5, h * 0.45, w * 0.85);
   vignette.addColorStop(0.4, 'transparent');
-  vignette.addColorStop(1, 'rgba(2, 3, 8, 0.90)');
+  vignette.addColorStop(1, 'rgba(2, 3, 8, 0.85)');
   ctx.fillStyle = vignette;
   ctx.fillRect(0, 0, w, h);
   ctx.restore();
@@ -3660,24 +3716,36 @@ function drawSynthWaveTriangleLogo5C(w, horizonY, time) {
   const topY = Math.max(82, horizonY * 0.22) + floatOffset;
   const halfW = Math.min(w * 0.35, (tipY - topY) * 0.65);
 
-  const backTiers = [
-    { color: '#5b6bff', width: 1.4, alpha: 0.18, scaleSpread: 1.24 },
-    { color: '#8a3cff', width: 1.4, alpha: 0.22, scaleSpread: 1.18 },
-    { color: '#c026a0', width: 1.4, alpha: 0.26, scaleSpread: 1.12 },
-    { color: '#ff2fb0', width: 1.4, alpha: 0.30, scaleSpread: 1.06 },
-    { color: '#eafcff', width: 2.8, alpha: 1.00, scaleSpread: 1.00, glow: true }
-  ];
+  // Expanded duplicating concentric triangle outline tiers (12 tiers)
+  const numTiers = 12;
+  const backTiers = [];
+  for (let i = numTiers; i >= 1; i--) {
+    const scale = 1.0 + i * 0.038;
+    const alpha = Math.max(0.12, 0.42 - i * 0.026);
+    backTiers.push({
+      width: 1.5,
+      alpha: alpha,
+      scaleSpread: scale,
+      isOuter: true
+    });
+  }
 
+  // Draw duplicating concentric triangle outlines with dual-coloring (Pink on left, Cyan on right)
   backTiers.forEach(tier => {
     ctx.save();
     ctx.globalAlpha = tier.alpha;
-    ctx.strokeStyle = tier.color;
     ctx.lineWidth = tier.width;
-    if (tier.glow) {
-      setGlow('#00e5ff', 8);
-    }
+
     const curHalfW = halfW * tier.scaleSpread;
-    const curTopY = topY - (tier.scaleSpread - 1) * 12;
+    const curTopY = topY - (tier.scaleSpread - 1) * 14;
+
+    const triGrad = ctx.createLinearGradient(cx - curHalfW, 0, cx + curHalfW, 0);
+    triGrad.addColorStop(0, '#f05f9f');  // Pink on left
+    triGrad.addColorStop(0.5, '#eafcff'); // White/cyan center
+    triGrad.addColorStop(1, '#00e5ff');  // Blue/green (cyan) on right
+
+    ctx.strokeStyle = triGrad;
+    setGlow('#00e5ff', 6);
 
     ctx.beginPath();
     ctx.moveTo(cx, tipY);
@@ -3687,6 +3755,36 @@ function drawSynthWaveTriangleLogo5C(w, horizonY, time) {
     ctx.stroke();
     ctx.restore();
   });
+
+  // Main white big triangle with enhanced glow and dual pink/cyan outer edge aura
+  ctx.save();
+  ctx.globalAlpha = 1.0;
+
+  // Dual outer glow aura for main triangle
+  setGlow('#00e5ff', 24);
+  const mainGrad = ctx.createLinearGradient(cx - halfW, 0, cx + halfW, 0);
+  mainGrad.addColorStop(0, '#f05f9f');  // Pink tint left
+  mainGrad.addColorStop(0.18, '#ffffff');
+  mainGrad.addColorStop(0.82, '#ffffff');
+  mainGrad.addColorStop(1, '#00e5ff');  // Cyan tint right
+
+  ctx.strokeStyle = mainGrad;
+  ctx.lineWidth = 3.8;
+
+  ctx.beginPath();
+  ctx.moveTo(cx, tipY);
+  ctx.lineTo(cx - halfW, topY);
+  ctx.lineTo(cx + halfW, topY);
+  ctx.closePath();
+  ctx.stroke();
+
+  // Core white line pass for maximum brightness
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2.2;
+  setGlow('#ffffff', 12);
+  ctx.stroke();
+
+  ctx.restore();
 }
 
 // [UI200] Synthwave background perspective grid scene renderer.
@@ -3694,7 +3792,7 @@ function drawSynthWavePerspectiveScene(now) {
   const w = window.innerWidth;
   const h = window.innerHeight;
   const time = now / 1000;
-  const horizonY = h * 0.44;
+  const horizonY = h * 0.44 + 25;
   const floorH = h - horizonY;
   const vpX = w * 0.5;
 
@@ -3819,19 +3917,37 @@ function drawSynthWavePerspectiveScene(now) {
   ctx.restore();
 
   ctx.save();
-  const fogGrad = ctx.createLinearGradient(0, horizonY, 0, horizonY + 80);
-  fogGrad.addColorStop(0, 'rgba(0, 229, 255, 0.20)');
+  // Enhanced dual-colored horizon line fog (Pink on left, Cyan on right)
+  const fogGrad = ctx.createLinearGradient(0, horizonY, 0, horizonY + 90);
+  fogGrad.addColorStop(0, 'rgba(0, 229, 255, 0.25)');
   fogGrad.addColorStop(1, 'transparent');
   ctx.fillStyle = fogGrad;
-  ctx.fillRect(0, horizonY, w, 80);
+  ctx.fillRect(0, horizonY, w, 90);
 
-  ctx.strokeStyle = '#eafcff';
-  setGlow('#00e5ff', 8);
-  ctx.lineWidth = 3.5;
+  // Main white horizontal horizon line with boosted glow and dual pink/cyan coloring
+  const horizLineGrad = ctx.createLinearGradient(0, 0, w, 0);
+  horizLineGrad.addColorStop(0, '#f05f9f');   // Pink left
+  horizLineGrad.addColorStop(0.15, '#eafcff'); // White transition
+  horizLineGrad.addColorStop(0.85, '#eafcff');
+  horizLineGrad.addColorStop(1, '#00e5ff');   // Blue/green right
+
+  ctx.strokeStyle = horizLineGrad;
+  setGlow('#00e5ff', 18);
+  ctx.lineWidth = 4.2;
   ctx.beginPath();
   ctx.moveTo(0, horizonY);
   ctx.lineTo(w, horizonY);
   ctx.stroke();
+
+  // Core crisp bright white line pass
+  ctx.strokeStyle = '#ffffff';
+  setGlow('#ffffff', 10);
+  ctx.lineWidth = 2.0;
+  ctx.beginPath();
+  ctx.moveTo(0, horizonY);
+  ctx.lineTo(w, horizonY);
+  ctx.stroke();
+
   ctx.restore();
 
   drawSynthWaveTriangleLogo5C(w, horizonY, time);

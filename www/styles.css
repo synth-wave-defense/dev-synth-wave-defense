@@ -1493,7 +1493,7 @@ body {
 
 .start-screen-buttons-zone {
   position: absolute;
-  top: 47vh;
+  top: calc(47vh + 25px);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
