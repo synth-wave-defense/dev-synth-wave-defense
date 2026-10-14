@@ -3559,21 +3559,461 @@ function createTeleportGhostFx(startX, startY, endX, endY, enemy) {
     });
   }
 }
+// [UI207] Math and random generator utilities for procedural background generation.
 
-const STAR_TINTS = ['#ffffff', '#cfe6ff', '#ffe2f5', '#d9fbff'];
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function randn() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+}
+
+function clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
+
+function smoothstep(a, b, x) {
+  const t = clamp01((x - a) / (b - a));
+  return t * t * (3 - 2 * t);
+}
+
+// [UI207.01] 2D Perlin Noise permutation table and gradient sampler.
+const perlin = (function () {
+  const rnd = mulberry32(1337);
+  const perm = [];
+  for (let i = 0; i < 256; i++) perm.push(i);
+  for (let i = 255; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    const t = perm[i]; perm[i] = perm[j]; perm[j] = t;
+  }
+  const p = new Uint8Array(512);
+  for (let i = 0; i < 512; i++) p[i] = perm[i & 255];
+
+  const GX = [1, -1, 1, -1, 1, -1, 0, 0];
+  const GY = [1, 1, -1, -1, 0, 0, 1, -1];
+  const fade = t => t * t * t * (t * (t * 6 - 15) + 10);
+
+  return function (x, y) {
+    const xi = Math.floor(x), yi = Math.floor(y);
+    const xf = x - xi, yf = y - yi;
+    const X = xi & 255, Y = yi & 255;
+    const aa = p[p[X] + Y] & 7;
+    const ab = p[p[X] + Y + 1] & 7;
+    const ba = p[p[X + 1] + Y] & 7;
+    const bb = p[p[X + 1] + Y + 1] & 7;
+    const u = fade(xf), v = fade(yf);
+    const g00 = GX[aa] * xf + GY[aa] * yf;
+    const g10 = GX[ba] * (xf - 1) + GY[ba] * yf;
+    const g01 = GX[ab] * xf + GY[ab] * (yf - 1);
+    const g11 = GX[bb] * (xf - 1) + GY[bb] * (yf - 1);
+    const x1 = g00 + u * (g10 - g00);
+    const x2 = g01 + u * (g11 - g01);
+    return x1 + v * (x2 - x1);
+  };
+})();
+
+function fbm(x, y, oct) {
+  let s = 0, a = 0.5, f = 1;
+  for (let i = 0; i < oct; i++) {
+    s += a * perlin(x * f, y * f);
+    f *= 2.03; a *= 0.5;
+  }
+  return s;
+}
+
+function ridged(x, y, oct) {
+  let s = 0, a = 0.5, f = 1;
+  for (let i = 0; i < oct; i++) {
+    let n = 1 - Math.abs(perlin(x * f, y * f));
+    n *= n;
+    s += a * n;
+    f *= 2.03; a *= 0.5;
+  }
+  return s;
+}
+
+
+// [UI208] Cosmic nebula and baked starfield texture renderer.
+
+const NEBULA_DENSITY = 1.0;        // Overall nebula brightness and density (0.7 - 1.6).
+const NEBULA_LOWRES_MAX = 560;     // Nebula resolution cap in high-performance mode.
+const NEBULA_LOWRES_PERF = 340;    // Reduced nebula resolution cap for low-performance mode.
+
+// [UI208.01] Nebula color clusters aligned with logo gradient (pink-purple left, cyan right, muted bottom).
+const NEBULA_CLUSTERS = [
+  // Top-left cluster (pink-purple).
+  { cx: 0.22, cy: 0.22, scale: 0.42, angle: 0.38, aspect: 0.64, intensity: 1.0,
+    base: [0.34, 0.14, 0.58], hot: [0.95, 0.38, 0.88] },
+  // Top-right cluster (cyan).
+  { cx: 0.78, cy: 0.20, scale: 0.40, angle: -0.38, aspect: 0.65, intensity: 1.0,
+    base: [0.04, 0.38, 0.62], hot: [0.25, 0.94, 0.96] },
+  // Bottom-left cluster (muted pink-purple background).
+  { cx: 0.20, cy: 0.76, scale: 0.45, angle: -0.28, aspect: 0.70, intensity: 0.52,
+    base: [0.28, 0.10, 0.48], hot: [0.82, 0.30, 0.78] },
+  // Bottom-right cluster (muted cyan background).
+  { cx: 0.80, cy: 0.74, scale: 0.44, angle: 0.32, aspect: 0.70, intensity: 0.52,
+    base: [0.04, 0.32, 0.50], hot: [0.20, 0.85, 0.88] }
+];
+
+// Noise offsets for randomized nebula structure per session.
+const NEB_OFF = [Math.random() * 200, Math.random() * 200];
+
+let nebulaCache = null;
+let nebulaCacheKey = '';
+
+// [UI209] Starfield parameters and sprite generation.
+// Static starfield is baked directly into the background texture once at boot, while a small subset twinkles dynamically.
+const BAKED_STAR_COUNT = 1620;
+const TWINKLE_STAR_COUNT = 160;
+const TWINKLE_STAR_COUNT_LOW = 65;
+const STAR_NEBULA_SHARE = 0.5;
+
+// Star temperature color tints (blue -> white -> yellow -> orange -> red).
+const STAR_TINTS = [
+  { rgb: [155, 176, 255], w: 0.08 },
+  { rgb: [202, 215, 255], w: 0.17 },
+  { rgb: [248, 247, 255], w: 0.30 },
+  { rgb: [255, 244, 234], w: 0.25 },
+  { rgb: [255, 210, 161], w: 0.15 },
+  { rgb: [255, 180, 130], w: 0.05 }
+];
+
+// Star size and brightness classes (sigma in CSS pixels).
+const STAR_CLASSES = [
+  { sigma: 0.50, halo: 0.00, spike: 0.00, len: 0,  alpha: [0.25, 0.55] },
+  { sigma: 0.65, halo: 0.04, spike: 0.00, len: 0,  alpha: [0.40, 0.70] },
+  { sigma: 0.85, halo: 0.08, spike: 0.00, len: 0,  alpha: [0.55, 0.85] },
+  { sigma: 1.05, halo: 0.14, spike: 0.00, len: 0,  alpha: [0.75, 1.00] },
+  { sigma: 1.25, halo: 0.20, spike: 0.35, len: 12, alpha: [0.90, 1.00] }
+];
+
+let starSprites = null;
+let starSpritesDpr = 0;
 let synthStars = [];
 let lastStarUpdateTime = performance.now();
 
-function createStar(randomizeLife = false) {
-  const maxLife = Math.random() * 13.0 + 9.0;
+function buildStarSprite(cls, tint, dpr) {
+  const Hcss = Math.ceil(Math.max(cls.sigma * 7, cls.len)) + 1;
+  const Hd = Math.ceil(Hcss * dpr);
+  const size = Hd * 2 + 1;
+
+  const cv = document.createElement('canvas');
+  cv.width = size; cv.height = size;
+  const c = cv.getContext('2d');
+  const img = c.createImageData(size, size);
+  const d = img.data;
+
+  const sg = cls.sigma;
+  const L = cls.len * 0.35;
+
+  for (let j = 0; j < size; j++) {
+    for (let i = 0; i < size; i++) {
+      const dx = (i - Hd) / dpr;
+      const dy = (j - Hd) / dpr;
+      const dist2 = dx * dx + dy * dy;
+      const dist = Math.sqrt(dist2);
+
+      let I = Math.exp(-dist2 / (2 * sg * sg));
+      if (cls.halo > 0) I += cls.halo * Math.exp(-dist / (sg * 3.5));
+      if (cls.spike > 0) {
+        I += cls.spike * (
+          Math.exp(-Math.abs(dx) / L) * Math.exp(-(dy * dy) / (2 * 0.45 * 0.45)) +
+          Math.exp(-Math.abs(dy) / L) * Math.exp(-(dx * dx) / (2 * 0.45 * 0.45))
+        );
+      }
+      I = Math.min(1, I);
+
+      // Core whitens at high intensity while edges retain spectral tint.
+      const white = I * I * 0.7;
+      const o = (j * size + i) * 4;
+      d[o]     = tint[0] + (255 - tint[0]) * white;
+      d[o + 1] = tint[1] + (255 - tint[1]) * white;
+      d[o + 2] = tint[2] + (255 - tint[2]) * white;
+      d[o + 3] = I * 255;
+    }
+  }
+  c.putImageData(img, 0, 0);
+  return { canvas: cv, half: Hd + 0.5, size: size };
+}
+
+function ensureStarSprites(dpr) {
+  if (starSprites && starSpritesDpr === dpr) return;
+  starSprites = STAR_CLASSES.map(cls => STAR_TINTS.map(t => buildStarSprite(cls, t.rgb, dpr)));
+  starSpritesDpr = dpr;
+}
+
+function pickTint() {
+  let r = Math.random();
+  for (let i = 0; i < STAR_TINTS.length; i++) {
+    r -= STAR_TINTS[i].w;
+    if (r <= 0) return i;
+  }
+  return 2;
+}
+
+function pickNebulaStarPosition() {
+  const idx = Math.random() < 0.75
+    ? (Math.random() < 0.5 ? 0 : 1)
+    : (Math.random() < 0.5 ? 2 : 3);
+  const cluster = NEBULA_CLUSTERS[idx] || NEBULA_CLUSTERS[0];
+  const lx = randn() * 0.45 * cluster.scale;
+  const ly = randn() * 0.45 * cluster.scale * cluster.aspect;
+  const cs = Math.cos(cluster.angle), sn = Math.sin(cluster.angle);
+  let x = cluster.cx + lx * cs - ly * sn;
+  let y = cluster.cy + lx * sn + ly * cs;
+  return { x: Math.min(1, Math.max(0, x)), y: Math.min(1, Math.max(0, y)) };
+}
+
+function renderNebulaCache(w, h, dpr) {
+  const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low');
+  const effectiveDpr = isLowPerf ? Math.min(1.0, dpr) : dpr;
+  const pw = Math.max(1, Math.round(w * effectiveDpr));
+  const ph = Math.max(1, Math.round(h * effectiveDpr));
+  const S = Math.min(w, h);
+
+  const maxRes = isLowPerf ? NEBULA_LOWRES_PERF : NEBULA_LOWRES_MAX;
+  const k = Math.min(1, maxRes / Math.max(w, h));
+  const lw = Math.max(2, Math.round(w * k));
+  const lh = Math.max(2, Math.round(h * k));
+  const low = new Float32Array(lw * lh * 3);
+
+  const cl = NEBULA_CLUSTERS.map(c => ({
+    c: c,
+    cx: c.cx * w, cy: c.cy * h,
+    R: c.scale * S,
+    cs: Math.cos(c.angle), sn: Math.sin(c.angle),
+    intensity: c.intensity !== undefined ? c.intensity : 1.0
+  }));
+  const env = new Float32Array(cl.length);
+
+  const octMain = isLowPerf ? 4 : 5;
+  const octRidge = isLowPerf ? 3 : 4;
+
+  for (let y = 0; y < lh; y++) {
+    const py = (y + 0.5) / k;
+    const t = py / h;
+    let bgR, bgG, bgB;
+    if (t < 0.5) {
+      const q = t / 0.5;
+      bgR = 6 + (5 - 6) * q; bgG = 9 + (7 - 9) * q; bgB = 20 + (17 - 20) * q;
+    } else {
+      const q = (t - 0.5) / 0.5;
+      bgR = 5 + (2 - 5) * q; bgG = 7 + (3 - 7) * q; bgB = 17 + (8 - 17) * q;
+    }
+
+    for (let x = 0; x < lw; x++) {
+      const px = (x + 0.5) / k;
+
+      let maxEnv = 0;
+      for (let i = 0; i < cl.length; i++) {
+        const q = cl[i];
+        const dx = (px - q.cx) / q.R;
+        const dy = (py - q.cy) / q.R;
+        const rx = dx * q.cs + dy * q.sn;
+        const ry = -dx * q.sn + dy * q.cs;
+        const sx = 0.85, sy = 0.85 * q.c.aspect;
+        const e = Math.exp(-(rx * rx) / (sx * sx) - (ry * ry) / (sy * sy)) * q.intensity;
+        env[i] = e;
+        if (e > maxEnv) maxEnv = e;
+      }
+
+      let nr = 0, ng = 0, nb = 0;
+
+      if (maxEnv > 0.01) {
+        const u = px / S, v = py / S;
+
+        const wx = u + 0.55 * fbm(u * 1.4 + NEB_OFF[0], v * 1.4 + NEB_OFF[1], 3);
+        const wy = v + 0.55 * fbm(u * 1.4 + NEB_OFF[1] + 31.7, v * 1.4 + NEB_OFF[0] + 17.3, 3);
+
+        const dustN = 0.5 + 1.1 * fbm(wx * 2.2 + 91.3, wy * 2.2 + 47.9, 4);
+        const dust = smoothstep(0.52, 0.78, dustN);
+
+        for (let i = 0; i < cl.length; i++) {
+          const e = env[i];
+          if (e < 0.01) continue;
+          const q = cl[i].c;
+          const off = i * 53.7;
+
+          const n01 = 0.5 + 1.1 * fbm(wx * 3.0 + off, wy * 3.0 + off * 0.7, octMain);
+          const dens = smoothstep(0.28, 0.82, n01);
+          const fil = Math.pow(clamp01(ridged(wx * 3.6 + off + 7.1, wy * 3.6 + off - 3.9, octRidge) * 1.7), 1.4);
+
+          let I = e * (0.28 + 0.95 * dens) * (0.5 + 0.95 * fil);
+          I *= 1 - 0.7 * dust * Math.min(1, e * 3);
+
+          const hotK = I * I * I * 0.6;
+          nr += (q.base[0] * I + q.hot[0] * hotK) * 0.8;
+          ng += (q.base[1] * I + q.hot[1] * hotK) * 0.8;
+          nb += (q.base[2] * I + q.hot[2] * hotK) * 0.8;
+        }
+      }
+
+      const tr = 1 - Math.exp(-nr * NEBULA_DENSITY);
+      const tg = 1 - Math.exp(-ng * NEBULA_DENSITY);
+      const tb = 1 - Math.exp(-nb * NEBULA_DENSITY);
+
+      let r = bgR + tr * 255 * (1 - bgR / 255);
+      let g = bgG + tg * 255 * (1 - bgG / 255);
+      let b = bgB + tb * 255 * (1 - bgB / 255);
+
+      const vr = Math.hypot(px - w * 0.5, py - h * 0.45) / (w * 0.85);
+      const vt = smoothstep(0.35, 1.0, vr) * 0.9;
+      r = r * (1 - vt) + 2 * vt;
+      g = g * (1 - vt) + 3 * vt;
+      b = b * (1 - vt) + 8 * vt;
+
+      const o = (y * lw + x) * 3;
+      low[o] = r; low[o + 1] = g; low[o + 2] = b;
+    }
+  }
+
+  // Bilinear scaling to full resolution with fine film grain.
+  const x0 = new Int32Array(pw), x1 = new Int32Array(pw), fx = new Float32Array(pw);
+  for (let X = 0; X < pw; X++) {
+    let s = (X + 0.5) * lw / pw - 0.5;
+    s = Math.max(0, Math.min(lw - 1, s));
+    const i = Math.floor(s);
+    x0[X] = i; x1[X] = Math.min(i + 1, lw - 1); fx[X] = s - i;
+  }
+
+  const off = document.createElement('canvas');
+  off.width = pw; off.height = ph;
+  const c = off.getContext('2d');
+  const img = c.createImageData(pw, ph);
+  const d = img.data;
+
+  for (let Y = 0; Y < ph; Y++) {
+    let sy = (Y + 0.5) * lh / ph - 0.5;
+    sy = Math.max(0, Math.min(lh - 1, sy));
+    const y0 = Math.floor(sy);
+    const y1 = Math.min(y0 + 1, lh - 1);
+    const fy = sy - y0;
+    const row0 = y0 * lw, row1 = y1 * lw;
+
+    for (let X = 0; X < pw; X++) {
+      const a = x0[X], b = x1[X], f = fx[X];
+      const i00 = (row0 + a) * 3, i10 = (row0 + b) * 3;
+      const i01 = (row1 + a) * 3, i11 = (row1 + b) * 3;
+      const o = (Y * pw + X) * 4;
+
+      const n = (Math.random() + Math.random() - 1) * 1.6;
+
+      for (let ch = 0; ch < 3; ch++) {
+        const top = low[i00 + ch] + (low[i10 + ch] - low[i00 + ch]) * f;
+        const bot = low[i01 + ch] + (low[i11 + ch] - low[i01 + ch]) * f;
+        d[o + ch] = top + (bot - top) * fy + n + 0.5;
+      }
+      d[o + 3] = 255;
+    }
+  }
+
+  // Micro star dust layer.
+  const dustCount = Math.floor(pw * ph / 700);
+  for (let i = 0; i < dustCount; i++) {
+    const X = Math.floor(Math.random() * pw);
+    const Y = Math.floor(Math.random() * ph);
+    const o = (Y * pw + X) * 4;
+    const v = 10 + Math.pow(Math.random(), 3) * 70;
+    d[o]     += v * 0.85;
+    d[o + 1] += v * 0.92;
+    d[o + 2] += v;
+  }
+
+  c.putImageData(img, 0, 0);
+
+  // [UI210] Pre-render static starfield directly into background canvas.
+  ensureStarSprites(effectiveDpr);
+  const bakeRand = mulberry32(4242); // Deterministic PRNG to prevent star displacement on window resize.
+  c.save();
+  c.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < BAKED_STAR_COUNT; i++) {
+    const inNeb = bakeRand() < STAR_NEBULA_SHARE;
+    let sx, sy;
+    if (inNeb) {
+      const idx = bakeRand() < 0.75
+        ? (bakeRand() < 0.5 ? 0 : 1)
+        : (bakeRand() < 0.5 ? 2 : 3);
+      const cluster = NEBULA_CLUSTERS[idx] || NEBULA_CLUSTERS[0];
+      const u1 = Math.max(1e-6, bakeRand()), u2 = bakeRand();
+      const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+      const z1 = Math.sqrt(-2.0 * Math.log(u1)) * Math.sin(2.0 * Math.PI * u2);
+      const lx = z0 * 0.45 * cluster.scale;
+      const ly = z1 * 0.45 * cluster.scale * cluster.aspect;
+      const cs = Math.cos(cluster.angle), sn = Math.sin(cluster.angle);
+      sx = Math.min(1, Math.max(0, cluster.cx + lx * cs - ly * sn));
+      sy = Math.min(1, Math.max(0, cluster.cy + lx * sn + ly * cs));
+    } else {
+      sx = bakeRand();
+      sy = bakeRand();
+    }
+
+    const u = bakeRand();
+    const cls = u < 0.56 ? 0 : u < 0.82 ? 1 : u < 0.94 ? 2 : u < 0.988 ? 3 : 4;
+    const aR = STAR_CLASSES[cls].alpha;
+    const alpha = (aR[0] + bakeRand() * (aR[1] - aR[0])) * 0.88;
+
+    let tr = bakeRand(), tintIdx = 2;
+    for (let t = 0; t < STAR_TINTS.length; t++) {
+      tr -= STAR_TINTS[t].w;
+      if (tr <= 0) { tintIdx = t; break; }
+    }
+
+    const sp = starSprites[cls][tintIdx];
+    const px = sx * pw;
+    const py = sy * ph;
+    c.globalAlpha = alpha;
+    c.drawImage(sp.canvas, px - sp.half, py - sp.half);
+  }
+  c.restore();
+
+  return off;
+}
+
+function getDpr() {
+  let a = 1;
+  try { a = ctx.getTransform().a; } catch (e) {}
+  return Math.min(2, a || 1);
+}
+
+function drawCosmicNebulaBackground(w, h) {
+  const dpr = getDpr();
+  const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low') ? 'low' : 'high';
+  const key = Math.round(w) + 'x' + Math.round(h) + '@' + dpr + '_' + isLowPerf;
+  if (!nebulaCache || nebulaCacheKey !== key) {
+    nebulaCache = renderNebulaCache(w, h, dpr);
+    nebulaCacheKey = key;
+  }
+  ctx.drawImage(nebulaCache, 0, 0, w, h);
+}
+
+
+// [UI211] Lightweight dynamic twinkling star overlay.
+
+function createStar(randomizeLife = false, inNebula = false) {
+  const maxLife = Math.random() * 16.0 + 10.0;
+
+  // Dynamic star instances with phase-offset twinkling.
+  const u = Math.random();
+  const cls = u < 0.25 ? 0 : u < 0.55 ? 1 : u < 0.82 ? 2 : u < 0.95 ? 3 : 4;
+  const aR = STAR_CLASSES[cls].alpha;
+
+  const pos = inNebula ? pickNebulaStarPosition() : { x: Math.random(), y: Math.random() };
+
   return {
-    x: Math.random(),
-    y: Math.random(),
-    r: Math.random() * 1.5 + 0.6,
-    baseAlpha: Math.random() * 0.55 + 0.4,
-    twinkleSpeed: Math.random() * 0.9 + 0.4,
+    x: pos.x,
+    y: pos.y,
+    cls: cls,
+    tint: pickTint(),
+    baseAlpha: aR[0] + Math.random() * (aR[1] - aR[0]),
+    twinkleSpeed: Math.random() * 1.6 + 0.7,
     twinklePhase: Math.random() * Math.PI * 2,
-    color: STAR_TINTS[Math.floor(Math.random() * STAR_TINTS.length)],
     life: randomizeLife ? Math.random() * maxLife : 0,
     maxLife: maxLife
   };
@@ -3581,9 +4021,8 @@ function createStar(randomizeLife = false) {
 
 function initSynthStars() {
   synthStars = [];
-  const starCount = 85;
-  for (let i = 0; i < starCount; i++) {
-    synthStars.push(createStar(true));
+  for (let i = 0; i < TWINKLE_STAR_COUNT; i++) {
+    synthStars.push(createStar(true, Math.random() < STAR_NEBULA_SHARE));
   }
 }
 initSynthStars();
@@ -3593,102 +4032,341 @@ function updateAndDrawStars(w, h, now) {
   lastStarUpdateTime = now;
   const time = now / 1000;
 
+  const dpr = getDpr();
+  ensureStarSprites(dpr);
+
+  const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low');
+  const activeCount = isLowPerf ? Math.min(synthStars.length, TWINKLE_STAR_COUNT_LOW) : synthStars.length;
+
   ctx.save();
-  for (let i = 0; i < synthStars.length; i++) {
+  ctx.globalCompositeOperation = 'lighter';
+
+  for (let i = 0; i < activeCount; i++) {
     const star = synthStars[i];
     star.life += dt;
     if (star.life >= star.maxLife) {
-      synthStars[i] = createStar(false);
+      synthStars[i] = createStar(false, Math.random() < STAR_NEBULA_SHARE);
       continue;
     }
 
     const lifeProgress = star.life / star.maxLife;
-    const fade = Math.sin(lifeProgress * Math.PI);
-    const twinkle = 0.5 + 0.5 * Math.sin(time * star.twinkleSpeed + star.twinklePhase);
-    const alpha = star.baseAlpha * Math.max(0, twinkle) * fade;
+    const fade = Math.min(1, Math.sin(lifeProgress * Math.PI) * 3);
 
-    if (alpha > 0.01) {
-      ctx.fillStyle = star.color;
-      ctx.globalAlpha = alpha;
-      ctx.beginPath();
-      ctx.arc(star.x * w, star.y * h, star.r, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    // Smooth sinusoidal brightness modulation.
+    const twinkle = 0.55 + 0.45 * Math.sin(time * star.twinkleSpeed + star.twinklePhase);
+    const alpha = star.baseAlpha * twinkle * fade;
+    if (alpha <= 0.02) continue;
+
+    const sp = starSprites[star.cls][star.tint];
+    const px = star.x * w;
+    const py = star.y * h;
+
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(sp.canvas, px - sp.half / dpr, py - sp.half / dpr, sp.size / dpr, sp.size / dpr);
   }
   ctx.restore();
 }
+//------------------------------------------------------------
 
-function drawCosmicNebulaBackground(w, h) {
-  const baseGrad = ctx.createLinearGradient(0, 0, 0, h);
-  baseGrad.addColorStop(0, '#060914');
-  baseGrad.addColorStop(0.5, '#050711');
-  baseGrad.addColorStop(1, '#020308');
-  ctx.fillStyle = baseGrad;
-  ctx.fillRect(0, 0, w, h);
+let triangleLogoCache = null;
+let triangleLogoCacheKey = '';
 
-  ctx.save();
-  const rad1 = ctx.createRadialGradient(w * 0.25, h * 0.15, 10, w * 0.25, h * 0.15, w * 0.65);
-  rad1.addColorStop(0, 'rgba(45, 55, 115, 0.35)');
-  rad1.addColorStop(1, 'transparent');
-  ctx.fillStyle = rad1;
-  ctx.fillRect(0, 0, w, h);
+function renderTriangleLogoCache(w, horizonY, dpr) {
+  const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low');
+  const effDpr = isLowPerf ? Math.min(1.25, dpr) : dpr;
 
-  const rad2 = ctx.createRadialGradient(w * 0.85, h * 0.70, 10, w * 0.85, h * 0.70, w * 0.60);
-  rad2.addColorStop(0, 'rgba(15, 75, 120, 0.30)');
-  rad2.addColorStop(1, 'transparent');
-  ctx.fillStyle = rad2;
-  ctx.fillRect(0, 0, w, h);
+  const pad = 70;
+  const ch = Math.ceil(horizonY + pad);
+  const off = document.createElement('canvas');
+  off.width = Math.max(1, Math.round(w * effDpr));
+  off.height = Math.max(1, Math.round(ch * effDpr));
+  const c = off.getContext('2d');
+  c.scale(effDpr, effDpr);
 
-  const rad3 = ctx.createRadialGradient(w * 0.55, h * 0.45, 10, w * 0.55, h * 0.45, w * 0.50);
-  rad3.addColorStop(0, 'rgba(30, 45, 80, 0.22)');
-  rad3.addColorStop(1, 'transparent');
-  ctx.fillStyle = rad3;
-  ctx.fillRect(0, 0, w, h);
+  const cx = w * 0.5;
+  const tipY = horizonY - 24;
+  const topY = Math.max(82, horizonY * 0.22);
+  const halfW = Math.min(w * 0.35, (tipY - topY) * 0.65);
 
-  const vignette = ctx.createRadialGradient(w * 0.5, h * 0.45, w * 0.15, w * 0.5, h * 0.45, w * 0.85);
-  vignette.addColorStop(0.4, 'transparent');
-  vignette.addColorStop(1, 'rgba(2, 3, 8, 0.90)');
-  ctx.fillStyle = vignette;
-  ctx.fillRect(0, 0, w, h);
-  ctx.restore();
+  const A = { x: cx,         y: tipY };   // Bottom tip.
+  const B = { x: cx - halfW, y: topY };   // Top-left corner.
+  const C = { x: cx + halfW, y: topY };   // Top-right corner.
+
+  // Inscribed circle radius for equidistant contour scaling.
+  const sa = Math.hypot(B.x - C.x, B.y - C.y);
+  const sb = Math.hypot(A.x - C.x, A.y - C.y);
+  const sc = Math.hypot(A.x - B.x, A.y - B.y);
+  const per = sa + sb + sc;
+  const inX = (sa * A.x + sb * B.x + sc * C.x) / per;
+  const inY = (sa * A.y + sb * B.y + sc * C.y) / per;
+  const inR = (halfW * (tipY - topY)) / (per / 2);
+
+  const triPath = (offset) => {
+    const k = 1 + offset / inR;
+    const p = v => ({ x: inX + (v.x - inX) * k, y: inY + (v.y - inY) * k });
+    const a = p(A), b = p(B), d = p(C);
+    c.beginPath();
+    c.moveTo(a.x, a.y);
+    c.lineTo(b.x, b.y);
+    c.lineTo(d.x, d.y);
+    c.closePath();
+  };
+
+  // Horizontal gradient: pink-purple left to cyan right.
+  const makeGrad = (lighten) => {
+    const g = c.createLinearGradient(B.x - 20, 0, C.x + 20, 0);
+    if (lighten) {
+      g.addColorStop(0.00, '#ff8be8');
+      g.addColorStop(0.45, '#d9b8ff');
+      g.addColorStop(1.00, '#b8fff6');
+    } else {
+      g.addColorStop(0.00, '#ff2fd0');
+      g.addColorStop(0.45, '#9a4dff');
+      g.addColorStop(1.00, '#00f0d8');
+    }
+    return g;
+  };
+
+  // [UI212.01] Soft atmospheric vertex glow pass.
+  c.save();
+  c.globalCompositeOperation = 'lighter';
+
+  // Top-left vertex haze.
+  const cornerR = halfW * 0.42;
+  const bGlow = c.createRadialGradient(B.x, B.y, 0, B.x, B.y, cornerR);
+  bGlow.addColorStop(0.0, 'rgba(255, 47, 208, 0.20)');
+  bGlow.addColorStop(0.4, 'rgba(154, 77, 255, 0.08)');
+  bGlow.addColorStop(1.0, 'rgba(154, 77, 255, 0)');
+  c.fillStyle = bGlow;
+  c.beginPath();
+  c.arc(B.x, B.y, cornerR, 0, Math.PI * 2);
+  c.fill();
+
+  // Top-right vertex haze.
+  const cGlow = c.createRadialGradient(C.x, C.y, 0, C.x, C.y, cornerR);
+  cGlow.addColorStop(0.0, 'rgba(0, 240, 216, 0.20)');
+  cGlow.addColorStop(0.4, 'rgba(0, 210, 255, 0.08)');
+  cGlow.addColorStop(1.0, 'rgba(0, 210, 255, 0)');
+  c.fillStyle = cGlow;
+  c.beginPath();
+  c.arc(C.x, C.y, cornerR, 0, Math.PI * 2);
+  c.fill();
+
+  // Bottom tip lens flare.
+  const tipR = halfW * 0.40;
+  const fl = c.createRadialGradient(cx, tipY, 0, cx, tipY, tipR);
+  fl.addColorStop(0.00, 'rgba(255, 255, 255, 0.52)');
+  fl.addColorStop(0.28, 'rgba(190, 150, 255, 0.22)');
+  fl.addColorStop(0.65, 'rgba(0, 229, 255, 0.07)');
+  fl.addColorStop(1.00, 'rgba(0, 229, 255, 0)');
+  c.fillStyle = fl;
+  c.beginPath();
+  c.arc(cx, tipY, tipR, 0, Math.PI * 2);
+  c.fill();
+  c.restore();
+
+  // [UI212.02] Multi-layered Gaussian glow contour stroke renderer.
+  const GLOW_FALLOFF = [
+    { mult: 9.5, alpha: 0.012 },
+    { mult: 7.8, alpha: 0.016 },
+    { mult: 6.3, alpha: 0.022 },
+    { mult: 5.0, alpha: 0.030 },
+    { mult: 3.9, alpha: 0.042 },
+    { mult: 3.0, alpha: 0.058 },
+    { mult: 2.3, alpha: 0.075 },
+    { mult: 1.7, alpha: 0.095 },
+    { mult: 1.3, alpha: 0.120 }
+  ];
+
+  const neonTriSoft = (offset, width, lighten, strength) => {
+    c.save();
+    c.lineJoin = 'round';
+    c.lineCap = 'round';
+
+    const glowGrad = makeGrad(false);
+    const coreGrad = makeGrad(lighten);
+
+    // Outer soft halo falloff.
+    c.globalCompositeOperation = 'lighter';
+    c.strokeStyle = glowGrad;
+    for (let i = 0; i < GLOW_FALLOFF.length; i++) {
+      const layer = GLOW_FALLOFF[i];
+      c.globalAlpha = layer.alpha * strength;
+      c.lineWidth = width * layer.mult;
+      triPath(offset);
+      c.stroke();
+    }
+
+    // Primary neon core tube.
+    c.globalCompositeOperation = 'source-over';
+    c.globalAlpha = 0.94;
+    c.strokeStyle = coreGrad;
+    c.lineWidth = width;
+    triPath(offset);
+    c.stroke();
+
+    // Incandescent white inner core.
+    c.globalCompositeOperation = 'lighter';
+    c.globalAlpha = 0.62 * strength;
+    c.strokeStyle = '#ffffff';
+    c.lineWidth = width * 0.36;
+    triPath(offset);
+    c.stroke();
+
+    c.restore();
+  };
+
+  // Render nested neon triangle contours into offscreen cache.
+  neonTriSoft(-inR * 0.40, 4.2, false, 0.90);
+  neonTriSoft(-14,         4.8, false, 0.95);
+  neonTriSoft(0,           5.2, true,  1.15);
+
+  return { canvas: off, height: ch };
 }
 
 function drawSynthWaveTriangleLogo5C(w, horizonY, time) {
-  const cx = w * 0.5;
-  const floatOffset = Math.sin(time * 0.7) * 4;
-  const tipY = horizonY - 24 + floatOffset;
-  const topY = Math.max(82, horizonY * 0.22) + floatOffset;
-  const halfW = Math.min(w * 0.35, (tipY - topY) * 0.65);
+  const dpr = getDpr();
+  const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low') ? 'low' : 'high';
+  const key = Math.round(w) + 'x' + Math.round(horizonY) + '@' + dpr + '_' + isLowPerf;
 
-  const backTiers = [
-    { color: '#5b6bff', width: 1.4, alpha: 0.18, scaleSpread: 1.24 },
-    { color: '#8a3cff', width: 1.4, alpha: 0.22, scaleSpread: 1.18 },
-    { color: '#c026a0', width: 1.4, alpha: 0.26, scaleSpread: 1.12 },
-    { color: '#ff2fb0', width: 1.4, alpha: 0.30, scaleSpread: 1.06 },
-    { color: '#eafcff', width: 2.8, alpha: 1.00, scaleSpread: 1.00, glow: true }
-  ];
+  if (!triangleLogoCache || triangleLogoCacheKey !== key) {
+    triangleLogoCache = renderTriangleLogoCache(w, horizonY, dpr);
+    triangleLogoCacheKey = key;
+  }
 
-  backTiers.forEach(tier => {
-    ctx.save();
-    ctx.globalAlpha = tier.alpha;
-    ctx.strokeStyle = tier.color;
-    ctx.lineWidth = tier.width;
-    if (tier.glow) {
-      setGlow('#00e5ff', 8);
-    }
-    const curHalfW = halfW * tier.scaleSpread;
-    const curTopY = topY - (tier.scaleSpread - 1) * 12;
-
-    ctx.beginPath();
-    ctx.moveTo(cx, tipY);
-    ctx.lineTo(cx - curHalfW, curTopY);
-    ctx.lineTo(cx + curHalfW, curTopY);
-    ctx.closePath();
-    ctx.stroke();
-    ctx.restore();
-  });
+  // Subtle brightness pulsation with single draw call overhead.
+  const flicker = 0.95 + 0.05 * Math.sin(time * 9.0) * Math.sin(time * 2.3 + 1.0);
+  ctx.save();
+  ctx.globalAlpha = flicker;
+  ctx.drawImage(triangleLogoCache.canvas, 0, 0, w, triangleLogoCache.height);
+  ctx.restore();
 }
 
+// [UI213] Multi-pass neon horizon beam renderer.
+function drawSynthWaveHorizonBeam(w, horizonY, time) {
+  const cx = w * 0.5;
+  const pulse = 0.95 + 0.05 * Math.sin(time * 3.2);
+
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+
+  // [UI213.01] Vertical exponential bloom gradient pass.
+  const bloomR = 46;
+  const vBloom = ctx.createLinearGradient(0, horizonY - bloomR, 0, horizonY + bloomR);
+  vBloom.addColorStop(0.00, 'rgba(140, 80, 255, 0)');
+  vBloom.addColorStop(0.22, `rgba(140, 80, 255, ${0.03 * pulse})`);
+  vBloom.addColorStop(0.36, `rgba(150, 100, 255, ${0.10 * pulse})`);
+  vBloom.addColorStop(0.45, `rgba(170, 180, 255, ${0.24 * pulse})`);
+  vBloom.addColorStop(0.50, `rgba(220, 245, 255, ${0.42 * pulse})`);
+  vBloom.addColorStop(0.55, `rgba(0, 229, 255, ${0.24 * pulse})`);
+  vBloom.addColorStop(0.64, `rgba(0, 229, 255, ${0.10 * pulse})`);
+  vBloom.addColorStop(0.78, `rgba(0, 229, 255, ${0.03 * pulse})`);
+  vBloom.addColorStop(1.00, 'rgba(0, 229, 255, 0)');
+  ctx.fillStyle = vBloom;
+  ctx.fillRect(0, horizonY - bloomR, w, bloomR * 2);
+
+  // [UI213.02] Lateral atmospheric glow cushions (pink-purple left, cyan right).
+  const sideRx = w * 0.46;
+  const sideRy = 26;
+
+  // Left pink-purple soft bloom.
+  ctx.save();
+  ctx.translate(w * 0.27, horizonY);
+  ctx.scale(1, sideRy / sideRx);
+  const leftGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, sideRx);
+  leftGlow.addColorStop(0.00, `rgba(255, 47, 208, ${0.38 * pulse})`);
+  leftGlow.addColorStop(0.35, `rgba(168, 85, 247, ${0.18 * pulse})`);
+  leftGlow.addColorStop(0.70, `rgba(140, 60, 220, ${0.05 * pulse})`);
+  leftGlow.addColorStop(1.00, 'rgba(140, 60, 220, 0)');
+  ctx.fillStyle = leftGlow;
+  ctx.beginPath();
+  ctx.arc(0, 0, sideRx, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Right cyan soft bloom.
+  ctx.save();
+  ctx.translate(w * 0.73, horizonY);
+  ctx.scale(1, sideRy / sideRx);
+  const rightGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, sideRx);
+  rightGlow.addColorStop(0.00, `rgba(0, 240, 216, ${0.38 * pulse})`);
+  rightGlow.addColorStop(0.35, `rgba(0, 210, 255, ${0.18 * pulse})`);
+  rightGlow.addColorStop(0.70, `rgba(0, 160, 230, ${0.05 * pulse})`);
+  rightGlow.addColorStop(1.00, 'rgba(0, 160, 230, 0)');
+  ctx.fillStyle = rightGlow;
+  ctx.beginPath();
+  ctx.arc(0, 0, sideRx, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // [UI213.03] Tight horizontal beam glow.
+  const tightR = 7;
+  const tightBloom = ctx.createLinearGradient(0, horizonY - tightR, 0, horizonY + tightR);
+  tightBloom.addColorStop(0.00, 'rgba(255, 255, 255, 0)');
+  tightBloom.addColorStop(0.30, `rgba(200, 170, 255, ${0.28 * pulse})`);
+  tightBloom.addColorStop(0.50, `rgba(255, 255, 255, ${0.75 * pulse})`);
+  tightBloom.addColorStop(0.70, `rgba(120, 245, 255, ${0.28 * pulse})`);
+  tightBloom.addColorStop(1.00, 'rgba(255, 255, 255, 0)');
+  ctx.fillStyle = tightBloom;
+  ctx.fillRect(0, horizonY - tightR, w, tightR * 2);
+
+  // [UI213.04] Primary neon beam core stroke.
+  const hBeamGrad = ctx.createLinearGradient(0, 0, w, 0);
+  hBeamGrad.addColorStop(0.00, 'rgba(255, 47, 208, 0.05)');
+  hBeamGrad.addColorStop(0.16, '#ff2fd0');
+  hBeamGrad.addColorStop(0.42, '#a855f7');
+  hBeamGrad.addColorStop(0.50, '#ffffff');
+  hBeamGrad.addColorStop(0.58, '#00e5ff');
+  hBeamGrad.addColorStop(0.84, '#00f0d8');
+  hBeamGrad.addColorStop(1.00, 'rgba(0, 240, 216, 0.05)');
+
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.strokeStyle = hBeamGrad;
+  ctx.globalAlpha = 0.95 * pulse;
+  ctx.lineWidth = 3.2;
+  ctx.beginPath();
+  ctx.moveTo(0, horizonY);
+  ctx.lineTo(w, horizonY);
+  ctx.stroke();
+
+  // [UI213.05] Incandescent white beam center line.
+  const coreGrad = ctx.createLinearGradient(0, 0, w, 0);
+  coreGrad.addColorStop(0.00, 'rgba(255, 255, 255, 0)');
+  coreGrad.addColorStop(0.12, 'rgba(255, 230, 252, 0.80)');
+  coreGrad.addColorStop(0.50, 'rgba(255, 255, 255, 1)');
+  coreGrad.addColorStop(0.88, 'rgba(220, 255, 252, 0.80)');
+  coreGrad.addColorStop(1.00, 'rgba(255, 255, 255, 0)');
+
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.strokeStyle = coreGrad;
+  ctx.globalAlpha = 0.95 * pulse;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(0, horizonY);
+  ctx.lineTo(w, horizonY);
+  ctx.stroke();
+
+  // [UI213.06] Anamorphic center flare under triangle vertex.
+  const flareW = Math.min(w * 0.36, 220);
+  const flareH = 18;
+  ctx.save();
+  ctx.translate(cx, horizonY);
+  ctx.scale(1, flareH / flareW);
+  const centerFlare = ctx.createRadialGradient(0, 0, 0, 0, 0, flareW);
+  centerFlare.addColorStop(0.00, `rgba(255, 255, 255, ${0.65 * pulse})`);
+  centerFlare.addColorStop(0.25, `rgba(215, 185, 255, ${0.30 * pulse})`);
+  centerFlare.addColorStop(0.60, `rgba(0, 229, 255, ${0.10 * pulse})`);
+  centerFlare.addColorStop(1.00, 'rgba(0, 229, 255, 0)');
+  ctx.fillStyle = centerFlare;
+  ctx.beginPath();
+  ctx.arc(0, 0, flareW, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+//------------------------------------------------------------
 // [UI200] Synthwave background perspective grid scene renderer.
 function drawSynthWavePerspectiveScene(now) {
   const w = window.innerWidth;
@@ -3703,10 +4381,11 @@ function drawSynthWavePerspectiveScene(now) {
 
   ctx.save();
 
+  // Semi-transparent perspective plane background.
   const planeGrad = ctx.createLinearGradient(0, horizonY, 0, h);
-  planeGrad.addColorStop(0, 'rgba(16, 26, 52, 0.08)');
-  planeGrad.addColorStop(0.35, 'rgba(16, 26, 52, 0.24)');
-  planeGrad.addColorStop(1, 'rgba(12, 20, 42, 0.48)');
+  planeGrad.addColorStop(0, 'rgba(16, 26, 52, 0.06)');
+  planeGrad.addColorStop(0.35, 'rgba(16, 26, 52, 0.18)');
+  planeGrad.addColorStop(1, 'rgba(12, 20, 42, 0.34)');
   ctx.fillStyle = planeGrad;
   ctx.fillRect(0, horizonY, w, floorH);
 
@@ -3818,22 +4497,8 @@ function drawSynthWavePerspectiveScene(now) {
 
   ctx.restore();
 
-  ctx.save();
-  const fogGrad = ctx.createLinearGradient(0, horizonY, 0, horizonY + 80);
-  fogGrad.addColorStop(0, 'rgba(0, 229, 255, 0.20)');
-  fogGrad.addColorStop(1, 'transparent');
-  ctx.fillStyle = fogGrad;
-  ctx.fillRect(0, horizonY, w, 80);
-
-  ctx.strokeStyle = '#eafcff';
-  setGlow('#00e5ff', 8);
-  ctx.lineWidth = 3.5;
-  ctx.beginPath();
-  ctx.moveTo(0, horizonY);
-  ctx.lineTo(w, horizonY);
-  ctx.stroke();
-  ctx.restore();
-
+  // Render neon horizon beam and synthwave triangle logo.
+  drawSynthWaveHorizonBeam(w, horizonY, time);
   drawSynthWaveTriangleLogo5C(w, horizonY, time);
 }
 
