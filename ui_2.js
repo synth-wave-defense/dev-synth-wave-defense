@@ -83,18 +83,18 @@ function updateOffscreenGrid() {
   if (!offscreenGridCanvas) {
     offscreenGridCanvas = document.createElement('canvas');
   }
-  
+
   const w = COLS * TILE_SIZE;
   const h = ROWS * TILE_SIZE;
-  
+
   if (offscreenGridCanvas.width !== w || offscreenGridCanvas.height !== h) {
     offscreenGridCanvas.width = w;
     offscreenGridCanvas.height = h;
   }
-  
+
   const oCtx = offscreenGridCanvas.getContext('2d');
   oCtx.clearRect(0, 0, w, h);
-  
+
   // [UI102.01] Static grid cell background rendering.
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
@@ -110,7 +110,7 @@ function updateOffscreenGrid() {
   oCtx.save();
   oCtx.strokeStyle = 'rgba(0, 229, 255, 0.22)';
   oCtx.lineWidth = 1.5;
-  
+
   // [UI102.02] Static track side rails rendering.
   if (typeof pathCells !== 'undefined' && Array.isArray(pathCells)) {
     pathCells.forEach(cell => {
@@ -1315,7 +1315,7 @@ function openDevMode() {
   window._lastThreadLag = 0;
   const bar = document.getElementById('devBar');
   if (bar) bar.classList.remove('hidden');
-  
+
   const goldHalf = document.getElementById('goldHalf');
   const hpHalf = document.getElementById('hpHalf');
   if (goldHalf) goldHalf.classList.add('interactive');
@@ -1332,15 +1332,14 @@ function openDevMode() {
     waveEl.style.cursor = 'pointer';
     waveEl.onclick = devPromptWaveSelect;
   }
-  
-  showHintToast('Dev Mode: Enabled');
+
 }
 
 function closeDevMode() {
   isDevModeActive = false;
   devMode = false;
   isDevExpanded = false;
-  
+
   const bar = document.getElementById('devBar');
   if (bar) {
     bar.classList.add('hidden');
@@ -1348,10 +1347,10 @@ function closeDevMode() {
     bar.style.top = '';
     bar.style.transform = '';
   }
-  
+
   const pane = document.getElementById('devDetailsPane');
   if (pane) pane.classList.add('hidden');
-  
+
   const btn = document.getElementById('devExpandBtn');
   if (btn) btn.textContent = '▾';
 
@@ -1372,7 +1371,6 @@ const levelEl = document.getElementById('levelText');
   }
   setGameSpeed(1);
 
-  showHintToast('Dev Mode: Disabled');
 }
 
 function toggleDevPanelExpand() {
@@ -1405,7 +1403,7 @@ function toggleDevPanelExpand() {
 
   function onPointerDown(e) {
     if (['BUTTON', 'SELECT', 'INPUT', 'OPTION'].includes(e.target.tagName)) return;
-    
+
     const bar = document.getElementById('devBar');
     if (!bar) return;
 
@@ -1834,8 +1832,8 @@ function showStartScreen() {
   const waveBtn = document.getElementById('waveBtn');
   if (waveBtn) waveBtn.classList.add('hidden');
 
-  
-  
+
+
   const customSpawner = document.getElementById('devCustomSpawner');
   if (customSpawner) customSpawner.classList.add('hidden');
 
@@ -1935,10 +1933,10 @@ function showSettings(fromSource = 'start') {
   }
 
   const isResultScreen = (fromSource === 'victory' || fromSource === 'defeat');
-  const bgScreenId = fromSource === 'victory' ? 'victoryScreen' 
-    : (fromSource === 'defeat' ? 'defeatScreen' 
-    : (fromSource === 'levels' ? 'levelsScreen' 
-    : (fromSource === 'shop' ? 'shopScreen' 
+  const bgScreenId = fromSource === 'victory' ? 'victoryScreen'
+    : (fromSource === 'defeat' ? 'defeatScreen'
+    : (fromSource === 'levels' ? 'levelsScreen'
+    : (fromSource === 'shop' ? 'shopScreen'
     : (fromSource === 'upgrades' ? 'upgradesScreen' : 'startScreen'))));
 
   ['startScreen', 'victoryScreen', 'defeatScreen', 'levelsScreen', 'shopScreen', 'upgradesScreen']
@@ -2323,7 +2321,7 @@ function showLevelSelectFromGame() {
 
   const customSpawner = document.getElementById('devCustomSpawner');
   if (customSpawner) customSpawner.classList.add('hidden');
-  
+
   currentLevelSection = Math.min(TOTAL_SECTIONS, Math.max(1, Math.ceil(currentLevel / LEVELS_PER_SECTION)));
   renderLevelsGrid();
   showLoadoutWidgetIn('loadoutAnchor-levels');
@@ -2667,7 +2665,7 @@ function showUpgradesScreen(fromSource) {
 
 function closeUpgradesScreen() {
   document.getElementById('upgradesScreen').classList.add('hidden');
-  
+
   const topHud = document.getElementById('topHud');
   if (topHud) topHud.classList.remove('hidden');
 
@@ -4600,7 +4598,7 @@ function drawPathRails(now) {
   const dt = Math.min((curTime - (lastPathTime || curTime)) / 1000, 0.1);
   lastPathTime = curTime;
 
-  const isBattleActive = (typeof waveInProgress !== 'undefined' && waveInProgress) || 
+  const isBattleActive = (typeof waveInProgress !== 'undefined' && waveInProgress) ||
                          (typeof enemies !== 'undefined' && enemies.length > 0);
 
   if (isBattleActive) {
@@ -5081,7 +5079,7 @@ function render(now) {
     const m = (perfProfiler.accum.drawMobs / f).toFixed(1);
     const fx = (perfProfiler.accum.drawFx / f).toFixed(1);
     perfProfiler.report = `Sim:${s}ms | Tow:${t}ms | Mobs:${m}ms | Fx:${fx}ms`;
-    
+
     const badge = document.getElementById('devFpsBadge');
     if (badge) {
       badge.title = perfProfiler.report;
@@ -5158,7 +5156,7 @@ function render(now) {
   const isSettingsFromCombat = (gameState === 'SETTINGS' && settingsPreviousSource === 'pause');
   const isShopFromCombat = (gameState === 'SHOP' && (shopPreviousSource === 'victory' || shopPreviousSource === 'defeat'));
 
-  if ((gameState === 'START' || gameState === 'LEVELS' || gameState === 'UPGRADES' || gameState === 'SHOP') 
+  if ((gameState === 'START' || gameState === 'LEVELS' || gameState === 'UPGRADES' || gameState === 'SHOP')
       && !isUpgradesFromCombat && !isSettingsFromCombat && !isShopFromCombat) {
     drawSynthWavePerspectiveScene(now);
     return;
@@ -5387,7 +5385,7 @@ function render(now) {
   });
 
   const _tFxStart = performance.now();
-  
+
   // [UI205.02] Particle pass 1: Concentric smoke and steam.
   ctx.globalCompositeOperation = 'source-over';
   const smokeSprite = typeof getSmokeSprite === 'function' ? getSmokeSprite() : null;
@@ -5574,6 +5572,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     }
-    
+
   }
 });

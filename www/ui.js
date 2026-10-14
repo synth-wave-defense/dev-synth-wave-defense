@@ -1333,7 +1333,6 @@ function openDevMode() {
     waveEl.onclick = devPromptWaveSelect;
   }
   
-  showHintToast('Dev Mode: Enabled');
 }
 
 function closeDevMode() {
@@ -1372,7 +1371,6 @@ const levelEl = document.getElementById('levelText');
   }
   setGameSpeed(1);
 
-  showHintToast('Dev Mode: Disabled');
 }
 
 function toggleDevPanelExpand() {
