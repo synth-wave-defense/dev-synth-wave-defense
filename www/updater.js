@@ -197,3 +197,15 @@
 
   window.AppUpdater = AppUpdater;
 })();
+
+// Сообщаем плагину OTA, что игра успешно загрузилась (защита от отката обновления)
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorUpdater) {
+      await window.Capacitor.Plugins.CapacitorUpdater.notifyAppReady();
+      console.log('[Updater] App ready notified to prevent rollback.');
+    }
+  } catch (e) {
+    console.warn('[Updater] notifyAppReady failed:', e);
+  }
+});
