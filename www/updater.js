@@ -4,10 +4,9 @@
 (function () {
   'use strict';
 
-  // Master URL for fetching the remote version manifest
   const REMOTE_MANIFEST_URL = 'https://raw.githubusercontent.com/synth-wave-defense/dev-synth-wave-defense/main/www/update_manifest.json';
   const LOCAL_MANIFEST_PATH = 'update_manifest.json';
-  const REQUEST_TIMEOUT_MS = 2500;
+  const REQUEST_TIMEOUT_MS = 8000; // Увеличено до 8 сек, чтобы GitHub Raw успевал ответить
 
   function getPlugin(name) {
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins[name]) {
@@ -16,13 +15,14 @@
     return null;
   }
 
-  // Fetch with strict timeout to prevent startup hangs
   async function fetchWithTimeout(url, timeoutMs) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const response = await fetch(url, {
+      // Добавляем анти-кэш параметр, чтобы телефон не читал старый манифест из кэша WebView
+      const cacheBusterUrl = `${url}?t=${Date.now()}`;
+      const response = await fetch(cacheBusterUrl, {
         signal: controller.signal,
         cache: 'no-store'
       });
@@ -35,7 +35,6 @@
     }
   }
 
-  // Overlay UI for blocking critical updates
   function createCriticalOverlay() {
     let overlay = document.getElementById('critical-update-overlay');
     if (overlay) return overlay;
@@ -80,20 +79,29 @@
   }
 
   const AppUpdater = {
-    // Primary startup lifecycle entry point
     init: async function () {
       console.log('[Updater] Initializing OTA & Music update check...');
+
+      // Первым делом подтверждаем работоспособность текущей сборки
+      const UpdaterPlugin = getPlugin('CapacitorUpdater');
+      if (UpdaterPlugin) {
+        try {
+          await UpdaterPlugin.notifyAppReady();
+          console.log('[Updater] notifyAppReady confirmed.');
+        } catch (e) {
+          console.warn('[Updater] notifyAppReady error:', e);
+        }
+      }
 
       // 1. Load local base manifest
       let localManifest = null;
       try {
-        const localRes = await fetch(LOCAL_MANIFEST_PATH);
+        const localRes = await fetch(LOCAL_MANIFEST_PATH, { cache: 'no-store' });
         localManifest = await localRes.json();
       } catch (e) {
         console.warn('[Updater] Failed to load local update_manifest.json:', e);
       }
 
-      // Propagate manifest to music downloader
       if (window.MusicDownloader && localManifest) {
         window.MusicDownloader.setManifest(localManifest);
       }
@@ -127,19 +135,20 @@
         window.MusicDownloader.startBackgroundDownload(activeManifest);
       }
 
-      // 5. Evaluate OTA bundle updates (Using flat manifest structure)
+      // 5. Evaluate OTA bundle updates
       if (remoteManifest && remoteManifest.version && localManifest && localManifest.version) {
-        const currentVersion = localManifest.version;
-        const targetVersion = remoteManifest.version;
+        const currentVersion = String(localManifest.version).trim();
+        const targetVersion = String(remoteManifest.version).trim();
 
         if (targetVersion && targetVersion !== currentVersion) {
           console.log(`[Updater] Update available: ${currentVersion} -> ${targetVersion}`);
           await this.processBundleUpdate(remoteManifest);
+        } else {
+          console.log(`[Updater] App is up to date (${currentVersion}).`);
         }
       }
     },
 
-    // Handle OTA bundle download & application
     processBundleUpdate: async function (manifest) {
       const UpdaterPlugin = getPlugin('CapacitorUpdater');
       if (!UpdaterPlugin) {
@@ -148,8 +157,8 @@
       }
 
       const isCritical = !!manifest.critical;
-      const downloadUrl = manifest.bundleUrl; // strictly looking at root bundleUrl
-      const version = manifest.version;       // strictly looking at root version
+      const downloadUrl = manifest.bundleUrl;
+      const version = manifest.version;
 
       if (!downloadUrl) {
         console.warn('[Updater] No bundleUrl found in manifest.');
@@ -168,27 +177,25 @@
           });
 
           updateCriticalProgress(85, 'Applying changes...');
-          await UpdaterPlugin.set(bundle);
-
-          updateCriticalProgress(100, 'Restarting...');
-          setTimeout(() => {
-            window.location.reload();
-          }, 300);
+          await UpdaterPlugin.set({ id: bundle.id });
         } catch (err) {
           console.error('[Updater] Critical update failed:', err);
           const overlay = document.getElementById('critical-update-overlay');
           if (overlay) overlay.remove();
         }
       } else {
-        // Non-critical background update: stage for next cold start
         console.log('[Updater] Background OTA update queued silently for next launch.');
         try {
           const bundle = await UpdaterPlugin.download({
             url: downloadUrl,
             version: version
           });
-          // Tell CapacitorUpdater to activate on next app restart without interrupting gameplay
-          await UpdaterPlugin.set(bundle);
+          // Используем .next() для тихой активации при следующем холодном старте
+          if (typeof UpdaterPlugin.next === 'function') {
+            await UpdaterPlugin.next({ id: bundle.id });
+          } else {
+            await UpdaterPlugin.set({ id: bundle.id });
+          }
           console.log('[Updater] Bundle ready. Will activate upon next cold start.');
         } catch (err) {
           console.warn('[Updater] Background download error:', err);
@@ -199,15 +206,3 @@
 
   window.AppUpdater = AppUpdater;
 })();
-
-// Сообщаем плагину OTA, что игра успешно загрузилась (защита от отката обновления)
-document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorUpdater) {
-      await window.Capacitor.Plugins.CapacitorUpdater.notifyAppReady();
-      console.log('[Updater] App ready notified to prevent rollback.');
-    }
-  } catch (e) {
-    console.warn('[Updater] notifyAppReady failed:', e);
-  }
-});
