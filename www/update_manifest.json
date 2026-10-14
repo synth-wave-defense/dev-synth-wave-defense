@@ -1,6 +1,6 @@
 {
-  "version": "1.0.4",
-  "bundleUrl": "https://github.com/synth-wave-defense/dev-synth-wave-defense/releases/download/v1.0.4/bundle.zip",
+  "version": "1.0.8",
+  "bundleUrl": "https://github.com/synth-wave-defense/dev-synth-wave-defense/releases/download/v1.0.8/bundle.zip",
   "music": [
     { "id": "menu_01", "filename": "menu_01.ogg", "bundled": true },
     { "id": "win", "filename": "win.ogg", "bundled": true },

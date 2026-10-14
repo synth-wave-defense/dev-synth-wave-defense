@@ -5,7 +5,6 @@
   'use strict';
 
   // Master URL for fetching the remote version manifest
-  // Replace <OWNER> and <REPO> with your GitHub repository coordinates
   const REMOTE_MANIFEST_URL = 'https://raw.githubusercontent.com/synth-wave-defense/dev-synth-wave-defense/main/www/update_manifest.json';
   const LOCAL_MANIFEST_PATH = 'update_manifest.json';
   const REQUEST_TIMEOUT_MS = 2500;
@@ -128,31 +127,34 @@
         window.MusicDownloader.startBackgroundDownload(activeManifest);
       }
 
-      // 5. Evaluate OTA bundle updates
-      if (remoteManifest && remoteManifest.code && localManifest && localManifest.code) {
-        const currentVersion = localManifest.code.version;
-        const targetVersion = remoteManifest.code.version;
+      // 5. Evaluate OTA bundle updates (Using flat manifest structure)
+      if (remoteManifest && remoteManifest.version && localManifest && localManifest.version) {
+        const currentVersion = localManifest.version;
+        const targetVersion = remoteManifest.version;
 
         if (targetVersion && targetVersion !== currentVersion) {
           console.log(`[Updater] Update available: ${currentVersion} -> ${targetVersion}`);
-          await this.processBundleUpdate(remoteManifest.code);
+          await this.processBundleUpdate(remoteManifest);
         }
       }
     },
 
     // Handle OTA bundle download & application
-    processBundleUpdate: async function (codeMeta) {
+    processBundleUpdate: async function (manifest) {
       const UpdaterPlugin = getPlugin('CapacitorUpdater');
       if (!UpdaterPlugin) {
         console.warn('[Updater] CapacitorUpdater plugin is missing (browser environment)');
         return;
       }
 
-      const isCritical = !!codeMeta.critical;
-      const downloadUrl = codeMeta.downloadUrl;
-      const version = codeMeta.version;
+      const isCritical = !!manifest.critical;
+      const downloadUrl = manifest.bundleUrl; // strictly looking at root bundleUrl
+      const version = manifest.version;       // strictly looking at root version
 
-      if (!downloadUrl) return;
+      if (!downloadUrl) {
+        console.warn('[Updater] No bundleUrl found in manifest.');
+        return;
+      }
 
       if (isCritical) {
         createCriticalOverlay();
