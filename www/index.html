@@ -1,4 +1,4 @@
-<!-- [HTM100] Version: 1.36.24 - Synth Wave Defense HTML application layout and script bindings. -->
+<!-- [HTM100] Version: 1.36.25 - Synth Wave Defense HTML application layout and script bindings. -->
 <!DOCTYPE html>
 
 <html lang="en">
@@ -339,9 +339,9 @@
   <span>🗑 Clear Save</span>
 </button>
 
-<div class="dev-bar hidden" id="devBar">
-  <div class="dev-bar-top">
-    <div class="dev-fps-badge" id="devFpsBadge">FPS: 60</div>
+<div class="dev-bar hidden" id="devBar" style="width: 210px; max-width: 92vw; box-sizing: border-box;">
+  <div class="dev-bar-top" style="display:flex; align-items:center; justify-content:space-between; gap:3px;">
+    <div class="dev-fps-badge" id="devFpsBadge" style="font-size:11px; min-width:48px;">FPS: 60</div>
 
     <button type="button" class="dev-icon-btn dev-speed-step-btn" onclick="stepDevSpeed(-1)" title="Decrease speed">−</button>
 
@@ -363,38 +363,130 @@
     <button type="button" class="dev-icon-btn dev-close-btn" onclick="closeDevMode()" title="Close Dev Mode">✕</button>
   </div>
 
-  <div class="dev-details-pane hidden" id="devDetailsPane">
-    <div class="dev-actions-row">
-      <button type="button" class="dev-btn" id="livePauseBtn" onclick="toggleLivePause()">PAUSE GAME</button>
-      <button type="button" class="dev-btn dev-danger-btn" id="devClearSaveBtn" onclick="handleClearSaveClick()">CLEAR SAVE</button>
-    </div>
+  <div class="dev-details-pane hidden" id="devDetailsPane" style="width:100%; box-sizing:border-box; overflow:hidden;">
+    
+    <!-- ================= 2 УРОВЕНЬ: GAME ================= -->
+    <div class="dev-spawner-sub" style="margin-top:4px;">
+      <div class="dev-sub-title" onclick="toggleDevSubSection('Game')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none; padding:3px 2px;">
+        <span>▸ GAME</span>
+        <span id="devSubArrowGame">▾</span>
+      </div>
+      <div id="devSubBodyGame" class="hidden" style="margin-top:4px;">
+        <div class="dev-actions-row" style="display:flex; flex-direction:column; gap:4px;">
+          <button type="button" class="dev-btn" id="livePauseBtn" onclick="toggleLivePause()" style="width:100%; font-size:10px; padding:4px;">PAUSE GAME</button>
+          <button type="button" class="dev-btn dev-danger-btn" id="devClearSaveBtn" onclick="handleClearSaveClick()" style="width:100%; font-size:10px; padding:4px;">CLEAR SAVE</button>
+        </div>
 
-    <div class="dev-spawner-sub" id="devTrackRow">
-      <div class="dev-sub-title">NOW PLAYING</div>
-      <div class="dev-track-info" id="devTrackTitle">None</div>
-    </div>
-
-    <div class="dev-spawner-sub" id="devAudioRow">
-      <div class="dev-sub-title">AUDIO MONITOR</div>
-      <pre id="devAudioLog" class="dev-audio-log"></pre>
-    </div>
-
-    <div class="dev-spawner-sub" id="devCustomSpawner">
-      <div class="dev-sub-title">SPAWNER</div>
-      <div class="dev-spawner-grid">
-        <select id="devSpawnType">
-          <option value="grunt">Grunt</option>
-          <option value="scout">Scout</option>
-          <option value="tank">Tank</option>
-          <option value="swarm">Swarm</option>
-          <option value="blinker">Blinker</option>
-          <option value="goliath">Goliath</option>
-          <option value="boss">Boss</option>
-        </select>
-        <input type="number" id="devSpawnCount" min="1" max="50" value="5" title="Count">
-        <button type="button" class="dev-btn" onclick="devSpawnCustomEnemies()">SPAWN</button>
+        <div class="dev-spawner-sub" id="devCustomSpawner" style="margin-top:6px;">
+          <div class="dev-sub-title" style="font-size:9px;">SPAWNER</div>
+          <div style="display:flex; flex-direction:column; gap:4px; margin-top:3px;">
+            <select id="devSpawnType" style="width:100%; font-size:11px; box-sizing:border-box;">
+              <option value="grunt">Grunt</option>
+              <option value="scout">Scout</option>
+              <option value="tank">Tank</option>
+              <option value="swarm">Swarm</option>
+              <option value="blinker">Blinker</option>
+              <option value="goliath">Goliath</option>
+              <option value="emp_bomber">EMP Bomber</option>
+              <option value="hive_empress">Boss: Hive</option>
+              <option value="chronos_warp">Boss: Chronos</option>
+              <option value="titan_core">Boss: Titan</option>
+              <option value="emp_overlord">Boss: Overlord</option>
+            </select>
+            <div style="display:flex; gap:4px;">
+              <input type="number" id="devSpawnCount" min="1" max="50" value="5" title="Count" style="width:55px; font-size:11px; box-sizing:border-box;">
+              <input type="hidden" id="devSpawnInterval" value="0.5">
+              <button type="button" class="dev-btn" onclick="devSpawnCustomEnemies()" style="flex:1; font-size:10px; padding:4px;">SPAWN</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+
+    <!-- ================= 2 УРОВЕНЬ: AUDIO ================= -->
+    <div class="dev-spawner-sub" style="margin-top:4px;">
+      <div class="dev-sub-title" onclick="toggleDevSubSection('Audio')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none; padding:3px 2px;">
+        <span>▸ AUDIO</span>
+        <span id="devSubArrowAudio">▾</span>
+      </div>
+      <div id="devSubBodyAudio" class="hidden" style="margin-top:4px; display:flex; flex-direction:column; gap:3px;">
+        <div style="font-size:10px; color:#8ef3ff; word-break:break-all; padding:2px 0;">
+          <b>Track:</b> <span id="devTrackTitle" style="color:#fff;">None</span>
+        </div>
+
+        <!-- 3 уровень: Audio Hardware -->
+        <div style="border-top:1px solid rgba(0,229,255,0.15); padding-top:3px;">
+          <div onclick="toggleDevMetricGroup('AudioHw')" style="cursor:pointer; display:flex; justify-content:space-between; font-size:10px; color:#94a3b8; user-select:none;">
+            <span>• Hardware</span><span id="devMetricArrowAudioHw">▾</span>
+          </div>
+          <pre id="devAudioLogHw" class="dev-audio-log hidden" style="font-size:10px; line-height:1.35; margin:3px 0 0 0; white-space:pre-wrap; overflow-wrap:anywhere;"></pre>
+        </div>
+
+        <!-- 3 уровень: Audio DSP -->
+        <div style="border-top:1px solid rgba(0,229,255,0.15); padding-top:3px;">
+          <div onclick="toggleDevMetricGroup('AudioDsp')" style="cursor:pointer; display:flex; justify-content:space-between; font-size:10px; color:#94a3b8; user-select:none;">
+            <span>• DSP & Nodes</span><span id="devMetricArrowAudioDsp">▾</span>
+          </div>
+          <pre id="devAudioLogDsp" class="dev-audio-log hidden" style="font-size:10px; line-height:1.35; margin:3px 0 0 0; white-space:pre-wrap; overflow-wrap:anywhere;"></pre>
+        </div>
+
+        <!-- 3 уровень: Thread & Memory -->
+        <div style="border-top:1px solid rgba(0,229,255,0.15); padding-top:3px;">
+          <div onclick="toggleDevMetricGroup('AudioMem')" style="cursor:pointer; display:flex; justify-content:space-between; font-size:10px; color:#94a3b8; user-select:none;">
+            <span>• Thread & RAM</span><span id="devMetricArrowAudioMem">▾</span>
+          </div>
+          <pre id="devAudioLogMem" class="dev-audio-log hidden" style="font-size:10px; line-height:1.35; margin:3px 0 0 0; white-space:pre-wrap; overflow-wrap:anywhere;"></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 2 УРОВЕНЬ: VERSION & OTA ================= -->
+    <div class="dev-spawner-sub" style="margin-top:4px;">
+      <div class="dev-sub-title" onclick="toggleDevSubSection('Version')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none; padding:3px 2px;">
+        <span>▸ VERSION</span>
+        <span id="devSubArrowVersion">▾</span>
+      </div>
+      <div id="devSubBodyVersion" class="hidden" style="margin-top:4px; display:flex; flex-direction:column; gap:3px;">
+
+        <!-- 3 уровень: 1. Версии и Манифест (открыт по умолчанию внутри VERSION) -->
+        <div style="border-top:1px solid rgba(0,229,255,0.15); padding-top:3px;">
+          <div onclick="toggleDevMetricGroup('VerManifest')" style="cursor:pointer; display:flex; justify-content:space-between; font-size:10px; color:#8ef3ff; user-select:none;">
+            <span>• Manifest & Ver</span><span id="devMetricArrowVerManifest">▴</span>
+          </div>
+          <pre id="devVerLogManifest" class="dev-audio-log" style="font-size:10px; line-height:1.35; margin:3px 0 0 0; white-space:pre-wrap; overflow-wrap:anywhere;">Init...</pre>
+        </div>
+
+        <!-- 3 уровень: 2. Скачивание и Применение -->
+        <div style="border-top:1px solid rgba(0,229,255,0.15); padding-top:3px;">
+          <div onclick="toggleDevMetricGroup('VerDownload')" style="cursor:pointer; display:flex; justify-content:space-between; font-size:10px; color:#94a3b8; user-select:none;">
+            <span>• Download & Next</span><span id="devMetricArrowVerDownload">▾</span>
+          </div>
+          <pre id="devVerLogDownload" class="dev-audio-log hidden" style="font-size:10px; line-height:1.35; margin:3px 0 0 0; white-space:pre-wrap; overflow-wrap:anywhere;"></pre>
+        </div>
+
+        <!-- 3 уровень: 3. Состояние плагина и бандлов -->
+        <div style="border-top:1px solid rgba(0,229,255,0.15); padding-top:3px;">
+          <div onclick="toggleDevMetricGroup('VerPlugin')" style="cursor:pointer; display:flex; justify-content:space-between; font-size:10px; color:#94a3b8; user-select:none;">
+            <span>• Plugin & Storage</span><span id="devMetricArrowVerPlugin">▾</span>
+          </div>
+          <pre id="devVerLogPlugin" class="dev-audio-log hidden" style="font-size:10px; line-height:1.35; margin:3px 0 0 0; white-space:pre-wrap; overflow-wrap:anywhere;"></pre>
+        </div>
+
+        <!-- 3 уровень: 4. Логи шагов -->
+        <div style="border-top:1px solid rgba(0,229,255,0.15); padding-top:3px;">
+          <div onclick="toggleDevMetricGroup('VerLogs')" style="cursor:pointer; display:flex; justify-content:space-between; font-size:10px; color:#94a3b8; user-select:none;">
+            <span>• Step Logs</span><span id="devMetricArrowVerLogs">▾</span>
+          </div>
+          <pre id="devVerLogHistory" class="dev-audio-log hidden" style="font-size:9px; line-height:1.3; margin:3px 0 0 0; max-height:95px; overflow-y:auto; white-space:pre-wrap; overflow-wrap:anywhere;"></pre>
+        </div>
+
+        <div class="dev-actions-row" style="display:flex; gap:4px; margin-top:4px;">
+          <button type="button" class="dev-btn" onclick="window.AppUpdater && window.AppUpdater.init()" style="flex:1; font-size:9px; padding:4px 2px;">CHECK</button>
+          <button type="button" class="dev-btn" onclick="window.AppUpdater && window.AppUpdater.forceApplyNow()" style="flex:1; font-size:9px; padding:4px 2px;">APPLY NOW</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -646,7 +738,7 @@
             <input type="range" class="vol-range" id="settingSfxVol" min="0" max="100" step="5" value="100"
                    oninput="setSfxVolume(this.value)">
           </div>
-          <div class="setting-version-label" id="settingsVersionLabel">Version: 1.36.24</div>
+          <div class="setting-version-label" id="settingsVersionLabel">Version: 1.36.25</div>
         </div>
       </div>
     </div>

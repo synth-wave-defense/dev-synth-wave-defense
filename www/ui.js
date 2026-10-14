@@ -1360,7 +1360,7 @@ function closeDevMode() {
   if (goldHalf) goldHalf.classList.remove('interactive');
   if (hpHalf) hpHalf.classList.remove('interactive');
 
-const levelEl = document.getElementById('levelText');
+  const levelEl = document.getElementById('levelText');
   const waveEl = document.getElementById('waveText');
   if (levelEl) {
     levelEl.style.cursor = '';
@@ -1371,6 +1371,14 @@ const levelEl = document.getElementById('levelText');
     waveEl.onclick = null;
   }
   setGameSpeed(1);
+
+  window.devSubExpanded = { Game: false, Audio: false, Version: false };
+  ['Game', 'Audio', 'Version'].forEach(k => {
+    const b = document.getElementById('devSubBody' + k);
+    const a = document.getElementById('devSubArrow' + k);
+    if (b) b.classList.add('hidden');
+    if (a) a.textContent = '▾';
+  });
 
   showHintToast('Dev Mode: Disabled');
 }
@@ -1392,6 +1400,79 @@ function toggleDevPanelExpand() {
   }
   if (btn) {
     btn.textContent = isDevExpanded ? '▴' : '▾';
+  }
+}
+
+// Управление раскрывашками 2-го и 3-го уровней (Game / Audio / Version)
+window.devSubExpanded = { Game: false, Audio: false, Version: false };
+window.devMetricExpanded = {
+  AudioHw: false,
+  AudioDsp: false,
+  AudioMem: false,
+  VerManifest: true,
+  VerDownload: false,
+  VerPlugin: false,
+  VerLogs: false
+};
+
+// 2-й уровень: открывает выбранный раздел и автоматически закрывает остальные два
+function toggleDevSubSection(name) {
+  if (!window.devSubExpanded) window.devSubExpanded = {};
+  const willOpen = !window.devSubExpanded[name];
+
+  ['Game', 'Audio', 'Version'].forEach(key => {
+    const isNowOpen = (key === name) ? willOpen : false;
+    window.devSubExpanded[key] = isNowOpen;
+    const body = document.getElementById('devSubBody' + key);
+    const arrow = document.getElementById('devSubArrow' + key);
+    if (body) body.classList.toggle('hidden', !isNowOpen);
+    if (arrow) arrow.textContent = isNowOpen ? '▴' : '▾';
+  });
+
+  if (name === 'Game' && willOpen) {
+    const customSpawner = document.getElementById('devCustomSpawner');
+    if (customSpawner) customSpawner.classList.remove('hidden');
+  }
+}
+
+// 3-й уровень: переключает подгруппы метрик по очереди (внутри Audio или внутри Version)
+function toggleDevMetricGroup(groupKey) {
+  if (!window.devMetricExpanded) window.devMetricExpanded = {};
+  const willOpen = !window.devMetricExpanded[groupKey];
+
+  const isAudioGroup = groupKey.startsWith('Audio');
+  const siblingKeys = isAudioGroup
+    ? ['AudioHw', 'AudioDsp', 'AudioMem']
+    : ['VerManifest', 'VerDownload', 'VerPlugin', 'VerLogs'];
+
+  const domMap = {
+    AudioHw: 'devAudioLogHw',
+    AudioDsp: 'devAudioLogDsp',
+    AudioMem: 'devAudioLogMem',
+    VerManifest: 'devVerLogManifest',
+    VerDownload: 'devVerLogDownload',
+    VerPlugin: 'devVerLogPlugin',
+    VerLogs: 'devVerLogHistory'
+  };
+
+  siblingKeys.forEach(k => {
+    const openState = (k === groupKey) ? willOpen : false;
+    window.devMetricExpanded[k] = openState;
+    const contentEl = document.getElementById(domMap[k]);
+    const arrowEl = document.getElementById('devMetricArrow' + k);
+    if (contentEl) contentEl.classList.toggle('hidden', !openState);
+    if (arrowEl) arrowEl.textContent = openState ? '▴' : '▾';
+  });
+}
+
+// Мост для кнопки SPAWN (чинит сломанный спаунер)
+function devSpawnCustomEnemies() {
+  if (gameState !== 'PLAYING') {
+    showHintToast('Start a level first to spawn enemies!');
+    return;
+  }
+  if (typeof handleDevSpawnClick === 'function') {
+    handleDevSpawnClick();
   }
 }
 
@@ -5103,14 +5184,15 @@ function render(now) {
         if (trackEl && typeof MusicManager !== 'undefined' && MusicManager.currentTrack) {
           trackEl.textContent = MusicManager.currentTrack();
         }
+
         if (typeof SFX !== 'undefined' && typeof SFX.getAudioMetrics === 'function') {
           const m = SFX.getAudioMetrics();
           const stateStr = m.state || window._audioCtxState || 'closed';
           const suspendsStr = window._audioCtxStateStalls || 0;
           const srStr = (m.sampleRate || 0) + ' Hz';
-          const baseLatStr = (m.baseLatency ? m.baseLatency.toFixed(3) : '0.000') + ' s';
+          const baseLatStr = (m.baseLatency ? m.baseLatency.toFixed(3) : '0.000') + 's';
           const outLatStr = (typeof m.outputLatency === 'number' && m.outputLatency > 0)
-            ? m.outputLatency.toFixed(3) + ' s'
+            ? m.outputLatency.toFixed(3) + 's'
             : 'N/A';
 
           const peakStr = m.peakVolume !== undefined ? m.peakVolume.toFixed(3) : '0.000';
@@ -5119,30 +5201,100 @@ function render(now) {
 
           const maxLagStr = (window._maxThreadLag || 0) + ' ms';
           const lastLagStr = (window._lastThreadLag || 0) + ' ms';
-
           const heapMB = getJSHeapSizeMB();
           const heapStr = heapMB !== null ? heapMB.toFixed(1) + ' MB' : 'N/A';
 
-          const audioLogEl = document.getElementById('devAudioLog');
-          if (audioLogEl) {
-            audioLogEl.textContent =
-              `--- AUDIO HARDWARE ---\n` +
-              `State      : ${stateStr}\n` +
-              `Suspends   : ${suspendsStr}\n` +
-              `Sample Rate: ${srStr}\n` +
-              `Base Lat.  : ${baseLatStr}\n` +
-              `Out Lat.   : ${outLatStr}\n\n` +
-              `--- DSP METRICS ---\n` +
-              `Peak Vol   : ${peakStr}\n` +
-              `DC Offset  : ${dcStr}\n` +
-              `Active Nodes: ${activeNodesStr}\n\n` +
-              `--- THREAD & MEMORY ---\n` +
-              `Max Lag    : ${maxLagStr}\n` +
-              `Last Lag   : ${lastLagStr}\n` +
-              `JS Heap    : ${heapStr}`;
+          const hwEl = document.getElementById('devAudioLogHw');
+          if (hwEl) {
+            hwEl.textContent =
+              `State   : ${stateStr}\n` +
+              `Stalls  : ${suspendsStr}\n` +
+              `Rate    : ${srStr}\n` +
+              `Latency : ${baseLatStr} / ${outLatStr}`;
+          }
+
+          const dspEl = document.getElementById('devAudioLogDsp');
+          if (dspEl) {
+            dspEl.textContent =
+              `Peak Vol: ${peakStr}\n` +
+              `DC Offs : ${dcStr}\n` +
+              `Nodes   : ${activeNodesStr}`;
+          }
+
+          const memEl = document.getElementById('devAudioLogMem');
+          if (memEl) {
+            memEl.textContent =
+              `Max Lag : ${maxLagStr}\n` +
+              `Last Lag: ${lastLagStr}\n` +
+              `JS Heap : ${heapStr}`;
+          }
+        }
+
+        if (window.OtaDiagnostics) {
+          const d = window.OtaDiagnostics;
+
+          const verManifestEl = document.getElementById('devVerLogManifest');
+          if (verManifestEl) {
+            verManifestEl.textContent =
+              `Step   : ${d.step}\n` +
+              `Our Ver: ${d.localVersion}\n` +
+              `Fetch  : ${d.remoteFetchStatus}\n` +
+              `Rem Ver: ${d.remoteVersion}\n` +
+              `Update?: ${d.updateNeeded}`;
+          }
+
+          const verDlEl = document.getElementById('devVerLogDownload');
+          if (verDlEl) {
+            verDlEl.textContent =
+              `DL Stat: ${d.downloadStatus}\n` +
+              `Progr. : ${d.downloadProgress}%\n` +
+              `Bndl ID: ${d.downloadedBundleId}\n` +
+              `Next   : ${d.nextQueueStatus}\n` +
+              `Error  : ${d.lastError}`;
+          }
+
+          const verPluginEl = document.getElementById('devVerLogPlugin');
+          if (verPluginEl) {
+            verPluginEl.textContent =
+              `Plugin : ${d.pluginAvailable ? 'YES' : 'NO'} (${d.notifyReadyStatus})\n` +
+              `Net    : ${d.networkConnected}\n` +
+              `Active : ${d.activeBundleInfo}\n` +
+              `Stored : ${d.downloadedBundlesList}\n` +
+              `Zip URL: ${d.bundleUrl}`;
+          }
+
+          const verLogsEl = document.getElementById('devVerLogHistory');
+          if (verLogsEl) {
+            verLogsEl.textContent = d.logs.length ? d.logs.join('\n') : 'No logs yet';
           }
         }
       }
+	  
+	  const versionLogEl = document.getElementById('devVersionLog');
+        if (versionLogEl && window.OtaDiagnostics) {
+          const d = window.OtaDiagnostics;
+          versionLogEl.textContent =
+            `--- OTA PIPELINE STATUS ---\n` +
+            `Step        : ${d.step}\n` +
+            `Plugin Ready: ${d.pluginAvailable ? 'YES' : 'NO'} (${d.notifyReadyStatus})\n` +
+            `Active Bndl : ${d.activeBundleInfo}\n` +
+            `Stored Bndls: ${d.downloadedBundlesList}\n` +
+            `Network     : ${d.networkConnected}\n\n` +
+            `--- MANIFEST & VERSION ---\n` +
+            `Our Version : ${d.localVersion}\n` +
+            `Remote Fetch: ${d.remoteFetchStatus}\n` +
+            `Remote Ver. : ${d.remoteVersion}\n` +
+            `Update Need?: ${d.updateNeeded}\n` +
+            `Bundle URL  : ${d.bundleUrl}\n\n` +
+            `--- DOWNLOAD & APPLY ---\n` +
+            `DL Status   : ${d.downloadStatus}\n` +
+            `DL Progress : ${d.downloadProgress}%\n` +
+            `Bundle ID   : ${d.downloadedBundleId}\n` +
+            `Next Launch : ${d.nextQueueStatus}\n` +
+            `Last Error  : ${d.lastError}\n\n` +
+            `--- RECENT LOGS ---\n` +
+            (d.logs.length ? d.logs.join('\n') : 'No logs yet');
+        }
     }
   }
 
