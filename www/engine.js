@@ -716,7 +716,60 @@ function startSpecificLevel(lvl) {
   reallyStartLevel(lvl);
 }
 
+function startEndlessMatch() {
+  isEndlessMode = true;
+  isOverdriveMode = false;
+  currentLevel = 1;
+
+  if (typeof battleStartedOnce !== 'undefined') battleStartedOnce = false;
+  if (typeof battlePathAlpha !== 'undefined') battlePathAlpha = 1.0;
+
+  if (typeof refreshLoadoutForProgress === 'function') refreshLoadoutForProgress();
+  activeBattleLoadout = selectedLoadout.slice();
+
+  if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
+  musicSetDucked(false);
+  music('battle');
+
+  document.getElementById('levelsScreen').classList.add('hidden');
+  document.getElementById('victoryScreen').classList.add('hidden');
+  document.getElementById('defeatScreen').classList.add('hidden');
+  document.getElementById('pauseScreen').classList.add('hidden');
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('settingsScreen').classList.add('hidden');
+  document.getElementById('upgradesScreen').classList.add('hidden');
+
+  document.getElementById('econHpSplitBadge').classList.remove('hidden');
+  document.getElementById('levelWaveSplitBadge').classList.remove('hidden');
+  document.getElementById('hudRightGroup').classList.remove('hidden');
+  updateStartChapterLabel(false);
+  document.getElementById('controlsWrapper').classList.remove('hidden');
+
+  const waveBtn = document.getElementById('waveBtn');
+  if (waveBtn) waveBtn.classList.remove('hidden');
+
+  resetLevelState();
+  const mapCfg = MAP_CATALOG.L20 || MAP_CATALOG.L15 || MAP_CATALOG.L1;
+  if (mapCfg) {
+    buildLevelGeometry(mapCfg.path, mapCfg.cols, mapCfg.rows, mapCfg.blocked);
+  }
+  gold = 150;
+  baseHp = 10 + Math.round(getUpgradeEffectiveLevel('base_hp'));
+  matchStartBaseHp = baseHp;
+  wave = 1;
+
+  initBuildPanel();
+  updateUI();
+  resizeCanvasAndCamera();
+  gameState = 'PLAYING';
+  lastTime = performance.now();
+  safeTrack('endless_start', { runsUsed: endlessDailyRunsUsed });
+
+  startWave();
+}
+
 function reallyStartLevel(lvl) {
+  isEndlessMode = false;
 	// Сброс анимации дорожки для нового боя:
   if (typeof battleStartedOnce !== 'undefined') battleStartedOnce = false;
   if (typeof battlePathAlpha !== 'undefined') battlePathAlpha = 1.0;
@@ -832,7 +885,36 @@ function nextLevel() {
   }
 }
 
-function retryLevel() { reallyStartLevel(currentLevel); }
+function retryLevel() {
+  if (isEndlessMode) {
+    const status = getEndlessEntryStatus();
+    const launch = () => {
+      endlessDailyRunsUsed++;
+      saveGame();
+      startEndlessMatch();
+    };
+
+    if (status.type === 'free') {
+      launch();
+    } else if (status.type === 'ad') {
+      if (typeof showAdPlaceholder === 'function') {
+        showAdPlaceholder(launch, null);
+      } else {
+        launch();
+      }
+    } else if (status.type === 'diamonds') {
+      if (diamonds < 15) {
+        if (typeof showHintToast === 'function') showHintToast('Need 15 Diamonds for entry!');
+        return;
+      }
+      diamonds -= 15;
+      updateDiamondUI();
+      launch();
+    }
+  } else {
+    reallyStartLevel(currentLevel);
+  }
+}
 
 function togglePause() {
   if (typeof handleHudSettingsClick === 'function') {
@@ -1310,11 +1392,117 @@ function replayDefeatFlash() {
   }
 }
 
+let lastEndlessEarnedDiamonds = 0;
+let lastEndlessEarnedPrisms = 0;
+let endlessHasClaimedDouble = false;
+
+function claimEndlessDoubleRewards() {
+  if (endlessHasClaimedDouble || (lastEndlessEarnedDiamonds <= 0 && lastEndlessEarnedPrisms <= 0)) return;
+  const doubleBtn = document.getElementById('endlessDoubleBtn');
+
+  const executeDouble = () => {
+    endlessHasClaimedDouble = true;
+    diamonds += lastEndlessEarnedDiamonds;
+    prisms += lastEndlessEarnedPrisms;
+    updateDiamondUI();
+    if (typeof updatePrismUI === 'function') updatePrismUI();
+    if (doubleBtn) {
+      doubleBtn.disabled = true;
+      doubleBtn.innerHTML = '<span>DOUBLED!</span>';
+    }
+    sfx('reward');
+    saveGame();
+  };
+
+  if (!noAdsPurchased) {
+    showAdPlaceholder(executeDouble, null);
+  } else {
+    executeDouble();
+  }
+}
+
 function updateDefeatWaveLine() {
   const el = document.getElementById('defeatWaveLine');
-  if (!el) return;
-  const maxW = (LEVELS_DATA[currentLevel] && LEVELS_DATA[currentLevel].totalWaves) || 1;
-  el.textContent = `WAVE ${Math.min(wave, maxW)} OF ${maxW} REACHED`;
+  const defeatScreen = document.getElementById('defeatScreen');
+  const kicker = defeatScreen ? defeatScreen.querySelector('.result-kicker') : null;
+  const title = defeatScreen ? defeatScreen.querySelector('.result-title') : null;
+  const rewardsBox = document.getElementById('endlessRewardsBox');
+  const recBadge = document.getElementById('endlessNewRecordBadge');
+  const lootLine = document.getElementById('endlessLootLine');
+  const doubleBtn = document.getElementById('endlessDoubleBtn');
+
+  if (isEndlessMode) {
+    const clearedWaves = Math.max(0, wave - 1);
+    const isNewRecord = clearedWaves > endlessBestWave;
+    if (isNewRecord) {
+      endlessBestWave = clearedWaves;
+      saveGameSoon();
+    }
+
+    if (kicker) kicker.textContent = 'ENDLESS ARENA';
+    if (title) {
+      if (clearedWaves >= 5) {
+        title.textContent = `RUN COMPLETE — WAVE ${wave}`;
+        title.setAttribute('data-text', `RUN COMPLETE — WAVE ${wave}`);
+      } else {
+        title.textContent = 'DEFEAT';
+        title.setAttribute('data-text', 'DEFEAT');
+      }
+    }
+    if (el) el.textContent = `WAVE ${wave} REACHED (${clearedWaves} CLEARED)`;
+
+    lastEndlessEarnedDiamonds = clearedWaves * 2;
+    const basePrisms = Math.floor(clearedWaves / 10);
+    let milestonePrisms = 0;
+    const milestones = [15, 30, 50, 75, 100];
+    milestones.forEach(m => {
+      if (clearedWaves >= m && !endlessMilestonesClaimed[m]) {
+        endlessMilestonesClaimed[m] = true;
+        milestonePrisms += 5;
+      }
+    });
+
+    lastEndlessEarnedPrisms = basePrisms;
+    const totalPrismsGranted = basePrisms + milestonePrisms;
+
+    diamonds += lastEndlessEarnedDiamonds;
+    prisms += totalPrismsGranted;
+    updateDiamondUI();
+    if (typeof updatePrismUI === 'function') updatePrismUI();
+    saveGame();
+
+    endlessHasClaimedDouble = false;
+
+    if (rewardsBox) rewardsBox.classList.remove('hidden');
+    if (recBadge) {
+      if (isNewRecord && clearedWaves > 0) recBadge.classList.remove('hidden');
+      else recBadge.classList.add('hidden');
+    }
+    if (lootLine) {
+      lootLine.textContent = `REWARDS: +${lastEndlessEarnedDiamonds} 💎 | +${totalPrismsGranted} 🔮`;
+    }
+    if (doubleBtn) {
+      if (lastEndlessEarnedDiamonds > 0 || lastEndlessEarnedPrisms > 0) {
+        doubleBtn.classList.remove('hidden');
+        doubleBtn.disabled = false;
+        const btnText = noAdsPurchased ? 'DOUBLE REWARDS (FREE)' : 'DOUBLE REWARDS (WATCH AD)';
+        doubleBtn.innerHTML = `<span>${btnText}</span>`;
+      } else {
+        doubleBtn.classList.add('hidden');
+      }
+    }
+  } else {
+    if (kicker) kicker.textContent = 'Level';
+    if (title) {
+      title.textContent = 'Failed';
+      title.setAttribute('data-text', 'Failed');
+    }
+    if (rewardsBox) rewardsBox.classList.add('hidden');
+    if (el) {
+      const maxW = (LEVELS_DATA[currentLevel] && LEVELS_DATA[currentLevel].totalWaves) || 1;
+      el.textContent = `WAVE ${Math.min(wave, maxW)} OF ${maxW} REACHED`;
+    }
+  }
 }
 
 function triggerEmergencyRevivePrompt() {
@@ -2455,7 +2643,7 @@ function update(dt) {
     if (autoWaveTimeRemaining <= 0) {
       autoWaveTimeRemaining = 0;
       waveTimerActive = false;
-      if (wave < maxW) {
+      if (isEndlessMode || wave < maxW) {
         wave++;
         startWave();
       }
@@ -2512,7 +2700,14 @@ function update(dt) {
       
       if (spawnQueue.length === 0 && waveInProgress) {
         waveInProgress = false;
-        if (wave < maxW) {
+        if (isEndlessMode) {
+          endlessBestWave = Math.max(endlessBestWave, wave);
+          saveGameSoon();
+          waveTimerActive = true;
+          autoWaveTimeRemaining = 5.0;
+          if (btn) btn.disabled = false;
+          if (btnText) btnText.textContent = 'Go';
+        } else if (wave < maxW) {
           waveTimerActive = true;
           
           let delay = 5.0;
@@ -3163,7 +3358,7 @@ for (let i = lightningBolts.length - 1; i >= 0; i--) {
     if (lb.life <= 0) lightningBolts.splice(i, 1);
   }
 
-  if (wave >= maxW && spawnQueue.length === 0 && enemies.length === 0 && baseHp > 0 && gameState === 'PLAYING') {
+  if (!isEndlessMode && wave >= maxW && spawnQueue.length === 0 && enemies.length === 0 && baseHp > 0 && gameState === 'PLAYING') {
     if (victoryDelayTimer <= 0) {
       victoryDelayTimer = 1.0;
     } else {

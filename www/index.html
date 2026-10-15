@@ -1,4 +1,4 @@
-<!-- [HTM100] Version: 1.36.29 - Synth Wave Defense HTML application layout and script bindings. -->
+<!-- [HTM100] Version: 1.36.30 - Synth Wave Defense HTML application layout and script bindings. -->
 <!DOCTYPE html>
 
 <html lang="en">
@@ -809,7 +809,7 @@
             <input type="range" class="vol-range" id="settingSfxVol" min="0" max="100" step="5" value="100"
                    oninput="setSfxVolume(this.value)">
           </div>
-          <div class="setting-version-label" id="settingsVersionLabel">Version: 1.36.29</div>
+          <div class="setting-version-label" id="settingsVersionLabel">Version: 1.36.30</div>
         </div>
       </div>
     </div>
@@ -1041,6 +1041,18 @@
     </div>
     <div class="result-subline seq-in seq-d1" id="defeatWaveLine">WAVE 1 OF 1 REACHED</div>
     
+    <div class="endless-rewards-box hidden" id="endlessRewardsBox" style="margin: 8px 0; text-align: center;">
+      <div class="endless-record-badge hidden" id="endlessNewRecordBadge" style="font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 900; color: #00e5ff; text-shadow: 0 0 10px #00e5ff; margin-bottom: 6px;">
+        ★ NEW RECORD! ★
+      </div>
+      <div class="endless-loot-line" id="endlessLootLine" style="font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 800; color: #f472b6;">
+        REWARDS: +0 💎 | +0 🔮
+      </div>
+      <button class="result-btn result-btn-primary hidden" id="endlessDoubleBtn" onclick="claimEndlessDoubleRewards()" style="margin-top: 8px;">
+        <span>DOUBLE REWARDS (WATCH AD)</span>
+      </button>
+    </div>
+
     <button class="result-btn result-btn-primary hidden" id="reviveBtn" onclick="acceptEmergencyRevive()">
       <svg width="15" height="15" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3" fill="none" stroke="#ffffff" stroke-width="2"/><polygon points="10,9 16,12 10,15" fill="#ffffff"/></svg>
       <span id="reviveBtnLabel">REVIVE (3s)</span>
