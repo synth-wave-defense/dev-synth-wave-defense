@@ -1591,6 +1591,325 @@ body {
   transform: none !important;
 }
 
+/* [CSS111] Synth Pass Battle Pass & Color Palette Skin Overlay Styles */
+:root {
+  --neon-primary: #00e5ff;
+  --neon-secondary: #ff007f;
+  --neon-glow: rgba(0, 229, 255, 0.75);
+}
+
+.bp-start-btn {
+  gap: 10px !important;
+  position: relative !important;
+}
+
+.bp-btn-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.bp-btn-progress-bar {
+  width: 90px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(140, 200, 255, 0.2);
+  overflow: hidden;
+}
+
+.bp-btn-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--neon-primary, #00e5ff);
+  box-shadow: 0 0 8px var(--neon-primary, #00e5ff);
+  transition: width 0.3s ease;
+}
+
+.bp-badge-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #ffd700;
+  box-shadow: 0 0 10px #ffd700;
+  border: 2px solid #080a13;
+  animation: badgePulse 1.8s infinite ease-in-out;
+}
+
+#battlePassScreen {
+  z-index: 210 !important;
+  pointer-events: auto !important;
+}
+
+.bp-content-col {
+  gap: 10px !important;
+}
+
+.bp-header-card {
+  border-radius: 18px;
+  background: rgba(8, 12, 24, 0.75);
+  border: 1.5px solid var(--neon-primary, #00e5ff);
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.2);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: none;
+}
+
+.bp-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bp-tier-badge {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: #ffffff;
+  text-shadow: 0 0 12px var(--neon-primary, #00e5ff);
+}
+
+.bp-palette-picker-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bp-palette-label {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  color: #8ea3c4;
+}
+
+.bp-xp-bar-container {
+  position: relative;
+  width: 100%;
+  height: 18px;
+  border-radius: 9px;
+  background: rgba(10, 14, 26, 0.9);
+  border: 1px solid rgba(140, 200, 255, 0.25);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bp-xp-bar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0%;
+  background: linear-gradient(90deg, var(--neon-primary, #00e5ff), #d946ef);
+  box-shadow: 0 0 12px var(--neon-primary, #00e5ff);
+  transition: width 0.3s ease;
+}
+
+.bp-xp-bar-text {
+  position: relative;
+  z-index: 2;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 1px 4px #000;
+}
+
+.bp-header-actions {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.bp-action-btn {
+  flex: 1;
+  padding: 8px 6px;
+  border-radius: 12px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+}
+
+.bp-btn-premium {
+  background: linear-gradient(135deg, #ffd700 0%, #9d4edd 100%);
+  color: #06070d;
+  box-shadow: 0 0 14px rgba(255, 215, 0, 0.4);
+}
+
+.bp-btn-premium:hover {
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+  transform: translateY(-1px);
+}
+
+.bp-btn-premium.owned {
+  background: rgba(8, 12, 24, 0.5);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  color: #ffd700;
+  cursor: default;
+  box-shadow: none;
+}
+
+.bp-btn-buy-tier {
+  background: rgba(8, 12, 24, 0.85);
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  color: #dff9ff;
+}
+
+.bp-btn-buy-tier:hover {
+  border-color: #00e5ff;
+  color: #00e5ff;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
+}
+
+.bp-dev-controls {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.bp-dev-btn {
+  flex: 1;
+  padding: 4px;
+  background: rgba(157, 78, 221, 0.25);
+  border: 1px solid #9d4edd;
+  color: #d8b4fe;
+  font-size: 9px;
+  font-weight: 800;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.bp-tier-list {
+  gap: 8px !important;
+}
+
+.bp-tier-row {
+  border-radius: 14px;
+  background: rgba(8, 12, 24, 0.65);
+  border: 1px solid rgba(140, 200, 255, 0.16);
+  padding: 6px 8px;
+  display: grid;
+  grid-template-columns: 1fr 50px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.bp-tier-row.current-tier {
+  border-color: var(--neon-primary, #00e5ff);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.2);
+  background: rgba(0, 229, 255, 0.08);
+}
+
+.bp-cell {
+  border-radius: 10px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  text-align: center;
+  background: rgba(16, 22, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 52px;
+}
+
+.bp-cell-free {
+  border-color: rgba(0, 229, 255, 0.25);
+}
+
+.bp-cell-prem {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.12), rgba(157, 78, 221, 0.12));
+  border-color: rgba(255, 215, 0, 0.35);
+}
+
+.bp-cell.claimed {
+  opacity: 0.5;
+  background: rgba(16, 35, 28, 0.5);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.bp-cell-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bp-cell-btn {
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9px;
+  font-weight: 900;
+  border: none;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.bp-cell-btn.claim-btn {
+  background: var(--neon-primary, #00e5ff);
+  color: #06070d;
+  box-shadow: 0 0 8px var(--neon-primary, #00e5ff);
+}
+
+.bp-cell-btn.ad-btn {
+  background: #f59e0b;
+  color: #06070d;
+  box-shadow: 0 0 8px #f59e0b;
+}
+
+.bp-cell-btn.claimed-btn {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  cursor: default;
+}
+
+.bp-cell-btn.locked-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #64748b;
+  cursor: default;
+}
+
+.bp-tier-num-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+
+.bp-tier-num {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.bp-tier-status {
+  font-size: 8px;
+  font-weight: 800;
+  color: #64748b;
+}
+
 .revive-skip-btn {
   -webkit-tap-highlight-color: transparent;
   background: rgba(8, 10, 18, 0.94);

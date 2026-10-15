@@ -541,6 +541,16 @@
 
     <div class="start-screen-buttons-zone">
       <button class="menu-btn-primary-capsule seq-in" onclick="showLevelSelect()"><span>START</span></button>
+      <button class="menu-btn-glass-capsule seq-in bp-start-btn" id="mainBattlePassBtn" onclick="showBattlePassScreen('start')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--neon-primary, #00e5ff)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        <div class="bp-btn-content">
+          <span>SYNTH PASS</span>
+          <div class="bp-btn-progress-bar"><div class="bp-btn-progress-fill" id="startBpProgressFill"></div></div>
+        </div>
+        <span class="bp-badge-dot hidden" id="startBpBadgeDot"></span>
+      </button>
       <button class="menu-btn-glass-capsule seq-in" id="mainUpgradesBtn" onclick="showUpgradesScreen('main')"><span>TECH TREE</span></button>
       <button class="menu-btn-glass-capsule seq-in" onclick="showShopScreen('start')"><span>GIFTS & SHOP</span></button>
       <button class="menu-btn-glass-capsule seq-in daily-calendar-btn" id="dailyCalendarBtn" onclick="openDailyLoginModal()">
@@ -809,6 +819,10 @@
             <input type="range" class="vol-range" id="settingSfxVol" min="0" max="100" step="5" value="100"
                    oninput="setSfxVolume(this.value)">
           </div>
+          <div class="setting-row">
+            <span>Neon Visual Theme</span>
+            <select id="settingPaletteSelect" class="hud-select-dropdown" onchange="selectPalette(this.value)"></select>
+          </div>
           <div class="setting-version-label" id="settingsVersionLabel">Version: 1.36.30</div>
         </div>
       </div>
@@ -895,6 +909,65 @@
     </div>
     <button class="result-btn result-btn-primary" onclick="confirmGiveUp()"><span>Give Up</span></button>
     <button class="result-btn" onclick="cancelGiveUp()" style="margin-top: 8px;"><span>Cancel</span></button>
+  </div>
+</div>
+
+<!-- [HTM107.01] Battle Pass Screen overlay -->
+<div class="overlay-screen transparent-bg upgrades-bg hidden" id="battlePassScreen">
+  <div class="upgrades-content-col bp-content-col">
+    <div class="upgrades-top-bar">
+      <div class="levels-top-resources">
+        <div class="levels-top-diamonds">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round">
+            <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/>
+            <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
+          </svg>
+          <span id="bpDiamondVal">0</span>
+        </div>
+        <div class="levels-top-prisms">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round">
+            <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/>
+            <polyline points="3 12 12 15 21 12"/>
+            <line x1="12" y1="2" x2="12" y2="22"/>
+          </svg>
+          <span id="bpPrismVal">0</span>
+        </div>
+      </div>
+      <span class="upgrades-top-label">SYNTH PASS</span>
+    </div>
+
+    <!-- BP Header: Tier, XP progress, Activate Premium, Buy Tier, Palette selector -->
+    <div class="bp-header-card">
+      <div class="bp-header-top">
+        <div class="bp-tier-badge" id="bpTierBadgeText">TIER 1 / 30</div>
+        <div class="bp-palette-picker-wrap">
+          <span class="bp-palette-label">THEME:</span>
+          <select id="bpPaletteSelect" class="hud-select-dropdown" onchange="selectPalette(this.value)"></select>
+        </div>
+      </div>
+      <div class="bp-xp-bar-container">
+        <div class="bp-xp-bar-fill" id="bpXpBarFill"></div>
+        <span class="bp-xp-bar-text" id="bpXpBarText">XP: 0 / 100</span>
+      </div>
+      <div class="bp-header-actions">
+        <button id="bpActivatePremBtn" class="bp-action-btn bp-btn-premium" onclick="buyBpPremiumIAP()">
+          <span>ACTIVATE PREMIUM ($2.99)</span>
+        </button>
+        <button class="bp-action-btn bp-btn-buy-tier" onclick="buyBpTierWithDiamonds()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>
+          <span>+1 TIER (15 💎)</span>
+        </button>
+      </div>
+      <div class="bp-dev-controls hidden" id="bpDevControls">
+        <button class="bp-dev-btn" onclick="devAddBpXp(100)">+100 BP XP</button>
+        <button class="bp-dev-btn" onclick="devToggleBpPremium()">TOGGLE PREMIUM</button>
+      </div>
+    </div>
+
+    <!-- 30 tiers scrollable list -->
+    <div class="upgrades-row-list bp-tier-list" id="bpTierListBody"></div>
+
+    <button class="menu-btn-glass-capsule upgrades-back-btn" onclick="closeBattlePassScreen()"><span>BACK</span></button>
   </div>
 </div>
 
