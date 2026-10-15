@@ -3337,3 +3337,241 @@ input:focus,
   outline: none !important;
   -webkit-tap-highlight-color: transparent !important;
 }
+
+/* --- Daily Calendar Modal & Badge --- */
+.daily-calendar-btn {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+.daily-badge-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  box-shadow: 0 0 10px #ef4444;
+  border: 2px solid #080a13;
+  animation: badgePulse 1.8s infinite ease-in-out;
+}
+
+@keyframes badgePulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1.15); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.daily-modal-card {
+  background: rgba(10, 14, 28, 0.96);
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  box-shadow: 0 0 24px rgba(0, 229, 255, 0.25), inset 0 0 18px rgba(0, 229, 255, 0.1);
+  border-radius: 18px;
+  padding: 18px 16px;
+  width: 92%;
+  max-width: 380px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: modalScaleUp 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes modalScaleUp {
+  0% { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.daily-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+  padding-bottom: 10px;
+}
+
+.daily-modal-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.daily-modal-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #00e5ff;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
+}
+
+.daily-modal-close-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: color 0.15s ease;
+}
+
+.daily-modal-close-btn:hover {
+  color: #ffffff;
+}
+
+.daily-grid-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.daily-card {
+  background: rgba(16, 22, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 10px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+  position: relative;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.daily-card.day7-card {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 70, 239, 0.2) 100%);
+  border: 1.5px solid rgba(245, 158, 11, 0.7);
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.3);
+  padding: 12px 10px;
+}
+
+.daily-card.claimed {
+  opacity: 0.6;
+  border-color: rgba(34, 197, 94, 0.4);
+  background: rgba(16, 35, 28, 0.6);
+}
+
+.daily-card.active {
+  border: 2px solid #00e5ff;
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.5), inset 0 0 10px rgba(0, 229, 255, 0.2);
+  background: rgba(0, 229, 255, 0.12);
+  transform: scale(1.02);
+}
+
+.daily-card.day7-card.active {
+  border: 2px solid #f59e0b;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.6), inset 0 0 12px rgba(245, 158, 11, 0.25);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.35) 0%, rgba(217, 70, 239, 0.3) 100%);
+}
+
+.daily-card.future {
+  opacity: 0.45;
+}
+
+.daily-card-num {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.daily-card.active .daily-card-num {
+  color: #00e5ff;
+}
+
+.daily-card.day7-card .daily-card-num {
+  color: #f59e0b;
+}
+
+.daily-card-reward {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.daily-card-status {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.daily-card.claimed .daily-card-status {
+  color: #22c55e;
+}
+
+.daily-card.active .daily-card-status {
+  color: #00e5ff;
+}
+
+.daily-card.future .daily-card-status {
+  color: #64748b;
+}
+
+.daily-modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.daily-claim-btn {
+  flex: 1;
+  padding: 10px 8px;
+  border-radius: 12px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+}
+
+.daily-claim-normal {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #f1f5f9;
+}
+
+.daily-claim-normal:not(:disabled):hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.daily-claim-double {
+  background: linear-gradient(135deg, #00e5ff 0%, #3b82f6 100%);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.4);
+}
+
+.daily-claim-double:not(:disabled):hover {
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.6);
+  transform: translateY(-1px);
+}
+
+.daily-claim-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none !important;
+  transform: none !important;
+}

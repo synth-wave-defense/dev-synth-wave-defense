@@ -2073,6 +2073,15 @@ function showStartScreen() {
   gameState = 'START';
   updateHudSpeedWidget();
   updateUpgradeButtonsLock();
+  if (typeof updateDailyLoginBadge === 'function') updateDailyLoginBadge();
+
+  if (!hasAutoShownDailyLoginModalThisSession) {
+    const isL1Cleared = (maxUnlockedLevel > 1) || (clearedLevels && clearedLevels.length > 0) || (typeof hasClearedLevelBefore === 'function' && hasClearedLevelBefore(1));
+    if (isL1Cleared && !checkDailyLoginState()) {
+      hasAutoShownDailyLoginModalThisSession = true;
+      setTimeout(() => openDailyLoginModal(), 300);
+    }
+  }
 
   if (typeof warmUpNebulaAndHideLoader === 'function') {
     warmUpNebulaAndHideLoader();
@@ -2988,11 +2997,32 @@ function renderShopScreen() {
   const prismLabel = document.getElementById('shopPrismVal');
   if (prismLabel) prismLabel.textContent = prisms;
 
+  const giftTitle = document.getElementById('dailyGiftTitleText');
   const giftSub = document.getElementById('dailyGiftSubText');
   const giftBtn = document.getElementById('dailyGiftClaimBtn');
 
+  if (giftTitle) {
+    if (dailyGiftsClaimedCount === 0) {
+      giftTitle.textContent = '+10 Diamonds';
+    } else if (dailyGiftsClaimedCount === 1) {
+      giftTitle.textContent = '+15 Diamonds';
+    } else if (dailyGiftsClaimedCount === 2) {
+      giftTitle.textContent = '+20 💎 + 1 🔮 Prism';
+    } else {
+      giftTitle.textContent = 'Daily Gifts Completed';
+    }
+  }
+
   if (giftSub) {
-    giftSub.textContent = `Claimed today: ${dailyGiftsClaimedCount}/3 packs`;
+    if (dailyGiftsClaimedCount === 0) {
+      giftSub.textContent = 'Next pack: 10 💎 (1/3)';
+    } else if (dailyGiftsClaimedCount === 1) {
+      giftSub.textContent = 'Next pack: 15 💎 (2/3)';
+    } else if (dailyGiftsClaimedCount === 2) {
+      giftSub.textContent = 'Next pack: 20 💎 + 1 🔮 Prism!';
+    } else {
+      giftSub.textContent = 'Claimed today: 3/3 packs';
+    }
   }
 
   if (giftBtn) {
@@ -3052,6 +3082,170 @@ function renderShopScreen() {
       noAdsBtn.className = 'shop-item-btn shop-btn-buy';
       noAdsBtn.innerHTML = '<span>$1.99</span>';
     }
+  }
+}
+
+// --- Daily Login 7-Day Calendar Logic ---
+function checkDailyLoginState() {
+  const todayStr = getTodayDateString();
+  return lastLoginClaimDate === todayStr;
+}
+
+function updateDailyLoginBadge() {
+  const badge = document.getElementById('dailyCalendarBadge');
+  if (!badge) return;
+  const isClaimedToday = checkDailyLoginState();
+  if (isClaimedToday) {
+    badge.classList.add('hidden');
+  } else {
+    badge.classList.remove('hidden');
+  }
+}
+
+function renderDailyLoginModal() {
+  const grid = document.getElementById('dailyCalendarGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const isClaimedToday = checkDailyLoginState();
+  const lastClaimedDay = isClaimedToday ? (loginStreakDay === 1 ? 7 : loginStreakDay - 1) : (loginStreakDay - 1);
+
+  DAILY_LOGIN_REWARDS.forEach(item => {
+    const d = item.day;
+    const isDay7 = (d === 7);
+    const card = document.createElement('div');
+
+    let isClaimed = false;
+    let isActive = false;
+    let isFuture = false;
+
+    if (isClaimedToday) {
+      if (d <= lastClaimedDay || (lastClaimedDay === 7)) {
+        isClaimed = true;
+      } else {
+        isFuture = true;
+      }
+    } else {
+      if (d < loginStreakDay) {
+        isClaimed = true;
+      } else if (d === loginStreakDay) {
+        isActive = true;
+      } else {
+        isFuture = true;
+      }
+    }
+
+    card.className = `daily-card${isDay7 ? ' day7-card' : ''}${isClaimed ? ' claimed' : ''}${isActive ? ' active' : ''}${isFuture ? ' future' : ''}`;
+
+    let rewardHtml = '';
+    if (item.diamonds > 0 && item.prisms > 0) {
+      rewardHtml = `<span>${item.diamonds}</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg><span>+</span><span>${item.prisms}</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
+    } else if (item.diamonds > 0) {
+      rewardHtml = `<span>${item.diamonds}</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
+    } else if (item.prisms > 0) {
+      rewardHtml = `<span>${item.prisms}</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
+    }
+
+    let statusText = 'LOCKED';
+    if (isClaimed) statusText = '✓ CLAIMED';
+    else if (isActive) statusText = 'TODAY';
+    else if (isClaimedToday && d === lastClaimedDay + 1) statusText = 'TOMORROW';
+
+    card.innerHTML = `
+      <span class="daily-card-num">DAY ${d}</span>
+      <div class="daily-card-reward">${rewardHtml}</div>
+      <span class="daily-card-status">${statusText}</span>
+    `;
+
+    grid.appendChild(card);
+  });
+
+  const normalBtn = document.getElementById('dailyLoginClaimNormalBtn');
+  const doubleBtn = document.getElementById('dailyLoginClaimDoubleBtn');
+  const doubleLabel = document.getElementById('dailyClaimDoubleLabel');
+  const adIcon = document.getElementById('dailyDoubleAdIcon');
+
+  if (isClaimedToday) {
+    if (normalBtn) {
+      normalBtn.disabled = true;
+      normalBtn.innerHTML = '<span>CLAIMED TODAY</span>';
+    }
+    if (doubleBtn) {
+      doubleBtn.disabled = true;
+      doubleBtn.style.display = 'none';
+    }
+  } else {
+    if (normalBtn) {
+      normalBtn.disabled = false;
+      normalBtn.innerHTML = '<span>CLAIM (1x)</span>';
+    }
+    if (doubleBtn) {
+      doubleBtn.disabled = false;
+      doubleBtn.style.display = 'flex';
+      if (noAdsPurchased) {
+        if (doubleLabel) doubleLabel.textContent = 'CLAIM x2 (FREE VIP)';
+        if (adIcon) adIcon.style.display = 'none';
+      } else {
+        if (doubleLabel) doubleLabel.textContent = 'CLAIM x2 (WATCH AD)';
+        if (adIcon) adIcon.style.display = 'inline-block';
+      }
+    }
+  }
+}
+
+function openDailyLoginModal() {
+  const modal = document.getElementById('dailyLoginModal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  renderDailyLoginModal();
+  sfx('confirm');
+}
+
+function closeDailyLoginModal() {
+  const modal = document.getElementById('dailyLoginModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function claimDailyLoginReward(isDouble) {
+  if (checkDailyLoginState()) {
+    showHintToast('Already claimed today!');
+    return;
+  }
+
+  const currentReward = DAILY_LOGIN_REWARDS[loginStreakDay - 1];
+  if (!currentReward) return;
+
+  const executeGrantReward = () => {
+    const mult = isDouble ? 2 : 1;
+    const addDiamonds = currentReward.diamonds * mult;
+    const addPrisms = currentReward.prisms * mult;
+
+    diamonds += addDiamonds;
+    prisms += addPrisms;
+    lastLoginClaimDate = getTodayDateString();
+    const claimedDay = loginStreakDay;
+    loginStreakDay = (loginStreakDay % 7) + 1;
+
+    updateDiamondUI();
+    if (typeof updatePrismUI === 'function') updatePrismUI();
+    saveGame();
+    sfx('reward');
+
+    updateDailyLoginBadge();
+    renderDailyLoginModal();
+
+    let toastText = isDouble ? `x2 Bonus: ` : `Day ${claimedDay}: `;
+    const parts = [];
+    if (addDiamonds > 0) parts.push(`+${addDiamonds} 💎`);
+    if (addPrisms > 0) parts.push(`+${addPrisms} 🔮`);
+    toastText += parts.join(' ');
+    showHintToast(toastText);
+  };
+
+  if (isDouble && !noAdsPurchased) {
+    showAdPlaceholder(executeGrantReward, null);
+  } else {
+    executeGrantReward();
   }
 }
 
