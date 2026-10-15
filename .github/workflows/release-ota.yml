@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Версия обновления (например: 1.1.3)'
+        description: 'Версия обновления (например: 1.1.4)'
         required: true
-        default: '1.1.3'
+        default: '1.1.4'
 
 jobs:
   build-and-release:
@@ -34,36 +34,19 @@ jobs:
           zip -r ../bundle.zip ./*
 
       - name: 📦 Публикация bundle.zip и получение вечного SHA-хэша
-        id: publish_bundle
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Сохраняем bundle.zip в ветку ota-bundles и пушим
           git checkout -B ota-bundles
-          git add -f bundle.zip
+          git add -f bundle.zip www/update_manifest.json
           git commit -m "chore(ota): bundle v${{ github.event.inputs.version }} [skip ci]"
           git push -f origin ota-bundles
 
-          # Берем точный SHA-хэш коммита, где гарантированно лежит этот bundle.zip
           BUNDLE_SHA=$(git rev-parse HEAD)
           RAW_URL="https://raw.githubusercontent.com/${{ github.repository }}/${BUNDLE_SHA}/bundle.zip"
           echo "RAW_URL=$RAW_URL" >> $GITHUB_ENV
           echo "✅ Прямая ссылка на архив: $RAW_URL"
-
-      - name: 💾 Обновление update_manifest.json в ветке main
-        run: |
-          VERSION="${{ github.event.inputs.version }}"
-          git checkout main
-          git pull origin main --rebase
-
-          cd www
-          jq --arg v "$VERSION" --arg url "$RAW_URL" '.version = $v | .bundleUrl = $url' update_manifest.json > tmp.json && mv tmp.json update_manifest.json
-          cd ..
-
-          git add www/update_manifest.json
-          git commit -m "chore(ota): update manifest to v${VERSION} [skip ci]" || echo "No changes"
-          git push origin main
 
       - name: 🚀 Создание GitHub Release (для истории)
         uses: softprops/action-gh-release@v2
@@ -73,3 +56,18 @@ jobs:
           files: bundle.zip
           draft: false
           prerelease: false
+
+      - name: 💾 Обновление update_manifest.json в ветке main
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          git fetch origin main
+          git checkout -f main
+          git reset --hard origin/main
+
+          cd www
+          jq --arg v "$VERSION" --arg url "$RAW_URL" '.version = $v | .bundleUrl = $url' update_manifest.json > tmp.json && mv tmp.json update_manifest.json
+          cd ..
+
+          git add www/update_manifest.json
+          git commit -m "chore(ota): update manifest to v${VERSION} [skip ci]" || echo "No changes"
+          git push origin main
