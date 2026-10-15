@@ -209,6 +209,7 @@ let sellConfirmArmed = false;
 let sellConfirmTimer = null;
 
 let diamonds = 0;
+let prisms = 0;
 let maxUnlockedLevel = 1;
 let clearedLevels = [];
 let levelStars = {};
@@ -251,6 +252,7 @@ function serializeSaveData() {
   return {
     version: 1,
     diamonds,
+    prisms,
     maxUnlockedLevel,
     clearedLevels,
     levelStars,
@@ -326,6 +328,7 @@ async function loadGame() {
   if (typeof data.consecutiveFails === 'number' && data.consecutiveFails >= 0) consecutiveFails = data.consecutiveFails;
 
   if (typeof data.diamonds === 'number' && data.diamonds >= 0) diamonds = data.diamonds;
+  prisms = typeof data.prisms === 'number' ? Math.max(0, Math.floor(data.prisms)) : 0;
   if (typeof data.maxUnlockedLevel === 'number' && data.maxUnlockedLevel >= 1) {
     maxUnlockedLevel = Math.min(data.maxUnlockedLevel, TOTAL_LEVELS);
   }
@@ -1873,6 +1876,7 @@ try {
   }
 
   diamonds = 0;
+  prisms = 0;
   maxUnlockedLevel = 1;
   clearedLevels = [];
   levelStars = {};
@@ -1898,6 +1902,7 @@ try {
   showStartScreen();
   renderLevelsGrid();
   updateDiamondUI();
+  if (typeof updatePrismUI === 'function') updatePrismUI();
   updateUpgradeButtonsLock();
   console.log('SectorDefenseTD: save cleared, state reset.');
 }

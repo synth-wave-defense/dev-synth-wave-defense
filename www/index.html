@@ -1,4 +1,4 @@
-<!-- [HTM100] Version: 1.36.27 - Synth Wave Defense HTML application layout and script bindings. -->
+<!-- [HTM100] Version: 1.36.28 - Synth Wave Defense HTML application layout and script bindings. -->
 <!DOCTYPE html>
 
 <html lang="en">
@@ -180,6 +180,17 @@
         </svg>
       </div>
       <span class="stat-val-text" id="globalDiamondsVal">10</span>
+    </div>
+
+    <div class="badge-half" id="hudPrismBadge" onclick="handleDevPrismClick()">
+      <div class="hud-icon" style="filter: drop-shadow(0 0 7px rgba(217,70,239,.85));">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round">
+          <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/>
+          <polyline points="3 12 12 15 21 12"/>
+          <line x1="12" y1="2" x2="12" y2="22"/>
+        </svg>
+      </div>
+      <span class="stat-val-text" id="globalPrismsVal">0</span>
     </div>
 
     <div class="hud-capsule-extra hidden" id="econHpSplitBadge">
@@ -539,12 +550,22 @@
 <div class="overlay-screen transparent-bg upgrades-bg hidden" id="upgradesScreen">
   <div class="upgrades-content-col">
     <div class="upgrades-top-bar">
-      <div class="levels-top-diamonds">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round">
-          <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/>
-          <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
-        </svg>
-        <span id="upgradesDiamondVal">0</span>
+      <div class="levels-top-resources">
+        <div class="levels-top-diamonds">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round">
+            <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/>
+            <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
+          </svg>
+          <span id="upgradesDiamondVal">0</span>
+        </div>
+        <div class="levels-top-prisms">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round">
+            <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/>
+            <polyline points="3 12 12 15 21 12"/>
+            <line x1="12" y1="2" x2="12" y2="22"/>
+          </svg>
+          <span id="upgradesPrismVal">0</span>
+        </div>
       </div>
       <span class="upgrades-top-label">TECH TREE</span>
     </div>
@@ -556,12 +577,22 @@
 <div class="overlay-screen transparent-bg upgrades-bg hidden" id="shopScreen">
   <div class="upgrades-content-col">
     <div class="upgrades-top-bar">
-      <div class="levels-top-diamonds">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round">
-          <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/>
-          <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
-        </svg>
-        <span id="shopDiamondVal">0</span>
+      <div class="levels-top-resources">
+        <div class="levels-top-diamonds">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round">
+            <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/>
+            <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
+          </svg>
+          <span id="shopDiamondVal">0</span>
+        </div>
+        <div class="levels-top-prisms">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round">
+            <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/>
+            <polyline points="3 12 12 15 21 12"/>
+            <line x1="12" y1="22" x2="12" y2="22"/>
+          </svg>
+          <span id="shopPrismVal">0</span>
+        </div>
       </div>
       <span class="upgrades-top-label">GIFTS & SHOP</span>
     </div>
@@ -768,7 +799,7 @@
             <input type="range" class="vol-range" id="settingSfxVol" min="0" max="100" step="5" value="100"
                    oninput="setSfxVolume(this.value)">
           </div>
-          <div class="setting-version-label" id="settingsVersionLabel">Version: 1.36.27</div>
+          <div class="setting-version-label" id="settingsVersionLabel">Version: 1.36.28</div>
         </div>
       </div>
     </div>
@@ -779,12 +810,22 @@
 
 <div class="overlay-screen levels-bg hidden" id="levelsScreen">
   <div class="levels-top-bar">
-    <div class="levels-top-diamonds">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round">
-        <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/>
-        <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
-      </svg>
-      <span id="levelsDiamondVal">128</span>
+    <div class="levels-top-resources">
+      <div class="levels-top-diamonds">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round">
+          <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/>
+          <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
+        </svg>
+        <span id="levelsDiamondVal">0</span>
+      </div>
+      <div class="levels-top-prisms">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round">
+          <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/>
+          <polyline points="3 12 12 15 21 12"/>
+          <line x1="12" y1="2" x2="12" y2="22"/>
+        </svg>
+        <span id="levelsPrismVal">0</span>
+      </div>
     </div>
     <span class="levels-top-chapter" id="levelsTopChapter">CHAPTER 1</span>
   </div>
@@ -1049,6 +1090,7 @@ loadGame().then(() => {
   initBuildPanel();
   toggleDevMode(initialDevState);
   updateDiamondUI();
+  updatePrismUI();
   showStartScreen();
 
   window.__gameBooted = true;
