@@ -63,6 +63,14 @@ function getBaseDamageFor(e) {
   return 1;
 }
 
+function checkEnemyEnrage(e) {
+  if (isOverdriveMode && e && e.hp > 0 && (e.hp / e.maxHp) <= 0.3 && !e.isEnraged) {
+    e.isEnraged = true;
+    e.baseSpeed *= 1.35;
+    e.speed *= 1.35;
+  }
+}
+
 function getNewlyUnlockedTowers(lvl) {
   const cur = (LEVELS_DATA[lvl] && LEVELS_DATA[lvl].unlockedTowers) || [];
   const prev = (LEVELS_DATA[lvl - 1] && LEVELS_DATA[lvl - 1].unlockedTowers) || [];
@@ -212,8 +220,18 @@ let diamonds = 0;
 let prisms = 0;
 let maxUnlockedLevel = 1;
 let clearedLevels = [];
+let overdriveClearedLevels = {};
+let isOverdriveMode = false;
+let regularSpawnCounter = 0;
 let levelStars = {};
 let matchStartBaseHp = 10;
+
+function isOverdriveUnlocked() {
+  if (typeof devMode !== 'undefined' && devMode) return true;
+  if (typeof clearedLevels !== 'undefined' && (clearedLevels.includes(LEVELS_PER_SECTION) || clearedLevels.some(l => l >= LEVELS_PER_SECTION))) return true;
+  if (typeof maxUnlockedLevel === 'number' && maxUnlockedLevel > LEVELS_PER_SECTION) return true;
+  return false;
+}
 let upgradesPreviousSource = 'main';
 let lastVictoryDiamondsReward = 2;
 let hasClaimedX2ThisLevel = false;
@@ -260,6 +278,7 @@ function serializeSaveData() {
     prisms,
     maxUnlockedLevel,
     clearedLevels,
+    overdriveClearedLevels,
     levelStars,
     upgradeTreeData: Object.assign({}, upgradeTreeData),
     selectedLoadout,
@@ -343,6 +362,9 @@ async function loadGame() {
   }
   if (Array.isArray(data.clearedLevels)) {
     clearedLevels = data.clearedLevels.filter(n => typeof n === 'number');
+  }
+  if (data.overdriveClearedLevels && typeof data.overdriveClearedLevels === 'object') {
+    overdriveClearedLevels = data.overdriveClearedLevels;
   }
   if (data.levelStars && typeof data.levelStars === 'object') {
     levelStars = data.levelStars;
@@ -763,8 +785,9 @@ function resetLevelState() {
   const lvlConfig = LEVELS_DATA[currentLevel];
   gold = lvlConfig ? lvlConfig.startGold : 100;
   const initialBaseHp = (lvlConfig && lvlConfig.startHp !== undefined) ? lvlConfig.startHp : 10;
-  baseHp = initialBaseHp + Math.round(getUpgradeEffectiveLevel('base_hp'));
+  baseHp = isOverdriveMode ? 1 : (initialBaseHp + Math.round(getUpgradeEffectiveLevel('base_hp')));
   matchStartBaseHp = baseHp;
+  regularSpawnCounter = 0;
 
   wave = 1;
   waveInProgress = false;
@@ -963,6 +986,43 @@ function claimX2Reward() {
   }
 }
 
+function claimOverdriveBonusPrism() {
+  if (hasClaimedX2ThisLevel) return;
+  const claimBtn = document.getElementById('claimX2Btn');
+
+  const executeGrant = () => {
+    hasClaimedX2ThisLevel = true;
+    prisms += 1;
+    if (typeof updatePrismUI === 'function') updatePrismUI();
+    if (claimBtn) {
+      claimBtn.disabled = true;
+      claimBtn.innerHTML = '<span>CLAIMED (+1 🔮)</span>';
+    }
+    sfx('reward');
+    saveGame();
+  };
+
+  if (!noAdsPurchased) {
+    showAdPlaceholder(executeGrant, null);
+  } else {
+    executeGrant();
+  }
+}
+
+function restoreNormalVictoryRewardBox() {
+  const rewardBox = document.getElementById('victoryRewardBox');
+  if (rewardBox) {
+    rewardBox.innerHTML = `
+      <span class="reward-amount" id="victoryRewardVal">+2</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round">
+        <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/>
+        <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
+      </svg>
+      <span class="reward-label" id="victoryRewardBadgeType">DIAMONDS</span>
+    `;
+  }
+}
+
 let victoryFanfareTimer = null;
 
 function playVictoryFanfare() {
@@ -995,27 +1055,100 @@ function triggerVictory() {
   hasClaimedX2ThisLevel = false;
 
   consecutiveFails = 0;
-  diamonds += reward;
-  updateDiamondUI();
-  renderVictoryStars(stars);
-  playVictoryFanfare();
 
-  const badgeTypeEl = document.getElementById('victoryRewardBadgeType');
-  if (badgeTypeEl) {
-    badgeTypeEl.textContent = rewardLabel === 'DIAMONDS' ? 'DIAMONDS' : rewardLabel;
-    badgeTypeEl.style.color = (rewardLabel === 'FIRST CLEAR BONUS' || rewardLabel === 'STAR UPGRADE BONUS') ? '#f59e0b' : '#8ef3ff';
+  if (!isOverdriveMode) {
+    restoreNormalVictoryRewardBox();
+    diamonds += reward;
+    updateDiamondUI();
+    renderVictoryStars(stars);
+    playVictoryFanfare();
+
+    const badgeTypeEl = document.getElementById('victoryRewardBadgeType');
+    if (badgeTypeEl) {
+      badgeTypeEl.textContent = rewardLabel === 'DIAMONDS' ? 'DIAMONDS' : rewardLabel;
+      badgeTypeEl.style.color = (rewardLabel === 'FIRST CLEAR BONUS' || rewardLabel === 'STAR UPGRADE BONUS') ? '#f59e0b' : '#8ef3ff';
+    }
+
+    const rewardValEl = document.getElementById('victoryRewardVal');
+    if (rewardValEl) rewardValEl.textContent = `+${reward}`;
+
+    const claimBtn = document.getElementById('claimX2Btn');
+    if (claimBtn) {
+      claimBtn.disabled = false;
+      claimBtn.classList.remove('hidden');
+      claimBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3" fill="none" stroke="#ffffff" stroke-width="2"/><polygon points="10,9 16,12 10,15" fill="#ffffff"/></svg><span>CLAIM x2</span>';
+      claimBtn.onclick = claimX2Reward;
+    }
+  } else {
+    const isFirstOverdriveClear = !overdriveClearedLevels[currentLevel];
+    let gainedPrisms = 0;
+    let gainedDiamonds = 0;
+    let odRewardLabel = 'OVERDRIVE FARM';
+
+    if (isFirstOverdriveClear) {
+      const isBossLvl = (currentLevel % LEVELS_PER_SECTION === 0);
+      gainedPrisms = isBossLvl ? 5 : 3;
+      gainedDiamonds = isBossLvl ? 30 : 15;
+      odRewardLabel = 'OVERDRIVE CLEAR';
+      overdriveClearedLevels[currentLevel] = true;
+    } else {
+      gainedDiamonds = 3;
+      gainedPrisms = 0;
+      odRewardLabel = 'OVERDRIVE FARM';
+    }
+
+    diamonds += gainedDiamonds;
+    prisms += gainedPrisms;
+    updateDiamondUI();
+    if (typeof updatePrismUI === 'function') updatePrismUI();
+    renderVictoryStars(3);
+    playVictoryFanfare();
+
+    const rewardBox = document.getElementById('victoryRewardBox');
+    if (rewardBox) {
+      if (gainedPrisms > 0) {
+        rewardBox.innerHTML = `
+          <span class="reward-amount" id="victoryRewardVal">+${gainedDiamonds}</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round">
+            <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/>
+            <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
+          </svg>
+          <span class="reward-amount" style="margin-left:6px; color:#d946ef;">+${gainedPrisms}</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round">
+            <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/>
+            <polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/>
+          </svg>
+          <span class="reward-label" style="color:#ff2a6d; margin-left:6px;">${odRewardLabel}</span>
+        `;
+      } else {
+        rewardBox.innerHTML = `
+          <span class="reward-amount" id="victoryRewardVal">+${gainedDiamonds}</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round">
+            <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/>
+            <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
+          </svg>
+          <span class="reward-label" style="color:#ff2a6d; margin-left:6px;">${odRewardLabel}</span>
+        `;
+      }
+    }
+
+    const claimBtn = document.getElementById('claimX2Btn');
+    if (claimBtn) {
+      claimBtn.disabled = false;
+      claimBtn.classList.remove('hidden');
+      const btnText = noAdsPurchased ? 'FREE: +1 BONUS PRISM' : 'WATCH AD: +1 BONUS PRISM';
+      claimBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="vertical-align:middle; margin-right:4px;">
+          <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.3)"/>
+          <polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/>
+        </svg>
+        <span>${btnText}</span>
+      `;
+      claimBtn.onclick = claimOverdriveBonusPrism;
+    }
   }
 
-  const rewardValEl = document.getElementById('victoryRewardVal');
-  if (rewardValEl) rewardValEl.textContent = `+${reward}`;
   setTimeout(() => sfx('reward'), 760);
-
-  const claimBtn = document.getElementById('claimX2Btn');
-  if (claimBtn) {
-    claimBtn.disabled = false;
-    claimBtn.classList.remove('hidden');
-    claimBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3" fill="none" stroke="#ffffff" stroke-width="2"/><polygon points="10,9 16,12 10,15" fill="#ffffff"/></svg><span>CLAIM x2</span>';
-  }
 
   const wasUpgradesLocked = !(devMode || getLoadoutReferenceLevel() >= getLoadoutStartLevel());
   const isFirstClear = currentLevel >= maxUnlockedLevel;
@@ -1041,9 +1174,9 @@ function triggerVictory() {
   };
 
   saveGame();
-  safeTrack('level_complete', { level: currentLevel, stars, reward });
+  safeTrack('level_complete', { level: currentLevel, stars, reward, isOverdrive: isOverdriveMode });
 
-  if (isFirstClear && currentLevel % LEVELS_PER_SECTION === 0) {
+  if (!isOverdriveMode && isFirstClear && currentLevel % LEVELS_PER_SECTION === 0) {
     showMilestoneSequence(currentLevel, showVictory);
   } else {
     showVictory();
@@ -1899,6 +2032,8 @@ try {
   prisms = 0;
   maxUnlockedLevel = 1;
   clearedLevels = [];
+  overdriveClearedLevels = {};
+  isOverdriveMode = false;
   levelStars = {};
   Object.keys(upgradeTreeData).forEach(key => { upgradeTreeData[key] = 0; });
   selectedLoadout = [];
@@ -2347,7 +2482,7 @@ function update(dt) {
           spawnY += ny * eData.laneOffset;
         }
 
-        enemies.push({
+        const spawnedEnemy = {
           x: spawnX, y: spawnY,
           laneOffset: eData.laneOffset || 0,
           angle: 0, wpIndex: 1,
@@ -2359,7 +2494,19 @@ function update(dt) {
           bounty: eData.bounty, radius: eData.radius,
           shieldTimer: 0, isShielded: false, warpTimer: 0,
           dashTimer: 0, empTimer: 0, slowTimer: 0
-        });
+        };
+
+        if (isOverdriveMode && !eData.isBoss && !eData.isMiniBoss) {
+          regularSpawnCounter++;
+          if (regularSpawnCounter % 10 === 0) {
+            spawnedEnemy.maxHp *= 2.5;
+            spawnedEnemy.hp = spawnedEnemy.maxHp;
+            spawnedEnemy.radius *= 1.25;
+            spawnedEnemy.isElite = true;
+          }
+        }
+
+        enemies.push(spawnedEnemy);
       }
       spawnTimer += (eData.interval || 0.8);
       
@@ -2575,7 +2722,8 @@ if (e.type === 'chronos_warp') {
     const dx = targetX - e.x;
     const dy = targetY - e.y;
     const dist = Math.hypot(dx, dy);
-    const step = e.speed * dt;
+    const effectiveSpeed = e.speed * (isOverdriveMode ? 1.2 : 1.0);
+    const step = effectiveSpeed * dt;
     e.angle = Math.atan2(dy, dx);
 
     if (dist <= step) {
@@ -2677,6 +2825,7 @@ if (e.type === 'chronos_warp') {
       sfx('laserHit');
       if (!target.isShielded) {
         target.hp -= t.damage * dt;
+        checkEnemyEnrage(target);
         if (Math.random() < 0.25) {
           createDamageShards(target.x, target.y, target.color, t.damage * dt * 4, false);
           createImpactSmoke(target.x, target.y, 8);
@@ -2807,6 +2956,7 @@ if (e.type === 'chronos_warp') {
             createImpactSmoke(target.x, target.y, 9 + rampProgress * 5);
           }
         }
+        checkEnemyEnrage(target);
         if (t.melterFireTimer >= rampTime) {
           t.melterCoolingTimer = t.melterCooldownTime || rampTime;
           t.melterFireTimer = 0;
@@ -2848,6 +2998,7 @@ if (e.type === 'chronos_warp') {
 
         if (distSq <= hitR * hitR && !e.isShielded) {
           e.hp -= t.damage;
+          checkEnemyEnrage(e);
           if (typeof createFloatingDamage === 'function') {
             createFloatingDamage(e.x, e.y, t.damage, '#a275df');
           }
@@ -2878,6 +3029,7 @@ if (e.type === 'chronos_warp') {
       if (dist <= step) {
         if (!p.target.isShielded) {
           p.target.hp -= p.damage;
+          checkEnemyEnrage(p.target);
           if (typeof createFloatingDamage === 'function') {
             createFloatingDamage(p.target.x, p.target.y, p.damage, p.color || '#00e5ff');
           }
@@ -2915,6 +3067,7 @@ if (e.type === 'chronos_warp') {
             const d = Math.sqrt(distSq);
             const splashDmg = p.damage * (1 - d / (p.splash * 1.3));
             e.hp -= splashDmg;
+            checkEnemyEnrage(e);
             if (typeof createFloatingDamage === 'function') {
               createFloatingDamage(e.x, e.y, splashDmg, p.color || '#ff9100');
             }
@@ -2992,6 +3145,7 @@ for (let i = lightningBolts.length - 1; i >= 0; i--) {
     if (!lb.hasDealtDamage && !lb.targetRef.isShielded && enemies.includes(lb.targetRef)) {
       lb.hasDealtDamage = true; // <-- блокируем повторный урон на следующих кадрах!
       lb.targetRef.hp -= lb.damage;
+      checkEnemyEnrage(lb.targetRef);
 
       if (typeof createFloatingDamage === 'function') {
         createFloatingDamage(lb.targetRef.x, lb.targetRef.y, lb.damage, '#00ffcc');

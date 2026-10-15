@@ -1383,7 +1383,47 @@ function navLevelSection(dir) {
   }, 180);
 }
 
+function toggleOverdriveMode() {
+  if (!isOverdriveUnlocked()) {
+    sfx('denied');
+    showHintToast('Complete Sector 1 to unlock OVERDRIVE');
+    return;
+  }
+  isOverdriveMode = !isOverdriveMode;
+  sfx('confirm');
+  updateOverdriveToggleUI();
+  renderLevelsGrid();
+}
+
+function updateOverdriveToggleUI() {
+  const switchEl = document.getElementById('modeToggleSwitch');
+  const levelsScreen = document.getElementById('levelsScreen');
+  const isUnlocked = isOverdriveUnlocked();
+
+  if (switchEl) {
+    if (isOverdriveMode) {
+      switchEl.classList.add('active-overdrive');
+    } else {
+      switchEl.classList.remove('active-overdrive');
+    }
+    if (!isUnlocked) {
+      switchEl.classList.add('locked-switch');
+    } else {
+      switchEl.classList.remove('locked-switch');
+    }
+  }
+
+  if (levelsScreen) {
+    if (isOverdriveMode) {
+      levelsScreen.classList.add('overdrive-active');
+    } else {
+      levelsScreen.classList.remove('overdrive-active');
+    }
+  }
+}
+
 function renderLevelsGrid() {
+  updateOverdriveToggleUI();
   const levelsGrid = document.getElementById('levelsGrid');
   if (!levelsGrid) return;
   levelsGrid.innerHTML = '';
@@ -1411,26 +1451,64 @@ function renderLevelsGrid() {
 
   for (let lvl = startLvl; lvl <= endLvl; lvl++) {
     const btn = document.createElement('button');
-    const isUnlocked = devMode || lvl <= maxUnlockedLevel;
-    const earnedStars = levelStars[lvl] || 0;
-    const isCleared = clearedLevels.includes(lvl) || earnedStars > 0;
-    const isCurrent = lvl === maxUnlockedLevel && !isCleared;
 
-    if (isUnlocked) {
-      btn.className = 'level-card-btn' + (isCurrent ? ' current' : (isCleared ? ' cleared' : ''));
-      btn.innerHTML = `
-        <span class="level-num">${lvl}</span>
-        <div class="level-card-stars">
-          <span class="mini-star ${earnedStars >= 1 ? 'filled' : 'empty'}">★</span>
-          <span class="mini-star ${earnedStars >= 2 ? 'filled' : 'empty'}">★</span>
-          <span class="mini-star ${earnedStars >= 3 ? 'filled' : 'empty'}">★</span>
-        </div>
-      `;
-      btn.onclick = () => startSpecificLevel(lvl);
+    if (!isOverdriveMode) {
+      const isUnlocked = devMode || lvl <= maxUnlockedLevel;
+      const earnedStars = levelStars[lvl] || 0;
+      const isCleared = clearedLevels.includes(lvl) || earnedStars > 0;
+      const isCurrent = lvl === maxUnlockedLevel && !isCleared;
+
+      if (isUnlocked) {
+        btn.className = 'level-card-btn' + (isCurrent ? ' current' : (isCleared ? ' cleared' : ''));
+        btn.innerHTML = `
+          <span class="level-num">${lvl}</span>
+          <div class="level-card-stars">
+            <span class="mini-star ${earnedStars >= 1 ? 'filled' : 'empty'}">★</span>
+            <span class="mini-star ${earnedStars >= 2 ? 'filled' : 'empty'}">★</span>
+            <span class="mini-star ${earnedStars >= 3 ? 'filled' : 'empty'}">★</span>
+          </div>
+        `;
+        btn.onclick = () => startSpecificLevel(lvl);
+      } else {
+        btn.className = 'level-card-btn locked';
+        btn.disabled = true;
+        btn.innerHTML = `<span class="level-num">🔒</span>`;
+      }
     } else {
-      btn.className = 'level-card-btn locked';
-      btn.disabled = true;
-      btn.innerHTML = `<span class="level-num">🔒</span>`;
+      const isUnlockedInNormal = devMode || clearedLevels.includes(lvl);
+      const isOdCleared = !!overdriveClearedLevels[lvl];
+
+      if (isUnlockedInNormal) {
+        btn.className = 'level-card-btn overdrive-card' + (isOdCleared ? ' cleared' : '');
+        const isBossLvl = (lvl % LEVELS_PER_SECTION === 0);
+        const rewardText = isBossLvl ? '+5 🔮' : '+3 🔮';
+
+        if (isOdCleared) {
+          btn.innerHTML = `
+            <span class="level-num">${lvl}</span>
+            <div class="level-card-overdrive-badge filled" title="Overdrive Cleared">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#ff0055" stroke="#ff2a6d" stroke-width="1.8" style="filter: drop-shadow(0 0 6px #ff0055);">
+                <polygon points="12 2 21 12 12 22 3 12"/>
+              </svg>
+            </div>
+          `;
+        } else {
+          btn.innerHTML = `
+            <span class="level-num">${lvl}</span>
+            <div class="level-card-overdrive-badge empty">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2">
+                <polygon points="12 2 21 12 12 22 3 12"/>
+              </svg>
+              <span class="od-reward-tag">${rewardText}</span>
+            </div>
+          `;
+        }
+        btn.onclick = () => startSpecificLevel(lvl);
+      } else {
+        btn.className = 'level-card-btn locked overdrive-card';
+        btn.disabled = true;
+        btn.innerHTML = `<span class="level-num">🔒</span>`;
+      }
     }
     levelsGrid.appendChild(btn);
   }
@@ -1699,6 +1777,8 @@ function handleClearSaveClick() {
   prisms = 0;
   maxUnlockedLevel = 1;
   clearedLevels = [];
+  overdriveClearedLevels = {};
+  isOverdriveMode = false;
   levelStars = {};
   Object.keys(upgradeTreeData).forEach(key => { upgradeTreeData[key] = 0; });
   selectedLoadout = [];
@@ -3253,6 +3333,19 @@ function renderVictoryStars(starsCount) {
   const row = document.getElementById('victoryStarsRow');
   if (!row) return;
   row.innerHTML = '';
+
+  if (isOverdriveMode) {
+    const slot = document.createElement('span');
+    slot.className = 'star-slot filled overdrive-victory-badge';
+    setTimeout(() => sfx('star'), 160);
+    slot.innerHTML = `
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="#ff0055" stroke="#ff2a6d" stroke-width="1.8" style="filter: drop-shadow(0 0 12px #ff0055);">
+        <polygon points="12 2 21 12 12 22 3 12"/>
+      </svg>`;
+    row.appendChild(slot);
+    return;
+  }
+
   for (let s = 1; s <= 3; s++) {
     const isFilled = s <= starsCount;
     const slot = document.createElement('span');
@@ -5290,8 +5383,43 @@ function drawEnemyModel(e, showHpBar = true) {
   ctx.save();
   ctx.translate(e.x, e.y);
 
+  if (e.isElite) {
+    ctx.save();
+    const eRad = e.radius || 12;
+    const col1 = e.glow || e.color || '#00e5ff';
+    const col2 = '#ff0055';
+
+    ctx.strokeStyle = col1;
+    ctx.lineWidth = 2.2;
+    if (typeof setGlow === 'function') setGlow(col1, 8);
+    ctx.beginPath();
+    ctx.arc(0, 0, eRad * 1.35, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = col2;
+    ctx.lineWidth = 2.0;
+    if (typeof setGlow === 'function') setGlow(col2, 10);
+    ctx.beginPath();
+    ctx.arc(0, 0, eRad * 1.62, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  if (e.isEnraged) {
+    ctx.save();
+    const pulse = (Math.sin(performance.now() * 0.012) + 1) / 2;
+    const eRad = e.radius || 12;
+    ctx.strokeStyle = pulse > 0.5 ? '#ff0055' : '#ffffff';
+    ctx.lineWidth = 3.0 + pulse * 1.5;
+    if (typeof setGlow === 'function') setGlow('#ff0055', 12 + pulse * 8);
+    ctx.beginPath();
+    ctx.arc(0, 0, eRad * (1.25 + pulse * 0.15), 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   const isBlinkerShielded = (e.type === 'blinker' || e.type === 'chronos_warp') && e.isShielded;
-  const renderColor = isBlinkerShielded ? '#64748b' : (e.color || '#00e5ff');
+  const renderColor = e.isEnraged ? '#ff0055' : (isBlinkerShielded ? '#64748b' : (e.color || '#00e5ff'));
 
   if (isBlinkerShielded) {
     ctx.save();

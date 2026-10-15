@@ -1,4 +1,4 @@
-<!-- [HTM100] Version: 1.36.28 - Synth Wave Defense HTML application layout and script bindings. -->
+<!-- [HTM100] Version: 1.36.29 - Synth Wave Defense HTML application layout and script bindings. -->
 <!DOCTYPE html>
 
 <html lang="en">
@@ -809,7 +809,7 @@
             <input type="range" class="vol-range" id="settingSfxVol" min="0" max="100" step="5" value="100"
                    oninput="setSfxVolume(this.value)">
           </div>
-          <div class="setting-version-label" id="settingsVersionLabel">Version: 1.36.28</div>
+          <div class="setting-version-label" id="settingsVersionLabel">Version: 1.36.29</div>
         </div>
       </div>
     </div>
@@ -843,6 +843,15 @@
   <div class="levels-header-zone">
     <div class="levels-subtitle">Select</div>
     <div class="levels-title">Level</div>
+    <div class="mode-toggle-container" id="modeToggleContainer">
+      <div class="mode-toggle-switch" id="modeToggleSwitch" onclick="toggleOverdriveMode()">
+        <span class="mode-toggle-label mode-normal" id="modeToggleLabelNormal">NORMAL</span>
+        <div class="mode-toggle-track">
+          <div class="mode-toggle-knob" id="modeToggleKnob"></div>
+        </div>
+        <span class="mode-toggle-label mode-overdrive" id="modeToggleLabelOverdrive">OVERDRIVE</span>
+      </div>
+    </div>
     <div class="level-part-navigator">
       <button class="part-nav-btn" id="partNavPrev" onclick="navLevelSection(-1)">❮</button>
       <span class="part-nav-label" id="partNavLabel">CHAPTER 1</span>
