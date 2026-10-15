@@ -1723,6 +1723,170 @@ body {
   text-shadow: 0 0 22px rgba(0, 229, 255, 0.85), 0 2px 14px rgba(2, 3, 8, 0.95);
 }
 
+/* Mode Toggle Switch (NORMAL / OVERDRIVE) */
+.mode-toggle-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 4px 0 6px 0;
+  user-select: none;
+}
+
+.mode-toggle-switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(6, 9, 20, 0.75);
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  border-radius: 20px;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.15);
+}
+
+.mode-toggle-switch:hover {
+  border-color: rgba(0, 229, 255, 0.6);
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.3);
+}
+
+.mode-toggle-switch.active-overdrive {
+  border-color: rgba(255, 0, 85, 0.7);
+  box-shadow: 0 0 18px rgba(255, 0, 85, 0.4);
+}
+
+.mode-toggle-label {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  transition: all 0.25s ease;
+}
+
+.mode-toggle-label.mode-normal {
+  color: #00e5ff;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.7);
+}
+
+.mode-toggle-switch.active-overdrive .mode-toggle-label.mode-normal {
+  color: rgba(148, 163, 184, 0.5);
+  text-shadow: none;
+}
+
+.mode-toggle-label.mode-overdrive {
+  color: rgba(148, 163, 184, 0.5);
+  text-shadow: none;
+}
+
+.mode-toggle-switch.active-overdrive .mode-toggle-label.mode-overdrive {
+  color: #ff0055;
+  text-shadow: 0 0 10px rgba(255, 0, 85, 0.85);
+}
+
+.mode-toggle-track {
+  width: 36px;
+  height: 18px;
+  background: rgba(15, 23, 42, 0.8);
+  border-radius: 10px;
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.mode-toggle-switch.active-overdrive .mode-toggle-track {
+  border-color: #ff0055;
+  background: rgba(40, 5, 20, 0.9);
+}
+
+.mode-toggle-knob {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #00e5ff;
+  box-shadow: 0 0 8px #00e5ff;
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.25s;
+}
+
+.mode-toggle-switch.active-overdrive .mode-toggle-knob {
+  transform: translateX(18px);
+  background: #ff0055;
+  box-shadow: 0 0 10px #ff0055;
+}
+
+.mode-toggle-switch.locked-switch {
+  opacity: 0.7;
+}
+
+/* OVERDRIVE ACTIVE VISUAL THEME */
+#levelsScreen.overdrive-active {
+  background: radial-gradient(circle at 50% 30%, rgba(60, 0, 25, 0.55), rgba(4, 5, 14, 0.95)) !important;
+}
+
+.overdrive-active .levels-subtitle {
+  color: #ff2a6d;
+  text-shadow: 0 0 12px rgba(255, 0, 85, 0.8);
+}
+
+.overdrive-active .levels-title {
+  color: #ff0055;
+  text-shadow: 0 0 24px rgba(255, 0, 85, 0.9), 0 0 12px rgba(255, 42, 109, 0.6);
+}
+
+.overdrive-active .levels-top-chapter,
+.overdrive-active .part-nav-label {
+  color: #ff2a6d;
+  text-shadow: 0 0 14px rgba(255, 0, 85, 0.8);
+}
+
+.overdrive-active .part-nav-btn {
+  border-color: rgba(255, 0, 85, 0.4);
+}
+
+.overdrive-active .part-nav-btn:hover:not(:disabled) {
+  background: rgba(255, 0, 85, 0.2);
+  border-color: #ff0055;
+  box-shadow: 0 0 14px rgba(255, 0, 85, 0.4);
+}
+
+.overdrive-active .level-card-btn {
+  border-color: rgba(255, 0, 85, 0.4);
+  background: rgba(20, 6, 16, 0.75);
+}
+
+.overdrive-active .level-card-btn:hover:not(:disabled) {
+  border-color: #ff0055;
+  box-shadow: 0 0 16px rgba(255, 0, 85, 0.5);
+}
+
+.overdrive-active .level-card-btn.cleared {
+  border-color: #ff0055;
+  box-shadow: 0 0 18px rgba(255, 0, 85, 0.4);
+  background: linear-gradient(rgba(255, 0, 85, 0.25), rgba(15, 4, 12, 0.85));
+}
+
+.level-card-overdrive-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  margin-top: 1px;
+}
+
+.level-card-overdrive-badge.empty {
+  opacity: 0.85;
+}
+
+.od-reward-tag {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9px;
+  font-weight: 800;
+  color: #d946ef;
+  letter-spacing: 0.5px;
+}
+
 .level-part-navigator {
   display: flex;
   align-items: center;
