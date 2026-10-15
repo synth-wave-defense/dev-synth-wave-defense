@@ -1160,6 +1160,7 @@ function renderUpgradeTree() {
   container.innerHTML = '';
 
   const maxStep = devMode ? 10 : getMaxUpgradeStep();
+  const isPhase2UnlockedGlobally = devMode || getLoadoutReferenceLevel() > 30 || maxUnlockedLevel > 30 || (typeof clearedLevels !== 'undefined' && clearedLevels.includes(30));
 
   const towerRows = UPGRADE_BRANCH_SPECS.towers.map(card => {
     const towerType = card.icon;
@@ -1191,9 +1192,29 @@ function renderUpgradeTree() {
 
   const addRow = (row) => {
     const currentLvl = upgradeTreeData[row.key] || 0;
-    const isMaxed = currentLvl >= 10;
     const nextStep = currentLvl + 1;
-    const isSectorGated = !row.isLockedCard && !isMaxed && !devMode && nextStep > maxStep;
+
+    let isSectorGated = false;
+    let lvlNeeded = 11;
+
+    if (!row.isLockedCard && !devMode) {
+      if (nextStep <= 10) {
+        if (nextStep > maxStep) {
+          isSectorGated = true;
+          if (nextStep > 8) lvlNeeded = 41;
+          else if (nextStep > 6) lvlNeeded = 31;
+          else if (nextStep > 3) lvlNeeded = 21;
+          else lvlNeeded = 11;
+        }
+      } else if (nextStep <= 15) {
+        if (!isPhase2UnlockedGlobally) {
+          isSectorGated = true;
+          lvlNeeded = 31;
+        }
+      } else {
+        isSectorGated = false;
+      }
+    }
 
     const card = document.createElement('div');
     card.className = 'upgrade-row-card' + (row.isLockedCard ? ' locked-row' : '');
@@ -1212,20 +1233,56 @@ function renderUpgradeTree() {
     const nameEl = document.createElement('span');
     nameEl.className = 'upgrade-row-name' + (row.isLockedCard ? ' locked-name' : '');
     nameEl.textContent = row.isLockedCard ? row.lockedLabel : row.label;
+
     const lvlEl = document.createElement('span');
     lvlEl.className = 'upgrade-row-level';
-    lvlEl.style.color = row.isLockedCard ? '#5d6a85' : row.color;
-    lvlEl.textContent = row.isLockedCard ? 'LOCKED' : `${currentLvl}/10`;
+
+    if (row.isLockedCard) {
+      lvlEl.style.color = '#5d6a85';
+      lvlEl.textContent = 'LOCKED';
+    } else if (currentLvl < 10) {
+      lvlEl.style.color = row.color;
+      lvlEl.textContent = `${currentLvl}/10`;
+    } else if (currentLvl < 15) {
+      lvlEl.style.color = '#d946ef';
+      lvlEl.textContent = `ASC ${currentLvl - 10}/5`;
+    } else {
+      lvlEl.style.color = '#00e5ff';
+      lvlEl.textContent = `SYNTH +${currentLvl - 15}`;
+    }
+
     head.appendChild(nameEl);
     head.appendChild(lvlEl);
     info.appendChild(head);
 
     const segs = document.createElement('div');
     segs.className = 'upgrade-row-segments';
-    for (let s = 1; s <= 10; s++) {
+
+    if (currentLvl < 10) {
+      for (let s = 1; s <= 10; s++) {
+        const seg = document.createElement('div');
+        seg.className = 'upgrade-row-seg' + (row.isLockedCard ? ' locked-seg' : '');
+        if (!row.isLockedCard && s <= currentLvl) {
+          seg.style.background = row.color;
+        }
+        segs.appendChild(seg);
+      }
+    } else if (currentLvl < 15) {
+      for (let s = 1; s <= 5; s++) {
+        const seg = document.createElement('div');
+        seg.className = 'upgrade-row-seg' + (row.isLockedCard ? ' locked-seg' : '');
+        if (!row.isLockedCard && s <= (currentLvl - 10)) {
+          seg.style.background = '#d946ef';
+          seg.style.boxShadow = '0 0 8px #d946ef';
+        }
+        segs.appendChild(seg);
+      }
+    } else {
       const seg = document.createElement('div');
-      seg.className = 'upgrade-row-seg' + (row.isLockedCard ? ' locked-seg' : '');
-      if (!row.isLockedCard && s <= currentLvl) seg.style.background = row.color;
+      seg.className = 'upgrade-row-seg';
+      seg.style.flex = '1';
+      seg.style.background = 'linear-gradient(90deg, #00e5ff, #d946ef)';
+      seg.style.boxShadow = '0 0 10px rgba(217, 70, 239, 0.5)';
       segs.appendChild(seg);
     }
     info.appendChild(segs);
@@ -1235,30 +1292,47 @@ function renderUpgradeTree() {
       const minusBtn = document.createElement('button');
       minusBtn.className = 'upgrade-row-dev-minus';
       minusBtn.textContent = '−';
-      minusBtn.onclick = () => handleNodeClick(row.key, currentLvl);
+      minusBtn.onclick = () => handleNodeClick(row.key, currentLvl - 1);
       card.appendChild(minusBtn);
     }
 
     const buyBtn = document.createElement('button');
     buyBtn.className = 'upgrade-row-buy';
+
     if (row.isLockedCard) {
       buyBtn.classList.add('locked-buy');
       buyBtn.innerHTML = `<span style="font-size:12px; filter:grayscale(1) brightness(.7);">🔒</span>`;
-    } else if (isMaxed) {
-      buyBtn.classList.add('max-buy');
-      buyBtn.innerHTML = `<span class="upgrade-row-buy-cost" style="color:#8ea3c4;">MAX</span>`;
     } else if (isSectorGated) {
       buyBtn.classList.add('locked-buy');
-      let lvlNeeded = 11;
-      if (nextStep > 8) lvlNeeded = 41;
-      else if (nextStep > 6) lvlNeeded = 31;
-      else if (nextStep > 3) lvlNeeded = 21;
       buyBtn.innerHTML = `<span style="font-size:11px; filter:grayscale(1) brightness(.7);">🔒</span><span class="upgrade-row-buy-cost" style="color:#8ea3c4; font-size:10px;">L${lvlNeeded}</span>`;
-      buyBtn.onclick = () => showHintToast(`Unlocks on Level ${lvlNeeded}`);
+      buyBtn.onclick = () => {
+        sfx('denied');
+        showHintToast(`Unlocks on Level ${lvlNeeded}`);
+      };
     } else {
-      const cost = UPGRADE_STEP_COSTS[nextStep - 1];
-      const canAfford = diamonds >= cost;
-      buyBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="flex:none;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg><span class="upgrade-row-buy-cost" style="color:${canAfford ? '#ffffff' : '#f87171'};">${cost}</span>`;
+      const costs = getUpgradeCostForLevel(nextStep);
+      const costD = costs.diamonds;
+      const costP = costs.prisms;
+
+      const diamondIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="flex:none;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
+      const prismIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="flex:none;"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
+
+      const canAffordD = diamonds >= costD;
+      const canAffordP = prisms >= costP;
+      const canAffordBoth = canAffordD && canAffordP;
+
+      if (costD > 0 && costP > 0) {
+        buyBtn.innerHTML = `${diamondIcon}<span class="upgrade-row-buy-cost" style="color:${canAffordD ? '#ffffff' : '#f87171'};">${costD}</span>${prismIcon}<span class="upgrade-row-buy-cost" style="color:${canAffordP ? '#ffffff' : '#f87171'};">${costP}</span>`;
+      } else if (costP > 0) {
+        buyBtn.innerHTML = `${prismIcon}<span class="upgrade-row-buy-cost" style="color:${canAffordP ? '#ffffff' : '#f87171'};">${costP}</span>`;
+      } else {
+        buyBtn.innerHTML = `${diamondIcon}<span class="upgrade-row-buy-cost" style="color:${canAffordD ? '#ffffff' : '#f87171'};">${costD}</span>`;
+      }
+
+      if (!canAffordBoth) {
+        buyBtn.style.opacity = '0.75';
+      }
+
       buyBtn.onclick = () => handleNodeClick(row.key, nextStep);
     }
     card.appendChild(buyBtn);
@@ -3424,7 +3498,7 @@ function updateWaveCircle(dt) {
   const maxW = (lvlConfig && lvlConfig.totalWaves) || 10;
   let bonus = 0;
   if (isCountdown && wave < maxW) {
-    const moneyMultiplier = 1 + (upgradeTreeData.base_gold || 0) * 0.05;
+    const moneyMultiplier = 1 + getUpgradeEffectiveLevel('base_gold') * 0.05;
     const fractionSaved = totalDelay > 0 ? Math.min(1, Math.max(0, autoWaveTimeRemaining / totalDelay)) : 0;
     bonus = Math.round(fractionSaved * baseBonus * moneyMultiplier);
   }

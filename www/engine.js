@@ -502,48 +502,59 @@ function getMaxUpgradeStep() {
 function handleNodeClick(key, stepIndex) {
   const currentVal = upgradeTreeData[key] || 0;
   if (devMode) {
-    if (stepIndex > currentVal) {
-      const diff = stepIndex - currentVal;
-      if (diamonds >= diff) {
-        diamonds -= diff;
-        upgradeTreeData[key] = stepIndex;
-      } else {
-        upgradeTreeData[key] = stepIndex;
-      }
-    } else if (stepIndex === currentVal) {
-      upgradeTreeData[key] = currentVal - 1;
-    } else {
-      upgradeTreeData[key] = stepIndex;
-    }
+    upgradeTreeData[key] = Math.max(0, stepIndex);
     updateDiamondUI();
+    updatePrismUI();
     renderUpgradeTree();
     saveGameSoon();
     return;
   }
 
   if (stepIndex <= currentVal) return;
+  const targetStep = currentVal + 1;
+  if (stepIndex !== targetStep) return;
+
   const maxStep = getMaxUpgradeStep();
-  if (stepIndex > maxStep) {
-    let lvlNeeded = 11;
-    if (stepIndex > 8) lvlNeeded = 41;
-    else if (stepIndex > 6) lvlNeeded = 31;
-    else if (stepIndex > 3) lvlNeeded = 21;
-    sfx('denied');
-    showHintToast(`Unlocks on Level ${lvlNeeded}`);
-    return;
-  }
-  if (stepIndex === currentVal + 1) {
-    const cost = stepIndex;
-    if (diamonds >= cost) {
-      diamonds -= cost;
-      upgradeTreeData[key] = stepIndex;
-      sfx('confirm');
-      updateDiamondUI();
-      renderUpgradeTree();
-      saveGameSoon();
-      safeTrack('upgrade_purchased', { key, step: stepIndex });
-    } else {
+  const isPhase2UnlockedGlobally = getLoadoutReferenceLevel() > 30 || maxUnlockedLevel > 30 || (typeof clearedLevels !== 'undefined' && clearedLevels.includes(30));
+
+  if (targetStep <= 10) {
+    if (targetStep > maxStep) {
+      let lvlNeeded = 11;
+      if (targetStep > 8) lvlNeeded = 41;
+      else if (targetStep > 6) lvlNeeded = 31;
+      else if (targetStep > 3) lvlNeeded = 21;
       sfx('denied');
+      showHintToast(`Unlocks on Level ${lvlNeeded}`);
+      return;
+    }
+  } else if (targetStep <= 15) {
+    if (!isPhase2UnlockedGlobally) {
+      sfx('denied');
+      showHintToast('Unlocks on Level 31');
+      return;
+    }
+  }
+
+  const { diamonds: costD, prisms: costP } = getUpgradeCostForLevel(targetStep);
+
+  if (diamonds >= costD && prisms >= costP) {
+    diamonds -= costD;
+    prisms -= costP;
+    upgradeTreeData[key] = targetStep;
+    sfx('confirm');
+    updateDiamondUI();
+    updatePrismUI();
+    renderUpgradeTree();
+    saveGameSoon();
+    safeTrack('upgrade_purchased', { key, step: targetStep });
+  } else {
+    sfx('denied');
+    if (diamonds < costD && prisms < costP) {
+      showHintToast('Not enough Diamonds & Prisms!');
+    } else if (diamonds < costD) {
+      showHintToast('Not enough Diamonds!');
+    } else {
+      showHintToast('Not enough Prisms!');
     }
   }
 }
@@ -743,7 +754,7 @@ function resetLevelState() {
   const lvlConfig = LEVELS_DATA[currentLevel];
   gold = lvlConfig ? lvlConfig.startGold : 100;
   const initialBaseHp = (lvlConfig && lvlConfig.startHp !== undefined) ? lvlConfig.startHp : 10;
-  baseHp = initialBaseHp + (upgradeTreeData.base_hp || 0);
+  baseHp = initialBaseHp + Math.round(getUpgradeEffectiveLevel('base_hp'));
   matchStartBaseHp = baseHp;
 
   wave = 1;
@@ -1358,7 +1369,7 @@ function buildTowerAt(type, c, r) {
     gold -= conf.cost;
     grid[r][c] = 2;
 
-    const powerLvl = upgradeTreeData[`${type}_power`] || 0;
+    const powerLvl = getUpgradeEffectiveLevel(`${type}_power`);
     const dmgBonus = 1 + powerLvl * (conf.powerDmg || 0);
     const rateBonus = 1 + powerLvl * (conf.powerRate || 0);
     const rangeBonus = 1 + powerLvl * (conf.powerRange || 0);
@@ -1483,7 +1494,7 @@ function upgradeSelectedTower() {
     if (selectedTower.type === 'melter') {
       selectedTower.melterFireTimer = 0;
       selectedTower.melterCoolingTimer = 0;
-      const powerLvl = upgradeTreeData.melter_power || 0;
+      const powerLvl = getUpgradeEffectiveLevel('melter_power');
       const rateBonus = 1 + powerLvl * (conf.powerRate || 0);
       if (selectedTower.level === 2) {
         selectedTower.melterRampTime = 4.4 / rateBonus;
@@ -1560,7 +1571,7 @@ function triggerManualWave() {
       }
 
       wave++;
-      const moneyMultiplier = 1 + (upgradeTreeData.base_gold || 0) * 0.05;
+      const moneyMultiplier = 1 + getUpgradeEffectiveLevel('base_gold') * 0.05;
       const fractionSaved = totalDelay > 0 ? Math.min(1, Math.max(0, secondsSaved / totalDelay)) : 0;
       let baseBonus = (currentWaveObj && currentWaveObj.earlyBonus !== undefined) ? currentWaveObj.earlyBonus : 15;
       const earlyCallBonus = Math.round(fractionSaved * baseBonus * moneyMultiplier);
@@ -2734,7 +2745,7 @@ if (e.type === 'chronos_warp') {
           const dxS = e.x - t.x;
           const dyS = e.y - t.y;
           if (dxS * dxS + dyS * dyS <= rangeSq && !e.isShielded) {
-            const stasisPowerLvl = upgradeTreeData.stasis_power || 0;
+            const stasisPowerLvl = getUpgradeEffectiveLevel('stasis_power');
             const baseSlow = (t.slowFactor !== undefined) ? t.slowFactor : (TOWER_CONFIGS.stasis.slowFactor || 0.30);
             const baseDur = (t.slowDuration !== undefined) ? t.slowDuration : (TOWER_CONFIGS.stasis.slowDuration || 1.4);
             const boostedSlow = Math.min(0.9, baseSlow * (1 + stasisPowerLvl * (TOWER_CONFIGS.stasis.powerSlow || 0)));
@@ -2902,7 +2913,7 @@ if (e.type === 'chronos_warp') {
   for (let i = enemies.length - 1; i >= 0; i--) {
     const e = enemies[i];
     if (e.hp <= 0) {
-      const moneyMultiplier = 1 + (upgradeTreeData.base_gold || 0) * 0.05;
+      const moneyMultiplier = 1 + getUpgradeEffectiveLevel('base_gold') * 0.05;
       gold += Math.round(e.bounty * moneyMultiplier);
       sfxDeath(e);
 
