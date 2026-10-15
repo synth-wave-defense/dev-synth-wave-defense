@@ -2320,8 +2320,386 @@ function showSettings(fromSource = 'start') {
   const vibCheckbox = document.getElementById('settingVibration');
   if (vibCheckbox) vibCheckbox.checked = settings.vibrationEnabled !== false;
 
+  updatePaletteSelectDropdown('settingPaletteSelect');
+
   applySfxVolume(settings.sfxVolume != null ? settings.sfxVolume : 100, false);
   applyMusicVolume(settings.musicVolume != null ? settings.musicVolume : 70, false);
+}
+
+// [UI122] Synth Pass & Custom Neon Color Palette UI Handlers.
+let bpPreviousSource = 'start';
+
+function updateBpProgressUI() {
+  const { tier, xpInTier, isMax, totalXp } = getBpTierInfo(bpXp);
+
+  // Fill progress bar in main menu button
+  const startFill = document.getElementById('startBpProgressFill');
+  if (startFill) {
+    const pct = isMax ? 100 : xpInTier;
+    startFill.style.width = `${pct}%`;
+  }
+
+  // Unclaimed reward badge check
+  let hasUnclaimed = false;
+  if (typeof BATTLE_PASS_TIERS !== 'undefined') {
+    for (let t = 1; t <= tier; t++) {
+      if (!bpClaimedFree[t]) { hasUnclaimed = true; break; }
+      if (bpPremiumPurchased && !bpClaimedPrem[t]) { hasUnclaimed = true; break; }
+    }
+  }
+
+  const badgeDot = document.getElementById('startBpBadgeDot');
+  if (badgeDot) {
+    badgeDot.classList.toggle('hidden', !hasUnclaimed);
+  }
+
+  // Update BP Screen elements if open
+  const bpScreen = document.getElementById('battlePassScreen');
+  if (bpScreen && !bpScreen.classList.contains('hidden')) {
+    renderBattlePassScreen();
+  }
+}
+
+function updatePaletteSelectDropdown(selectId) {
+  const selectEl = document.getElementById(selectId);
+  if (!selectEl || typeof NEON_PALETTES === 'undefined') return;
+  selectEl.innerHTML = '';
+
+  Object.keys(NEON_PALETTES).forEach(pId => {
+    const pal = NEON_PALETTES[pId];
+    const isUnlocked = unlockedPalettes.includes(pId);
+    const opt = document.createElement('option');
+    opt.value = pId;
+    opt.textContent = isUnlocked ? pal.name : `🔒 ${pal.name}`;
+    if (pId === activePalette) opt.selected = true;
+    if (!isUnlocked) opt.disabled = true;
+    selectEl.appendChild(opt);
+  });
+}
+
+function selectPalette(paletteId) {
+  if (!unlockedPalettes.includes(paletteId) && !devMode) {
+    sfx('denied');
+    showHintToast('Palette locked in Synth Pass!');
+    return;
+  }
+  if (!unlockedPalettes.includes(paletteId) && devMode) {
+    unlockedPalettes.push(paletteId);
+  }
+  applyPaletteColors(paletteId);
+  sfx('confirm');
+  saveGame();
+  updatePaletteSelectDropdown('settingPaletteSelect');
+  updatePaletteSelectDropdown('bpPaletteSelect');
+  showHintToast(`Active Theme: ${NEON_PALETTES[paletteId] ? NEON_PALETTES[paletteId].name : paletteId}`);
+}
+
+function showBattlePassScreen(fromSource = 'start') {
+  bpPreviousSource = fromSource;
+  const bgScreenId = (fromSource === 'victory') ? 'victoryScreen'
+    : ((fromSource === 'defeat') ? 'defeatScreen' : 'startScreen');
+
+  ['startScreen', 'victoryScreen', 'defeatScreen', 'levelsScreen', 'pauseScreen', 'settingsScreen', 'upgradesScreen', 'shopScreen']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.remove('screen-bg-only');
+      if (id === bgScreenId) {
+        el.classList.remove('hidden');
+        el.classList.add('screen-bg-only');
+      } else {
+        el.classList.add('hidden');
+      }
+    });
+
+  const topHud = document.getElementById('topHud');
+  if (topHud) topHud.classList.add('hidden');
+
+  const bpScreen = document.getElementById('battlePassScreen');
+  if (bpScreen) bpScreen.classList.remove('hidden');
+  gameState = 'BATTLE_PASS';
+
+  renderBattlePassScreen();
+}
+
+function closeBattlePassScreen() {
+  const bpScreen = document.getElementById('battlePassScreen');
+  if (bpScreen) bpScreen.classList.add('hidden');
+
+  const topHud = document.getElementById('topHud');
+  if (topHud) topHud.classList.remove('hidden');
+
+  ['startScreen', 'victoryScreen', 'defeatScreen'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('screen-bg-only');
+  });
+
+  if (bpPreviousSource === 'victory') {
+    document.getElementById('victoryScreen').classList.remove('hidden');
+    gameState = 'VICTORY';
+  } else if (bpPreviousSource === 'defeat') {
+    document.getElementById('defeatScreen').classList.remove('hidden');
+    gameState = 'DEFEAT';
+  } else {
+    document.getElementById('startScreen').classList.remove('hidden');
+    gameState = 'START';
+  }
+  updateBpProgressUI();
+}
+
+function renderBattlePassScreen() {
+  const dVal = document.getElementById('bpDiamondVal');
+  if (dVal) dVal.textContent = diamonds;
+  const pVal = document.getElementById('bpPrismVal');
+  if (pVal) pVal.textContent = prisms;
+
+  const { tier, xpInTier, isMax } = getBpTierInfo(bpXp);
+
+  const badgeText = document.getElementById('bpTierBadgeText');
+  if (badgeText) badgeText.textContent = `TIER ${tier} / 30`;
+
+  const barFill = document.getElementById('bpXpBarFill');
+  if (barFill) barFill.style.width = isMax ? '100%' : `${xpInTier}%`;
+
+  const barText = document.getElementById('bpXpBarText');
+  if (barText) barText.textContent = isMax ? 'XP: MAX (3000/3000)' : `XP: ${xpInTier} / 100`;
+
+  const premBtn = document.getElementById('bpActivatePremBtn');
+  if (premBtn) {
+    if (bpPremiumPurchased) {
+      premBtn.className = 'bp-action-btn bp-btn-premium owned';
+      premBtn.innerHTML = '<span>PREMIUM UNLOCKED ✓</span>';
+    } else {
+      premBtn.className = 'bp-action-btn bp-btn-premium';
+      premBtn.innerHTML = '<span>ACTIVATE PREMIUM ($2.99)</span>';
+    }
+  }
+
+  const devBox = document.getElementById('bpDevControls');
+  if (devBox) devBox.classList.toggle('hidden', !devMode);
+
+  updatePaletteSelectDropdown('bpPaletteSelect');
+
+  // Render 30 tier rows
+  const listBody = document.getElementById('bpTierListBody');
+  if (!listBody) return;
+  enablePointerScroll(listBody);
+  listBody.innerHTML = '';
+
+  const diamondIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
+  const prismIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
+
+  BATTLE_PASS_TIERS.forEach(item => {
+    const t = item.tier;
+    const isUnlockedTier = tier >= t;
+    const isCurrentTier = tier === t;
+
+    const row = document.createElement('div');
+    row.className = `bp-tier-row${isCurrentTier ? ' current-tier' : ''}`;
+
+    // --- FREE CELL ---
+    const freeCell = document.createElement('div');
+    const isFreeClaimed = !!bpClaimedFree[t];
+    freeCell.className = `bp-cell bp-cell-free${isFreeClaimed ? ' claimed' : ''}`;
+
+    let freeTitle = '';
+    const fr = item.freeReward;
+    if (fr.type === 'diamonds') freeTitle = `+${fr.amount} ${diamondIcon}`;
+    else if (fr.type === 'prisms') freeTitle = `+${fr.amount} ${prismIcon}`;
+    else if (fr.type === 'ad_capsule') freeTitle = `Ad-Capsule (+2 ${prismIcon})`;
+
+    let freeBtnHtml = '';
+    if (isFreeClaimed) {
+      freeBtnHtml = `<button class="bp-cell-btn claimed-btn">CLAIMED ✓</button>`;
+    } else if (isUnlockedTier) {
+      if (fr.type === 'ad_capsule' && !noAdsPurchased) {
+        freeBtnHtml = `<button class="bp-cell-btn ad-btn" onclick="claimBpFreeReward(${t})">CLAIM (AD)</button>`;
+      } else {
+        freeBtnHtml = `<button class="bp-cell-btn claim-btn" onclick="claimBpFreeReward(${t})">CLAIM</button>`;
+      }
+    } else {
+      freeBtnHtml = `<button class="bp-cell-btn locked-btn">LOCKED</button>`;
+    }
+
+    freeCell.innerHTML = `<span class="bp-cell-title">${freeTitle}</span>${freeBtnHtml}`;
+
+    // --- CENTER TIER NUMBER ---
+    const numBox = document.createElement('div');
+    numBox.className = 'bp-tier-num-box';
+    numBox.innerHTML = `<span class="bp-tier-num">${t}</span><span class="bp-tier-status">${isUnlockedTier ? 'UNLOCKED' : 'LOCKED'}</span>`;
+
+    // --- PREMIUM CELL ---
+    const premCell = document.createElement('div');
+    const isPremClaimed = !!bpClaimedPrem[t];
+    premCell.className = `bp-cell bp-cell-prem${isPremClaimed ? ' claimed' : ''}`;
+
+    let premTitle = '';
+    const pr = item.premReward;
+    if (pr.type === 'diamonds') premTitle = `+${pr.amount} ${diamondIcon}`;
+    else if (pr.type === 'prisms') premTitle = `+${pr.amount} ${prismIcon}`;
+    else if (pr.type === 'palette' || pr.type === 'perk' || pr.type === 'ultimate') premTitle = pr.title;
+
+    let premBtnHtml = '';
+    if (isPremClaimed) {
+      premBtnHtml = `<button class="bp-cell-btn claimed-btn">CLAIMED ✓</button>`;
+    } else if (bpPremiumPurchased && isUnlockedTier) {
+      premBtnHtml = `<button class="bp-cell-btn claim-btn" onclick="claimBpPremReward(${t})">CLAIM</button>`;
+    } else if (!bpPremiumPurchased) {
+      premBtnHtml = `<button class="bp-cell-btn locked-btn">PREMIUM</button>`;
+    } else {
+      premBtnHtml = `<button class="bp-cell-btn locked-btn">LOCKED</button>`;
+    }
+
+    premCell.innerHTML = `<span class="bp-cell-title">${premTitle}</span>${premBtnHtml}`;
+
+    row.appendChild(freeCell);
+    row.appendChild(numBox);
+    row.appendChild(premCell);
+
+    listBody.appendChild(row);
+  });
+}
+
+function claimBpFreeReward(t) {
+  const { tier } = getBpTierInfo(bpXp);
+  if (tier < t) {
+    showHintToast(`Reach Tier ${t} first!`);
+    return;
+  }
+  if (bpClaimedFree[t]) return;
+
+  const item = BATTLE_PASS_TIERS.find(i => i.tier === t);
+  if (!item) return;
+  const fr = item.freeReward;
+
+  const executeClaim = () => {
+    bpClaimedFree[t] = true;
+    let toast = '';
+    if (fr.type === 'diamonds') {
+      diamonds += fr.amount;
+      toast = `+${fr.amount} Diamonds claimed!`;
+    } else if (fr.type === 'prisms') {
+      prisms += fr.amount;
+      toast = `+${fr.amount} Prisms claimed!`;
+    } else if (fr.type === 'ad_capsule') {
+      prisms += fr.prisms;
+      toast = `Ad-Capsule: +${fr.prisms} Prisms claimed!`;
+    }
+    updateDiamondUI();
+    updatePrismUI();
+    saveGame();
+    sfx('reward');
+    renderBattlePassScreen();
+    showHintToast(toast);
+  };
+
+  if (fr.type === 'ad_capsule' && !noAdsPurchased) {
+    showAdPlaceholder(executeClaim, null);
+  } else {
+    executeClaim();
+  }
+}
+
+function claimBpPremReward(t) {
+  if (!bpPremiumPurchased) {
+    showHintToast('Activate Premium Pass first!');
+    return;
+  }
+  const { tier } = getBpTierInfo(bpXp);
+  if (tier < t) {
+    showHintToast(`Reach Tier ${t} first!`);
+    return;
+  }
+  if (bpClaimedPrem[t]) return;
+
+  const item = BATTLE_PASS_TIERS.find(i => i.tier === t);
+  if (!item) return;
+  const pr = item.premReward;
+
+  bpClaimedPrem[t] = true;
+  let toast = '';
+
+  if (pr.type === 'diamonds') {
+    diamonds += pr.amount;
+    toast = `+${pr.amount} Diamonds claimed!`;
+  } else if (pr.type === 'prisms') {
+    prisms += pr.amount;
+    toast = `+${pr.amount} Prisms claimed!`;
+  } else if (pr.type === 'palette') {
+    if (!unlockedPalettes.includes(pr.paletteId)) {
+      unlockedPalettes.push(pr.paletteId);
+    }
+    applyPaletteColors(pr.paletteId);
+    toast = `Unlocked Palette: ${NEON_PALETTES[pr.paletteId].name}!`;
+  } else if (pr.type === 'perk') {
+    toast = 'Unlocked Perk: Starting Reserve (+15% Gold)!';
+  } else if (pr.type === 'ultimate') {
+    if (!unlockedPalettes.includes(pr.paletteId)) {
+      unlockedPalettes.push(pr.paletteId);
+    }
+    prisms += pr.prisms;
+    diamonds += pr.diamonds;
+    applyPaletteColors(pr.paletteId);
+    toast = 'ULTIMATE REWARD CLAIMED! Blood Moon + 25 🔮 + 150 💎';
+  }
+
+  updateDiamondUI();
+  updatePrismUI();
+  saveGame();
+  sfx('reward');
+  renderBattlePassScreen();
+  showHintToast(toast);
+}
+
+function buyBpPremiumIAP() {
+  if (bpPremiumPurchased) {
+    showHintToast('Premium Pass already activated!');
+    return;
+  }
+  bpPremiumPurchased = true;
+  if (!unlockedPalettes.includes('cyber_gold')) {
+    unlockedPalettes.push('cyber_gold');
+  }
+  saveGame();
+  sfx('victory');
+  renderBattlePassScreen();
+  showHintToast('SYNTH PASS PREMIUM ACTIVATED!');
+}
+
+function buyBpTierWithDiamonds() {
+  const { tier } = getBpTierInfo(bpXp);
+  if (tier >= 30 && bpXp >= 3000) {
+    showHintToast('Synth Pass already at Max Tier!');
+    return;
+  }
+  if (diamonds < 15) {
+    showHintToast('Not enough Diamonds! (15 required)');
+    return;
+  }
+  diamonds -= 15;
+  addBpXp(100);
+  updateDiamondUI();
+  sfx('confirm');
+  renderBattlePassScreen();
+  showHintToast('+1 Tier purchased (+100 XP)!');
+}
+
+function devAddBpXp(amount) {
+  if (!devMode) return;
+  addBpXp(amount);
+  renderBattlePassScreen();
+  showHintToast(`Dev: +${amount} BP XP added`);
+}
+
+function devToggleBpPremium() {
+  if (!devMode) return;
+  bpPremiumPurchased = !bpPremiumPurchased;
+  if (bpPremiumPurchased && !unlockedPalettes.includes('cyber_gold')) {
+    unlockedPalettes.push('cyber_gold');
+  }
+  saveGame();
+  renderBattlePassScreen();
+  showHintToast(`Dev: Premium Pass ${bpPremiumPurchased ? 'ON' : 'OFF'}`);
 }
 
 function closeSettings() {

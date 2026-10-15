@@ -249,6 +249,57 @@ let lastLoginClaimDate = '';
 let loginStreakDay = 1; // 1 до 7
 let hasAutoShownDailyLoginModalThisSession = false;
 
+// --- Synth Pass / Battle Pass State ---
+let bpXp = 0;
+let bpPremiumPurchased = false;
+let bpClaimedFree = {};
+let bpClaimedPrem = {};
+let unlockedPalettes = ['default'];
+let activePalette = 'default';
+let sessionMobKillsCount = 0;
+
+function addBpXp(amount) {
+  if (!amount || amount <= 0) return;
+  bpXp += amount;
+  saveGameSoon();
+  if (typeof updateBpProgressUI === 'function') {
+    updateBpProgressUI();
+  }
+}
+
+function applyPaletteColors(paletteId) {
+  const pId = (NEON_PALETTES && NEON_PALETTES[paletteId]) ? paletteId : 'default';
+  activePalette = pId;
+  const cfg = NEON_PALETTES[pId] || NEON_PALETTES['default'];
+
+  // Apply root CSS variables for visual skins
+  if (typeof document !== 'undefined' && document.documentElement) {
+    document.documentElement.style.setProperty('--neon-primary', cfg.primary);
+    document.documentElement.style.setProperty('--neon-secondary', cfg.secondary);
+    document.documentElement.style.setProperty('--neon-glow', cfg.glow);
+  }
+
+  // Synchronize tower laser/theme color definitions dynamically
+  if (typeof TOWER_CONFIGS !== 'undefined' && TOWER_CONFIGS.gun) {
+    if (pId === 'cyber_gold') {
+      TOWER_CONFIGS.gun.color = '#ffd700';
+      TOWER_CONFIGS.gun.glow = '#ffd700';
+      TOWER_CONFIGS.laser.color = '#9d4edd';
+      TOWER_CONFIGS.laser.glow = '#9d4edd';
+    } else if (pId === 'blood_moon') {
+      TOWER_CONFIGS.gun.color = '#ff003c';
+      TOWER_CONFIGS.gun.glow = '#ff003c';
+      TOWER_CONFIGS.laser.color = '#ff8a00';
+      TOWER_CONFIGS.laser.glow = '#ff8a00';
+    } else {
+      TOWER_CONFIGS.gun.color = '#00e5ff';
+      TOWER_CONFIGS.gun.glow = '#00e5ff';
+      TOWER_CONFIGS.laser.color = '#f05f9f';
+      TOWER_CONFIGS.laser.glow = '#f05f9f';
+    }
+  }
+}
+
 let consecutiveFails = 0;
 let reviveUsedThisMatch = false;
 let reviveTimerInterval = null;
@@ -290,7 +341,13 @@ function serializeSaveData() {
     timeModTier,
     consecutiveFails,
     lastLoginClaimDate,
-    loginStreakDay
+    loginStreakDay,
+    bpXp,
+    bpPremiumPurchased,
+    bpClaimedFree: Object.assign({}, bpClaimedFree),
+    bpClaimedPrem: Object.assign({}, bpClaimedPrem),
+    unlockedPalettes: unlockedPalettes.slice(),
+    activePalette
   };
 }
 
@@ -354,6 +411,16 @@ async function loadGame() {
   if (typeof data.consecutiveFails === 'number' && data.consecutiveFails >= 0) consecutiveFails = data.consecutiveFails;
   if (typeof data.lastLoginClaimDate === 'string') lastLoginClaimDate = data.lastLoginClaimDate;
   if (typeof data.loginStreakDay === 'number' && data.loginStreakDay >= 1 && data.loginStreakDay <= 7) loginStreakDay = data.loginStreakDay;
+
+  if (typeof data.bpXp === 'number' && data.bpXp >= 0) bpXp = data.bpXp;
+  if (typeof data.bpPremiumPurchased === 'boolean') bpPremiumPurchased = data.bpPremiumPurchased;
+  if (data.bpClaimedFree && typeof data.bpClaimedFree === 'object') bpClaimedFree = data.bpClaimedFree;
+  if (data.bpClaimedPrem && typeof data.bpClaimedPrem === 'object') bpClaimedPrem = data.bpClaimedPrem;
+  if (Array.isArray(data.unlockedPalettes) && data.unlockedPalettes.length > 0) {
+    unlockedPalettes = data.unlockedPalettes.filter(p => typeof p === 'string');
+  }
+  if (typeof data.activePalette === 'string') activePalette = data.activePalette;
+  applyPaletteColors(activePalette);
 
   if (typeof data.diamonds === 'number' && data.diamonds >= 0) diamonds = data.diamonds;
   prisms = typeof data.prisms === 'number' ? Math.max(0, Math.floor(data.prisms)) : 0;
@@ -753,7 +820,11 @@ function startEndlessMatch() {
   if (mapCfg) {
     buildLevelGeometry(mapCfg.path, mapCfg.cols, mapCfg.rows, mapCfg.blocked);
   }
-  gold = 150;
+  let baseGold = 150;
+  if (bpClaimedPrem[15] || bpClaimedPrem['15']) {
+    baseGold = Math.round(baseGold * 1.15);
+  }
+  gold = baseGold;
   baseHp = 10 + Math.round(getUpgradeEffectiveLevel('base_hp'));
   matchStartBaseHp = baseHp;
   wave = 1;
@@ -810,6 +881,9 @@ function reallyStartLevel(lvl) {
   }
 
   resetLevelState();
+  if (bpClaimedPrem[15] || bpClaimedPrem['15']) {
+    gold = Math.round(gold * 1.15);
+  }
   initBuildPanel();
   updateUI();
   resizeCanvasAndCamera();
@@ -834,6 +908,7 @@ function reallyStartLevel(lvl) {
 function resetLevelState() {
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
   reviveUsedThisMatch = false;
+  sessionMobKillsCount = 0;
 
   const lvlConfig = LEVELS_DATA[currentLevel];
   gold = lvlConfig ? lvlConfig.startGold : 100;
@@ -1141,6 +1216,7 @@ function triggerVictory() {
   if (!isOverdriveMode) {
     restoreNormalVictoryRewardBox();
     diamonds += reward;
+    addBpXp(25);
     updateDiamondUI();
     renderVictoryStars(stars);
     playVictoryFanfare();
@@ -1181,6 +1257,7 @@ function triggerVictory() {
 
     diamonds += gainedDiamonds;
     prisms += gainedPrisms;
+    addBpXp(50);
     updateDiamondUI();
     if (typeof updatePrismUI === 'function') updatePrismUI();
     renderVictoryStars(3);
@@ -2244,6 +2321,14 @@ try {
   lastLoginClaimDate = '';
   loginStreakDay = 1;
 
+  bpXp = 0;
+  bpPremiumPurchased = false;
+  bpClaimedFree = {};
+  bpClaimedPrem = {};
+  unlockedPalettes = ['default'];
+  activePalette = 'default';
+  applyPaletteColors('default');
+
   showStartScreen();
   renderLevelsGrid();
   updateDiamondUI();
@@ -2644,6 +2729,9 @@ function update(dt) {
       autoWaveTimeRemaining = 0;
       waveTimerActive = false;
       if (isEndlessMode || wave < maxW) {
+        if (isEndlessMode) {
+          addBpXp(5);
+        }
         wave++;
         startWave();
       }
@@ -3284,6 +3372,10 @@ if (e.type === 'chronos_warp') {
   for (let i = enemies.length - 1; i >= 0; i--) {
     const e = enemies[i];
     if (e.hp <= 0) {
+      sessionMobKillsCount++;
+      if (sessionMobKillsCount % 5 === 0) {
+        addBpXp(1);
+      }
       const moneyMultiplier = 1 + getUpgradeEffectiveLevel('base_gold') * 0.05;
       gold += Math.round(e.bounty * moneyMultiplier);
       sfxDeath(e);

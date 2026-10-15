@@ -19,6 +19,75 @@ const DAILY_LOGIN_REWARDS = [
   { day: 7, diamonds: 50, prisms: 10 }
 ];
 
+// [DAT107] Synth Pass Battle Pass Tiers & Neon Color Palettes Configuration.
+const BATTLE_PASS_TIERS = [
+  { tier: 1,  freeReward: { type: 'diamonds', amount: 10 }, premReward: { type: 'palette', paletteId: 'cyber_gold', title: 'Cyber Gold Palette' } },
+  { tier: 2,  freeReward: { type: 'diamonds', amount: 10 }, premReward: { type: 'diamonds', amount: 25 } },
+  { tier: 3,  freeReward: { type: 'diamonds', amount: 15 }, premReward: { type: 'diamonds', amount: 30 } },
+  { tier: 4,  freeReward: { type: 'diamonds', amount: 15 }, premReward: { type: 'prisms', amount: 3 } },
+  { tier: 5,  freeReward: { type: 'ad_capsule', prisms: 2, title: 'Ad-Capsule (+2 🔮)' }, premReward: { type: 'diamonds', amount: 35 } },
+  { tier: 6,  freeReward: { type: 'diamonds', amount: 15 }, premReward: { type: 'prisms', amount: 4 } },
+  { tier: 7,  freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'diamonds', amount: 40 } },
+  { tier: 8,  freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'prisms', amount: 4 } },
+  { tier: 9,  freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'diamonds', amount: 40 } },
+  { tier: 10, freeReward: { type: 'prisms', amount: 3 }, premReward: { type: 'prisms', amount: 6 } },
+  { tier: 11, freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'diamonds', amount: 45 } },
+  { tier: 12, freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'prisms', amount: 5 } },
+  { tier: 13, freeReward: { type: 'diamonds', amount: 25 }, premReward: { type: 'diamonds', amount: 45 } },
+  { tier: 14, freeReward: { type: 'diamonds', amount: 25 }, premReward: { type: 'prisms', amount: 5 } },
+  { tier: 15, freeReward: { type: 'ad_capsule', prisms: 2, title: 'Ad-Capsule (+2 🔮)' }, premReward: { type: 'perk', perkId: 'starting_reserve', title: 'Starting Reserve (+15% Gold)' } },
+  { tier: 16, freeReward: { type: 'diamonds', amount: 25 }, premReward: { type: 'diamonds', amount: 50 } },
+  { tier: 17, freeReward: { type: 'diamonds', amount: 25 }, premReward: { type: 'prisms', amount: 6 } },
+  { tier: 18, freeReward: { type: 'diamonds', amount: 25 }, premReward: { type: 'diamonds', amount: 50 } },
+  { tier: 19, freeReward: { type: 'diamonds', amount: 25 }, premReward: { type: 'prisms', amount: 6 } },
+  { tier: 20, freeReward: { type: 'prisms', amount: 5 }, premReward: { type: 'prisms', amount: 8 } },
+  { tier: 21, freeReward: { type: 'diamonds', amount: 25 }, premReward: { type: 'diamonds', amount: 50 } },
+  { tier: 22, freeReward: { type: 'diamonds', amount: 25 }, premReward: { type: 'prisms', amount: 7 } },
+  { tier: 23, freeReward: { type: 'diamonds', amount: 25 }, premReward: { type: 'diamonds', amount: 50 } },
+  { tier: 24, freeReward: { type: 'diamonds', amount: 25 }, premReward: { type: 'prisms', amount: 7 } },
+  { tier: 25, freeReward: { type: 'ad_capsule', prisms: 2, title: 'Ad-Capsule (+2 🔮)' }, premReward: { type: 'diamonds', amount: 50 } },
+  { tier: 26, freeReward: { type: 'diamonds', amount: 25 }, premReward: { type: 'prisms', amount: 8 } },
+  { tier: 27, freeReward: { type: 'diamonds', amount: 25 }, premReward: { type: 'diamonds', amount: 50 } },
+  { tier: 28, freeReward: { type: 'diamonds', amount: 25 }, premReward: { type: 'prisms', amount: 8 } },
+  { tier: 29, freeReward: { type: 'diamonds', amount: 25 }, premReward: { type: 'prisms', amount: 10 } },
+  { tier: 30, freeReward: { type: 'prisms', amount: 10 }, premReward: { type: 'ultimate', paletteId: 'blood_moon', prisms: 25, diamonds: 150, title: 'Blood Moon + 25 🔮 + 150 💎' } }
+];
+
+const NEON_PALETTES = {
+  default: {
+    id: 'default',
+    name: 'Default Cyan',
+    primary: '#00e5ff',
+    secondary: '#ff007f',
+    glow: 'rgba(0, 229, 255, 0.75)',
+    bgGlow: 'rgba(0, 229, 255, 0.25)'
+  },
+  cyber_gold: {
+    id: 'cyber_gold',
+    name: 'Cyber Gold',
+    primary: '#ffd700',
+    secondary: '#9d4edd',
+    glow: 'rgba(255, 215, 0, 0.85)',
+    bgGlow: 'rgba(157, 78, 221, 0.35)'
+  },
+  blood_moon: {
+    id: 'blood_moon',
+    name: 'Blood Moon',
+    primary: '#ff003c',
+    secondary: '#ff8a00',
+    glow: 'rgba(255, 0, 60, 0.85)',
+    bgGlow: 'rgba(255, 138, 0, 0.35)'
+  }
+};
+
+function getBpTierInfo(xp) {
+  const currentXp = Math.max(0, xp || 0);
+  const tier = Math.min(30, Math.floor(currentXp / 100) + 1);
+  const xpInTier = (tier === 30 && currentXp >= 3000) ? 100 : (currentXp % 100);
+  const isMax = tier === 30 && currentXp >= 3000;
+  return { tier, xpInTier, isMax, totalXp: currentXp };
+}
+
 const UPGRADE_BRANCH_SPECS = {
   towers: [
     { title: 'Gatling', icon: 'gun', branches: [{ key: 'gun_power', name: 'Power', stepVal: 8, unit: '%', prefix: '+' }] },
