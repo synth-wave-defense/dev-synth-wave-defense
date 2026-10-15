@@ -194,6 +194,41 @@ const TOWER_UNLOCK_BLURBS = {
 const UPGRADE_STEPS_PER_SECTOR = 2;
 const UPGRADE_STEP_COSTS = [6, 7, 8, 9, 10, 11, 12, 13, 15, 19];
 
+// [DAT101.01] Tech Tree Upgrade Cost & Effective Level Calculators: Phase 1 (1-10), Phase 2 (11-15), Phase 3 (16+) spend and stat formulas.
+function getUpgradeCostForLevel(nextLvl) {
+  if (nextLvl <= 10) {
+    return {
+      diamonds: UPGRADE_STEP_COSTS[nextLvl - 1] || 10,
+      prisms: 0
+    };
+  } else if (nextLvl <= 15) {
+    const phase2Costs = {
+      11: { diamonds: 40, prisms: 2 },
+      12: { diamonds: 50, prisms: 4 },
+      13: { diamonds: 65, prisms: 6 },
+      14: { diamonds: 80, prisms: 9 },
+      15: { diamonds: 100, prisms: 12 }
+    };
+    return phase2Costs[nextLvl] || { diamonds: 100, prisms: 12 };
+  } else {
+    return {
+      diamonds: 0,
+      prisms: 15 + (nextLvl - 16) * 5
+    };
+  }
+}
+
+function getUpgradeEffectiveLevel(key) {
+  const lvl = upgradeTreeData[key] || 0;
+  if (lvl <= 14) {
+    return lvl;
+  } else if (lvl === 15) {
+    return 15 * 1.10;
+  } else {
+    return (15 * 1.10) * (1 + (lvl - 15) * 0.01);
+  }
+}
+
 // [DAT103.01] Tower Target Lock-on Specs: Lock-on delay constants and targeted tower classification.
 const LOCK_ON_DELAY_LIGHT = 0.1;
 const LOCK_ON_DELAY_HEAVY = 0.5;
