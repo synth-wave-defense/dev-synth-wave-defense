@@ -226,6 +226,11 @@ let dailyGiftsClaimedCount = 0; // 0, 1, 2 или 3 в день
 let timeModTier = 0; // 0 = locked, 1 = Tier 1 (0.8x, 1.0x, 1.5x), 2 = Tier 2 (0.5x, 0.8x, 1.0x, 1.5x, 2.0x)
 let shopPreviousSource = 'start'; // откуда пришли в магазин: 'start', 'victory', 'defeat'
 
+// --- Daily Login Calendar State ---
+let lastLoginClaimDate = '';
+let loginStreakDay = 1; // 1 до 7
+let hasAutoShownDailyLoginModalThisSession = false;
+
 let consecutiveFails = 0;
 let reviveUsedThisMatch = false;
 let reviveTimerInterval = null;
@@ -264,7 +269,9 @@ function serializeSaveData() {
     dailyGiftsClaimedDate,
     dailyGiftsClaimedCount,
     timeModTier,
-    consecutiveFails
+    consecutiveFails,
+    lastLoginClaimDate,
+    loginStreakDay
   };
 }
 
@@ -326,6 +333,8 @@ async function loadGame() {
   if (typeof data.dailyGiftsClaimedCount === 'number') dailyGiftsClaimedCount = data.dailyGiftsClaimedCount;
   if (typeof data.timeModTier === 'number') timeModTier = data.timeModTier;
   if (typeof data.consecutiveFails === 'number' && data.consecutiveFails >= 0) consecutiveFails = data.consecutiveFails;
+  if (typeof data.lastLoginClaimDate === 'string') lastLoginClaimDate = data.lastLoginClaimDate;
+  if (typeof data.loginStreakDay === 'number' && data.loginStreakDay >= 1 && data.loginStreakDay <= 7) loginStreakDay = data.loginStreakDay;
 
   if (typeof data.diamonds === 'number' && data.diamonds >= 0) diamonds = data.diamonds;
   prisms = typeof data.prisms === 'number' ? Math.max(0, Math.floor(data.prisms)) : 0;
@@ -1909,6 +1918,8 @@ try {
   dailyGiftsClaimedDate = '';
   dailyGiftsClaimedCount = 0;
   timeModTier = 0;
+  lastLoginClaimDate = '';
+  loginStreakDay = 1;
 
   showStartScreen();
   renderLevelsGrid();
@@ -2039,13 +2050,25 @@ function claimDailyGiftsPack() {
   const needsAd = dailyGiftsClaimedCount > 0 && !noAdsPurchased;
 
   const grantGift = () => {
+    let msg = '';
+    if (dailyGiftsClaimedCount === 0) {
+      diamonds += 10;
+      msg = '+10 Diamonds claimed!';
+    } else if (dailyGiftsClaimedCount === 1) {
+      diamonds += 15;
+      msg = '+15 Diamonds claimed!';
+    } else {
+      diamonds += 20;
+      prisms += 1;
+      msg = '+20 Diamonds & +1 Prism claimed!';
+    }
     dailyGiftsClaimedCount++;
-    diamonds += 5;
     updateDiamondUI();
+    if (typeof updatePrismUI === 'function') updatePrismUI();
     saveGame();
     sfx('reward');
     renderShopScreen();
-    showHintToast('+5 Diamonds claimed!');
+    showHintToast(msg);
   };
 
   if (needsAd) {

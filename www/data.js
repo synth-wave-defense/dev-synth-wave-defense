@@ -9,6 +9,16 @@ const TOTAL_LEVELS = 50;
 const LEVELS_PER_SECTION = 10;
 const TOTAL_SECTIONS = 5;
 
+const DAILY_LOGIN_REWARDS = [
+  { day: 1, diamonds: 15, prisms: 0 },
+  { day: 2, diamonds: 20, prisms: 0 },
+  { day: 3, diamonds: 0,  prisms: 3 },
+  { day: 4, diamonds: 30, prisms: 0 },
+  { day: 5, diamonds: 40, prisms: 2 },
+  { day: 6, diamonds: 50, prisms: 0 },
+  { day: 7, diamonds: 50, prisms: 10 }
+];
+
 const UPGRADE_BRANCH_SPECS = {
   towers: [
     { title: 'Gatling', icon: 'gun', branches: [{ key: 'gun_power', name: 'Power', stepVal: 8, unit: '%', prefix: '+' }] },
