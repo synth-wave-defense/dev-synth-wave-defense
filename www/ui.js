@@ -1000,7 +1000,7 @@ function devPromptLevelSelect() {
 function devPromptWaveSelect() {
   if (!devMode) return;
   const lvlConfig = (typeof LEVELS_DATA !== 'undefined') ? LEVELS_DATA[currentLevel] : null;
-  const maxW = lvlConfig ? lvlConfig.totalWaves : 10;
+  const maxW = isEndlessMode ? 999 : (lvlConfig ? lvlConfig.totalWaves : 10);
 
   devInputOpen = true;
   const val = prompt(`Select Wave (1 - ${maxW}):`, wave);
@@ -1009,7 +1009,7 @@ function devPromptWaveSelect() {
 
   if (val !== null) {
     const targetW = parseInt(val, 10);
-    if (!isNaN(targetW) && targetW >= 1 && targetW <= maxW) {
+    if (!isNaN(targetW) && targetW >= 1 && (isEndlessMode || targetW <= maxW)) {
       devJumpToWave(targetW);
     }
   }
@@ -1823,24 +1823,37 @@ function refreshDevDropdowns() {
     lvlSelect.appendChild(opt);
   }
 
-  const lvlConfig = LEVELS_DATA[currentLevel];
-  const maxW = lvlConfig ? lvlConfig.totalWaves : 10;
   const waveSelect = document.getElementById('devWaveSelect');
   if (!waveSelect) return;
   waveSelect.innerHTML = '';
-  for (let w = 1; w <= maxW; w++) {
-    const opt = document.createElement('option');
-    opt.value = w;
-    opt.textContent = `${w}/${maxW}`;
-    if (w === wave) opt.selected = true;
-    waveSelect.appendChild(opt);
+
+  if (isEndlessMode) {
+    const endlessMax = Math.max(wave + 20, 50, endlessBestWave + 10);
+    for (let w = 1; w <= endlessMax; w++) {
+      const opt = document.createElement('option');
+      opt.value = w;
+      opt.textContent = `W${w}`;
+      if (w === wave) opt.selected = true;
+      waveSelect.appendChild(opt);
+    }
+  } else {
+    const lvlConfig = LEVELS_DATA[currentLevel];
+    const maxW = lvlConfig ? lvlConfig.totalWaves : 10;
+    for (let w = 1; w <= maxW; w++) {
+      const opt = document.createElement('option');
+      opt.value = w;
+      opt.textContent = `${w}/${maxW}`;
+      if (w === wave) opt.selected = true;
+      waveSelect.appendChild(opt);
+    }
   }
 }
 
 function devJumpToWave(targetWave) {
   const lvlConfig = LEVELS_DATA[currentLevel];
   const maxW = lvlConfig ? lvlConfig.totalWaves : 10;
-  if (targetWave < 1 || targetWave > maxW) return;
+  if (!isEndlessMode && (targetWave < 1 || targetWave > maxW)) return;
+  if (isEndlessMode && targetWave < 1) return;
 
   enemies = [];
   projectiles = [];
@@ -2112,6 +2125,7 @@ function updateStartChapterLabel(show, text) {
 
 // [UI117] Navigation screen display and menu visibility controllers.
 function showStartScreen() {
+  isEndlessMode = false;
   music('menu');
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
   document.getElementById('pauseScreen').classList.add('hidden');
@@ -3782,9 +3796,13 @@ function updateWaveCircle(dt) {
   const bonusValEl = el('waveGoBonusVal');
   if (!bonusEl || !bonusValEl) return;
 
+  if (typeof isEndlessMode !== 'undefined' && isEndlessMode) {
+    baseBonus = 15 + Math.floor(wave * 1.5);
+  }
+
   const maxW = (lvlConfig && lvlConfig.totalWaves) || 10;
   let bonus = 0;
-  if (isCountdown && wave < maxW) {
+  if (isCountdown && ((typeof isEndlessMode !== 'undefined' && isEndlessMode) || wave < maxW)) {
     const moneyMultiplier = 1 + getUpgradeEffectiveLevel('base_gold') * 0.05;
     const fractionSaved = totalDelay > 0 ? Math.min(1, Math.max(0, autoWaveTimeRemaining / totalDelay)) : 0;
     bonus = Math.round(fractionSaved * baseBonus * moneyMultiplier);
@@ -3801,8 +3819,13 @@ function updateUI() {
 
   document.getElementById('goldVal').textContent = gold;
   document.getElementById('hpVal').textContent = baseHp;
-  document.getElementById('levelText').textContent = `${currentLevel}`;
-  document.getElementById('waveText').textContent = `${Math.min(wave, maxW)}/${maxW}`;
+  if (typeof isEndlessMode !== 'undefined' && isEndlessMode) {
+    document.getElementById('levelText').textContent = 'ENDLESS';
+    document.getElementById('waveText').textContent = `${wave}`;
+  } else {
+    document.getElementById('levelText').textContent = `${currentLevel}`;
+    document.getElementById('waveText').textContent = `${Math.min(wave, maxW)}/${maxW}`;
+  }
 
   for (let key in TOWER_CONFIGS) {
     const btn = document.getElementById(`btn-${key}`);
@@ -3821,7 +3844,7 @@ function updateUI() {
 
   const waveBtn = document.getElementById('waveBtn');
   if (waveBtn) {
-    waveBtn.disabled = (waveInProgress || spawnQueue.length > 0 || wave >= maxW);
+    waveBtn.disabled = (waveInProgress || spawnQueue.length > 0 || (!(typeof isEndlessMode !== 'undefined' && isEndlessMode) && wave >= maxW));
   }
 
   updateHudSpeedWidget();
