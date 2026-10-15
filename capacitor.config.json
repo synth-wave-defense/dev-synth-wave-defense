@@ -4,5 +4,11 @@
   "webDir": "www",
   "server": {
     "hostname": "dev-synth-wave-defense"
+  },
+  "plugins": {
+    "CapacitorUpdater": {
+      "autoUpdate": false,
+      "statsUrl": ""
+    }
   }
 }
