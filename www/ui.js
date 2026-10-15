@@ -868,6 +868,12 @@ function pushParticle(p) {
   particles.push(p);
 }
 
+const PRISM_ICON_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="flex:none;">
+  <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/>
+  <polyline points="3 12 12 15 21 12"/>
+  <line x1="12" y1="2" x2="12" y2="22"/>
+</svg>`;
+
 function updateDiamondUI() {
   const el = document.getElementById('globalDiamondsVal');
   if (el) el.textContent = diamonds;
@@ -880,6 +886,27 @@ function updateDiamondUI() {
     if (devMode) {
       badge.classList.add('interactive');
       badge.title = "Click: +50 / Hold: set amount (Dev Mode)";
+    } else {
+      badge.classList.remove('interactive');
+      badge.removeAttribute('title');
+    }
+  }
+}
+
+function updatePrismUI() {
+  const el = document.getElementById('globalPrismsVal');
+  if (el) el.textContent = prisms;
+  const elLevels = document.getElementById('levelsPrismVal');
+  if (elLevels) elLevels.textContent = prisms;
+  const elUpgrades = document.getElementById('upgradesPrismVal');
+  if (elUpgrades) elUpgrades.textContent = prisms;
+  const elShop = document.getElementById('shopPrismVal');
+  if (elShop) elShop.textContent = prisms;
+  const badge = document.getElementById('hudPrismBadge');
+  if (badge) {
+    if (devMode) {
+      badge.classList.add('interactive');
+      badge.title = "Click: +10 / Hold: set amount (Dev Mode)";
     } else {
       badge.classList.remove('interactive');
       badge.removeAttribute('title');
@@ -902,6 +929,23 @@ function promptDevDiamonds() {
     if (!isNaN(parsed) && parsed >= 0) {
       diamonds = parsed;
       updateDiamondUI();
+      renderUpgradeTree();
+      saveGameSoon();
+    }
+  }
+}
+
+function promptDevPrisms() {
+  if (!devMode) return;
+  devInputOpen = true;
+  const val = prompt("Set Prisms:", prisms);
+  devInputOpen = false;
+  suppressBackgroundPause();
+  if (val !== null) {
+    const parsed = parseInt(val, 10);
+    if (!isNaN(parsed) && parsed >= 0) {
+      prisms = parsed;
+      updatePrismUI();
       renderUpgradeTree();
       saveGameSoon();
     }
@@ -1008,6 +1052,7 @@ function initDevResourceHold() {
   };
 
   setupHold('hudDiamondBadge', promptDevDiamonds);
+  setupHold('hudPrismBadge', promptDevPrisms);
   setupHold('goldHalf', promptDevGold);
   setupHold('hpHalf', promptDevHp);
 }
@@ -1020,6 +1065,18 @@ function handleDevDiamondClick() {
   }
   diamonds += 50;
   updateDiamondUI();
+  renderUpgradeTree();
+  saveGameSoon();
+}
+
+function handleDevPrismClick() {
+  if (!devMode) return;
+  if (devHoldTriggered) {
+    devHoldTriggered = false;
+    return;
+  }
+  prisms += 10;
+  updatePrismUI();
   renderUpgradeTree();
   saveGameSoon();
 }
@@ -1096,6 +1153,7 @@ function enablePointerScroll(el) {
 // [UI112] Meta-upgrade skill tree DOM interface renderer.
 function renderUpgradeTree() {
   updateDiamondUI();
+  updatePrismUI();
   const container = document.getElementById('upgradesTreeBody');
   if (!container) return;
   enablePointerScroll(container);
@@ -1333,6 +1391,8 @@ function openDevMode() {
     waveEl.onclick = devPromptWaveSelect;
   }
   
+  updateDiamondUI();
+  updatePrismUI();
   showHintToast('Dev Mode: Enabled');
 }
 
@@ -1380,6 +1440,8 @@ function closeDevMode() {
     if (a) a.textContent = '▾';
   });
 
+  updateDiamondUI();
+  updatePrismUI();
   showHintToast('Dev Mode: Disabled');
 }
 
@@ -1560,6 +1622,7 @@ function handleClearSaveClick() {
   }
 
   diamonds = 0;
+  prisms = 0;
   maxUnlockedLevel = 1;
   clearedLevels = [];
   levelStars = {};
@@ -1580,6 +1643,7 @@ function handleClearSaveClick() {
   showStartScreen();
   renderLevelsGrid();
   updateDiamondUI();
+  updatePrismUI();
   updateUpgradeButtonsLock();
   showHintToast('Save cleared');
 }
@@ -2847,6 +2911,8 @@ function renderShopScreen() {
   if (shopBody) enablePointerScroll(shopBody);
   const diamondLabel = document.getElementById('shopDiamondVal');
   if (diamondLabel) diamondLabel.textContent = diamonds;
+  const prismLabel = document.getElementById('shopPrismVal');
+  if (prismLabel) prismLabel.textContent = prisms;
 
   const giftSub = document.getElementById('dailyGiftSubText');
   const giftBtn = document.getElementById('dailyGiftClaimBtn');
