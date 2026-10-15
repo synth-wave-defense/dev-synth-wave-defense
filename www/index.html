@@ -855,6 +855,17 @@
   </div>
 
   <div class="levels-header-zone">
+    <div class="endless-arena-banner" id="endlessArenaBanner" onclick="openEndlessLoadoutModal()">
+      <div class="endless-banner-glow"></div>
+      <div class="endless-banner-badge">SURVIVAL ARENA</div>
+      <div class="endless-banner-title">ENDLESS ARENA</div>
+      <div class="endless-banner-sub">
+        <span class="endless-banner-status" id="endlessBannerStatus">FREE ENTRY (1/1)</span>
+        <span class="endless-banner-divider">•</span>
+        <span class="endless-banner-best" id="endlessBannerBest">BEST: WAVE 0</span>
+      </div>
+    </div>
+
     <div class="levels-subtitle">Select</div>
     <div class="levels-title">Level</div>
     <div class="mode-toggle-container" id="modeToggleContainer">
@@ -896,6 +907,28 @@
   </div>
   <div class="loadout-widget-expanded hidden" id="loadoutWidgetExpanded">
     <div class="loadout-grid" id="loadoutWidgetGrid"></div>
+  </div>
+</div>
+
+<!-- Endless Loadout Selection Modal -->
+<div class="overlay-screen result-screen hidden" id="endlessLoadoutModal" style="z-index: 10001;">
+  <div class="endless-modal-card">
+    <div class="endless-modal-header">
+      <div class="endless-modal-badge">SURVIVAL ARENA</div>
+      <div class="endless-modal-title">ENDLESS ARENA</div>
+      <div class="endless-modal-best" id="endlessModalBest">BEST: WAVE 0</div>
+    </div>
+    <div class="endless-modal-subtitle">SELECT YOUR LOADOUT</div>
+    <div class="endless-modal-grid" id="endlessModalGrid"></div>
+    <div class="endless-modal-count" id="endlessModalCount">3/3 TOWERS SELECTED</div>
+    <div class="endless-modal-actions">
+      <button class="result-btn result-btn-primary" id="endlessStartBtn" onclick="confirmStartEndlessRun()">
+        <span id="endlessStartBtnText">ENTER ARENA</span>
+      </button>
+      <button class="result-btn" onclick="closeEndlessLoadoutModal()" style="margin-top: 8px;">
+        <span>CANCEL</span>
+      </button>
+    </div>
   </div>
 </div>
 

@@ -226,6 +226,109 @@ let regularSpawnCounter = 0;
 let levelStars = {};
 let matchStartBaseHp = 10;
 
+let isEndlessMode = false;
+let endlessBestWave = 0;
+let endlessDailyRunsUsed = 0;
+let endlessDailyRunsDate = '';
+let endlessMilestonesClaimed = {};
+
+function resetEndlessDailyRunsIfNeeded() {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  if (endlessDailyRunsDate !== todayStr) {
+    endlessDailyRunsDate = todayStr;
+    endlessDailyRunsUsed = 0;
+  }
+}
+
+function isEndlessUnlocked() {
+  if (typeof devMode !== 'undefined' && devMode) return true;
+  if (typeof localStorage !== 'undefined' && localStorage.getItem("dev_auth_token") === "MTMzNw==") return true;
+  if (typeof maxUnlockedLevel === 'number' && maxUnlockedLevel > 15) return true;
+  if (Array.isArray(clearedLevels) && clearedLevels.includes(15)) return true;
+  return false;
+}
+
+function getEndlessEntryStatus() {
+  resetEndlessDailyRunsIfNeeded();
+  if (endlessDailyRunsUsed === 0) {
+    return { type: 'free', text: 'FREE ENTRY (1/1)', label: 'FREE ENTRY (1/1)', cost: 0 };
+  } else if (endlessDailyRunsUsed < 3) {
+    const remainingAdRuns = 3 - endlessDailyRunsUsed;
+    return { type: 'ad', text: `WATCH AD (${remainingAdRuns}/2)`, label: `WATCH AD (${remainingAdRuns}/2)`, cost: 0 };
+  } else {
+    return { type: 'diamonds', text: '15 💎', label: '15 💎', cost: 15 };
+  }
+}
+
+function generateEndlessWaveData(w) {
+  const hpMult = 1 + (w - 1) * 0.22 + Math.pow((w - 1) / 7, 1.3);
+  const spdMult = Math.min(1.85, 1 + (w - 1) * 0.018);
+  const spawns = [];
+
+  if (w % 10 === 0) {
+    const bossHp = Math.round(1000 * hpMult);
+    spawns.push({
+      type: 'titan',
+      isBoss: true,
+      isMiniBoss: false,
+      count: 1,
+      hp: bossHp,
+      speed: Math.round(28 * spdMult),
+      bounty: Math.round(50 + w * 2),
+      interval: 1.5,
+      shape: 'octagon',
+      color: '#ff0055',
+      glow: '#ff0055'
+    });
+    spawns.push({
+      type: 'grunt',
+      isBoss: false,
+      isMiniBoss: false,
+      count: 4 + Math.floor(w / 5),
+      hp: Math.round(35 * hpMult),
+      speed: Math.round(45 * spdMult),
+      bounty: Math.round(8 + w),
+      interval: 0.6
+    });
+  } else {
+    const types = ['grunt', 'fast', 'tank', 'swarm', 'emp_bomber'];
+    const availableTypes = types.slice(0, Math.min(types.length, 1 + Math.floor(w / 3)));
+    const primaryType = availableTypes[Math.floor((w * 3 + 1) % availableTypes.length)] || 'grunt';
+    const totalCount = 6 + Math.floor(w * 1.2);
+    const proto = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[primaryType]) ? ENEMY_CONFIGS[primaryType] : { baseHp: 30, baseSpeed: 50, baseBounty: 5, shape: 'circle', color: '#00e5ff', glow: '#00e5ff' };
+
+    spawns.push({
+      type: primaryType,
+      isBoss: false,
+      isMiniBoss: false,
+      count: totalCount,
+      hp: Math.round(proto.baseHp * hpMult),
+      speed: Math.min(160, Math.round(proto.baseSpeed * spdMult)),
+      bounty: Math.max(1, Math.round(proto.baseBounty * (1 + w * 0.05))),
+      interval: Math.max(0.2, 0.8 - w * 0.01)
+    });
+
+    if (w > 3) {
+      const secType = availableTypes[Math.floor((w * 5 + 2) % availableTypes.length)];
+      if (secType && secType !== primaryType) {
+        const secProto = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[secType]) ? ENEMY_CONFIGS[secType] : proto;
+        spawns.push({
+          type: secType,
+          isBoss: false,
+          isMiniBoss: false,
+          count: 3 + Math.floor(w * 0.5),
+          hp: Math.round(secProto.baseHp * hpMult * 0.85),
+          speed: Math.min(160, Math.round(secProto.baseSpeed * spdMult)),
+          bounty: Math.max(1, Math.round(secProto.baseBounty * (1 + w * 0.05))),
+          interval: 0.6
+        });
+      }
+    }
+  }
+
+  return { wave: w, delayAfter: 5.0, spawns };
+}
+
 function isOverdriveUnlocked() {
   if (typeof devMode !== 'undefined' && devMode) return true;
   if (typeof clearedLevels !== 'undefined' && (clearedLevels.includes(LEVELS_PER_SECTION) || clearedLevels.some(l => l >= LEVELS_PER_SECTION))) return true;
@@ -347,7 +450,11 @@ function serializeSaveData() {
     bpClaimedFree: Object.assign({}, bpClaimedFree),
     bpClaimedPrem: Object.assign({}, bpClaimedPrem),
     unlockedPalettes: unlockedPalettes.slice(),
-    activePalette
+    activePalette,
+    endlessBestWave,
+    endlessDailyRunsUsed,
+    endlessDailyRunsDate,
+    endlessMilestonesClaimed: Object.assign({}, endlessMilestonesClaimed)
   };
 }
 
@@ -436,6 +543,13 @@ async function loadGame() {
   if (data.levelStars && typeof data.levelStars === 'object') {
     levelStars = data.levelStars;
   }
+  if (typeof data.endlessBestWave === 'number' && data.endlessBestWave >= 0) endlessBestWave = data.endlessBestWave;
+  if (typeof data.endlessDailyRunsUsed === 'number' && data.endlessDailyRunsUsed >= 0) endlessDailyRunsUsed = data.endlessDailyRunsUsed;
+  if (typeof data.endlessDailyRunsDate === 'string') endlessDailyRunsDate = data.endlessDailyRunsDate;
+  if (data.endlessMilestonesClaimed && typeof data.endlessMilestonesClaimed === 'object') {
+    endlessMilestonesClaimed = data.endlessMilestonesClaimed;
+  }
+  resetEndlessDailyRunsIfNeeded();
   if (data.upgradeTreeData && typeof data.upgradeTreeData === 'object') {
     Object.keys(upgradeTreeData).forEach(key => {
       const v = data.upgradeTreeData[key];
@@ -2002,6 +2116,91 @@ function getBossPreDelay(lvl) {
 
 function startWave() {
   sfx('waveStart');
+  if (isEndlessMode) {
+    waveInProgress = true;
+    waveTimerActive = false;
+    autoWaveTimeRemaining = 0;
+    spawnQueue = [];
+
+    const waveData = generateEndlessWaveData(wave);
+    let hasBoss = false;
+    let hasMiniBoss = false;
+
+    if (waveData && waveData.spawns) {
+      waveData.spawns.forEach(grp => {
+        if (grp.isBoss) hasBoss = true;
+        if (grp.isMiniBoss) hasMiniBoss = true;
+
+        if ((grp.isBoss || grp.isMiniBoss) && spawnQueue.length > 0) {
+          const preDelay = grp.isBoss ? getBossPreDelay(10) : getMinibossPreDelay();
+          spawnQueue[spawnQueue.length - 1].interval += preDelay;
+        }
+
+        const proto = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[grp.type]) || { size: 10, shape: 'circle', color: '#00e5ff', glow: '#00e5ff' };
+        const isSwarm = grp.type === 'swarm';
+        const spawnCount = grp.count || 1;
+        const baseRadius = proto.size * (grp.isBoss ? 1.75 : (grp.isMiniBoss ? 1.35 : 1.0));
+        const finalRadius = isSwarm ? baseRadius * 0.5 : baseRadius;
+        const spawnInterval = grp.interval || 0.8;
+
+        for (let i = 0; i < spawnCount; i++) {
+          const isLeft = (i % 2 === 0);
+          const laneOffset = isSwarm ? (isLeft ? -6 : 6) : 0;
+
+          spawnQueue.push({
+            type: grp.type,
+            isBoss: grp.isBoss,
+            isMiniBoss: grp.isMiniBoss,
+            hp: grp.hp,
+            maxHp: grp.hp,
+            speed: grp.speed,
+            bounty: grp.bounty,
+            radius: finalRadius,
+            shape: grp.shape || proto.shape,
+            color: grp.color || proto.color,
+            glow: grp.glow || proto.glow,
+            interval: spawnInterval,
+            laneOffset: laneOffset
+          });
+        }
+      });
+    }
+
+    bossAlertScheduled = false;
+    bossAlertShown = false;
+    activeBossAlertType = null;
+    hideIncomingAlert();
+
+    let firstUnitIsBoss = false;
+    if (spawnQueue.length > 0 && (spawnQueue[0].isBoss || spawnQueue[0].isMiniBoss)) {
+      firstUnitIsBoss = true;
+    }
+
+    if (hasBoss) {
+      activeBossAlertType = 'boss';
+      bossAlertScheduled = true;
+    } else if (hasMiniBoss) {
+      activeBossAlertType = 'miniboss';
+      bossAlertScheduled = true;
+    }
+
+    spawnTimer = firstUnitIsBoss ? 2.0 : 0.15;
+
+    let totalTime = 0;
+    if (spawnQueue.length > 1) {
+      for (let i = 0; i < spawnQueue.length - 1; i++) totalTime += (spawnQueue[i].interval || 0.8);
+    } else {
+      totalTime = 0.5;
+    }
+    waveTotalSpawnTime = totalTime > 0 ? totalTime : 0.8;
+    waveSpawnElapsedTime = 0;
+
+    updateWaveCircle(0);
+    updateUI();
+    if (devMode) refreshDevDropdowns();
+    return;
+  }
+
   const lvlConfig = LEVELS_DATA[currentLevel];
   const maxW = lvlConfig ? lvlConfig.totalWaves : 10;
   if (wave > maxW) return;
