@@ -1422,8 +1422,146 @@ function updateOverdriveToggleUI() {
   }
 }
 
+function updateEndlessBannerUI() {
+  const banner = document.getElementById('endlessArenaBanner');
+  const statusEl = document.getElementById('endlessBannerStatus');
+  const bestEl = document.getElementById('endlessBannerBest');
+  if (!banner) return;
+
+  const unlocked = (typeof isEndlessUnlocked === 'function') ? isEndlessUnlocked() : false;
+  if (unlocked) {
+    banner.classList.remove('locked');
+    const status = (typeof getEndlessEntryStatus === 'function') ? getEndlessEntryStatus() : { text: 'FREE ENTRY (1/1)' };
+    if (statusEl) statusEl.textContent = status.text;
+    if (bestEl) bestEl.textContent = `BEST: WAVE ${endlessBestWave || 0}`;
+  } else {
+    banner.classList.add('locked');
+    if (statusEl) statusEl.textContent = 'UNLOCKS AT LEVEL 15';
+    if (bestEl) bestEl.textContent = `BEST: WAVE ${endlessBestWave || 0}`;
+  }
+}
+
+function openEndlessLoadoutModal() {
+  const unlocked = (typeof isEndlessUnlocked === 'function') ? isEndlessUnlocked() : false;
+  if (!unlocked) {
+    if (typeof showHintToast === 'function') showHintToast('Complete Campaign Level 15 to unlock Endless Arena!');
+    return;
+  }
+
+  const modal = document.getElementById('endlessLoadoutModal');
+  if (!modal) return;
+
+  if (typeof refreshLoadoutForProgress === 'function') refreshLoadoutForProgress();
+
+  const bestEl = document.getElementById('endlessModalBest');
+  if (bestEl) bestEl.textContent = `BEST: WAVE ${endlessBestWave || 0}`;
+
+  renderEndlessModalGrid();
+  updateEndlessModalButton();
+
+  modal.classList.remove('hidden');
+}
+
+function closeEndlessLoadoutModal() {
+  const modal = document.getElementById('endlessLoadoutModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function updateEndlessModalButton() {
+  const countEl = document.getElementById('endlessModalCount');
+  const btnText = document.getElementById('endlessStartBtnText');
+
+  if (countEl) {
+    countEl.textContent = `${selectedLoadout.length}/${LOADOUT_SIZE} TOWERS SELECTED`;
+  }
+
+  if (btnText) {
+    const status = (typeof getEndlessEntryStatus === 'function') ? getEndlessEntryStatus() : { text: 'FREE ENTRY' };
+    btnText.textContent = `ENTER ARENA (${status.text})`;
+  }
+}
+
+function renderEndlessModalGrid() {
+  const grid = document.getElementById('endlessModalGrid');
+  if (!grid) return;
+  const pool = (typeof getPlayerUnlockedTowers === 'function') ? getPlayerUnlockedTowers() : ['gun'];
+
+  grid.innerHTML = '';
+  pool.forEach(type => {
+    const conf = TOWER_CONFIGS[type];
+    if (!conf) return;
+    const isSelected = selectedLoadout.includes(type);
+    const isFull = selectedLoadout.length >= LOADOUT_SIZE;
+
+    const btn = document.createElement('div');
+    btn.className = 'loadout-tower-btn'
+      + (isSelected ? ' selected' : '')
+      + (!isSelected && isFull ? ' blocked' : '');
+    btn.innerHTML = `
+      <div class="tower-btn-icon">${TOWER_ICONS[type] || ''}</div>
+      <span class="tower-btn-title">${TOWER_NAMES[type] || type}</span>
+    `;
+    btn.onclick = (e) => { e.stopPropagation(); toggleEndlessLoadoutTower(type); };
+    grid.appendChild(btn);
+  });
+}
+
+function toggleEndlessLoadoutTower(type) {
+  if (typeof sfx === 'function') sfx('tap');
+  const idx = selectedLoadout.indexOf(type);
+  if (idx !== -1) {
+    selectedLoadout.splice(idx, 1);
+  } else {
+    if (selectedLoadout.length >= LOADOUT_SIZE) {
+      if (typeof showHintToast === 'function') showHintToast(`Deselect a tower first (${LOADOUT_SIZE} max)`);
+      return;
+    }
+    selectedLoadout.push(type);
+  }
+  renderEndlessModalGrid();
+  updateEndlessModalButton();
+  if (typeof saveGameSoon === 'function') saveGameSoon();
+}
+
+function confirmStartEndlessRun() {
+  if (!selectedLoadout || selectedLoadout.length === 0) {
+    if (typeof showHintToast === 'function') showHintToast('Select at least 1 tower!');
+    return;
+  }
+
+  const status = (typeof getEndlessEntryStatus === 'function') ? getEndlessEntryStatus() : { type: 'free', cost: 0 };
+
+  const launch = () => {
+    endlessDailyRunsUsed++;
+    if (typeof saveGame === 'function') saveGame();
+    closeEndlessLoadoutModal();
+    if (typeof startEndlessMatch === 'function') startEndlessMatch();
+  };
+
+  if (status.type === 'free' || status.type === 'ad') {
+    launch();
+  } else if (status.type === 'diamonds') {
+    if (diamonds < status.cost) {
+      if (typeof showHintToast === 'function') showHintToast(`Need ${status.cost} Diamonds for entry!`);
+      return;
+    }
+    diamonds -= status.cost;
+    if (typeof updateDiamondUI === 'function') updateDiamondUI();
+    launch();
+  } else {
+    launch();
+  }
+}
+
+// Global Exports
+window.openEndlessLoadoutModal = openEndlessLoadoutModal;
+window.closeEndlessLoadoutModal = closeEndlessLoadoutModal;
+window.confirmStartEndlessRun = confirmStartEndlessRun;
+window.getEndlessEntryStatus = getEndlessEntryStatus;
+
 function renderLevelsGrid() {
   updateOverdriveToggleUI();
+  updateEndlessBannerUI();
   const levelsGrid = document.getElementById('levelsGrid');
   if (!levelsGrid) return;
   levelsGrid.innerHTML = '';
