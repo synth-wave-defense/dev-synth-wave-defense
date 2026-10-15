@@ -1935,6 +1935,10 @@ function showStartScreen() {
   gameState = 'START';
   updateHudSpeedWidget();
   updateUpgradeButtonsLock();
+
+  if (typeof warmUpNebulaAndHideLoader === 'function') {
+    warmUpNebulaAndHideLoader();
+  }
 }
 
 function updateUpgradeButtonsLock() {
@@ -4063,7 +4067,19 @@ function getDpr() {
   return Math.min(2, a || 1);
 }
 
-function drawCosmicNebulaBackground(w, h) {
+function isMenuSceneActive() {
+  const isUpgradesFromCombat = (typeof gameState !== 'undefined' && gameState === 'UPGRADES' && (typeof upgradesPreviousSource !== 'undefined' && (upgradesPreviousSource === 'victory' || upgradesPreviousSource === 'defeat')));
+  const isSettingsFromCombat = (typeof gameState !== 'undefined' && gameState === 'SETTINGS' && (typeof settingsPreviousSource !== 'undefined' && settingsPreviousSource === 'pause'));
+  const isShopFromCombat = (typeof gameState !== 'undefined' && gameState === 'SHOP' && (typeof shopPreviousSource !== 'undefined' && (shopPreviousSource === 'victory' || shopPreviousSource === 'defeat')));
+
+  return (typeof gameState !== 'undefined' && (gameState === 'START' || gameState === 'LEVELS' || gameState === 'UPGRADES' || gameState === 'SHOP')) &&
+         !isUpgradesFromCombat && !isSettingsFromCombat && !isShopFromCombat;
+}
+
+let combatDimAlpha = 0;
+let lastDimUpdateTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
+
+function drawCosmicNebulaBackground(w, h, customDim = null) {
   const dpr = getDpr();
   const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low') ? 'low' : 'high';
   const key = Math.round(w) + 'x' + Math.round(h) + '@' + dpr + '_' + isLowPerf;
@@ -4072,6 +4088,59 @@ function drawCosmicNebulaBackground(w, h) {
     nebulaCacheKey = key;
   }
   ctx.drawImage(nebulaCache, 0, 0, w, h);
+
+  const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+  const dt = Math.min((now - lastDimUpdateTime) / 1000, 0.1);
+  lastDimUpdateTime = now;
+
+  const targetDim = customDim !== null ? customDim : (isMenuSceneActive() ? 0 : 0.48);
+  if (combatDimAlpha < targetDim) {
+    combatDimAlpha = Math.min(targetDim, combatDimAlpha + dt * 1.5);
+  } else if (combatDimAlpha > targetDim) {
+    combatDimAlpha = Math.max(targetDim, combatDimAlpha - dt * 2.0);
+  }
+
+  if (combatDimAlpha > 0.001) {
+    ctx.save();
+    ctx.fillStyle = `rgba(2, 3, 10, ${combatDimAlpha})`;
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
+}
+
+let initialLoaderHidden = false;
+
+function warmUpNebulaAndHideLoader() {
+  if (initialLoaderHidden) return;
+  initialLoaderHidden = true;
+
+  const loader = document.getElementById('initialLoadingScreen');
+
+  // Даём браузеру гарантированно отрисовать кадр с надписью LOADING...
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      try {
+        if (typeof canvas !== 'undefined' && canvas) {
+          const dpr = getDpr();
+          const w = canvas.width / dpr || window.innerWidth;
+          const h = canvas.height / dpr || window.innerHeight;
+          // Заранее генерируем кэш туманности и звёзд под ширмой LOADING...
+          drawCosmicNebulaBackground(w, h);
+        }
+      } catch (e) {
+        console.warn('Pre-warm nebula failed:', e);
+      }
+
+      // Когда текстура космоса полностью готова в памяти — плавно убираем экран загрузки
+      if (loader) {
+        loader.style.opacity = '0';
+        loader.style.pointerEvents = 'none';
+        setTimeout(() => {
+          if (loader.parentNode) loader.parentNode.removeChild(loader);
+        }, 420);
+      }
+    }, 30);
+  });
 }
 
 
@@ -4133,9 +4202,10 @@ function updateAndDrawStars(w, h, now) {
     const lifeProgress = star.life / star.maxLife;
     const fade = Math.min(1, Math.sin(lifeProgress * Math.PI) * 3);
 
-    // Smooth sinusoidal brightness modulation.
+    // выразительное мягкое мерцание (в битве приглушаем яркость на 45%)
+    const combatStarMult = isMenuSceneActive() ? 1.0 : 0.55;
     const twinkle = 0.55 + 0.45 * Math.sin(time * star.twinkleSpeed + star.twinklePhase);
-    const alpha = star.baseAlpha * twinkle * fade;
+    const alpha = star.baseAlpha * twinkle * fade * combatStarMult;
     if (alpha <= 0.02) continue;
 
     const sp = starSprites[star.cls][star.tint];
@@ -5298,12 +5368,7 @@ function render(now) {
     }
   }
 
-  const isUpgradesFromCombat = (gameState === 'UPGRADES' && (upgradesPreviousSource === 'victory' || upgradesPreviousSource === 'defeat'));
-  const isSettingsFromCombat = (gameState === 'SETTINGS' && settingsPreviousSource === 'pause');
-  const isShopFromCombat = (gameState === 'SHOP' && (shopPreviousSource === 'victory' || shopPreviousSource === 'defeat'));
-
-  if ((gameState === 'START' || gameState === 'LEVELS' || gameState === 'UPGRADES' || gameState === 'SHOP') 
-      && !isUpgradesFromCombat && !isSettingsFromCombat && !isShopFromCombat) {
+  if (isMenuSceneActive()) {
     drawSynthWavePerspectiveScene(now);
     return;
   }

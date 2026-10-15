@@ -2171,6 +2171,10 @@ function showStartScreen() {
   resizeCanvasAndCamera();
   gameState = 'START';
   updateUpgradeButtonsLock();
+
+  if (typeof warmUpNebulaAndHideLoader === 'function') {
+    warmUpNebulaAndHideLoader();
+  }
 }
 
 function showLevelSelect() {
