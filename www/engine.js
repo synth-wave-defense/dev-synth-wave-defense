@@ -2081,20 +2081,27 @@ function triggerManualWave() {
     const secondsSaved = autoWaveTimeRemaining;
     waveTimerActive = false;
     autoWaveTimeRemaining = 0;
-    if (wave < maxW) {
+    if (isEndlessMode || wave < maxW) {
       let totalDelay = 5.0;
       let currentWaveObj = null;
-      if (lvlConfig && lvlConfig.waves) {
+      let baseBonus = 15;
+
+      if (isEndlessMode) {
+        addBpXp(5);
+        baseBonus = 15 + Math.floor(wave * 1.5);
+      } else if (lvlConfig && lvlConfig.waves) {
         currentWaveObj = lvlConfig.waves.find(w => w.wave === wave);
         if (currentWaveObj && currentWaveObj.delayAfter !== undefined) {
           totalDelay = currentWaveObj.delayAfter;
+        }
+        if (currentWaveObj && currentWaveObj.earlyBonus !== undefined) {
+          baseBonus = currentWaveObj.earlyBonus;
         }
       }
 
       wave++;
       const moneyMultiplier = 1 + getUpgradeEffectiveLevel('base_gold') * 0.05;
       const fractionSaved = totalDelay > 0 ? Math.min(1, Math.max(0, secondsSaved / totalDelay)) : 0;
-      let baseBonus = (currentWaveObj && currentWaveObj.earlyBonus !== undefined) ? currentWaveObj.earlyBonus : 15;
       const earlyCallBonus = Math.round(fractionSaved * baseBonus * moneyMultiplier);
 
       if (earlyCallBonus > 0) {
@@ -2104,7 +2111,7 @@ function triggerManualWave() {
       startWave();
     }
   } else if (!waveInProgress && spawnQueue.length === 0) {
-    if (wave <= maxW) startWave();
+    if (isEndlessMode || wave <= maxW) startWave();
   }
 }
 
