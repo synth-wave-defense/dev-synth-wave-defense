@@ -2333,8 +2333,15 @@ function showStartScreen() {
   if (typeof updateDailyLoginBadge === 'function') updateDailyLoginBadge();
 
   if (!hasAutoShownDailyLoginModalThisSession) {
-    const isL1Cleared = (maxUnlockedLevel > 1) || (clearedLevels && clearedLevels.length > 0) || (typeof hasClearedLevelBefore === 'function' && hasClearedLevelBefore(1));
-    if (isL1Cleared && !checkDailyLoginState()) {
+    const hasCleared2Levels = (maxUnlockedLevel >= 3) ||
+                              (clearedLevels && clearedLevels.length >= 2) ||
+                              (typeof hasClearedLevelBefore === 'function' && hasClearedLevelBefore(2));
+    const isNotClaimedToday = !checkDailyLoginState();
+    const milestoneScr = document.getElementById('milestoneScreen');
+    const isMilestoneHidden = milestoneScr ? milestoneScr.classList.contains('hidden') : true;
+    const isNotDismissedThisSession = (typeof dailyLoginDismissedThisSession !== 'undefined') ? !dailyLoginDismissedThisSession : true;
+
+    if (hasCleared2Levels && isNotClaimedToday && isMilestoneHidden && isNotDismissedThisSession) {
       hasAutoShownDailyLoginModalThisSession = true;
       setTimeout(() => openDailyLoginModal(), 300);
     }
@@ -3837,6 +3844,7 @@ function openDailyLoginModal() {
 }
 
 function closeDailyLoginModal() {
+  dailyLoginDismissedThisSession = true;
   const modal = document.getElementById('dailyLoginModal');
   if (modal) modal.classList.add('hidden');
 }
@@ -5072,7 +5080,7 @@ function isMenuSceneActive() {
   const isSettingsFromCombat = (typeof gameState !== 'undefined' && gameState === 'SETTINGS' && (typeof settingsPreviousSource !== 'undefined' && settingsPreviousSource === 'pause'));
   const isShopFromCombat = (typeof gameState !== 'undefined' && gameState === 'SHOP' && (typeof shopPreviousSource !== 'undefined' && (shopPreviousSource === 'victory' || shopPreviousSource === 'defeat')));
 
-  return (typeof gameState !== 'undefined' && (gameState === 'START' || gameState === 'LEVELS' || gameState === 'UPGRADES' || gameState === 'SHOP')) &&
+  return (typeof gameState !== 'undefined' && (gameState === 'START' || gameState === 'LEVELS' || gameState === 'UPGRADES' || gameState === 'SHOP' || gameState === 'BATTLE_PASS')) &&
          !isUpgradesFromCombat && !isSettingsFromCombat && !isShopFromCombat;
 }
 
