@@ -2705,7 +2705,7 @@ function renderBattlePassScreen() {
   listBody.innerHTML = '';
 
   const diamondIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
-  const prismIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
+  const prismIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
 
   BATTLE_PASS_TIERS.forEach(item => {
     const t = item.tier;
