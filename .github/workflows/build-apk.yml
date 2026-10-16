@@ -29,6 +29,36 @@ jobs:
       - name: 📦 Установка зависимостей
         run: npm install
 
+      - name: 🔧 Патч CapacitorUpdater (VPN WorkManager fix & диагностика Java)
+        run: |
+          python3 - << 'EOF'
+          import os, glob
+
+          root = "node_modules/@capgo/capacitor-updater/android"
+          for path in glob.glob(f"{root}/**/*.java", recursive=True):
+              with open(path, "r", encoding="utf-8") as f:
+                  lines = f.readlines()
+              content = "".join(lines)
+              orig = content
+
+              # Печатаем в лог GitHub Actions место, где формируется ошибка "Failed to download from"
+              for idx, line in enumerate(lines):
+                  if "Failed to download from" in line or "downloadFailed" in line:
+                      print(f"=== {path} (line {idx+1}) ===")
+                      start = max(0, idx - 20)
+                      end = min(len(lines), idx + 20)
+                      print("".join(lines[start:end]))
+                      print("=========================================")
+
+              # Отключаем блокировку WorkManager при включенном VPN
+              content = content.replace("NetworkType.CONNECTED", "NetworkType.NOT_REQUIRED")
+
+              if content != orig:
+                  with open(path, "w", encoding="utf-8") as f:
+                      f.write(content)
+                  print(f"✅ Patched NetworkType.NOT_REQUIRED in {path}")
+          EOF
+
       - name: 🔄 Синхронизация Capacitor
         run: npx cap sync android
 

@@ -318,8 +318,8 @@
           path: 'ota_probe_bundle.zip',
           directory: 'DATA'
         });
-        if (uriObj && uriObj.uri && window.Capacitor && typeof window.Capacitor.convertFileSrc === 'function') {
-          localWebViewUrl = window.Capacitor.convertFileSrc(uriObj.uri);
+		if (uriObj && uriObj.uri) {
+          localWebViewUrl = uriObj.uri;
         }
       } catch (e2) {
         OtaDiagnostics.triageT2FsDl = `FAIL (${formatErr(e2)})`;
