@@ -1408,63 +1408,91 @@ function navLevelSection(dir) {
   }, 180);
 }
 
-function toggleOverdriveMode() {
-  if (!isOverdriveUnlocked()) {
-    sfx('denied');
-    showHintToast('Complete Sector 1 to unlock OVERDRIVE');
-    return;
+let currentLevelMode = 'normal';
+
+function selectLevelMode(mode) {
+  if (mode === 'overdrive') {
+    if (!isOverdriveUnlocked()) {
+      if (typeof sfx === 'function') sfx('denied');
+      if (typeof showHintToast === 'function') showHintToast('Complete Sector 1 to unlock OVERDRIVE');
+      return;
+    }
+  } else if (mode === 'endless') {
+    if (!isEndlessUnlocked()) {
+      if (typeof sfx === 'function') sfx('denied');
+      if (typeof showHintToast === 'function') showHintToast('Complete Campaign Level 15 to unlock Endless Arena!');
+      return;
+    }
   }
-  isOverdriveMode = !isOverdriveMode;
-  sfx('confirm');
-  updateOverdriveToggleUI();
+
+  if (typeof sfx === 'function') sfx('confirm');
+  currentLevelMode = mode;
+  isOverdriveMode = (mode === 'overdrive');
+  isEndlessMode = (mode === 'endless');
+
+  updateModeSwitcherUI();
   renderLevelsGrid();
 }
 
-function updateOverdriveToggleUI() {
-  const switchEl = document.getElementById('modeToggleSwitch');
+function updateModeSwitcherUI() {
+  const tabNormal = document.getElementById('tabNormal');
+  const tabOverdrive = document.getElementById('tabOverdrive');
+  const tabEndless = document.getElementById('tabEndless');
   const levelsScreen = document.getElementById('levelsScreen');
-  const isUnlocked = isOverdriveUnlocked();
 
-  if (switchEl) {
-    if (isOverdriveMode) {
-      switchEl.classList.add('active-overdrive');
-    } else {
-      switchEl.classList.remove('active-overdrive');
-    }
-    if (!isUnlocked) {
-      switchEl.classList.add('locked-switch');
-    } else {
-      switchEl.classList.remove('locked-switch');
-    }
+  const odUnlocked = isOverdriveUnlocked();
+  const endlessUnlocked = isEndlessUnlocked();
+
+  if (tabNormal) tabNormal.classList.toggle('active', currentLevelMode === 'normal');
+  if (tabOverdrive) {
+    tabOverdrive.classList.toggle('active', currentLevelMode === 'overdrive');
+    tabOverdrive.classList.toggle('locked', !odUnlocked);
+  }
+  if (tabEndless) {
+    tabEndless.classList.toggle('active', currentLevelMode === 'endless');
+    tabEndless.classList.toggle('locked', !endlessUnlocked);
   }
 
   if (levelsScreen) {
-    if (isOverdriveMode) {
-      levelsScreen.classList.add('overdrive-active');
-    } else {
-      levelsScreen.classList.remove('overdrive-active');
-    }
+    levelsScreen.classList.toggle('mode-normal-active', currentLevelMode === 'normal');
+    levelsScreen.classList.toggle('mode-overdrive-active', currentLevelMode === 'overdrive');
+    levelsScreen.classList.toggle('mode-endless-active', currentLevelMode === 'endless');
   }
-}
 
-function updateEndlessBannerUI() {
-  const banner = document.getElementById('endlessArenaBanner');
-  const statusEl = document.getElementById('endlessBannerStatus');
-  const bestEl = document.getElementById('endlessBannerBest');
-  if (!banner) return;
+  const campaignView = document.getElementById('levelsCampaignView');
+  const endlessView = document.getElementById('endlessDashboardView');
 
-  const unlocked = (typeof isEndlessUnlocked === 'function') ? isEndlessUnlocked() : false;
-  if (unlocked) {
-    banner.classList.remove('locked');
-    const status = (typeof getEndlessEntryStatus === 'function') ? getEndlessEntryStatus() : { text: 'FREE ENTRY (1/1)' };
-    if (statusEl) statusEl.textContent = status.text;
-    if (bestEl) bestEl.textContent = `BEST: WAVE ${endlessBestWave || 0}`;
+  if (currentLevelMode === 'endless') {
+    if (campaignView) campaignView.classList.add('hidden');
+    if (endlessView) endlessView.classList.remove('hidden');
+    renderEndlessDashboardUI();
   } else {
-    banner.classList.add('locked');
-    if (statusEl) statusEl.textContent = 'UNLOCKS AT LEVEL 15';
-    if (bestEl) bestEl.textContent = `BEST: WAVE ${endlessBestWave || 0}`;
+    if (campaignView) campaignView.classList.remove('hidden');
+    if (endlessView) endlessView.classList.add('hidden');
   }
 }
+
+function renderEndlessDashboardUI() {
+  const valEl = document.getElementById('endlessRecordVal');
+  const subEl = document.getElementById('endlessRecordSub');
+  const mapEl = document.getElementById('endlessMapText');
+  const ticketEl = document.getElementById('endlessDeployTicketText');
+
+  const bestWave = endlessBestWave || 0;
+  if (valEl) valEl.textContent = `WAVE ${bestWave}`;
+
+  const nextMilestone = bestWave < 50 ? 50 : Math.ceil((bestWave + 1) / 50) * 50;
+  if (subEl) subEl.textContent = `Next Milestone: Wave ${nextMilestone} (+5 🔮 Prisms Bonus)`;
+
+  if (mapEl) mapEl.textContent = `< MAP: SECTOR ${currentLevelSection} ARENA >`;
+
+  if (ticketEl) {
+    const status = (typeof getEndlessEntryStatus === 'function') ? getEndlessEntryStatus() : { text: 'FREE (1/1 REMAINING)' };
+    ticketEl.textContent = `DAILY TICKET: ${status.text.toUpperCase()}`;
+  }
+}
+
+window.selectLevelMode = selectLevelMode;
 
 function openEndlessLoadoutModal() {
   const unlocked = (typeof isEndlessUnlocked === 'function') ? isEndlessUnlocked() : false;
@@ -1585,20 +1613,22 @@ window.confirmStartEndlessRun = confirmStartEndlessRun;
 window.getEndlessEntryStatus = getEndlessEntryStatus;
 
 function renderLevelsGrid() {
-  updateOverdriveToggleUI();
-  updateEndlessBannerUI();
+  updateModeSwitcherUI();
   const levelsGrid = document.getElementById('levelsGrid');
   if (!levelsGrid) return;
   levelsGrid.innerHTML = '';
 
   const partLabel = document.getElementById('partNavLabel');
-  const topChapter = document.getElementById('levelsTopChapter');
   const prevBtn = document.getElementById('partNavPrev');
   const nextBtn = document.getElementById('partNavNext');
   const nextSecUnlocked = devMode || maxUnlockedLevel > currentLevelSection * LEVELS_PER_SECTION;
 
-  if (partLabel) partLabel.textContent = `CHAPTER ${currentLevelSection}`;
-  if (topChapter) topChapter.textContent = `CHAPTER ${currentLevelSection}`;
+  const sectorName = currentLevelSection === 1 ? 'NEON DAWN' : `SECTOR ${currentLevelSection}`;
+  const sectorTitle = (currentLevelMode === 'overdrive')
+    ? `SECTOR ${currentLevelSection}: OVERDRIVE`
+    : `SECTOR ${currentLevelSection}: ${sectorName}`;
+
+  if (partLabel) partLabel.textContent = `< ${sectorTitle} >`;
 
   if (prevBtn) {
     const canGoPrev = currentLevelSection > 1;
@@ -1609,15 +1639,31 @@ function renderLevelsGrid() {
     nextBtn.disabled = !canGoNext;
   }
 
+  const subInfo = document.getElementById('levelsSubInfo');
+  const hazardPill = document.getElementById('overdriveHazardPill');
+  const progressPillText = document.getElementById('sectorProgressText');
+
+  if (currentLevelMode === 'overdrive') {
+    if (subInfo) subInfo.classList.add('hidden');
+    if (hazardPill) hazardPill.classList.remove('hidden');
+  } else {
+    if (subInfo) subInfo.classList.remove('hidden');
+    if (hazardPill) hazardPill.classList.add('hidden');
+  }
+
   const startLvl = (currentLevelSection - 1) * LEVELS_PER_SECTION + 1;
   const endLvl = currentLevelSection * LEVELS_PER_SECTION;
+
+  let sectionStars = 0;
+  let sectionOdCleared = 0;
 
   for (let lvl = startLvl; lvl <= endLvl; lvl++) {
     const btn = document.createElement('button');
 
-    if (!isOverdriveMode) {
+    if (currentLevelMode !== 'overdrive') {
       const isUnlocked = devMode || lvl <= maxUnlockedLevel;
       const earnedStars = levelStars[lvl] || 0;
+      sectionStars += earnedStars;
       const isCleared = clearedLevels.includes(lvl) || earnedStars > 0;
       const isCurrent = lvl === maxUnlockedLevel && !isCleared;
 
@@ -1626,9 +1672,11 @@ function renderLevelsGrid() {
         btn.innerHTML = `
           <span class="level-num">${lvl}</span>
           <div class="level-card-stars">
-            <span class="mini-star ${earnedStars >= 1 ? 'filled' : 'empty'}">★</span>
-            <span class="mini-star ${earnedStars >= 2 ? 'filled' : 'empty'}">★</span>
-            <span class="mini-star ${earnedStars >= 3 ? 'filled' : 'empty'}">★</span>
+            ${isCurrent ? '<span class="level-next-tag">NEXT</span>' : `
+              <span class="mini-star ${earnedStars >= 1 ? 'filled' : 'empty'}">★</span>
+              <span class="mini-star ${earnedStars >= 2 ? 'filled' : 'empty'}">★</span>
+              <span class="mini-star ${earnedStars >= 3 ? 'filled' : 'empty'}">★</span>
+            `}
           </div>
         `;
         btn.onclick = () => startSpecificLevel(lvl);
@@ -1640,6 +1688,7 @@ function renderLevelsGrid() {
     } else {
       const isUnlockedInNormal = devMode || clearedLevels.includes(lvl);
       const isOdCleared = !!overdriveClearedLevels[lvl];
+      if (isOdCleared) sectionOdCleared++;
 
       if (isUnlockedInNormal) {
         btn.className = 'level-card-btn overdrive-card' + (isOdCleared ? ' cleared' : '');
@@ -1650,18 +1699,13 @@ function renderLevelsGrid() {
           btn.innerHTML = `
             <span class="level-num">${lvl}</span>
             <div class="level-card-overdrive-badge filled" title="Overdrive Cleared">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="#f04878" stroke="#f04878" stroke-width="1.8" style="filter: drop-shadow(0 0 6px #f04878);">
-                <polygon points="12 2 21 12 12 22 3 12"/>
-              </svg>
+              <span class="od-clear-skull">💀✓</span>
             </div>
           `;
         } else {
           btn.innerHTML = `
             <span class="level-num">${lvl}</span>
             <div class="level-card-overdrive-badge empty">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2">
-                <polygon points="12 2 21 12 12 22 3 12"/>
-              </svg>
               <span class="od-reward-tag">${rewardText}</span>
             </div>
           `;
@@ -1674,6 +1718,14 @@ function renderLevelsGrid() {
       }
     }
     levelsGrid.appendChild(btn);
+  }
+
+  if (progressPillText) {
+    if (currentLevelMode === 'overdrive') {
+      progressPillText.textContent = `OVERDRIVE CLEARED: ${sectionOdCleared} / ${LEVELS_PER_SECTION} 💀 (+3 🔮 / LVL)`;
+    } else {
+      progressPillText.textContent = `SECTOR STARS: ${sectionStars} / ${LEVELS_PER_SECTION * 3} ★`;
+    }
   }
 }
 
@@ -3678,7 +3730,7 @@ function renderShopScreen() {
     } else {
       giftBtn.disabled = false;
       giftBtn.className = 'shop-item-btn shop-btn-ad';
-      giftBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="flex:none;"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zM8 15l7-4-7-4v8z"/></svg><span>WATCH AD</span>';
+      giftBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" style="flex:none; margin-right:4px;"><rect x="2" y="4" width="20" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="10,9 16,12 10,15" fill="currentColor"/></svg><span>WATCH AD</span>';
     }
   }
 
@@ -3905,6 +3957,8 @@ function claimDailyLoginReward(isDouble) {
     if (addPrisms > 0) parts.push(`+${addPrisms} 🔮`);
     toastText += parts.join(' ');
     showHintToast(toastText);
+
+    closeDailyLoginModal();
   };
 
   if (isDouble && !noAdsPurchased) {
