@@ -64,7 +64,7 @@ const SFX = (function () {
     try {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return null;
-      ctx = new AC({ latencyHint: 'playback' });
+      ctx = new AC({ latencyHint: 'interactive' });
 
       ctx.addEventListener('statechange', () => {
         if (ctx) window._audioCtxState = ctx.state;
