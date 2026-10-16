@@ -904,12 +904,17 @@ function updatePrismUI() {
   if (elShop) elShop.textContent = prisms;
   const badge = document.getElementById('hudPrismBadge');
   if (badge) {
-    if (devMode) {
-      badge.classList.add('interactive');
-      badge.title = "Click: +10 / Hold: set amount (Dev Mode)";
+    if (typeof gameState !== 'undefined' && gameState === 'PLAYING') {
+      badge.style.display = 'none';
     } else {
-      badge.classList.remove('interactive');
-      badge.removeAttribute('title');
+      badge.style.display = '';
+      if (devMode) {
+        badge.classList.add('interactive');
+        badge.title = "Click: +10 / Hold: set amount (Dev Mode)";
+      } else {
+        badge.classList.remove('interactive');
+        badge.removeAttribute('title');
+      }
     }
   }
 }
@@ -1246,6 +1251,9 @@ function renderUpgradeTree() {
     } else if (currentLvl < 15) {
       lvlEl.style.color = '#d946ef';
       lvlEl.textContent = `ASC ${currentLvl - 10}/5`;
+    } else if (!isScalingBranch(row.key)) {
+      lvlEl.style.color = '#d946ef';
+      lvlEl.textContent = 'ASCENDED MAX';
     } else {
       lvlEl.style.color = '#00e5ff';
       lvlEl.textContent = `SYNTH +${currentLvl - 15}`;
@@ -1267,7 +1275,7 @@ function renderUpgradeTree() {
         }
         segs.appendChild(seg);
       }
-    } else if (currentLvl < 15) {
+    } else if (currentLvl < 15 || !isScalingBranch(row.key)) {
       for (let s = 1; s <= 5; s++) {
         const seg = document.createElement('div');
         seg.className = 'upgrade-row-seg' + (row.isLockedCard ? ' locked-seg' : '');
@@ -1302,6 +1310,13 @@ function renderUpgradeTree() {
     if (row.isLockedCard) {
       buyBtn.classList.add('locked-buy');
       buyBtn.innerHTML = `<span style="font-size:12px; filter:grayscale(1) brightness(.7);">🔒</span>`;
+    } else if (currentLvl >= 15 && !isScalingBranch(row.key)) {
+      buyBtn.classList.add('locked-buy', 'max-buy');
+      buyBtn.innerHTML = `<span class="upgrade-row-buy-cost" style="color:#d946ef; font-size:10px;">ASCENDED MAX</span>`;
+      buyBtn.onclick = () => {
+        sfx('denied');
+        showHintToast('Branch is ASCENDED MAX (Lvl 15)');
+      };
     } else if (isSectorGated) {
       buyBtn.classList.add('locked-buy');
       buyBtn.innerHTML = `<span style="font-size:11px; filter:grayscale(1) brightness(.7);">🔒</span><span class="upgrade-row-buy-cost" style="color:#8ea3c4; font-size:10px;">L${lvlNeeded}</span>`;
@@ -1322,7 +1337,17 @@ function renderUpgradeTree() {
       const canAffordBoth = canAffordD && canAffordP;
 
       if (costD > 0 && costP > 0) {
-        buyBtn.innerHTML = `${diamondIcon}<span class="upgrade-row-buy-cost" style="color:${canAffordD ? '#ffffff' : '#f87171'};">${costD}</span>${prismIcon}<span class="upgrade-row-buy-cost" style="color:${canAffordP ? '#ffffff' : '#f87171'};">${costP}</span>`;
+        buyBtn.classList.add('dual-cost-btn');
+        buyBtn.innerHTML = `
+          <div class="dual-cost-row">
+            ${diamondIcon}
+            <span class="upgrade-row-buy-cost" style="color:${canAffordD ? '#ffffff' : '#f87171'};">${costD}</span>
+          </div>
+          <div class="dual-cost-row">
+            ${prismIcon}
+            <span class="upgrade-row-buy-cost" style="color:${canAffordP ? '#ffffff' : '#f87171'};">${costP}</span>
+          </div>
+        `;
       } else if (costP > 0) {
         buyBtn.innerHTML = `${prismIcon}<span class="upgrade-row-buy-cost" style="color:${canAffordP ? '#ffffff' : '#f87171'};">${costP}</span>`;
       } else {
@@ -4341,6 +4366,15 @@ function updateUI() {
   } else {
     document.getElementById('levelText').textContent = `${currentLevel}`;
     document.getElementById('waveText').textContent = `${Math.min(wave, maxW)}/${maxW}`;
+  }
+
+  const prismBadge = document.getElementById('hudPrismBadge');
+  if (prismBadge) {
+    if (typeof gameState !== 'undefined' && gameState === 'PLAYING') {
+      prismBadge.style.display = 'none';
+    } else {
+      prismBadge.style.display = '';
+    }
   }
 
   for (let key in TOWER_CONFIGS) {

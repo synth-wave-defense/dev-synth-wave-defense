@@ -2714,6 +2714,18 @@ body {
   transition: all 0.15s;
   font-family: 'Montserrat', sans-serif;
 }
+.upgrade-row-buy.dual-cost-btn {
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 8px;
+  line-height: 1.05;
+  font-size: 11px;
+}
+.dual-cost-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 .upgrade-row-buy:active:not(.locked-buy):not(.max-buy),
 .upgrade-row-buy.btn-pushed:not(.locked-buy):not(.max-buy) {
   transform: scale(0.90) translateY(1px) !important;

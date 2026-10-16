@@ -297,6 +297,14 @@ function getUpgradeCostForLevel(nextLvl) {
   }
 }
 
+function isScalingBranch(key) {
+  if (!key) return false;
+  if (key.endsWith('_power') || key === 'base_hp' || key === 'base_gold' || key === 'shield' || key === 'damage') {
+    return true;
+  }
+  return false;
+}
+
 function getUpgradeEffectiveLevel(key) {
   const lvl = upgradeTreeData[key] || 0;
   if (lvl <= 14) {

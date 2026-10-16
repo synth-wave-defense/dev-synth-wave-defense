@@ -726,6 +726,12 @@ function handleNodeClick(key, stepIndex) {
   const targetStep = currentVal + 1;
   if (stepIndex !== targetStep) return;
 
+  if (currentVal >= 15 && !isScalingBranch(key)) {
+    sfx('denied');
+    showHintToast('Branch is ASCENDED MAX (Lvl 15)');
+    return;
+  }
+
   const maxStep = getMaxUpgradeStep();
   const isPhase2UnlockedGlobally = getLoadoutReferenceLevel() > 30 || maxUnlockedLevel > 30 || (typeof clearedLevels !== 'undefined' && clearedLevels.includes(30));
 
