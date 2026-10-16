@@ -956,6 +956,8 @@ function startEndlessMatch() {
   document.getElementById('startScreen').classList.add('hidden');
   document.getElementById('settingsScreen').classList.add('hidden');
   document.getElementById('upgradesScreen').classList.add('hidden');
+  const topHud = document.getElementById('topHud');
+  if (topHud) topHud.classList.remove('hidden');
 
   document.getElementById('econHpSplitBadge').classList.remove('hidden');
   document.getElementById('levelWaveSplitBadge').classList.remove('hidden');
@@ -1016,6 +1018,8 @@ function reallyStartLevel(lvl) {
   document.getElementById('upgradesScreen').classList.add('hidden');
   const revSc = document.getElementById('reviveScreen');
   if (revSc) revSc.classList.add('hidden');
+  const topHud = document.getElementById('topHud');
+  if (topHud) topHud.classList.remove('hidden');
 
   document.getElementById('econHpSplitBadge').classList.remove('hidden');
   document.getElementById('levelWaveSplitBadge').classList.remove('hidden');

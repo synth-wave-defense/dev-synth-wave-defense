@@ -3150,6 +3150,8 @@ function showLevelSelect() {
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
   document.getElementById('startScreen').classList.add('hidden');
   document.getElementById('levelsScreen').classList.remove('hidden');
+  const topHud = document.getElementById('topHud');
+  if (topHud) topHud.classList.add('hidden');
   const quickDailyBtn = document.getElementById('dailyBonusQuickBtn');
   if (quickDailyBtn) quickDailyBtn.classList.add('hidden');
   document.getElementById('econHpSplitBadge').classList.add('hidden');
@@ -3236,6 +3238,8 @@ function showLevelSelectFromGame() {
   if (revSc) revSc.classList.add('hidden');
 
   document.getElementById('levelsScreen').classList.remove('hidden');
+  const topHud = document.getElementById('topHud');
+  if (topHud) topHud.classList.add('hidden');
   document.getElementById('econHpSplitBadge').classList.add('hidden');
   document.getElementById('levelWaveSplitBadge').classList.add('hidden');
   document.getElementById('hudRightGroup').classList.remove('hidden');
@@ -3593,7 +3597,6 @@ function closeUpgradesScreen() {
   document.getElementById('upgradesScreen').classList.add('hidden');
   
   const topHud = document.getElementById('topHud');
-  if (topHud) topHud.classList.remove('hidden');
 
   ['startScreen', 'victoryScreen', 'defeatScreen', 'levelsScreen', 'pauseScreen', 'settingsScreen'].forEach(id => {
     const el = document.getElementById(id);
@@ -3601,15 +3604,19 @@ function closeUpgradesScreen() {
   });
 
   if (upgradesPreviousSource === 'victory') {
+    if (topHud) topHud.classList.remove('hidden');
     document.getElementById('victoryScreen').classList.remove('hidden');
     gameState = 'VICTORY';
   } else if (upgradesPreviousSource === 'defeat') {
+    if (topHud) topHud.classList.remove('hidden');
     document.getElementById('defeatScreen').classList.remove('hidden');
     gameState = 'DEFEAT';
   } else if (upgradesPreviousSource === 'levels') {
+    if (topHud) topHud.classList.add('hidden');
     document.getElementById('levelsScreen').classList.remove('hidden');
     gameState = 'LEVELS';
   } else {
+    if (topHud) topHud.classList.remove('hidden');
     document.getElementById('startScreen').classList.remove('hidden');
     gameState = 'START';
   }
