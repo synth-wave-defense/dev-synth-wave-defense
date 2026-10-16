@@ -4758,8 +4758,8 @@ function ridged(x, y, oct) {
 // [UI208] Cosmic nebula and baked starfield texture renderer.
 
 const NEBULA_DENSITY = 1.0;        // Overall nebula brightness and density (0.7 - 1.6).
-const NEBULA_LOWRES_MAX = 560;     // Nebula resolution cap in high-performance mode.
-const NEBULA_LOWRES_PERF = 340;    // Reduced nebula resolution cap for low-performance mode.
+const NEBULA_LOWRES_MAX = 1280;    // Nebula resolution cap in high-performance mode.
+const NEBULA_LOWRES_PERF = 640;     // Reduced nebula resolution cap for low-performance mode.
 
 // [UI208.01] Nebula color clusters aligned with logo gradient (pink-purple left, cyan right, muted bottom).
 const NEBULA_CLUSTERS = [
