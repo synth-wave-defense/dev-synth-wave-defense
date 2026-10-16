@@ -1341,17 +1341,17 @@ function renderUpgradeTree() {
         buyBtn.innerHTML = `
           <div class="dual-cost-row">
             ${diamondIcon}
-            <span class="upgrade-row-buy-cost" style="color:${canAffordD ? '#ffffff' : '#f87171'};">${costD}</span>
+            <span class="upgrade-row-buy-cost" style="color:${canAffordD ? '#ffffff' : '#f05f9f'};">${costD}</span>
           </div>
           <div class="dual-cost-row">
             ${prismIcon}
-            <span class="upgrade-row-buy-cost" style="color:${canAffordP ? '#ffffff' : '#f87171'};">${costP}</span>
+            <span class="upgrade-row-buy-cost" style="color:${canAffordP ? '#ffffff' : '#f05f9f'};">${costP}</span>
           </div>
         `;
       } else if (costP > 0) {
-        buyBtn.innerHTML = `${prismIcon}<span class="upgrade-row-buy-cost" style="color:${canAffordP ? '#ffffff' : '#f87171'};">${costP}</span>`;
+        buyBtn.innerHTML = `${prismIcon}<span class="upgrade-row-buy-cost" style="color:${canAffordP ? '#ffffff' : '#f05f9f'};">${costP}</span>`;
       } else {
-        buyBtn.innerHTML = `${diamondIcon}<span class="upgrade-row-buy-cost" style="color:${canAffordD ? '#ffffff' : '#f87171'};">${costD}</span>`;
+        buyBtn.innerHTML = `${diamondIcon}<span class="upgrade-row-buy-cost" style="color:${canAffordD ? '#ffffff' : '#f05f9f'};">${costD}</span>`;
       }
 
       if (!canAffordBoth) {
@@ -1650,7 +1650,7 @@ function renderLevelsGrid() {
           btn.innerHTML = `
             <span class="level-num">${lvl}</span>
             <div class="level-card-overdrive-badge filled" title="Overdrive Cleared">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="#ff0055" stroke="#ff2a6d" stroke-width="1.8" style="filter: drop-shadow(0 0 6px #ff0055);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#f04878" stroke="#f04878" stroke-width="1.8" style="filter: drop-shadow(0 0 6px #f04878);">
                 <polygon points="12 2 21 12 12 22 3 12"/>
               </svg>
             </div>
@@ -2304,6 +2304,8 @@ function showStartScreen() {
   document.getElementById('econHpSplitBadge').classList.add('hidden');
   document.getElementById('levelWaveSplitBadge').classList.add('hidden');
   document.getElementById('hudRightGroup').classList.remove('hidden');
+  const quickDailyBtn = document.getElementById('dailyBonusQuickBtn');
+  if (quickDailyBtn) quickDailyBtn.classList.remove('hidden');
   updateStartChapterLabel(true);
   document.getElementById('controlsWrapper').classList.add('hidden');
 
@@ -2330,18 +2332,19 @@ function showStartScreen() {
   gameState = 'START';
   updateHudSpeedWidget();
   updateUpgradeButtonsLock();
-  if (typeof updateDailyLoginBadge === 'function') updateDailyLoginBadge();
+  updateMenuBadges();
 
   if (!hasAutoShownDailyLoginModalThisSession) {
-    const hasCleared2Levels = (maxUnlockedLevel >= 3) ||
-                              (clearedLevels && clearedLevels.length >= 2) ||
-                              (typeof hasClearedLevelBefore === 'function' && hasClearedLevelBefore(2));
+    const hasCleared1Level = (maxUnlockedLevel >= 2) ||
+                              (clearedLevels && clearedLevels.length >= 1) ||
+                              (typeof hasClearedLevelBefore === 'function' && hasClearedLevelBefore(1)) ||
+                              (typeof tutorialSeen !== 'undefined' && tutorialSeen.l1);
     const isNotClaimedToday = !checkDailyLoginState();
     const milestoneScr = document.getElementById('milestoneScreen');
     const isMilestoneHidden = milestoneScr ? milestoneScr.classList.contains('hidden') : true;
     const isNotDismissedThisSession = (typeof dailyLoginDismissedThisSession !== 'undefined') ? !dailyLoginDismissedThisSession : true;
 
-    if (hasCleared2Levels && isNotClaimedToday && isMilestoneHidden && isNotDismissedThisSession) {
+    if (hasCleared1Level && isNotClaimedToday && isMilestoneHidden && isNotDismissedThisSession) {
       hasAutoShownDailyLoginModalThisSession = true;
       setTimeout(() => openDailyLoginModal(), 300);
     }
@@ -2502,26 +2505,19 @@ let bpPreviousSource = 'start';
 function updateBpProgressUI() {
   const { tier, xpInTier, isMax, totalXp } = getBpTierInfo(bpXp);
 
-  // Fill progress bar in main menu button
+  // Update tier text and progress bar in main menu Synth Pass widget
+  const tierText = document.getElementById('startBpTierText');
+  if (tierText) {
+    tierText.textContent = `TIER ${tier}`;
+  }
+
   const startFill = document.getElementById('startBpProgressFill');
   if (startFill) {
     const pct = isMax ? 100 : xpInTier;
     startFill.style.width = `${pct}%`;
   }
 
-  // Unclaimed reward badge check
-  let hasUnclaimed = false;
-  if (typeof BATTLE_PASS_TIERS !== 'undefined') {
-    for (let t = 1; t <= tier; t++) {
-      if (!bpClaimedFree[t]) { hasUnclaimed = true; break; }
-      if (bpPremiumPurchased && !bpClaimedPrem[t]) { hasUnclaimed = true; break; }
-    }
-  }
-
-  const badgeDot = document.getElementById('startBpBadgeDot');
-  if (badgeDot) {
-    badgeDot.classList.toggle('hidden', !hasUnclaimed);
-  }
+  updateMenuBadges();
 
   // Update BP Screen elements if open
   const bpScreen = document.getElementById('battlePassScreen');
@@ -3102,6 +3098,8 @@ function showLevelSelect() {
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
   document.getElementById('startScreen').classList.add('hidden');
   document.getElementById('levelsScreen').classList.remove('hidden');
+  const quickDailyBtn = document.getElementById('dailyBonusQuickBtn');
+  if (quickDailyBtn) quickDailyBtn.classList.add('hidden');
   document.getElementById('econHpSplitBadge').classList.add('hidden');
   document.getElementById('levelWaveSplitBadge').classList.add('hidden');
   document.getElementById('hudRightGroup').classList.remove('hidden');
@@ -3632,6 +3630,7 @@ function closeShopScreen() {
 
 function renderShopScreen() {
   checkDailyGiftReset();
+  updateMenuBadges();
   const shopBody = document.getElementById('shopBodyList');
   if (shopBody) enablePointerScroll(shopBody);
   const diamondLabel = document.getElementById('shopDiamondVal');
@@ -3733,15 +3732,38 @@ function checkDailyLoginState() {
   return lastLoginClaimDate === todayStr;
 }
 
-function updateDailyLoginBadge() {
-  const badge = document.getElementById('dailyCalendarBadge');
-  if (!badge) return;
-  const isClaimedToday = checkDailyLoginState();
-  if (isClaimedToday) {
-    badge.classList.add('hidden');
-  } else {
-    badge.classList.remove('hidden');
+function updateMenuBadges() {
+  // 1. Daily Bonus badge
+  const dailyBadge = document.getElementById('dailyBonusBadgeDot') || document.getElementById('dailyCalendarBadge');
+  if (dailyBadge) {
+    const isClaimedToday = checkDailyLoginState();
+    dailyBadge.classList.toggle('hidden', isClaimedToday);
   }
+
+  // 2. Synth Pass badge
+  const bpBadge = document.getElementById('startBpBadgeDot');
+  if (bpBadge) {
+    let hasUnclaimed = false;
+    if (typeof getBpTierInfo === 'function' && typeof BATTLE_PASS_TIERS !== 'undefined') {
+      const { tier } = getBpTierInfo(bpXp);
+      for (let t = 1; t <= tier; t++) {
+        if (!bpClaimedFree[t]) { hasUnclaimed = true; break; }
+        if (bpPremiumPurchased && !bpClaimedPrem[t]) { hasUnclaimed = true; break; }
+      }
+    }
+    bpBadge.classList.toggle('hidden', !hasUnclaimed);
+  }
+
+  // 3. Gifts & Shop badge
+  const shopBadge = document.getElementById('shopBadgeDot');
+  if (shopBadge) {
+    const hasUnclaimedGifts = (typeof dailyGiftsClaimedCount !== 'undefined') ? (dailyGiftsClaimedCount < 3) : false;
+    shopBadge.classList.toggle('hidden', !hasUnclaimedGifts);
+  }
+}
+
+function updateDailyLoginBadge() {
+  updateMenuBadges();
 }
 
 function renderDailyLoginModal() {
@@ -3902,7 +3924,7 @@ function renderVictoryStars(starsCount) {
     slot.className = 'star-slot filled overdrive-victory-badge';
     setTimeout(() => sfx('star'), 160);
     slot.innerHTML = `
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="#ff0055" stroke="#ff2a6d" stroke-width="1.8" style="filter: drop-shadow(0 0 12px #ff0055);">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="#f04878" stroke="#f04878" stroke-width="1.8" style="filter: drop-shadow(0 0 12px #f04878);">
         <polygon points="12 2 21 12 12 22 3 12"/>
       </svg>`;
     row.appendChild(slot);
@@ -4280,7 +4302,7 @@ function updateInspectUI() {
     upgBtn.disabled = !canAfford;
     if (upgValEl) {
       upgValEl.textContent = `${upgCost}`;
-      upgValEl.style.color = canAfford ? '#ffffff' : '#f87171';
+      upgValEl.style.color = canAfford ? '#ffffff' : '#f05f9f';
     }
     if (upgIconEl) upgIconEl.style.display = 'inline-flex';
     if (upgStatusEl) upgStatusEl.textContent = 'UPGRADE';
@@ -4410,7 +4432,7 @@ function updateUI() {
   if (selectedTower) updateInspectUI();
 }
 
-function createFloatingDamage(x, y, damage, color = '#ff3366') {
+function createFloatingDamage(x, y, damage, color = '#f05f9f') {
   if (typeof settings !== 'undefined' && settings.showDamage === false) return;
   const dmgVal = typeof damage === 'number' ? Math.round(damage) : damage;
   if (!dmgVal || dmgVal <= 0) return;
@@ -5942,7 +5964,7 @@ function drawTowerModel(type, angle, color, level = 1, glow = '#00e5ff', isDisab
     ctx.stroke();
 
     const isOverheated = clampedHeat >= 0.999;
-    const heatColor = isOverheated ? '#ffffff' : (isCooling ? '#fb923c' : '#ef4444');
+    const heatColor = isOverheated ? '#ffffff' : (isCooling ? '#fb923c' : '#f05f9f');
     ctx.beginPath();
     ctx.strokeStyle = heatColor;
     setGlow(heatColor, isOverheated ? 8 : 5);
@@ -5968,7 +5990,7 @@ function drawEnemyModel(e, showHpBar = true) {
     ctx.save();
     const eRad = e.radius || 12;
     const col1 = e.glow || e.color || '#00e5ff';
-    const col2 = '#ff0055';
+    const col2 = '#f04878';
 
     ctx.strokeStyle = col1;
     ctx.lineWidth = 2.2;
@@ -5990,9 +6012,9 @@ function drawEnemyModel(e, showHpBar = true) {
     ctx.save();
     const pulse = (Math.sin(performance.now() * 0.012) + 1) / 2;
     const eRad = e.radius || 12;
-    ctx.strokeStyle = pulse > 0.5 ? '#ff0055' : '#ffffff';
+    ctx.strokeStyle = pulse > 0.5 ? '#f04878' : '#ffffff';
     ctx.lineWidth = 3.0 + pulse * 1.5;
-    if (typeof setGlow === 'function') setGlow('#ff0055', 12 + pulse * 8);
+    if (typeof setGlow === 'function') setGlow('#f04878', 12 + pulse * 8);
     ctx.beginPath();
     ctx.arc(0, 0, eRad * (1.25 + pulse * 0.15), 0, Math.PI * 2);
     ctx.stroke();
@@ -6000,7 +6022,7 @@ function drawEnemyModel(e, showHpBar = true) {
   }
 
   const isBlinkerShielded = (e.type === 'blinker' || e.type === 'chronos_warp') && e.isShielded;
-  const renderColor = e.isEnraged ? '#ff0055' : (isBlinkerShielded ? '#64748b' : (e.color || '#00e5ff'));
+  const renderColor = e.isEnraged ? '#f04878' : (isBlinkerShielded ? '#64748b' : (e.color || '#00e5ff'));
 
   if (isBlinkerShielded) {
     ctx.save();
@@ -6287,7 +6309,7 @@ function render(now) {
       const badge = document.getElementById('devFpsBadge');
       if (badge) {
         badge.textContent = `FPS: ${currentFps}`;
-        badge.style.color = currentFps >= 50 ? '#39ff14' : (currentFps >= 30 ? '#ffb703' : '#ff2a6d');
+        badge.style.color = currentFps >= 50 ? '#39ff14' : (currentFps >= 30 ? '#ffb703' : '#f05f9f');
       }
       window._fpsFrames = 0;
       window._fpsLastTime = now;
@@ -6763,7 +6785,7 @@ function render(now) {
     const rawProg = Math.max(0, Math.min(1, pt.life / pt.maxLife));
     ctx.globalAlpha = rawProg > 0.3 ? 1.0 : rawProg / 0.3;
     ctx.font = '900 12px Montserrat, sans-serif';
-    ctx.fillStyle = pt.color || '#ff3366';
+    ctx.fillStyle = pt.color || '#f05f9f';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';

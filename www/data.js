@@ -58,7 +58,7 @@ const NEON_PALETTES = {
     id: 'default',
     name: 'Default Cyan',
     primary: '#00e5ff',
-    secondary: '#ff007f',
+    secondary: '#f05f9f',
     glow: 'rgba(0, 229, 255, 0.75)',
     bgGlow: 'rgba(0, 229, 255, 0.25)'
   },
@@ -73,9 +73,9 @@ const NEON_PALETTES = {
   blood_moon: {
     id: 'blood_moon',
     name: 'Blood Moon',
-    primary: '#ff003c',
+    primary: '#f05f9f',
     secondary: '#ff8a00',
-    glow: 'rgba(255, 0, 60, 0.85)',
+    glow: 'rgba(240, 95, 159, 0.85)',
     bgGlow: 'rgba(255, 138, 0, 0.35)'
   }
 };
