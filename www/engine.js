@@ -261,12 +261,12 @@ function getEndlessEntryStatus() {
 }
 
 function generateEndlessWaveData(w) {
-  const hpMult = 1 + (w - 1) * 0.22 + Math.pow((w - 1) / 7, 1.3);
+  const hpScalingMult = w >= 30 ? (1 + (w - 1) * 0.22 + Math.pow((w - 1) / 7, 1.3) + Math.pow((w - 29) / 2, 1.5)) : (1 + (w - 1) * 0.22 + Math.pow((w - 1) / 7, 1.3));
   const spdMult = Math.min(1.85, 1 + (w - 1) * 0.018);
   const spawns = [];
 
   if (w % 10 === 0) {
-    const bossHp = Math.round(1000 * hpMult);
+    const bossHp = Math.round(1000 * hpScalingMult);
     spawns.push({
       type: 'titan',
       isBoss: true,
@@ -280,12 +280,13 @@ function generateEndlessWaveData(w) {
       color: '#ff0055',
       glow: '#ff0055'
     });
+    const gruntCount = Math.min(59, 4 + Math.floor(w / 5));
     spawns.push({
       type: 'grunt',
       isBoss: false,
       isMiniBoss: false,
-      count: 4 + Math.floor(w / 5),
-      hp: Math.round(35 * hpMult),
+      count: gruntCount,
+      hp: Math.round(35 * hpScalingMult),
       speed: Math.round(45 * spdMult),
       bounty: Math.round(8 + w),
       interval: 0.6
@@ -294,7 +295,27 @@ function generateEndlessWaveData(w) {
     const types = ['grunt', 'fast', 'tank', 'swarm', 'emp_bomber'];
     const availableTypes = types.slice(0, Math.min(types.length, 1 + Math.floor(w / 3)));
     const primaryType = availableTypes[Math.floor((w * 3 + 1) % availableTypes.length)] || 'grunt';
-    const totalCount = 6 + Math.floor(w * 1.2);
+    let totalCount = 6 + Math.floor(w * 1.2);
+    let secCount = 0;
+    let secType = null;
+
+    if (w > 3) {
+      secType = availableTypes[Math.floor((w * 5 + 2) % availableTypes.length)];
+      if (secType && secType !== primaryType) {
+        secCount = 3 + Math.floor(w * 0.5);
+      } else {
+        secType = null;
+      }
+    }
+
+    if (totalCount + secCount > 60) {
+      const overflow = (totalCount + secCount) - 60;
+      totalCount = Math.max(10, totalCount - overflow);
+      if (totalCount + secCount > 60) {
+        secCount = Math.max(0, 60 - totalCount);
+      }
+    }
+
     const proto = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[primaryType]) ? ENEMY_CONFIGS[primaryType] : { baseHp: 30, baseSpeed: 50, baseBounty: 5, shape: 'circle', color: '#00e5ff', glow: '#00e5ff' };
 
     spawns.push({
@@ -302,27 +323,24 @@ function generateEndlessWaveData(w) {
       isBoss: false,
       isMiniBoss: false,
       count: totalCount,
-      hp: Math.round(proto.baseHp * hpMult),
+      hp: Math.round(proto.baseHp * hpScalingMult),
       speed: Math.min(160, Math.round(proto.baseSpeed * spdMult)),
       bounty: Math.max(1, Math.round(proto.baseBounty * (1 + w * 0.05))),
       interval: Math.max(0.2, 0.8 - w * 0.01)
     });
 
-    if (w > 3) {
-      const secType = availableTypes[Math.floor((w * 5 + 2) % availableTypes.length)];
-      if (secType && secType !== primaryType) {
-        const secProto = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[secType]) ? ENEMY_CONFIGS[secType] : proto;
-        spawns.push({
-          type: secType,
-          isBoss: false,
-          isMiniBoss: false,
-          count: 3 + Math.floor(w * 0.5),
-          hp: Math.round(secProto.baseHp * hpMult * 0.85),
-          speed: Math.min(160, Math.round(secProto.baseSpeed * spdMult)),
-          bounty: Math.max(1, Math.round(secProto.baseBounty * (1 + w * 0.05))),
-          interval: 0.6
-        });
-      }
+    if (secType && secCount > 0) {
+      const secProto = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[secType]) ? ENEMY_CONFIGS[secType] : proto;
+      spawns.push({
+        type: secType,
+        isBoss: false,
+        isMiniBoss: false,
+        count: secCount,
+        hp: Math.round(secProto.baseHp * hpScalingMult * 0.85),
+        speed: Math.min(160, Math.round(secProto.baseSpeed * spdMult)),
+        bounty: Math.max(1, Math.round(secProto.baseBounty * (1 + w * 0.05))),
+        interval: 0.6
+      });
     }
   }
 
@@ -351,6 +369,7 @@ let shopPreviousSource = 'start'; // откуда пришли в магазин
 let lastLoginClaimDate = '';
 let loginStreakDay = 1; // 1 до 7
 let hasAutoShownDailyLoginModalThisSession = false;
+let dailyLoginDismissedThisSession = false;
 
 // --- Synth Pass / Battle Pass State ---
 let bpXp = 0;
@@ -400,6 +419,18 @@ function applyPaletteColors(paletteId) {
       TOWER_CONFIGS.laser.color = '#f05f9f';
       TOWER_CONFIGS.laser.glow = '#f05f9f';
     }
+  }
+
+  // Force cache invalidation on canvas elements when palette is switched
+  if (typeof nebulaCache !== 'undefined') nebulaCache = null;
+  if (typeof nebulaCacheKey !== 'undefined') nebulaCacheKey = '';
+  if (typeof triangleLogoCache !== 'undefined') triangleLogoCache = null;
+  if (typeof triangleLogoCacheKey !== 'undefined') triangleLogoCacheKey = '';
+  if (typeof invalidateGridCache === 'function') {
+    invalidateGridCache();
+  }
+  if (typeof GLOW_SPRITES !== 'undefined' && GLOW_SPRITES) {
+    for (const k in GLOW_SPRITES) delete GLOW_SPRITES[k];
   }
 }
 
@@ -1177,21 +1208,25 @@ function handleHardwareBack() {
 
 // [ENG106] Match Result & Victory/Defeat Handlers: Star calculations, rewards, revive prompt, and victory/defeat sequences.
 function calculateLevelStarsAndReward(lvl, currentHp, startingHp) {
-  const hpRatio = startingHp > 0 ? (currentHp / startingHp) : 1;
   let earnedStars = 1;
-  if (hpRatio >= 0.999) {
-    earnedStars = 3;
-  } else if (hpRatio >= 0.5) {
-    earnedStars = 2;
+  if (isOverdriveMode) {
+    earnedStars = (currentHp > 0) ? 3 : 1;
   } else {
-    earnedStars = 1;
+    const hpRatio = startingHp > 0 ? (currentHp / startingHp) : 1;
+    if (hpRatio >= 0.999) {
+      earnedStars = 3;
+    } else if (hpRatio >= 0.5) {
+      earnedStars = 2;
+    } else {
+      earnedStars = 1;
+    }
   }
 
   const prevBestStars = levelStars[lvl] || 0;
   let rewardDiamonds = 0;
   let rewardLabel = 'FARM REWARD';
 
-  if (earnedStars > prevBestStars) {
+  if (!isOverdriveMode && earnedStars > prevBestStars) {
     const deltaStars = earnedStars - prevBestStars;
     rewardDiamonds = deltaStars * 2;
     rewardLabel = (prevBestStars === 0) ? 'FIRST CLEAR BONUS' : 'STAR UPGRADE BONUS';
