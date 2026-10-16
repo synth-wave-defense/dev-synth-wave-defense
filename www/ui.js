@@ -1376,7 +1376,7 @@ function navLevelSection(dir) {
   if (isNavigatingSection) return;
   const target = currentLevelSection + dir;
   if (target < 1 || target > TOTAL_SECTIONS) return;
-  const isTargetUnlocked = devMode || maxUnlockedLevel > (target - 1) * LEVELS_PER_SECTION;
+  const isTargetUnlocked = devMode || (currentLevelMode === 'endless') || maxUnlockedLevel > (target - 1) * LEVELS_PER_SECTION;
   if (!isTargetUnlocked) return;
 
   const grid = document.getElementById('levelsGrid');
@@ -1482,7 +1482,7 @@ function renderEndlessDashboardUI() {
   if (valEl) valEl.textContent = `WAVE ${bestWave}`;
 
   const nextMilestone = bestWave < 50 ? 50 : Math.ceil((bestWave + 1) / 50) * 50;
-  if (subEl) subEl.textContent = `Next Milestone: Wave ${nextMilestone} (+5 🔮 Prisms Bonus)`;
+  if (subEl) subEl.textContent = `Next Milestone: Wave ${nextMilestone} (+5 Prisms Bonus)`;
 
   if (mapEl) mapEl.textContent = `< MAP: SECTOR ${currentLevelSection} ARENA >`;
 
@@ -1591,8 +1591,14 @@ function confirmStartEndlessRun() {
     if (typeof startEndlessMatch === 'function') startEndlessMatch();
   };
 
-  if (status.type === 'free' || status.type === 'ad') {
+  if (status.type === 'free') {
     launch();
+  } else if (status.type === 'ad') {
+    if (typeof showAdPlaceholder === 'function') {
+      showAdPlaceholder(launch, null);
+    } else {
+      launch();
+    }
   } else if (status.type === 'diamonds') {
     if (diamonds < status.cost) {
       if (typeof showHintToast === 'function') showHintToast(`Need ${status.cost} Diamonds for entry!`);
@@ -1621,12 +1627,14 @@ function renderLevelsGrid() {
   const partLabel = document.getElementById('partNavLabel');
   const prevBtn = document.getElementById('partNavPrev');
   const nextBtn = document.getElementById('partNavNext');
-  const nextSecUnlocked = devMode || maxUnlockedLevel > currentLevelSection * LEVELS_PER_SECTION;
+  const nextSecUnlocked = devMode || (currentLevelMode === 'endless') || maxUnlockedLevel > currentLevelSection * LEVELS_PER_SECTION;
 
   const sectorName = currentLevelSection === 1 ? 'NEON DAWN' : `SECTOR ${currentLevelSection}`;
-  const sectorTitle = (currentLevelMode === 'overdrive')
-    ? `SECTOR ${currentLevelSection}: OVERDRIVE`
-    : `SECTOR ${currentLevelSection}: ${sectorName}`;
+  const sectorTitle = (currentLevelMode === 'endless')
+    ? `SECTOR ${currentLevelSection}: ENDLESS ARENA`
+    : (currentLevelMode === 'overdrive')
+      ? `SECTOR ${currentLevelSection}: OVERDRIVE`
+      : `SECTOR ${currentLevelSection}: ${sectorName}`;
 
   if (partLabel) partLabel.textContent = `< ${sectorTitle} >`;
 
@@ -2351,6 +2359,8 @@ function showStartScreen() {
   document.getElementById('defeatScreen').classList.add('hidden');
   const revSc = document.getElementById('reviveScreen');
   if (revSc) revSc.classList.add('hidden');
+  const levelsBackBtn = document.getElementById('levelsBackBtn');
+  if (levelsBackBtn) levelsBackBtn.classList.add('hidden');
   document.getElementById('startScreen').classList.remove('hidden');
 
   document.getElementById('econHpSplitBadge').classList.add('hidden');
@@ -3150,8 +3160,8 @@ function showLevelSelect() {
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
   document.getElementById('startScreen').classList.add('hidden');
   document.getElementById('levelsScreen').classList.remove('hidden');
-  const quickDailyBtn = document.getElementById('dailyBonusQuickBtn');
-  if (quickDailyBtn) quickDailyBtn.classList.add('hidden');
+  const levelsBackBtn = document.getElementById('levelsBackBtn');
+  if (levelsBackBtn) levelsBackBtn.classList.remove('hidden');
   document.getElementById('econHpSplitBadge').classList.add('hidden');
   document.getElementById('levelWaveSplitBadge').classList.add('hidden');
   document.getElementById('hudRightGroup').classList.remove('hidden');
@@ -3538,7 +3548,7 @@ function advanceMilestone() {
 
 function showUpgradesScreen(fromSource) {
   const unlockLevel = getLoadoutStartLevel();
-  const isUpgradesUnlocked = devMode || getLoadoutReferenceLevel() >= unlockLevel;
+  const isUpgradesUnlocked = devMode || (typeof isEndlessMode !== 'undefined' && isEndlessMode) || (typeof currentLevelMode !== 'undefined' && currentLevelMode === 'endless') || getLoadoutReferenceLevel() >= unlockLevel;
   if (!isUpgradesUnlocked) {
     showHintToast(`Will be available on Level ${unlockLevel}`);
     return;

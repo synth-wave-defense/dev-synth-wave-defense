@@ -171,6 +171,7 @@
 <!-- [HTM104] Top HUD Bar: Resource counters (diamonds, gold, base HP), level/wave indicator, and settings launcher. -->
 <div class="hud-top-bar" id="topHud">
   <div class="hud-left-group">
+      <button class="levels-back-pill hidden" id="levelsBackBtn" onclick="showStartScreen()">&lt; BACK</button>
     <div class="badge-half" id="hudDiamondBadge" onclick="handleDevDiamondClick()">
       <div class="hud-icon" style="filter: drop-shadow(0 0 7px rgba(0,229,255,.85));">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round">
@@ -885,28 +886,6 @@
 </div>
 
 <div class="overlay-screen levels-bg hidden" id="levelsScreen">
-  <!-- Top Header Bar -->
-  <div class="levels-top-bar">
-    <button class="levels-back-pill" onclick="showStartScreen()">&lt; BACK</button>
-    <span class="levels-top-title">OPERATIONS</span>
-    <div class="levels-top-resources">
-      <div class="levels-top-diamonds">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round">
-          <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/>
-          <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
-        </svg>
-        <span id="levelsDiamondVal">0</span>
-      </div>
-      <div class="levels-top-prisms">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round">
-          <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/>
-          <polyline points="3 12 12 15 21 12"/>
-          <line x1="12" y1="2" x2="12" y2="22"/>
-        </svg>
-        <span id="levelsPrismVal">0</span>
-      </div>
-    </div>
-  </div>
 
   <!-- 3-Way Mode Switcher -->
   <div class="mode-3way-container">
@@ -925,15 +904,15 @@
 
   <!-- Content View Zone -->
   <div class="levels-content-zone" id="levelsContentZone">
+    <!-- Sector Header Navigator -->
+    <div class="level-part-navigator">
+      <button class="part-nav-btn" id="partNavPrev" onclick="navLevelSection(-1)">❮</button>
+      <span class="part-nav-label" id="partNavLabel">SECTOR 1: NEON DAWN</span>
+      <button class="part-nav-btn" id="partNavNext" onclick="navLevelSection(1)">❯</button>
+    </div>
+
     <!-- Campaign / Overdrive View -->
     <div class="levels-campaign-view" id="levelsCampaignView">
-      <!-- Sector Header Navigator -->
-      <div class="level-part-navigator">
-        <button class="part-nav-btn" id="partNavPrev" onclick="navLevelSection(-1)">❮</button>
-        <span class="part-nav-label" id="partNavLabel">SECTOR 1: NEON DAWN</span>
-        <button class="part-nav-btn" id="partNavNext" onclick="navLevelSection(1)">❯</button>
-      </div>
-
       <!-- Mode Subtitle / Rules -->
       <div class="levels-sub-info" id="levelsSubInfo">Standard Campaign Rules • Earn 💎 Diamonds</div>
 
@@ -965,11 +944,11 @@
 
       <div class="endless-rules-card">
         <div class="endless-rule-line">• Standard Base HP • Infinite Scaling Waves</div>
-        <div class="endless-loot-line">Loot: +2 💎 / Wave • +1 🔮 / Boss (Every 10W)</div>
+        <div class="endless-loot-line">Loot: +2 💎 / Wave • +1 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="vertical-align:middle; display:inline-block; margin:0 1px;"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="22" x2="12" y2="22"/></svg> / Boss (Every 10W)</div>
       </div>
 
-      <button class="endless-deploy-btn" id="endlessDeployBtn" onclick="openEndlessLoadoutModal()">
-        <div class="deploy-btn-main">🚀 DEPLOY TO ARENA</div>
+      <button class="endless-deploy-btn" id="endlessDeployBtn" onclick="confirmStartEndlessRun()">
+        <div class="deploy-btn-main">🚀 ENTER ARENA</div>
         <div class="deploy-btn-sub" id="endlessDeployTicketText">DAILY TICKET: FREE (1/1 REMAINING)</div>
       </button>
     </div>

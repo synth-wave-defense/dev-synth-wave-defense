@@ -840,14 +840,10 @@ function getBuildPanelPool(lvl) {
   const highestLvl = Math.max(maxUnlockedLevel || 1, lvl || 1);
   const loadoutStart = getLoadoutStartLevel(); // 11
 
-  // Если игрок в принципе еще не дошел до 11 уровня (ранняя игра) —
-  // показываем 3 первыe башни (Gatling, Laser, Mortar), блокируя незаблокированные по уровню
-  if (highestLvl < loadoutStart) {
+  if (!isEndlessMode && highestLvl < loadoutStart) {
     return ['gun', 'laser', 'mortar'];
   }
 
-  // Если игрок дошел до 11 уровня и выше — на ЛЮБОМ уровне используются
-  // башни из его зафиксированного боевого лодаута
   const pool = (activeBattleLoadout && activeBattleLoadout.length > 0)
     ? activeBattleLoadout
     : selectedLoadout;
@@ -858,17 +854,15 @@ function isTowerActiveThisLevel(type) {
   if (devMode) return true;
   const loadoutStart = getLoadoutStartLevel();
 
-  // До 11 уровня: активны только те башни, которые разблокированы на ТЕКУЩЕМ уровне
-  if (currentLevel < loadoutStart) {
-    const curUnlocked = (LEVELS_DATA[currentLevel] && LEVELS_DATA[currentLevel].unlockedTowers) || ['gun'];
-    return curUnlocked.includes(type);
+  if (isEndlessMode || maxUnlockedLevel >= loadoutStart) {
+    const pool = (activeBattleLoadout && activeBattleLoadout.length > 0)
+      ? activeBattleLoadout
+      : selectedLoadout;
+    return pool.includes(type);
   }
 
-  // После 11 уровня: активны ровно те башни, которые выбраны в лодаут
-  const pool = (activeBattleLoadout && activeBattleLoadout.length > 0)
-    ? activeBattleLoadout
-    : selectedLoadout;
-  return pool.includes(type);
+  const curUnlocked = (LEVELS_DATA[currentLevel] && LEVELS_DATA[currentLevel].unlockedTowers) || ['gun'];
+  return curUnlocked.includes(type);
 }
 
 function computeDefaultLoadout(lvl, pool) {
@@ -937,7 +931,8 @@ function startSpecificLevel(lvl) {
 function startEndlessMatch() {
   isEndlessMode = true;
   isOverdriveMode = false;
-  currentLevel = 1;
+  const sec = (typeof currentLevelSection === 'number' && currentLevelSection >= 1) ? currentLevelSection : 1;
+  currentLevel = (sec - 1) * 10 + 1;
 
   if (typeof battleStartedOnce !== 'undefined') battleStartedOnce = false;
   if (typeof battlePathAlpha !== 'undefined') battlePathAlpha = 1.0;
@@ -948,6 +943,9 @@ function startEndlessMatch() {
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
   musicSetDucked(false);
   music('battle');
+
+  const levelsBackBtn = document.getElementById('levelsBackBtn');
+  if (levelsBackBtn) levelsBackBtn.classList.add('hidden');
 
   document.getElementById('levelsScreen').classList.add('hidden');
   document.getElementById('victoryScreen').classList.add('hidden');
@@ -967,7 +965,8 @@ function startEndlessMatch() {
   if (waveBtn) waveBtn.classList.remove('hidden');
 
   resetLevelState();
-  const mapCfg = MAP_CATALOG.L20 || MAP_CATALOG.L15 || MAP_CATALOG.L1;
+  const mapLvl = (sec - 1) * 10 + 5;
+  const mapCfg = MAP_CATALOG['L' + mapLvl] || MAP_CATALOG['L' + ((sec - 1) * 10 + 1)] || MAP_CATALOG.L1;
   if (mapCfg) {
     buildLevelGeometry(mapCfg.path, mapCfg.cols, mapCfg.rows, mapCfg.blocked);
   }
