@@ -1308,7 +1308,8 @@ function claimOverdriveBonusPrism() {
     if (typeof updatePrismUI === 'function') updatePrismUI();
     if (claimBtn) {
       claimBtn.disabled = true;
-      claimBtn.innerHTML = '<span>CLAIMED (+1 🔮)</span>';
+      const prismIcon = (typeof getPrismSvg === 'function') ? getPrismSvg(12, 'vertical-align:middle;margin-left:2px;') : '🔮';
+      claimBtn.innerHTML = `<span>CLAIMED (+1 ${prismIcon})</span>`;
     }
     sfx('reward');
     saveGame();
@@ -1428,10 +1429,7 @@ function triggerVictory() {
             <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
           </svg>
           <span class="reward-amount" style="margin-left:6px; color:#d946ef;">+${gainedPrisms}</span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round">
-            <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/>
-            <polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/>
-          </svg>
+          ${typeof getPrismSvg === 'function' ? getPrismSvg(18) : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`}
           <span class="reward-label" style="color:#ff2a6d; margin-left:6px;">${odRewardLabel}</span>
         `;
       } else {
@@ -1451,11 +1449,9 @@ function triggerVictory() {
       claimBtn.disabled = false;
       claimBtn.classList.remove('hidden');
       const btnText = noAdsPurchased ? 'FREE: +1 BONUS PRISM' : 'WATCH AD: +1 BONUS PRISM';
+      const claimPrismIcon = (typeof getPrismSvg === 'function') ? getPrismSvg(16, 'vertical-align:middle; margin-right:4px;') : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="vertical-align:middle; margin-right:4px;"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
       claimBtn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="vertical-align:middle; margin-right:4px;">
-          <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.3)"/>
-          <polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/>
-        </svg>
+        ${claimPrismIcon}
         <span>${btnText}</span>
       `;
       claimBtn.onclick = claimOverdriveBonusPrism;
@@ -1713,7 +1709,8 @@ function updateDefeatWaveLine() {
       else recBadge.classList.add('hidden');
     }
     if (lootLine) {
-      lootLine.textContent = `REWARDS: +${lastEndlessEarnedDiamonds} 💎 | +${totalPrismsGranted} 🔮`;
+      const prismIcon = (typeof getPrismSvg === 'function') ? getPrismSvg(13, 'vertical-align:middle;margin-left:1px;') : '🔮';
+      lootLine.innerHTML = `REWARDS: +${lastEndlessEarnedDiamonds} 💎 | +${totalPrismsGranted} ${prismIcon}`;
     }
     if (doubleBtn) {
       if (lastEndlessEarnedDiamonds > 0 || lastEndlessEarnedPrisms > 0) {

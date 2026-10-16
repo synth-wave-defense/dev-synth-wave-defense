@@ -868,11 +868,13 @@ function pushParticle(p) {
   particles.push(p);
 }
 
-const PRISM_ICON_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="flex:none;">
-  <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/>
-  <polyline points="3 12 12 15 21 12"/>
-  <line x1="12" y1="2" x2="12" y2="22"/>
-</svg>`;
+function getPrismSvg(size = 14, extraStyle = '') {
+  const styleAttr = extraStyle ? ` style="${extraStyle}"` : '';
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round"${styleAttr}><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
+}
+window.getPrismSvg = getPrismSvg;
+
+const PRISM_ICON_SVG = getPrismSvg(14, 'flex:none;');
 
 function updateDiamondUI() {
   const el = document.getElementById('globalDiamondsVal');
@@ -1330,7 +1332,7 @@ function renderUpgradeTree() {
       const costP = costs.prisms;
 
       const diamondIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="flex:none;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
-      const prismIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="flex:none;"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
+      const prismIcon = getPrismSvg(13, 'flex:none;');
 
       const canAffordD = diamonds >= costD;
       const canAffordP = prisms >= costP;
@@ -1482,7 +1484,8 @@ function renderEndlessDashboardUI() {
   if (valEl) valEl.textContent = `WAVE ${bestWave}`;
 
   const nextMilestone = bestWave < 50 ? 50 : Math.ceil((bestWave + 1) / 50) * 50;
-  if (subEl) subEl.textContent = `Next Milestone: Wave ${nextMilestone} (+5 🔮 Prisms Bonus)`;
+  const prismIcon = getPrismSvg(12, 'vertical-align:middle;margin-left:1px;');
+  if (subEl) subEl.innerHTML = `Next Milestone: Wave ${nextMilestone} (+5 ${prismIcon} Prisms Bonus)`;
 
   if (mapEl) mapEl.textContent = `< MAP: SECTOR ${currentLevelSection} ARENA >`;
 
@@ -1693,7 +1696,8 @@ function renderLevelsGrid() {
       if (isUnlockedInNormal) {
         btn.className = 'level-card-btn overdrive-card' + (isOdCleared ? ' cleared' : '');
         const isBossLvl = (lvl % LEVELS_PER_SECTION === 0);
-        const rewardText = isBossLvl ? '+5 🔮' : '+3 🔮';
+        const rewardAmt = isBossLvl ? 5 : 3;
+        const rewardHtml = `+${rewardAmt} ${getPrismSvg(10, 'vertical-align:middle;margin-left:1px;')}`;
 
         if (isOdCleared) {
           btn.innerHTML = `
@@ -1706,7 +1710,7 @@ function renderLevelsGrid() {
           btn.innerHTML = `
             <span class="level-num">${lvl}</span>
             <div class="level-card-overdrive-badge empty">
-              <span class="od-reward-tag">${rewardText}</span>
+              <span class="od-reward-tag">${rewardHtml}</span>
             </div>
           `;
         }
@@ -1722,7 +1726,8 @@ function renderLevelsGrid() {
 
   if (progressPillText) {
     if (currentLevelMode === 'overdrive') {
-      progressPillText.textContent = `OVERDRIVE CLEARED: ${sectionOdCleared} / ${LEVELS_PER_SECTION} 💀 (+3 🔮 / LVL)`;
+      const prismIcon = getPrismSvg(12, 'vertical-align:middle;margin-left:1px;margin-right:1px;');
+      progressPillText.innerHTML = `OVERDRIVE CLEARED: ${sectionOdCleared} / ${LEVELS_PER_SECTION} 💀 (+3 ${prismIcon} / LVL)`;
     } else {
       progressPillText.textContent = `SECTOR STARS: ${sectionStars} / ${LEVELS_PER_SECTION * 3} ★`;
     }
@@ -2713,7 +2718,7 @@ function renderBattlePassScreen() {
   listBody.innerHTML = '';
 
   const diamondIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
-  const prismIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
+  const prismIcon = getPrismSvg(12);
 
   BATTLE_PASS_TIERS.forEach(item => {
     const t = item.tier;
@@ -3863,11 +3868,11 @@ function renderDailyLoginModal() {
 
     let rewardHtml = '';
     if (item.diamonds > 0 && item.prisms > 0) {
-      rewardHtml = `<span>${item.diamonds}</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg><span>+</span><span>${item.prisms}</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
+      rewardHtml = `<span>${item.diamonds}</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg><span>+</span><span>${item.prisms}</span>${getPrismSvg(12)}`;
     } else if (item.diamonds > 0) {
       rewardHtml = `<span>${item.diamonds}</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
     } else if (item.prisms > 0) {
-      rewardHtml = `<span>${item.prisms}</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
+      rewardHtml = `<span>${item.prisms}</span>${getPrismSvg(13)}`;
     }
 
     let statusText = 'LOCKED';
