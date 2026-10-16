@@ -1472,6 +1472,17 @@ function updateModeSwitcherUI() {
   }
 }
 
+function navEndlessLevel(dir) {
+  if (typeof sfx === 'function') sfx('tap');
+  const maxLvl = devMode ? TOTAL_LEVELS : Math.max(1, Math.min(TOTAL_LEVELS, maxUnlockedLevel || 1));
+  let nextLvl = (typeof selectedEndlessLevel !== 'undefined' ? selectedEndlessLevel : 1) + dir;
+  if (nextLvl < 1) nextLvl = maxLvl;
+  if (nextLvl > maxLvl) nextLvl = 1;
+  selectedEndlessLevel = nextLvl;
+  renderEndlessDashboardUI();
+  if (typeof saveGameSoon === 'function') saveGameSoon();
+}
+
 function renderEndlessDashboardUI() {
   const valEl = document.getElementById('endlessRecordVal');
   const subEl = document.getElementById('endlessRecordSub');
@@ -1484,13 +1495,21 @@ function renderEndlessDashboardUI() {
   const nextMilestone = bestWave < 50 ? 50 : Math.ceil((bestWave + 1) / 50) * 50;
   if (subEl) subEl.textContent = `Next Milestone: Wave ${nextMilestone} (+5 🔮 Prisms Bonus)`;
 
-  if (mapEl) mapEl.textContent = `< MAP: SECTOR ${currentLevelSection} ARENA >`;
+  const curLvl = typeof selectedEndlessLevel !== 'undefined' ? selectedEndlessLevel : 1;
+  const lvlConfig = (typeof LEVELS_DATA !== 'undefined' && LEVELS_DATA[curLvl]) ? LEVELS_DATA[curLvl] : null;
+  const mapId = lvlConfig ? lvlConfig.mapId : ('L' + curLvl);
+  const mapCfg = (typeof MAP_CATALOG !== 'undefined' && MAP_CATALOG[mapId]) ? MAP_CATALOG[mapId] : null;
+  const mapName = mapCfg ? mapCfg.name : `ARENA`;
+
+  if (mapEl) mapEl.textContent = `LEVEL ${curLvl}: ${mapName.toUpperCase()}`;
 
   if (ticketEl) {
     const status = (typeof getEndlessEntryStatus === 'function') ? getEndlessEntryStatus() : { text: 'FREE (1/1 REMAINING)' };
     ticketEl.textContent = `DAILY TICKET: ${status.text.toUpperCase()}`;
   }
 }
+
+window.navEndlessLevel = navEndlessLevel;
 
 window.selectLevelMode = selectLevelMode;
 
@@ -4301,7 +4320,7 @@ function updateInspectUI() {
   const t = selectedTower;
   const lvlConfig = LEVELS_DATA[currentLevel];
   const isL1FirstTime = (currentLevel === 1 && !hasClearedLevelBefore(1) && !devMode);
-  const canUpgradeLevel = (!lvlConfig || lvlConfig.canUpgrade !== false) && !isL1FirstTime;
+  const canUpgradeLevel = (typeof isEndlessMode !== 'undefined' && isEndlessMode) || ((!lvlConfig || lvlConfig.canUpgrade !== false) && !isL1FirstTime);
 
   const iconBox = document.getElementById('inspectIconBox');
   if (iconBox) {

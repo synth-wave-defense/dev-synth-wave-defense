@@ -231,6 +231,7 @@ let endlessBestWave = 0;
 let endlessDailyRunsUsed = 0;
 let endlessDailyRunsDate = '';
 let endlessMilestonesClaimed = {};
+let selectedEndlessLevel = 1;
 
 function resetEndlessDailyRunsIfNeeded() {
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -251,10 +252,10 @@ function isEndlessUnlocked() {
 function getEndlessEntryStatus() {
   resetEndlessDailyRunsIfNeeded();
   if (endlessDailyRunsUsed === 0) {
-    return { type: 'free', text: 'FREE ENTRY (1/1)', label: 'FREE ENTRY (1/1)', cost: 0 };
+    return { type: 'free', text: 'FREE (1/1 REMAINING)', label: 'FREE (1/1 REMAINING)', cost: 0 };
   } else if (endlessDailyRunsUsed < 3) {
     const remainingAdRuns = 3 - endlessDailyRunsUsed;
-    return { type: 'ad', text: `WATCH AD (${remainingAdRuns}/2)`, label: `WATCH AD (${remainingAdRuns}/2)`, cost: 0 };
+    return { type: 'ad', text: `WATCH AD (${remainingAdRuns}/2 ADS REMAINING)`, label: `WATCH AD (${remainingAdRuns}/2 ADS REMAINING)`, cost: 0 };
   } else {
     return { type: 'diamonds', text: '15 💎', label: '15 💎', cost: 15 };
   }
@@ -485,7 +486,8 @@ function serializeSaveData() {
     endlessBestWave,
     endlessDailyRunsUsed,
     endlessDailyRunsDate,
-    endlessMilestonesClaimed: Object.assign({}, endlessMilestonesClaimed)
+    endlessMilestonesClaimed: Object.assign({}, endlessMilestonesClaimed),
+    selectedEndlessLevel
   };
 }
 
@@ -577,6 +579,7 @@ async function loadGame() {
   if (typeof data.endlessBestWave === 'number' && data.endlessBestWave >= 0) endlessBestWave = data.endlessBestWave;
   if (typeof data.endlessDailyRunsUsed === 'number' && data.endlessDailyRunsUsed >= 0) endlessDailyRunsUsed = data.endlessDailyRunsUsed;
   if (typeof data.endlessDailyRunsDate === 'string') endlessDailyRunsDate = data.endlessDailyRunsDate;
+  if (typeof data.selectedEndlessLevel === 'number' && data.selectedEndlessLevel >= 1 && data.selectedEndlessLevel <= TOTAL_LEVELS) selectedEndlessLevel = data.selectedEndlessLevel;
   if (data.endlessMilestonesClaimed && typeof data.endlessMilestonesClaimed === 'object') {
     endlessMilestonesClaimed = data.endlessMilestonesClaimed;
   }
@@ -837,6 +840,12 @@ function getPlayerUnlockedTowers() {
 
 function getBuildPanelPool(lvl) {
   if (devMode) return Object.keys(TOWER_CONFIGS);
+  if (isEndlessMode || isOverdriveMode) {
+    const pool = (activeBattleLoadout && activeBattleLoadout.length > 0)
+      ? activeBattleLoadout
+      : selectedLoadout;
+    return (pool && pool.length > 0) ? pool.slice() : ['gun'];
+  }
   const highestLvl = Math.max(maxUnlockedLevel || 1, lvl || 1);
   const loadoutStart = getLoadoutStartLevel(); // 11
 
@@ -856,6 +865,12 @@ function getBuildPanelPool(lvl) {
 
 function isTowerActiveThisLevel(type) {
   if (devMode) return true;
+  if (isEndlessMode || isOverdriveMode) {
+    const pool = (activeBattleLoadout && activeBattleLoadout.length > 0)
+      ? activeBattleLoadout
+      : selectedLoadout;
+    return pool.includes(type);
+  }
   const loadoutStart = getLoadoutStartLevel();
 
   // До 11 уровня: активны только те башни, которые разблокированы на ТЕКУЩЕМ уровне
@@ -937,7 +952,7 @@ function startSpecificLevel(lvl) {
 function startEndlessMatch() {
   isEndlessMode = true;
   isOverdriveMode = false;
-  currentLevel = 1;
+  currentLevel = selectedEndlessLevel || 1;
 
   if (typeof battleStartedOnce !== 'undefined') battleStartedOnce = false;
   if (typeof battlePathAlpha !== 'undefined') battlePathAlpha = 1.0;
@@ -967,7 +982,8 @@ function startEndlessMatch() {
   if (waveBtn) waveBtn.classList.remove('hidden');
 
   resetLevelState();
-  const mapCfg = MAP_CATALOG.L20 || MAP_CATALOG.L15 || MAP_CATALOG.L1;
+  const mapId = (LEVELS_DATA[currentLevel] && LEVELS_DATA[currentLevel].mapId) || ('L' + currentLevel);
+  const mapCfg = MAP_CATALOG[mapId] || MAP_CATALOG.L1;
   if (mapCfg) {
     buildLevelGeometry(mapCfg.path, mapCfg.cols, mapCfg.rows, mapCfg.blocked);
   }
@@ -2027,10 +2043,12 @@ function getUpgradeCost(towerOrType, level) {
 }
 
 function upgradeSelectedTower() {
-  const lvlConfig = LEVELS_DATA[currentLevel];
-  if (lvlConfig && lvlConfig.canUpgrade === false) return;
-  // На L1 апгрейды заблокированы только если игрок проходит его впервые
-  if (currentLevel === 1 && !hasClearedLevelBefore(1) && !devMode) return;
+  if (!isEndlessMode) {
+    const lvlConfig = LEVELS_DATA[currentLevel];
+    if (lvlConfig && lvlConfig.canUpgrade === false) return;
+    // На L1 апгрейды заблокированы только если игрок проходит его впервые
+    if (currentLevel === 1 && !hasClearedLevelBefore(1) && !devMode) return;
+  }
   if (!selectedTower || selectedTower.level >= 3) return;
   const cost = getUpgradeCost(selectedTower.type, selectedTower.level);
   if (gold >= cost) {

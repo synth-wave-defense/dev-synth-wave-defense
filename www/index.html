@@ -959,8 +959,10 @@
         <div class="endless-record-sub" id="endlessRecordSub">Next Milestone: Wave 50 (+5 🔮 Prisms Bonus)</div>
       </div>
 
-      <div class="endless-map-pill">
-        <span id="endlessMapText">&lt; MAP: SECTOR 1 ARENA &gt;</span>
+      <div class="endless-map-pill level-part-navigator" style="display:flex; align-items:center; justify-content:center; gap:12px;">
+        <button class="part-nav-btn" id="endlessMapPrev" onclick="navEndlessLevel(-1)">❮</button>
+        <span id="endlessMapText" style="min-width: 180px; text-align: center;">LEVEL 1: STRAIGHT PATH</span>
+        <button class="part-nav-btn" id="endlessMapNext" onclick="navEndlessLevel(1)">❯</button>
       </div>
 
       <div class="endless-rules-card">
@@ -968,8 +970,8 @@
         <div class="endless-loot-line">Loot: +2 💎 / Wave • +1 🔮 / Boss (Every 10W)</div>
       </div>
 
-      <button class="endless-deploy-btn" id="endlessDeployBtn" onclick="openEndlessLoadoutModal()">
-        <div class="deploy-btn-main">🚀 DEPLOY TO ARENA</div>
+      <button class="endless-deploy-btn" id="endlessDeployBtn" onclick="confirmStartEndlessRun()">
+        <div class="deploy-btn-main">🚀 ENTER ARENA</div>
         <div class="deploy-btn-sub" id="endlessDeployTicketText">DAILY TICKET: FREE (1/1 REMAINING)</div>
       </button>
     </div>
