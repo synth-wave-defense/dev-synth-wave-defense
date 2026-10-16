@@ -1622,7 +1622,9 @@ function confirmStartEndlessRun() {
 window.openEndlessLoadoutModal = openEndlessLoadoutModal;
 window.closeEndlessLoadoutModal = closeEndlessLoadoutModal;
 window.confirmStartEndlessRun = confirmStartEndlessRun;
-window.getEndlessEntryStatus = getEndlessEntryStatus;
+if (typeof getEndlessEntryStatus !== 'undefined') {
+  window.getEndlessEntryStatus = getEndlessEntryStatus;
+}
 
 function renderLevelsGrid() {
   updateModeSwitcherUI();
