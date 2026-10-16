@@ -6314,14 +6314,15 @@ function render(now) {
               `Update?: ${d.updateNeeded}`;
           }
 
-          const verDlEl = document.getElementById('devVerLogDownload');
+		  const verDlEl = document.getElementById('devVerLogDownload');
           if (verDlEl) {
             verDlEl.textContent =
-              `DL Stat: ${d.downloadStatus}\n` +
-              `Progr. : ${d.downloadProgress}%\n` +
-              `Bndl ID: ${d.downloadedBundleId}\n` +
-              `Next   : ${d.nextQueueStatus}\n` +
-              `Error  : ${d.lastError}`;
+              `T1 Fetch: ${d.triageT1Fetch || '—'}\n` +
+              `T2 FS DL: ${d.triageT2FsDl || '—'}\n` +
+              `T3 LocUp: ${d.triageT3LocalUpd || '—'}\n` +
+              `T4 DirUp: ${d.triageT4DirectUpd || '—'}\n` +
+              `Next    : ${d.nextQueueStatus}\n` +
+              `Error   : ${d.lastError}`;
           }
 
           const verPluginEl = document.getElementById('devVerLogPlugin');
