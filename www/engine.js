@@ -2720,6 +2720,7 @@ function claimDailyGiftsPack() {
     dailyGiftsClaimedCount++;
     updateDiamondUI();
     if (typeof updatePrismUI === 'function') updatePrismUI();
+    if (typeof updateMenuBadges === 'function') updateMenuBadges();
     saveGame();
     sfx('reward');
     renderShopScreen();
