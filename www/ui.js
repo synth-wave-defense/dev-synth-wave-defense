@@ -1,5 +1,17 @@
 // [UI100] Presentation layer and rendering pipeline initialization.
 
+/**
+ * Generates standardized SVG Lock icon string matching settings button cyan stroke theme.
+ * @param {number} [size=16]
+ * @param {string} [strokeColor='#00e5ff']
+ * @param {string} [extraStyle='']
+ * @returns {string} SVG HTML string
+ */
+function getLockSvg(size = 16, strokeColor = '#00e5ff', extraStyle = '') {
+  const styleAttr = extraStyle ? ` style="${extraStyle}"` : '';
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${strokeColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lock-svg-icon"${styleAttr}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
+}
+
 // [UI100.01] Thread Lag & Memory Monitor: High-frequency sampler tracking WebView thread freezes (>20ms).
 window._maxThreadLag = 0;
 window._lastThreadLag = 0;
@@ -1309,7 +1321,7 @@ function renderUpgradeTree() {
 
     if (row.isLockedCard) {
       buyBtn.classList.add('locked-buy');
-      buyBtn.innerHTML = `<span style="font-size:12px; filter:grayscale(1) brightness(.7);">🔒</span>`;
+      buyBtn.innerHTML = getLockSvg(14);
     } else if (currentLvl >= 15 && !isScalingBranch(row.key)) {
       buyBtn.classList.add('locked-buy', 'max-buy');
       buyBtn.innerHTML = `<span class="upgrade-row-buy-cost" style="color:#d946ef; font-size:10px;">ASCENDED MAX</span>`;
@@ -1319,7 +1331,7 @@ function renderUpgradeTree() {
       };
     } else if (isSectorGated) {
       buyBtn.classList.add('locked-buy');
-      buyBtn.innerHTML = `<span style="font-size:11px; filter:grayscale(1) brightness(.7);">🔒</span><span class="upgrade-row-buy-cost" style="color:#8ea3c4; font-size:10px;">L${lvlNeeded}</span>`;
+      buyBtn.innerHTML = `${getLockSvg(13)}<span class="upgrade-row-buy-cost" style="color:#8ea3c4; font-size:10px; margin-left:2px;">L${lvlNeeded}</span>`;
       buyBtn.onclick = () => {
         sfx('denied');
         showHintToast(`Unlocks on Level ${lvlNeeded}`);
@@ -1683,7 +1695,7 @@ function renderLevelsGrid() {
       } else {
         btn.className = 'level-card-btn locked';
         btn.disabled = true;
-        btn.innerHTML = `<span class="level-num">🔒</span>`;
+        btn.innerHTML = `<span class="level-num">${getLockSvg(20)}</span>`;
       }
     } else {
       const isUnlockedInNormal = devMode || clearedLevels.includes(lvl);
@@ -1714,7 +1726,7 @@ function renderLevelsGrid() {
       } else {
         btn.className = 'level-card-btn locked overdrive-card';
         btn.disabled = true;
-        btn.innerHTML = `<span class="level-num">🔒</span>`;
+        btn.innerHTML = `<span class="level-num">${getLockSvg(20)}</span>`;
       }
     }
     levelsGrid.appendChild(btn);
@@ -2418,7 +2430,7 @@ function updateUpgradeButtonsLock() {
     btn.disabled = false;
     btn.innerHTML = isUpgradesUnlocked
       ? '<span>TECH TREE</span>'
-      : '<span class="btn-lock-glyph">🔒</span><span>TECH TREE</span>';
+      : `<span class="btn-lock-glyph">${getLockSvg(16, '#00e5ff')}</span><span>TECH TREE</span>`;
   });
 }
 
@@ -2588,7 +2600,7 @@ function updatePaletteSelectDropdown(selectId) {
     const isUnlocked = unlockedPalettes.includes(pId);
     const opt = document.createElement('option');
     opt.value = pId;
-    opt.textContent = isUnlocked ? pal.name : `🔒 ${pal.name}`;
+    opt.textContent = isUnlocked ? pal.name : `[LOCKED] ${pal.name}`;
     if (pId === activePalette) opt.selected = true;
     if (!isUnlocked) opt.disabled = true;
     selectEl.appendChild(opt);
@@ -3756,7 +3768,7 @@ function renderShopScreen() {
     } else if (timeModTier < 1) {
       t2Btn.disabled = false;
       t2Btn.className = 'shop-item-btn shop-btn-buy locked-buy';
-      t2Btn.innerHTML = '<span style="font-size:11px; filter:grayscale(1) brightness(.7);">🔒</span><span style="font-size:10px;">TIER 1 REQUIRED</span>';
+      t2Btn.innerHTML = `${getLockSvg(13)}<span style="font-size:10px; margin-left:3px;">TIER 1 REQUIRED</span>`;
     } else {
       t2Btn.disabled = false;
       t2Btn.className = 'shop-item-btn shop-btn-buy';

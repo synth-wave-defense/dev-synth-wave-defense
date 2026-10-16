@@ -1502,7 +1502,8 @@ function playVictoryUnlockFx() {
     const btn = document.getElementById('victoryUpgradesBtn');
     if (btn) {
       btn.classList.add('btn-locked', 'btn-unlocking');
-      btn.innerHTML = '<span class="btn-lock-glyph">🔒</span><span>TECH TREE</span>';
+      const lockIcon = (typeof getLockSvg === 'function') ? getLockSvg(16) : '<span class="btn-lock-glyph">🔒</span>';
+      btn.innerHTML = `<span class="btn-lock-glyph">${lockIcon}</span><span>TECH TREE</span>`;
       setTimeout(() => {
         btn.classList.remove('btn-locked', 'btn-unlocking', 'no-press-feedback');
         btn.innerHTML = '<span>TECH TREE</span>';
