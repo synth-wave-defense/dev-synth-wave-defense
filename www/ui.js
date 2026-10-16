@@ -2422,6 +2422,12 @@ function showStartScreen() {
 function updateUpgradeButtonsLock() {
   const unlockLevel = getLoadoutStartLevel();
   const isUpgradesUnlocked = devMode || getLoadoutReferenceLevel() >= unlockLevel;
+  const mainTechTreeIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><line x1="7" y1="21" x2="17" y2="21"/><line x1="12" y1="21" x2="12" y2="18"/><line x1="8" y1="21" x2="6" y2="23"/><line x1="16" y1="21" x2="18" y2="23"/><line x1="12" y1="18" x2="12" y2="11" stroke-width="2.2"/><circle cx="12" cy="18" r="1" fill="currentColor"/><path d="M12 11L7 7V4"/><path d="M12 11L17 7V4"/><path d="M12 11V5"/><path d="M7 7L4 5"/><path d="M17 7L20 5"/><circle cx="12" cy="11" r="1.2" fill="currentColor"/><polygon points="12,2 14,5 12,8 10,5" fill="currentColor" fill-opacity="0.3"/><polygon points="7,2 8.5,4 7,6 5.5,4" fill="currentColor" fill-opacity="0.3"/><polygon points="17,2 18.5,4 17,6 15.5,4" fill="currentColor" fill-opacity="0.3"/><polygon points="4,3 5,4.5 4,6 3,4.5" fill="currentColor" fill-opacity="0.3"/><polygon points="20,3 21,4.5 20,6 19,4.5" fill="currentColor" fill-opacity="0.3"/></svg>`;
+  const mainLockIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
+
+  const resTechTreeIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none; margin-right: 4px;"><line x1="7" y1="21" x2="17" y2="21"/><line x1="12" y1="21" x2="12" y2="18"/><line x1="8" y1="21" x2="6" y2="23"/><line x1="16" y1="21" x2="18" y2="23"/><line x1="12" y1="18" x2="12" y2="11" stroke-width="2.2"/><circle cx="12" cy="18" r="1" fill="currentColor"/><path d="M12 11L7 7V4"/><path d="M12 11L17 7V4"/><path d="M12 11V5"/><path d="M7 7L4 5"/><path d="M17 7L20 5"/><circle cx="12" cy="11" r="1.2" fill="currentColor"/><polygon points="12,2 14,5 12,8 10,5" fill="currentColor" fill-opacity="0.3"/><polygon points="7,2 8.5,4 7,6 5.5,4" fill="currentColor" fill-opacity="0.3"/><polygon points="17,2 18.5,4 17,6 15.5,4" fill="currentColor" fill-opacity="0.3"/><polygon points="4,3 5,4.5 4,6 3,4.5" fill="currentColor" fill-opacity="0.3"/><polygon points="20,3 21,4.5 20,6 19,4.5" fill="currentColor" fill-opacity="0.3"/></svg>`;
+  const resLockIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none; margin-right: 4px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
+
   ['mainUpgradesBtn', 'victoryUpgradesBtn', 'defeatUpgradesBtn'].forEach(id => {
     const btn = document.getElementById(id);
     if (!btn) return;
@@ -2431,6 +2437,11 @@ function updateUpgradeButtonsLock() {
     btn.innerHTML = isUpgradesUnlocked
       ? '<span>TECH TREE</span>'
       : `<span class="btn-lock-glyph">${getLockSvg(16, '#00e5ff')}</span><span>TECH TREE</span>`;
+    const isMain = id === 'mainUpgradesBtn';
+    const activeIcon = isUpgradesUnlocked
+      ? (isMain ? mainTechTreeIcon : resTechTreeIcon)
+      : (isMain ? mainLockIcon : resLockIcon);
+    btn.innerHTML = activeIcon + '<span>TECH TREE</span>';
   });
 }
 
@@ -2717,7 +2728,7 @@ function renderBattlePassScreen() {
   listBody.innerHTML = '';
 
   const diamondIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
-  const prismIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
+  const prismIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
 
   BATTLE_PASS_TIERS.forEach(item => {
     const t = item.tier;
