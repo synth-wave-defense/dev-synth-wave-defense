@@ -2420,20 +2420,28 @@ function toggleSettingsAccordion(forceState) {
 }
 
 function handleHudSettingsClick() {
-  devSettingsTapCount++;
-  if (devSettingsTapTimer) clearTimeout(devSettingsTapTimer);
-  devSettingsTapTimer = setTimeout(() => {
-    devSettingsTapCount = 0;
-    devSettingsTapTimer = null;
-  }, 1800);
+  const isDevHost = window.location.hostname.includes('dev-synth-wave-defense') ||
+                    window.location.hostname === 'localhost' ||
+                    window.location.protocol === 'file:';
 
-  if (devSettingsTapCount >= 5) {
-    devSettingsTapCount = 0;
-    if (devMode) {
-      if (typeof closeDevMode === 'function') closeDevMode();
-    } else {
-      if (typeof openDevMode === 'function') openDevMode();
+  if (gameState === 'START' || isDevHost) {
+    devSettingsTapCount++;
+    if (devSettingsTapTimer) clearTimeout(devSettingsTapTimer);
+    devSettingsTapTimer = setTimeout(() => {
+      devSettingsTapCount = 0;
+      devSettingsTapTimer = null;
+    }, 1800);
+
+    if (devSettingsTapCount >= 7) {
+      devSettingsTapCount = 0;
+      if (devMode) {
+        if (typeof closeDevMode === 'function') closeDevMode();
+      } else {
+        if (typeof openDevMode === 'function') openDevMode();
+      }
     }
+  } else {
+    devSettingsTapCount = 0;
   }
 
   const settingsSc = document.getElementById('settingsScreen');
@@ -2995,9 +3003,6 @@ function applyMusicVolume(pct, persist) {
 
 function setSfxVolume(pct) { applySfxVolume(pct, true); }
 function setMusicVolume(pct) { applyMusicVolume(pct, true); }
-
-function toggleSettingSfx(isChecked) { applySfxVolume(isChecked ? (settings.sfxVolume || 100) : 0, true); }
-function toggleSettingMusic(isChecked) { applyMusicVolume(isChecked ? (settings.musicVolume || 70) : 0, true); }
 
 function toggleSettingPerf(isChecked) {
   perfMode = isChecked ? 'low' : 'high';
