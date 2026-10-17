@@ -115,6 +115,11 @@
         OtaDiagnostics.lastError = 'Local: ' + formatErr(e);
       }
 
+      const verLabel = document.getElementById('settingsVersionLabel');
+      if (verLabel && OtaDiagnostics.localVersion && OtaDiagnostics.localVersion !== '—') {
+        verLabel.textContent = `Version: ${OtaDiagnostics.localVersion}`;
+      }
+
       if (window.MusicDownloader && localManifest) {
         window.MusicDownloader.setManifest(localManifest);
       }

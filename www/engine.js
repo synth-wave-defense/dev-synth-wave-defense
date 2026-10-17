@@ -961,7 +961,7 @@ function startEndlessMatch() {
   document.getElementById('levelsScreen').classList.add('hidden');
   document.getElementById('victoryScreen').classList.add('hidden');
   document.getElementById('defeatScreen').classList.add('hidden');
-  document.getElementById('pauseScreen').classList.add('hidden');
+  document.getElementById('pauseScreen')?.classList.add('hidden');
   document.getElementById('startScreen').classList.add('hidden');
   document.getElementById('settingsScreen').classList.add('hidden');
   document.getElementById('upgradesScreen').classList.add('hidden');
@@ -1019,7 +1019,7 @@ function reallyStartLevel(lvl) {
   document.getElementById('levelsScreen').classList.add('hidden');
   document.getElementById('victoryScreen').classList.add('hidden');
   document.getElementById('defeatScreen').classList.add('hidden');
-  document.getElementById('pauseScreen').classList.add('hidden');
+  document.getElementById('pauseScreen')?.classList.add('hidden');
   document.getElementById('startScreen').classList.add('hidden');
   document.getElementById('settingsScreen').classList.add('hidden');
   document.getElementById('upgradesScreen').classList.add('hidden');

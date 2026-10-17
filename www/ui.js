@@ -1107,7 +1107,7 @@ function handleDevHpClick() {
 }
 
 const BASE_BRANCH_ICONS = {
-  base_hp: `<svg width="25" height="25" viewBox="-32 -32 64 64"><circle cx="0" cy="0" r="17" fill="none" stroke="#f05f9f" stroke-width="1.6"/><circle cx="0" cy="0" r="11" fill="none" stroke="#f05f9f" stroke-width="1" opacity=".35"/><path d="M0,7 C-10,0 -10,-9 -2.5,-9 C0,-9 0,-6 0,-6 C0,-6 0,-9 2.5,-9 C10,-9 10,0 0,7 Z" fill="#f05f9f"/></svg>`,
+  base_hp: `<svg width="25" height="25" viewBox="-32 -32 64 64"><circle cx="0" cy="0" r="17" fill="none" stroke="#f05f9f" stroke-width="1.6"/><circle cx="0" cy="0" r="11" fill="none" stroke="#f05f9f" stroke-width="1" opacity=".35"/><path d="M 0 8 L -7.5 0.5 A 4.8 4.8 0 0 1 0 -6 A 4.8 4.8 0 0 1 7.5 0.5 Z" fill="#f05f9f"/></svg>`,
   base_gold: `<svg width="25" height="25" viewBox="-32 -32 64 64"><circle cx="0" cy="0" r="17" fill="none" stroke="#f59e0b" stroke-width="1.6"/><circle cx="0" cy="0" r="11" fill="none" stroke="#f59e0b" stroke-width="1" opacity=".35"/><circle cx="0" cy="0" r="8" fill="#f59e0b"/><text x="0" y="4" font-size="11" font-weight="900" fill="#0a0e1c" text-anchor="middle" font-family="Montserrat, sans-serif">$</text></svg>`
 };
 const BASE_BRANCH_COLORS = { base_hp: '#f05f9f', base_gold: '#f59e0b' };
@@ -2307,7 +2307,7 @@ function showStartScreen() {
   isEndlessMode = false;
   music('menu');
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
-  document.getElementById('pauseScreen').classList.add('hidden');
+  document.getElementById('pauseScreen')?.classList.add('hidden');
   document.getElementById('levelsScreen').classList.add('hidden');
   document.getElementById('settingsScreen').classList.add('hidden');
   document.getElementById('upgradesScreen').classList.add('hidden');
@@ -2521,6 +2521,14 @@ function showSettings(fromSource = 'start') {
 
   applySfxVolume(settings.sfxVolume != null ? settings.sfxVolume : 100, false);
   applyMusicVolume(settings.musicVolume != null ? settings.musicVolume : 70, false);
+
+  const versionLabel = document.getElementById('settingsVersionLabel');
+  if (versionLabel) {
+    const liveVersion = (window.OtaDiagnostics && window.OtaDiagnostics.localVersion && window.OtaDiagnostics.localVersion !== '—')
+      ? window.OtaDiagnostics.localVersion
+      : '1.36.24';
+    versionLabel.textContent = `Version: ${liveVersion}`;
+  }
 }
 
 // [UI122] Synth Pass & Custom Neon Color Palette UI Handlers.
@@ -4114,7 +4122,7 @@ function initBuildPanel() {
         </div>
         <span class="cost">
           <span class="cost-icon">
-            <svg width="12" height="12" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#ff9100" /><text x="12" y="16.5" font-size="14" font-weight="900" fill="#00" text-anchor="middle">$</text></svg>
+            <svg width="12" height="12" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#ff9100" /><text x="12" y="17.5" font-size="16" font-weight="900" fill="#000000" text-anchor="middle" font-family="Montserrat, sans-serif">$</text></svg>
           </span>
           ${conf.cost}
         </span>
