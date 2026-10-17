@@ -6423,32 +6423,6 @@ function render(now) {
           }
         }
       }
-	  
-	  const versionLogEl = document.getElementById('devVersionLog');
-        if (versionLogEl && window.OtaDiagnostics) {
-          const d = window.OtaDiagnostics;
-          versionLogEl.textContent =
-            `--- OTA PIPELINE STATUS ---\n` +
-            `Step        : ${d.step}\n` +
-            `Plugin Ready: ${d.pluginAvailable ? 'YES' : 'NO'} (${d.notifyReadyStatus})\n` +
-            `Active Bndl : ${d.activeBundleInfo}\n` +
-            `Stored Bndls: ${d.downloadedBundlesList}\n` +
-            `Network     : ${d.networkConnected}\n\n` +
-            `--- MANIFEST & VERSION ---\n` +
-            `Our Version : ${d.localVersion}\n` +
-            `Remote Fetch: ${d.remoteFetchStatus}\n` +
-            `Remote Ver. : ${d.remoteVersion}\n` +
-            `Update Need?: ${d.updateNeeded}\n` +
-            `Bundle URL  : ${d.bundleUrl}\n\n` +
-            `--- DOWNLOAD & APPLY ---\n` +
-            `DL Status   : ${d.downloadStatus}\n` +
-            `DL Progress : ${d.downloadProgress}%\n` +
-            `Bundle ID   : ${d.downloadedBundleId}\n` +
-            `Next Launch : ${d.nextQueueStatus}\n` +
-            `Last Error  : ${d.lastError}\n\n` +
-            `--- RECENT LOGS ---\n` +
-            (d.logs.length ? d.logs.join('\n') : 'No logs yet');
-        }
     }
   }
 
