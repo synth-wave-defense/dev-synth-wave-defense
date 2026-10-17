@@ -1,17 +1,5 @@
 // [UI100] Presentation layer and rendering pipeline initialization.
 
-/**
- * Generates standardized SVG Lock icon string matching settings button cyan stroke theme.
- * @param {number} [size=16]
- * @param {string} [strokeColor='#00e5ff']
- * @param {string} [extraStyle='']
- * @returns {string} SVG HTML string
- */
-function getLockSvg(size = 16, strokeColor = '#00e5ff', extraStyle = '') {
-  const styleAttr = extraStyle ? ` style="${extraStyle}"` : '';
-  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${strokeColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lock-svg-icon"${styleAttr}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
-}
-
 // [UI100.01] Thread Lag & Memory Monitor: High-frequency sampler tracking WebView thread freezes (>20ms).
 window._maxThreadLag = 0;
 window._lastThreadLag = 0;
@@ -1119,7 +1107,7 @@ function handleDevHpClick() {
 }
 
 const BASE_BRANCH_ICONS = {
-  base_hp: `<svg width="25" height="25" viewBox="-32 -32 64 64"><circle cx="0" cy="0" r="17" fill="none" stroke="#f05f9f" stroke-width="1.6"/><circle cx="0" cy="0" r="11" fill="none" stroke="#f05f9f" stroke-width="1" opacity=".35"/><path d="M0,7 C-10,0 -10,-9 -2.5,-9 C0,-9 0,-6 0,-6 C0,-6 0,-9 2.5,-9 C10,-9 10,0 0,7 Z" fill="#f05f9f"/></svg>`,
+  base_hp: `<svg width="25" height="25" viewBox="-32 -32 64 64"><circle cx="0" cy="0" r="17" fill="none" stroke="#f05f9f" stroke-width="1.6"/><circle cx="0" cy="0" r="11" fill="none" stroke="#f05f9f" stroke-width="1" opacity=".35"/><path d="M 0 8 L -7.5 0.5 A 4.8 4.8 0 0 1 0 -6 A 4.8 4.8 0 0 1 7.5 0.5 Z" fill="#f05f9f"/></svg>`,
   base_gold: `<svg width="25" height="25" viewBox="-32 -32 64 64"><circle cx="0" cy="0" r="17" fill="none" stroke="#f59e0b" stroke-width="1.6"/><circle cx="0" cy="0" r="11" fill="none" stroke="#f59e0b" stroke-width="1" opacity=".35"/><circle cx="0" cy="0" r="8" fill="#f59e0b"/><text x="0" y="4" font-size="11" font-weight="900" fill="#0a0e1c" text-anchor="middle" font-family="Montserrat, sans-serif">$</text></svg>`
 };
 const BASE_BRANCH_COLORS = { base_hp: '#f05f9f', base_gold: '#f59e0b' };
@@ -1321,7 +1309,7 @@ function renderUpgradeTree() {
 
     if (row.isLockedCard) {
       buyBtn.classList.add('locked-buy');
-      buyBtn.innerHTML = getLockSvg(14);
+      buyBtn.innerHTML = `<span style="font-size:12px; filter:grayscale(1) brightness(.7);">🔒</span>`;
     } else if (currentLvl >= 15 && !isScalingBranch(row.key)) {
       buyBtn.classList.add('locked-buy', 'max-buy');
       buyBtn.innerHTML = `<span class="upgrade-row-buy-cost" style="color:#d946ef; font-size:10px;">ASCENDED MAX</span>`;
@@ -1331,7 +1319,7 @@ function renderUpgradeTree() {
       };
     } else if (isSectorGated) {
       buyBtn.classList.add('locked-buy');
-      buyBtn.innerHTML = `${getLockSvg(13)}<span class="upgrade-row-buy-cost" style="color:#8ea3c4; font-size:10px; margin-left:2px;">L${lvlNeeded}</span>`;
+      buyBtn.innerHTML = `<span style="font-size:11px; filter:grayscale(1) brightness(.7);">🔒</span><span class="upgrade-row-buy-cost" style="color:#8ea3c4; font-size:10px;">L${lvlNeeded}</span>`;
       buyBtn.onclick = () => {
         sfx('denied');
         showHintToast(`Unlocks on Level ${lvlNeeded}`);
@@ -1697,7 +1685,7 @@ function renderLevelsGrid() {
       } else {
         btn.className = 'level-card-btn locked';
         btn.disabled = true;
-        btn.innerHTML = `<span class="level-num">${getLockSvg(20)}</span>`;
+        btn.innerHTML = `<span class="level-num">🔒</span>`;
       }
     } else {
       const isUnlockedInNormal = devMode || clearedLevels.includes(lvl);
@@ -1728,7 +1716,7 @@ function renderLevelsGrid() {
       } else {
         btn.className = 'level-card-btn locked overdrive-card';
         btn.disabled = true;
-        btn.innerHTML = `<span class="level-num">${getLockSvg(20)}</span>`;
+        btn.innerHTML = `<span class="level-num">🔒</span>`;
       }
     }
     levelsGrid.appendChild(btn);
@@ -1994,42 +1982,6 @@ function toggleDevMode(enabled) {
   else closeDevMode();
 }
 
-function handleClearSaveClick() {
-  if (!devMode) return;
-  try {
-    localStorage.removeItem(SAVE_KEY);
-  } catch (e) {
-    console.warn('SectorDefenseTD: could not clear localStorage', e);
-  }
-
-  diamonds = 0;
-  prisms = 0;
-  maxUnlockedLevel = 1;
-  clearedLevels = [];
-  overdriveClearedLevels = {};
-  isOverdriveMode = false;
-  levelStars = {};
-  Object.keys(upgradeTreeData).forEach(key => { upgradeTreeData[key] = 0; });
-  selectedLoadout = [];
-  loadoutSyncedUpToLevel = 0;
-  settings.showEnemyHp = true;
-  settings.perfModeOverride = null;
-  perfMode = 'high';
-  perfDecided = false;
-  perfSampleFrames = 0;
-  perfSampleTime = 0;
-  tutorialSeen.l1 = false;
-  tutorialSeen.l2 = false;
-  tutorialSeen.l3 = false;
-  hasClaimedX2ThisLevel = false;
-
-  showStartScreen();
-  renderLevelsGrid();
-  updateDiamondUI();
-  updatePrismUI();
-  updateUpgradeButtonsLock();
-  showHintToast('Save cleared');
-}
 
 function refreshDevDropdowns() {
   ['devLevelSelect', 'devWaveSelect'].forEach(id => {
@@ -2357,7 +2309,7 @@ function showStartScreen() {
   isEndlessMode = false;
   music('menu');
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
-  document.getElementById('pauseScreen').classList.add('hidden');
+  document.getElementById('pauseScreen')?.classList.add('hidden');
   document.getElementById('levelsScreen').classList.add('hidden');
   document.getElementById('settingsScreen').classList.add('hidden');
   document.getElementById('upgradesScreen').classList.add('hidden');
@@ -2436,9 +2388,6 @@ function updateUpgradeButtonsLock() {
     btn.classList.toggle('no-press-feedback', !isUpgradesUnlocked);
     btn.classList.toggle('btn-locked', !isUpgradesUnlocked);
     btn.disabled = false;
-    btn.innerHTML = isUpgradesUnlocked
-      ? '<span>TECH TREE</span>'
-      : `<span class="btn-lock-glyph">${getLockSvg(16, '#00e5ff')}</span><span>TECH TREE</span>`;
     const isMain = id === 'mainUpgradesBtn';
     const activeIcon = isUpgradesUnlocked
       ? (isMain ? mainTechTreeIcon : resTechTreeIcon)
@@ -2574,6 +2523,14 @@ function showSettings(fromSource = 'start') {
 
   applySfxVolume(settings.sfxVolume != null ? settings.sfxVolume : 100, false);
   applyMusicVolume(settings.musicVolume != null ? settings.musicVolume : 70, false);
+
+  const versionLabel = document.getElementById('settingsVersionLabel');
+  if (versionLabel) {
+    const liveVersion = (window.OtaDiagnostics && window.OtaDiagnostics.localVersion && window.OtaDiagnostics.localVersion !== '—')
+      ? window.OtaDiagnostics.localVersion
+      : '1.36.24';
+    versionLabel.textContent = `Version: ${liveVersion}`;
+  }
 }
 
 // [UI122] Synth Pass & Custom Neon Color Palette UI Handlers.
@@ -2613,7 +2570,7 @@ function updatePaletteSelectDropdown(selectId) {
     const isUnlocked = unlockedPalettes.includes(pId);
     const opt = document.createElement('option');
     opt.value = pId;
-    opt.textContent = isUnlocked ? pal.name : `[LOCKED] ${pal.name}`;
+    opt.textContent = isUnlocked ? pal.name : `🔒 ${pal.name}`;
     if (pId === activePalette) opt.selected = true;
     if (!isUnlocked) opt.disabled = true;
     selectEl.appendChild(opt);
@@ -3281,35 +3238,6 @@ function showLevelSelectFromGame() {
 }
 
 // [UI119] Player loadout slot configuration and milestone sequence manager.
-function refreshLoadoutForProgress() {
-  const highestLvl = Math.max(maxUnlockedLevel || 1, currentLevel || 1);
-  const loadoutStart = getLoadoutStartLevel();
-  const availableTowers = (typeof getPlayerUnlockedTowers === 'function')
-    ? getPlayerUnlockedTowers()
-    : ['gun'];
-
-  if (highestLvl < loadoutStart) {
-    selectedLoadout = availableTowers.slice(0, LOADOUT_SIZE);
-    return;
-  }
-
-  let valid = Array.isArray(selectedLoadout)
-    ? selectedLoadout.filter(t => availableTowers.includes(t))
-    : [];
-
-  if (valid.length === LOADOUT_SIZE) {
-    selectedLoadout = valid;
-    return;
-  }
-
-  for (const t of availableTowers) {
-    if (valid.length >= LOADOUT_SIZE) break;
-    if (!valid.includes(t)) valid.push(t);
-  }
-
-  selectedLoadout = valid.slice(0, LOADOUT_SIZE);
-  saveGameSoon();
-}
 
 let loadoutWidgetExpanded = false;
 
@@ -3781,7 +3709,7 @@ function renderShopScreen() {
     } else if (timeModTier < 1) {
       t2Btn.disabled = false;
       t2Btn.className = 'shop-item-btn shop-btn-buy locked-buy';
-      t2Btn.innerHTML = `${getLockSvg(13)}<span style="font-size:10px; margin-left:3px;">TIER 1 REQUIRED</span>`;
+      t2Btn.innerHTML = '<span style="font-size:11px; filter:grayscale(1) brightness(.7);">🔒</span><span style="font-size:10px;">TIER 1 REQUIRED</span>';
     } else {
       t2Btn.disabled = false;
       t2Btn.className = 'shop-item-btn shop-btn-buy';
@@ -4196,7 +4124,7 @@ function initBuildPanel() {
         </div>
         <span class="cost">
           <span class="cost-icon">
-            <svg width="12" height="12" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#ff9100" /><text x="12" y="16.5" font-size="14" font-weight="900" fill="#00" text-anchor="middle">$</text></svg>
+            <svg width="12" height="12" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#ff9100" /><text x="12" y="17.5" font-size="16" font-weight="900" fill="#000000" text-anchor="middle" font-family="Montserrat, sans-serif">$</text></svg>
           </span>
           ${conf.cost}
         </span>
@@ -6921,13 +6849,5 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.Capacitor.Plugins.StatusBar) {
       window.Capacitor.Plugins.StatusBar.hide().catch(err => console.warn('StatusBar error:', err));
     }
-    if (window.Capacitor.Plugins.App) {
-      window.Capacitor.Plugins.App.addListener('backButton', () => {
-        if (typeof handleHardwareBack === 'function') {
-          handleHardwareBack();
-        }
-      });
-    }
-    
   }
 });
