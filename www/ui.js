@@ -1591,8 +1591,14 @@ function confirmStartEndlessRun() {
     if (typeof startEndlessMatch === 'function') startEndlessMatch();
   };
 
-  if (status.type === 'free' || status.type === 'ad') {
+  if (status.type === 'free') {
     launch();
+  } else if (status.type === 'ad') {
+    if (!noAdsPurchased && typeof showAdPlaceholder === 'function') {
+      showAdPlaceholder(launch, null);
+    } else {
+      launch();
+    }
   } else if (status.type === 'diamonds') {
     if (diamonds < status.cost) {
       if (typeof showHintToast === 'function') showHintToast(`Need ${status.cost} Diamonds for entry!`);

@@ -269,7 +269,7 @@ function generateEndlessWaveData(w) {
   if (w % 10 === 0) {
     const bossHp = Math.round(1000 * hpScalingMult);
     spawns.push({
-      type: 'titan',
+      type: 'titan_core',
       isBoss: true,
       isMiniBoss: false,
       count: 1,
@@ -293,7 +293,7 @@ function generateEndlessWaveData(w) {
       interval: 0.6
     });
   } else {
-    const types = ['grunt', 'fast', 'tank', 'swarm', 'emp_bomber'];
+    const types = ['grunt', 'scout', 'tank', 'swarm', 'emp_bomber'];
     const availableTypes = types.slice(0, Math.min(types.length, 1 + Math.floor(w / 3)));
     const primaryType = availableTypes[Math.floor((w * 3 + 1) % availableTypes.length)] || 'grunt';
     let totalCount = 6 + Math.floor(w * 1.2);
