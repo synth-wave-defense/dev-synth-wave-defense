@@ -1,18 +1,20 @@
 name: Release OTA Update
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'www/**'
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Версия обновления (например: 1.1.4)'
-        required: true
-        default: '1.1.4'
 
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      VERSION: 1.0.${{ github.run_number }}
 
     steps:
       - name: 📥 Получение кода ветки main
@@ -23,7 +25,6 @@ jobs:
 
       - name: 📝 Проставление версии внутри будущего бандла
         run: |
-          VERSION="${{ github.event.inputs.version }}"
           cd www
           jq --arg v "$VERSION" '.version = $v' update_manifest.json > tmp.json && mv tmp.json update_manifest.json
 
@@ -40,7 +41,7 @@ jobs:
 
           git checkout -B ota-bundles
           git add -f bundle.zip www/update_manifest.json
-          git commit -m "chore(ota): bundle v${{ github.event.inputs.version }} [skip ci]"
+          git commit -m "chore(ota): bundle v${VERSION} [skip ci]"
           git push -f origin ota-bundles
 
           BUNDLE_SHA=$(git rev-parse HEAD)
@@ -51,15 +52,14 @@ jobs:
       - name: 🚀 Создание GitHub Release (для истории)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ github.event.inputs.version }}
-          name: OTA Update v${{ github.event.inputs.version }}
+          tag_name: v${{ env.VERSION }}
+          name: OTA Update v${{ env.VERSION }}
           files: bundle.zip
           draft: false
           prerelease: false
 
       - name: 💾 Обновление update_manifest.json в ветке main
         run: |
-          VERSION="${{ github.event.inputs.version }}"
           git fetch origin main
           git checkout -f main
           git reset --hard origin/main
