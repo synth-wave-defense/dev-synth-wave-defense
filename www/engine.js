@@ -427,11 +427,15 @@ function applyPaletteColors(paletteId) {
   if (typeof nebulaCacheKey !== 'undefined') nebulaCacheKey = '';
   if (typeof triangleLogoCache !== 'undefined') triangleLogoCache = null;
   if (typeof triangleLogoCacheKey !== 'undefined') triangleLogoCacheKey = '';
-  if (typeof invalidateGridCache === 'function') {
-    invalidateGridCache();
-  }
+  if (typeof invalidateGridCache === 'function') invalidateGridCache();
   if (typeof GLOW_SPRITES !== 'undefined' && GLOW_SPRITES) {
     for (const k in GLOW_SPRITES) delete GLOW_SPRITES[k];
+  }
+  if (typeof NEON_DISC_SPRITES !== 'undefined' && NEON_DISC_SPRITES) {
+    for (const k in NEON_DISC_SPRITES) delete NEON_DISC_SPRITES[k];
+  }
+  if (typeof ENEMY_SPRITE_CACHE !== 'undefined' && ENEMY_SPRITE_CACHE) {
+    for (const k in ENEMY_SPRITE_CACHE) delete ENEMY_SPRITE_CACHE[k];
   }
 }
 
