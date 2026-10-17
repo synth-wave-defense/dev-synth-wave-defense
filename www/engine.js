@@ -422,6 +422,22 @@ function applyPaletteColors(paletteId) {
     }
   }
 
+  if (typeof TOWER_ICONS !== 'undefined' && typeof buildTowerIconSvg === 'function') {
+    TOWER_ICONS.gun = buildTowerIconSvg('gun');
+    TOWER_ICONS.laser = buildTowerIconSvg('laser');
+  }
+  if (typeof towers !== 'undefined' && Array.isArray(towers)) {
+    towers.forEach(t => {
+      if (TOWER_CONFIGS[t.type]) {
+        t.color = TOWER_CONFIGS[t.type].color;
+        t.glow = TOWER_CONFIGS[t.type].glow;
+      }
+    });
+  }
+  if (typeof initBuildPanel === 'function' && typeof window.__gameBooted !== 'undefined' && window.__gameBooted) {
+    initBuildPanel();
+  }
+
   // Force cache invalidation on canvas elements when palette is switched
   if (typeof nebulaCache !== 'undefined') nebulaCache = null;
   if (typeof nebulaCacheKey !== 'undefined') nebulaCacheKey = '';
@@ -981,7 +997,8 @@ function startEndlessMatch() {
   if (waveBtn) waveBtn.classList.remove('hidden');
 
   resetLevelState();
-  const mapCfg = MAP_CATALOG.L20 || MAP_CATALOG.L15 || MAP_CATALOG.L1;
+  const arenaMapKey = 'L' + (Math.min(5, Math.max(1, currentLevelSection)) * 10);
+  const mapCfg = MAP_CATALOG[arenaMapKey] || MAP_CATALOG.L20 || MAP_CATALOG.L1;
   if (mapCfg) {
     buildLevelGeometry(mapCfg.path, mapCfg.cols, mapCfg.rows, mapCfg.blocked);
   }
@@ -1179,6 +1196,30 @@ function forcePauseForBackground() {
 }
 
 function handleHardwareBack() {
+  const giveUpModal = document.getElementById('giveUpConfirmModal');
+  if (giveUpModal && !giveUpModal.classList.contains('hidden')) {
+    if (typeof cancelGiveUp === 'function') cancelGiveUp();
+    return;
+  }
+
+  const dailyModal = document.getElementById('dailyLoginModal');
+  if (dailyModal && !dailyModal.classList.contains('hidden')) {
+    if (typeof closeDailyLoginModal === 'function') closeDailyLoginModal();
+    return;
+  }
+
+  const endlessModal = document.getElementById('endlessLoadoutModal');
+  if (endlessModal && !endlessModal.classList.contains('hidden')) {
+    if (typeof closeEndlessLoadoutModal === 'function') closeEndlessLoadoutModal();
+    return;
+  }
+
+  const bpScreen = document.getElementById('battlePassScreen');
+  if (bpScreen && !bpScreen.classList.contains('hidden')) {
+    if (typeof closeBattlePassScreen === 'function') closeBattlePassScreen();
+    return;
+  }
+
   const settingsEl = document.getElementById('settingsScreen');
   if (settingsEl && !settingsEl.classList.contains('hidden')) {
     if (typeof closeSettings === 'function') closeSettings();
@@ -2581,6 +2622,7 @@ function handleClearSaveClick() {
   endlessDailyRunsUsed = 0;
   endlessDailyRunsDate = '';
   endlessMilestonesClaimed = {};
+  isEndlessMode = false;
 
   bpXp = 0;
   bpPremiumPurchased = false;
