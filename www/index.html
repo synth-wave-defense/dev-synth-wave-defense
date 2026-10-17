@@ -741,6 +741,8 @@
           <div class="shop-card-icon">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2">
               <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.2)"/>
+              <polyline points="2 9 12 13 22 9"/>
+              <line x1="12" y1="22" x2="12" y2="13"/>
             </svg>
           </div>
           <div class="shop-card-info">
@@ -758,6 +760,8 @@
           <div class="shop-card-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2">
               <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.3)"/>
+              <polyline points="2 9 12 13 22 9"/>
+              <line x1="12" y1="22" x2="12" y2="13"/>
             </svg>
           </div>
           <div class="shop-card-info">
@@ -1136,20 +1140,6 @@
       To get diamonds (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 1px;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>) complete previous easier levels, visit GIFTS & SHOP.
     </div>
     <button class="result-btn result-btn-primary" onclick="closeRecommendationsModal()" style="width: 100%;"><span>OK</span></button>
-  </div>
-</div>
-
-<div class="overlay-screen result-screen hidden" id="pauseScreen">
-  <div class="result-stack">
-    <div class="result-heading seq-in">
-      <div class="result-kicker">Game</div>
-      <div class="result-title">Paused</div>
-    </div>
-    <button class="result-btn result-btn-primary seq-in seq-d1" onclick="togglePause()"><span>RESUME</span></button>
-    <button class="result-btn seq-in seq-d2" onclick="retryLevel()"><span>RETRY</span></button>
-    <button class="result-btn seq-in seq-d2" onclick="giveUpMatch()"><span>GIVE UP</span></button>
-    <button class="result-btn seq-in seq-d3" onclick="showSettings('pause')"><span>SETTINGS</span></button>
-    <div class="loadout-anchor seq-in seq-d4" id="loadoutAnchor-pause"></div>
   </div>
 </div>
 
