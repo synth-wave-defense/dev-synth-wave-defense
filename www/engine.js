@@ -908,23 +908,32 @@ let loadoutSyncedUpToLevel = 0;
 function refreshLoadoutForProgress() {
   const loadoutStart = getLoadoutStartLevel();
   const progressRef = getLoadoutReferenceLevel();
+  const availableTowers = (typeof getPlayerUnlockedTowers === 'function')
+    ? getPlayerUnlockedTowers()
+    : ['gun'];
+
   if (progressRef < loadoutStart) {
     const priorLvl = loadoutStart - 1;
     const tierPool = (LEVELS_DATA[priorLvl] && LEVELS_DATA[priorLvl].unlockedTowers)
-      ? LEVELS_DATA[priorLvl].unlockedTowers.slice() : ['gun'];
+      ? LEVELS_DATA[priorLvl].unlockedTowers.slice() : availableTowers.slice(0, LOADOUT_SIZE);
     selectedLoadout = tierPool;
     return;
   }
 
   const ref = Math.min(progressRef, TOTAL_LEVELS);
-  const pool = (LEVELS_DATA[ref] && LEVELS_DATA[ref].unlockedTowers) ? LEVELS_DATA[ref].unlockedTowers : ['gun'];
+  const pool = (LEVELS_DATA[ref] && LEVELS_DATA[ref].unlockedTowers) ? LEVELS_DATA[ref].unlockedTowers : availableTowers;
 
-  if (ref > loadoutSyncedUpToLevel || selectedLoadout.length === 0) {
+  if (ref > loadoutSyncedUpToLevel || !Array.isArray(selectedLoadout) || selectedLoadout.length === 0) {
     const { picks } = computeDefaultLoadout(ref, pool);
     selectedLoadout = picks;
     loadoutSyncedUpToLevel = ref;
   } else {
-    selectedLoadout = selectedLoadout.filter(t => pool.includes(t));
+    let valid = selectedLoadout.filter(t => availableTowers.includes(t) && pool.includes(t));
+    for (const t of pool) {
+      if (valid.length >= LOADOUT_SIZE) break;
+      if (availableTowers.includes(t) && !valid.includes(t)) valid.push(t);
+    }
+    selectedLoadout = valid.slice(0, LOADOUT_SIZE);
   }
 }
 
@@ -2517,14 +2526,6 @@ function el(id) {
   return n;
 }
 
-function toggleDevMode(enabled) {
-  if (enabled) {
-    if (typeof openDevMode === 'function') openDevMode();
-  } else {
-    if (typeof closeDevMode === 'function') closeDevMode();
-  }
-}
-
 function handleClearSaveClick() {
   if (!devMode) return;
   devInputOpen = true;
@@ -2533,7 +2534,7 @@ function handleClearSaveClick() {
   suppressBackgroundPause();
   if (!ok) return;
 
-try {
+  try {
     localStorage.removeItem(SAVE_KEY);
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
       window.Capacitor.Plugins.Preferences.remove({ key: SAVE_KEY });
@@ -2562,13 +2563,19 @@ try {
   tutorialSeen.l2 = false;
   tutorialSeen.l3 = false;
   hasClaimedX2ThisLevel = false;
-  
+
   noAdsPurchased = false;
   dailyGiftsClaimedDate = '';
   dailyGiftsClaimedCount = 0;
   timeModTier = 0;
+  consecutiveFails = 0;
   lastLoginClaimDate = '';
   loginStreakDay = 1;
+
+  endlessBestWave = 0;
+  endlessDailyRunsUsed = 0;
+  endlessDailyRunsDate = '';
+  endlessMilestonesClaimed = {};
 
   bpXp = 0;
   bpPremiumPurchased = false;
@@ -2583,6 +2590,7 @@ try {
   updateDiamondUI();
   if (typeof updatePrismUI === 'function') updatePrismUI();
   updateUpgradeButtonsLock();
+  if (typeof showHintToast === 'function') showHintToast('Save cleared');
   console.log('SectorDefenseTD: save cleared, state reset.');
 }
 
@@ -2612,72 +2620,6 @@ function handleDevHpClick() {
     if (!isNaN(parsed) && parsed > 0) {
       baseHp = parsed;
       updateUI();
-    }
-  }
-}
-
-function refreshDevDropdowns() {
-  ['devLevelSelect', 'devWaveSelect'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el && !el.dataset.pauseGuard) {
-      el.dataset.pauseGuard = '1';
-      el.addEventListener('focus', () => suppressBackgroundPause(1500));
-      el.addEventListener('change', () => suppressBackgroundPause(1500));
-      el.addEventListener('blur', () => suppressBackgroundPause());
-    }
-  });
-  const lvlSelect = document.getElementById('devLevelSelect');
-  if (!lvlSelect) return;
-  lvlSelect.innerHTML = '';
-  for (let l = 1; l <= TOTAL_LEVELS; l++) {
-    const opt = document.createElement('option');
-    opt.value = l;
-    opt.textContent = `${l}`;
-    if (l === currentLevel) opt.selected = true;
-    lvlSelect.appendChild(opt);
-  }
-
-  const lvlConfig = LEVELS_DATA[currentLevel];
-  const maxW = lvlConfig ? lvlConfig.totalWaves : 10;
-  const waveSelect = document.getElementById('devWaveSelect');
-  if (!waveSelect) return;
-  waveSelect.innerHTML = '';
-  for (let w = 1; w <= maxW; w++) {
-    const opt = document.createElement('option');
-    opt.value = w;
-    opt.textContent = `${w}/${maxW}`;
-    if (w === wave) opt.selected = true;
-    waveSelect.appendChild(opt);
-  }
-}
-
-function devJumpToWave(targetWave) {
-  const lvlConfig = LEVELS_DATA[currentLevel];
-  const maxW = lvlConfig ? lvlConfig.totalWaves : 10;
-  if (targetWave < 1 || targetWave > maxW) return;
-
-  enemies = [];
-  projectiles = [];
-  spawnQueue = [];
-  waveInProgress = false;
-  waveTimerActive = false;
-  autoWaveTimeRemaining = 0;
-  wave = targetWave;
-  startWave();
-}
-
-function setGameSpeed(speed) { gameTimeScale = speed; }
-
-function toggleLivePause() {
-  isLivePaused = !isLivePaused;
-  const btn = document.getElementById('livePauseBtn');
-  if (btn) {
-    if (isLivePaused) {
-      btn.textContent = 'RESUME GAME';
-      btn.classList.add('paused');
-    } else {
-      btn.textContent = 'PAUSE GAME';
-      btn.classList.remove('paused');
     }
   }
 }
@@ -2822,108 +2764,6 @@ function updateStartChapterLabel(show) {
   }
 }
 
-function showStartScreen() {
-  music('menu');
-  if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
-  document.getElementById('pauseScreen').classList.add('hidden');
-  document.getElementById('levelsScreen').classList.add('hidden');
-  document.getElementById('settingsScreen').classList.add('hidden');
-  document.getElementById('upgradesScreen').classList.add('hidden');
-  document.getElementById('victoryScreen').classList.add('hidden');
-  document.getElementById('defeatScreen').classList.add('hidden');
-  const revSc = document.getElementById('reviveScreen');
-  if (revSc) revSc.classList.add('hidden');
-  document.getElementById('startScreen').classList.remove('hidden');
-
-  document.getElementById('econHpSplitBadge').classList.add('hidden');
-  document.getElementById('levelWaveSplitBadge').classList.add('hidden');
-  document.getElementById('hudRightGroup').classList.add('hidden');
-  updateStartChapterLabel(true);
-  document.getElementById('controlsWrapper').classList.add('hidden');
-
-  const waveBtn = document.getElementById('waveBtn');
-  if (waveBtn) waveBtn.classList.add('hidden');
-
-  document.getElementById('speedContainer').classList.add('hidden');
-  document.getElementById('livePauseBtn').classList.add('hidden');
-  
-  const customSpawner = document.getElementById('devCustomSpawner');
-  if (customSpawner) customSpawner.classList.add('hidden');
-
-  const startTopZone = document.querySelector('.start-screen-top-zone');
-  if (startTopZone) {
-    startTopZone.style.marginTop = 'clamp(140px, 22vh, 200px)';
-  }
-  const startSubTitle = document.querySelector('.start-sub-title');
-  if (startSubTitle) {
-    startSubTitle.style.textShadow = '0 0 14px rgba(2, 3, 8, 0.95), 0 2px 8px rgba(2, 3, 8, 0.95)';
-  }
-  const startMainTitle = document.querySelector('.start-main-title');
-  if (startMainTitle) {
-    startMainTitle.style.textShadow = '0 0 24px rgba(0, 229, 255, 0.9), 0 0 12px rgba(2, 3, 8, 0.95), 0 3px 10px rgba(2, 3, 8, 0.95)';
-  }
-
-  const l1 = MAP_CATALOG['L1'];
-  if (l1) buildLevelGeometry(l1.path, l1.cols, l1.rows, l1.blocked);
-  resizeCanvasAndCamera();
-  gameState = 'START';
-  updateUpgradeButtonsLock();
-
-  if (typeof warmUpNebulaAndHideLoader === 'function') {
-    warmUpNebulaAndHideLoader();
-  }
-}
-
-function showLevelSelect() {
-  music('menu');
-  if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
-  document.getElementById('startScreen').classList.add('hidden');
-  document.getElementById('levelsScreen').classList.remove('hidden');
-  document.getElementById('econHpSplitBadge').classList.add('hidden');
-  document.getElementById('levelWaveSplitBadge').classList.add('hidden');
-  document.getElementById('hudRightGroup').classList.add('hidden');
-  updateStartChapterLabel(false);
-  document.getElementById('controlsWrapper').classList.add('hidden');
-
-  const waveBtn = document.getElementById('waveBtn');
-  if (waveBtn) waveBtn.classList.add('hidden');
-
-  const customSpawner = document.getElementById('devCustomSpawner');
-  if (customSpawner) customSpawner.classList.add('hidden');
-  
-  currentLevelSection = Math.min(TOTAL_SECTIONS, Math.max(1, Math.ceil(currentLevel / LEVELS_PER_SECTION)));
-  renderLevelsGrid();
-  showLoadoutWidgetIn('loadoutAnchor-levels');
-  gameState = 'LEVELS';
-}
-
-function showLevelSelectFromGame() {
-  music('menu');
-  if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
-  document.getElementById('pauseScreen').classList.add('hidden');
-  document.getElementById('victoryScreen').classList.add('hidden');
-  document.getElementById('defeatScreen').classList.add('hidden');
-  document.getElementById('upgradesScreen').classList.add('hidden');
-  const revSc = document.getElementById('reviveScreen');
-  if (revSc) revSc.classList.add('hidden');
-  document.getElementById('levelsScreen').classList.remove('hidden');
-  document.getElementById('econHpSplitBadge').classList.add('hidden');
-  document.getElementById('levelWaveSplitBadge').classList.add('hidden');
-  document.getElementById('hudRightGroup').classList.add('hidden');
-  updateStartChapterLabel(false);
-  document.getElementById('controlsWrapper').classList.add('hidden');
-
-  const waveBtn = document.getElementById('waveBtn');
-  if (waveBtn) waveBtn.classList.add('hidden');
-
-  const customSpawner = document.getElementById('devCustomSpawner');
-  if (customSpawner) customSpawner.classList.add('hidden');
-  
-  currentLevelSection = Math.min(TOTAL_SECTIONS, Math.max(1, Math.ceil(currentLevel / LEVELS_PER_SECTION)));
-  renderLevelsGrid();
-  showLoadoutWidgetIn('loadoutAnchor-levels');
-  gameState = 'LEVELS';
-}
 
 // [ENG113] Simulation Step Update Pipeline: Enemy movement, tower targeting, projectile physics, and status effects.
 // javascript-obfuscator: disable

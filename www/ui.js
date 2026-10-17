@@ -1980,42 +1980,6 @@ function toggleDevMode(enabled) {
   else closeDevMode();
 }
 
-function handleClearSaveClick() {
-  if (!devMode) return;
-  try {
-    localStorage.removeItem(SAVE_KEY);
-  } catch (e) {
-    console.warn('SectorDefenseTD: could not clear localStorage', e);
-  }
-
-  diamonds = 0;
-  prisms = 0;
-  maxUnlockedLevel = 1;
-  clearedLevels = [];
-  overdriveClearedLevels = {};
-  isOverdriveMode = false;
-  levelStars = {};
-  Object.keys(upgradeTreeData).forEach(key => { upgradeTreeData[key] = 0; });
-  selectedLoadout = [];
-  loadoutSyncedUpToLevel = 0;
-  settings.showEnemyHp = true;
-  settings.perfModeOverride = null;
-  perfMode = 'high';
-  perfDecided = false;
-  perfSampleFrames = 0;
-  perfSampleTime = 0;
-  tutorialSeen.l1 = false;
-  tutorialSeen.l2 = false;
-  tutorialSeen.l3 = false;
-  hasClaimedX2ThisLevel = false;
-
-  showStartScreen();
-  renderLevelsGrid();
-  updateDiamondUI();
-  updatePrismUI();
-  updateUpgradeButtonsLock();
-  showHintToast('Save cleared');
-}
 
 function refreshDevDropdowns() {
   ['devLevelSelect', 'devWaveSelect'].forEach(id => {
@@ -3264,35 +3228,6 @@ function showLevelSelectFromGame() {
 }
 
 // [UI119] Player loadout slot configuration and milestone sequence manager.
-function refreshLoadoutForProgress() {
-  const highestLvl = Math.max(maxUnlockedLevel || 1, currentLevel || 1);
-  const loadoutStart = getLoadoutStartLevel();
-  const availableTowers = (typeof getPlayerUnlockedTowers === 'function')
-    ? getPlayerUnlockedTowers()
-    : ['gun'];
-
-  if (highestLvl < loadoutStart) {
-    selectedLoadout = availableTowers.slice(0, LOADOUT_SIZE);
-    return;
-  }
-
-  let valid = Array.isArray(selectedLoadout)
-    ? selectedLoadout.filter(t => availableTowers.includes(t))
-    : [];
-
-  if (valid.length === LOADOUT_SIZE) {
-    selectedLoadout = valid;
-    return;
-  }
-
-  for (const t of availableTowers) {
-    if (valid.length >= LOADOUT_SIZE) break;
-    if (!valid.includes(t)) valid.push(t);
-  }
-
-  selectedLoadout = valid.slice(0, LOADOUT_SIZE);
-  saveGameSoon();
-}
 
 let loadoutWidgetExpanded = false;
 
@@ -6904,13 +6839,5 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.Capacitor.Plugins.StatusBar) {
       window.Capacitor.Plugins.StatusBar.hide().catch(err => console.warn('StatusBar error:', err));
     }
-    if (window.Capacitor.Plugins.App) {
-      window.Capacitor.Plugins.App.addListener('backButton', () => {
-        if (typeof handleHardwareBack === 'function') {
-          handleHardwareBack();
-        }
-      });
-    }
-    
   }
 });
