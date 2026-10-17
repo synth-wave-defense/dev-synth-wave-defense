@@ -19,7 +19,7 @@ const DAILY_LOGIN_REWARDS = [
   { day: 7, diamonds: 50, prisms: 10 }
 ];
 
-// [DAT107] Synth Pass Battle Pass Tiers & Neon Color Palettes Configuration.
+// [DAT107] Synth Pass Battle Pass Tiers & Neon Color Palettes Configuration: Reward tiers and palettes.
 const BATTLE_PASS_TIERS = [
   { tier: 1,  freeReward: { type: 'diamonds', amount: 10 }, premReward: { type: 'palette', paletteId: 'cyber_gold', title: 'Cyber Gold Palette' } },
   { tier: 2,  freeReward: { type: 'diamonds', amount: 10 }, premReward: { type: 'diamonds', amount: 25 } },
