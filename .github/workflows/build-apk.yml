@@ -208,7 +208,28 @@ jobs:
                               return "ERR: Unzipped " + fileCount + " files, but index.html not in root";
                           }}
 
+                          if (zipFile.exists()) {{
+                              zipFile.delete();
+                          }}
+
                           SharedPreferences prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+                          String activePath = prefs.getString(KEY_ACTIVE_PATH, null);
+                          File bundlesDir = new File(ctx.getFilesDir(), "ota_bundles");
+                          if (bundlesDir.exists() && bundlesDir.isDirectory()) {{
+                              File[] files = bundlesDir.listFiles();
+                              if (files != null) {{
+                                  for (File f : files) {{
+                                      if (f.isDirectory()) {{
+                                          boolean isDest = f.getAbsolutePath().equals(destDir.getAbsolutePath());
+                                          boolean isActive = activePath != null && f.getAbsolutePath().equals(new File(activePath).getAbsolutePath());
+                                          if (!isDest && !isActive) {{
+                                              deleteRecursive(f);
+                                          }}
+                                      }}
+                                  }}
+                              }}
+                          }}
+
                           String finalPath = destDir.getAbsolutePath();
 
                           if (applyImmediately) {{

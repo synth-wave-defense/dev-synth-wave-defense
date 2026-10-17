@@ -1,5 +1,5 @@
 // Synth Wave Defense -- updater.js
-// OTA Live Updates Manager (Filesystem DL + NativeOtaBridge + Full Diagnostics)
+// OTA Live Updates Manager (Filesystem DL + NativeOtaBridge + Full Diagnostics - No CapacitorUpdater dependency)
 
 (function () {
   'use strict';
