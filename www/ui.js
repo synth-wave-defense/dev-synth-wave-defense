@@ -3823,6 +3823,14 @@ function updateDailyLoginBadge() {
   updateMenuBadges();
 }
 
+function getDailyDiamondSvg(size = 20, opacity = 1) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2" stroke-linejoin="round"${opacity < 1 ? ` style="opacity:${opacity};"` : ''}><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,0.28)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
+}
+
+function getDailyPrismSvg(size = 20, opacity = 1) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2" stroke-linejoin="round"${opacity < 1 ? ` style="opacity:${opacity};"` : ''}><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,0.35)"/><line x1="12" y1="2" x2="12" y2="22"/><polyline points="3 12 12 15 21 12" fill="none"/></svg>`;
+}
+
 function renderDailyLoginModal() {
   const grid = document.getElementById('dailyCalendarGrid');
   if (!grid) return;
@@ -3831,6 +3839,65 @@ function renderDailyLoginModal() {
   const isClaimedToday = checkDailyLoginState();
   const lastClaimedDay = isClaimedToday ? (loginStreakDay === 1 ? 7 : loginStreakDay - 1) : (loginStreakDay - 1);
 
+  // Render Streak Track Header Widget
+  const trackEl = document.getElementById('dailyStreakTrack');
+  if (trackEl) {
+    const activeStreakDay = isClaimedToday ? (loginStreakDay === 1 ? 7 : loginStreakDay - 1) : loginStreakDay;
+    let trackNodesHtml = '';
+
+    // Background Track Line
+    trackNodesHtml += `<line x1="18" y1="16" x2="262" y2="16" stroke="#1e293b" stroke-width="2.5"/>`;
+
+    // Progress line up to active streak day
+    const activeX = 18 + (activeStreakDay - 1) * 40.66;
+    if (activeX > 18) {
+      trackNodesHtml += `<line x1="18" y1="16" x2="${activeX}" y2="16" stroke="#00e5ff" stroke-width="2.5"/>`;
+    }
+
+    for (let d = 1; d <= 7; d++) {
+      const cx = 18 + (d - 1) * 40.66;
+      let nodeClaimed = false;
+      let nodeActive = false;
+
+      if (isClaimedToday) {
+        if (d <= lastClaimedDay || lastClaimedDay === 7) nodeClaimed = true;
+      } else {
+        if (d < loginStreakDay) nodeClaimed = true;
+        else if (d === loginStreakDay) nodeActive = true;
+      }
+
+      if (d < 7) {
+        if (nodeClaimed) {
+          trackNodesHtml += `<circle cx="${cx}" cy="16" r="6" fill="#041a22" stroke="#00e5ff" stroke-width="1.8"/>`;
+          trackNodesHtml += `<path d="M ${cx - 2.5},16 L ${cx - 0.5},18 L ${cx + 3},14" fill="none" stroke="#00e5ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+        } else if (nodeActive) {
+          trackNodesHtml += `<circle cx="${cx}" cy="16" r="8" fill="#2d083d" stroke="#d946ef" stroke-width="2.2"/>`;
+          trackNodesHtml += `<circle cx="${cx}" cy="16" r="3" fill="#ffffff"/>`;
+        } else {
+          trackNodesHtml += `<circle cx="${cx}" cy="16" r="5" fill="#0b1324" stroke="#334155" stroke-width="1.5"/>`;
+        }
+      } else {
+        if (nodeClaimed) {
+          trackNodesHtml += `<polygon points="${cx},9 ${cx+7},16 ${cx},23 ${cx-7},16" fill="#041a22" stroke="#00e5ff" stroke-width="1.8"/>`;
+          trackNodesHtml += `<path d="M ${cx - 2.5},16 L ${cx - 0.5},18 L ${cx + 3},14" fill="none" stroke="#00e5ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+        } else if (nodeActive) {
+          trackNodesHtml += `<polygon points="${cx},8 ${cx+8},16 ${cx},24 ${cx-8},16" fill="#2d083d" stroke="#d946ef" stroke-width="2.2"/>`;
+          trackNodesHtml += `<circle cx="${cx}" cy="16" r="3" fill="#ffffff"/>`;
+        } else {
+          trackNodesHtml += `<polygon points="${cx},10 ${cx+6},16 ${cx},22 ${cx-6},16" fill="#1f0833" stroke="#ff2fd0" stroke-width="1.6"/>`;
+        }
+      }
+    }
+
+    trackEl.innerHTML = `
+      <svg width="280" height="32" viewBox="0 0 280 32" style="display:block; margin:auto;">
+        ${trackNodesHtml}
+      </svg>
+      <div class="daily-streak-sub">DAY ${activeStreakDay} OF 7</div>
+    `;
+  }
+
+  // Render 7 Daily Reward Cards
   DAILY_LOGIN_REWARDS.forEach(item => {
     const d = item.day;
     const isDay7 = (d === 7);
@@ -3856,27 +3923,87 @@ function renderDailyLoginModal() {
       }
     }
 
-    card.className = `daily-card${isDay7 ? ' day7-card' : ''}${isClaimed ? ' claimed' : ''}${isActive ? ' active' : ''}${isFuture ? ' future' : ''}`;
+    const iconOpacity = isClaimed ? 0.35 : 1.0;
 
-    let rewardHtml = '';
-    if (item.diamonds > 0 && item.prisms > 0) {
-      rewardHtml = `<span>${item.diamonds}</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg><span>+</span><span>${item.prisms}</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
-    } else if (item.diamonds > 0) {
-      rewardHtml = `<span>${item.diamonds}</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
-    } else if (item.prisms > 0) {
-      rewardHtml = `<span>${item.prisms}</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
+    if (isDay7) {
+      card.className = `daily-card day7-card${isClaimed ? ' claimed' : ''}${isActive ? ' active' : ''}${isFuture ? ' future' : ''}`;
+
+      let statusBadge = '';
+      if (isClaimed) {
+        statusBadge = `<div class="daily-check-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>`;
+      }
+
+      card.innerHTML = `
+        <div class="day7-left">
+          <div class="day7-badge">GRAND BONUS</div>
+          <div class="day7-title">DAY 7</div>
+          ${statusBadge}
+        </div>
+        <div class="day7-right">
+          <div class="day7-capsule diamond-capsule">
+            ${getDailyDiamondSvg(18, iconOpacity)}
+            <span class="day7-val">+50</span>
+          </div>
+          <span class="day7-plus">+</span>
+          <div class="day7-capsule prism-capsule">
+            ${getDailyPrismSvg(18, iconOpacity)}
+            <span class="day7-val">+10</span>
+          </div>
+        </div>
+      `;
+    } else if (d === 5) {
+      card.className = `daily-card day5-card${isClaimed ? ' claimed' : ''}${isActive ? ' active' : ''}${isFuture ? ' future' : ''}`;
+
+      let topBadge = '';
+      if (isActive) {
+        topBadge = `<div class="daily-today-badge">TODAY</div>`;
+      }
+
+      let bottomBadge = '';
+      if (isClaimed) {
+        bottomBadge = `<div class="daily-check-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>`;
+      }
+
+      card.innerHTML = `
+        ${topBadge}
+        <span class="daily-card-num">DAY 5</span>
+        <div class="daily-dual-wrap">
+          <div class="daily-dual-side">
+            ${getDailyDiamondSvg(16, iconOpacity)}
+            <span class="daily-dual-val">+40</span>
+          </div>
+          <span class="daily-dual-plus">+</span>
+          <div class="daily-dual-side">
+            ${getDailyPrismSvg(16, iconOpacity)}
+            <span class="daily-dual-val">+2</span>
+          </div>
+        </div>
+        ${bottomBadge}
+      `;
+    } else {
+      card.className = `daily-card${isClaimed ? ' claimed' : ''}${isActive ? ' active' : ''}${isFuture ? ' future' : ''}`;
+
+      let topBadge = '';
+      if (isActive) {
+        topBadge = `<div class="daily-today-badge">TODAY</div>`;
+      }
+
+      let rewardIcon = item.prisms > 0 ? getDailyPrismSvg(22, iconOpacity) : getDailyDiamondSvg(22, iconOpacity);
+      let rewardValText = item.prisms > 0 ? `+${item.prisms}` : `+${item.diamonds}`;
+
+      let bottomBadge = '';
+      if (isClaimed) {
+        bottomBadge = `<div class="daily-check-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>`;
+      }
+
+      card.innerHTML = `
+        ${topBadge}
+        <span class="daily-card-num">DAY ${d}</span>
+        <div class="daily-card-icon-wrap">${rewardIcon}</div>
+        <span class="daily-card-val">${rewardValText}</span>
+        ${bottomBadge}
+      `;
     }
-
-    let statusText = 'LOCKED';
-    if (isClaimed) statusText = '✓ CLAIMED';
-    else if (isActive) statusText = 'TODAY';
-    else if (isClaimedToday && d === lastClaimedDay + 1) statusText = 'TOMORROW';
-
-    card.innerHTML = `
-      <span class="daily-card-num">DAY ${d}</span>
-      <div class="daily-card-reward">${rewardHtml}</div>
-      <span class="daily-card-status">${statusText}</span>
-    `;
 
     grid.appendChild(card);
   });
@@ -3898,7 +4025,7 @@ function renderDailyLoginModal() {
   } else {
     if (normalBtn) {
       normalBtn.disabled = false;
-      normalBtn.innerHTML = '<span>CLAIM (1x)</span>';
+      normalBtn.innerHTML = '<span>CLAIM</span>';
     }
     if (doubleBtn) {
       doubleBtn.disabled = false;
@@ -3907,7 +4034,7 @@ function renderDailyLoginModal() {
         if (doubleLabel) doubleLabel.textContent = 'CLAIM x2 (FREE VIP)';
         if (adIcon) adIcon.style.display = 'none';
       } else {
-        if (doubleLabel) doubleLabel.textContent = 'CLAIM x2 (WATCH AD)';
+        if (doubleLabel) doubleLabel.textContent = 'CLAIM x2';
         if (adIcon) adIcon.style.display = 'inline-block';
       }
     }
