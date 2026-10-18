@@ -6869,6 +6869,23 @@ if (typeof window !== 'undefined') {
   initDevResourceHold();
 }
 
+function toggleTacticalTips() {
+  const body = document.getElementById('tacticalTipsBody');
+  const arrow = document.getElementById('tacticalTipsArrow');
+  const preview = document.getElementById('tacticalTipsPreview');
+  if (!body) return;
+  if (body.classList.contains('hidden')) {
+    body.classList.remove('hidden');
+    if (arrow) arrow.textContent = '▴';
+    if (preview) preview.classList.add('hidden');
+  } else {
+    body.classList.add('hidden');
+    if (arrow) arrow.textContent = '▾';
+    if (preview) preview.classList.remove('hidden');
+  }
+}
+window.toggleTacticalTips = toggleTacticalTips;
+
 // [UI206] Listener to intercept Back button on Android.
 document.addEventListener('DOMContentLoaded', () => {
   if (window.Capacitor && window.Capacitor.Plugins) {

@@ -1212,6 +1212,156 @@ body {
   color: #ffffff;
 }
 .result-btn-primary svg { flex: none; }
+
+.victory-claim-btn {
+  padding: 14px 26px;
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.4) 0%, rgba(168, 85, 247, 0.4) 50%, rgba(240, 95, 159, 0.4) 100%);
+  border: 1.8px solid #00e5ff;
+  box-shadow: 0 0 24px rgba(0, 229, 255, 0.45);
+  color: #ffffff;
+}
+
+.result-btn-grunt {
+  padding: 14px 26px;
+  background: linear-gradient(135deg, rgba(240, 95, 159, 0.35) 0%, rgba(120, 20, 60, 0.45) 100%);
+  border: 1.6px solid #f05f9f;
+  box-shadow: 0 0 20px rgba(240, 95, 159, 0.45);
+  color: #ffffff;
+}
+
+.grunt-stripe-bg::before {
+  background:
+    repeating-linear-gradient(0deg, rgba(240, 95, 159, 0.04) 0px, rgba(240, 95, 159, 0.04) 2px, transparent 2px, transparent 16px),
+    radial-gradient(75% 55% at 50% 45%, transparent 40%, rgba(12, 2, 8, 0.88) 100%),
+    rgba(15, 3, 10, 0.7) !important;
+}
+
+.result-kicker-grunt { color: #f05f9f !important; }
+.result-title-grunt {
+  color: #ffffff !important;
+  text-shadow: 0 0 22px rgba(240, 95, 159, 0.9), 0 0 38px rgba(240, 95, 159, 0.5) !important;
+}
+
+/* Emergency Revive Circular Timer Ring */
+.revive-timer-container {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 4px 0;
+}
+
+.revive-timer-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.revive-timer-progress {
+  transition: stroke-dashoffset 1s linear;
+  filter: drop-shadow(0 0 6px #f05f9f);
+}
+
+.revive-timer-number {
+  position: relative;
+  z-index: 2;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 28px;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(240, 95, 159, 0.8);
+}
+
+.revive-timer-label {
+  position: absolute;
+  bottom: -22px;
+  white-space: nowrap;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #fbcfe8;
+}
+
+/* Tactical Tip Accordion Widget */
+.tactical-tips-widget {
+  width: 260px;
+  max-width: 100%;
+  background: #14040d;
+  border: 1.2px solid rgba(240, 95, 159, 0.5);
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tactical-tips-widget:hover {
+  border-color: #f05f9f;
+  box-shadow: 0 0 12px rgba(240, 95, 159, 0.3);
+}
+
+.tactical-tips-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tactical-tips-header-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.tactical-tips-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #f05f9f;
+}
+
+.tactical-tips-preview {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.tactical-tips-arrow {
+  font-size: 14px;
+  font-weight: bold;
+  color: #f05f9f;
+  margin-left: 6px;
+  user-select: none;
+}
+
+.tactical-tips-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(240, 95, 159, 0.25);
+  margin: 8px 0;
+}
+
+.tactical-tips-list {
+  margin: 0;
+  padding-left: 14px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  color: #e2e8f0;
+  line-height: 1.6;
+}
+
+.tactical-tips-list li::marker {
+  color: #f05f9f;
+}
 .revive-sec {
   text-transform: lowercase;
   font-size: 0.82em;

@@ -1414,6 +1414,8 @@ function playVictoryFanfare() {
 
 function triggerVictory() {
   gameState = 'VICTORY';
+  const defeatScreen = document.getElementById('defeatScreen');
+  if (defeatScreen) defeatScreen.classList.add('hidden');
   sfxStopBeams();
   music('win');
   sfx('victory');
@@ -1587,6 +1589,15 @@ function triggerDefeat() {
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
   gameState = 'DEFEAT';
 
+  const victoryScreen = document.getElementById('victoryScreen');
+  if (victoryScreen) victoryScreen.classList.add('hidden');
+
+  const reviveTimerContainer = document.getElementById('reviveTimerContainer');
+  if (reviveTimerContainer) reviveTimerContainer.classList.add('hidden');
+
+  const tacticalTipsWidget = document.getElementById('tacticalTipsWidget');
+  if (tacticalTipsWidget) tacticalTipsWidget.classList.remove('hidden');
+
   const reviveBtn = document.getElementById('reviveBtn');
   const skipBtn = document.getElementById('reviveSkipBtn');
   const retryBtn = document.getElementById('defeatRetryBtn');
@@ -1651,8 +1662,16 @@ function closeRecommendationsModal() {
 }
 
 function setReviveBtnLabel(seconds) {
+  const numEl = document.getElementById('reviveTimerNumber');
+  if (numEl) numEl.textContent = `${seconds}s`;
   const label = document.getElementById('reviveBtnLabel');
-  if (label) label.innerHTML = `REVIVE (${seconds}<span class="revive-sec">s</span>)`;
+  if (label) label.textContent = 'REVIVE';
+  const progressEl = document.getElementById('reviveTimerProgress');
+  if (progressEl) {
+    const totalDash = 276.46;
+    const fraction = Math.max(0, seconds / 3);
+    progressEl.style.strokeDashoffset = (totalDash * (1 - fraction)).toFixed(2);
+  }
 }
 
 let defeatFlashTimeout = null;
@@ -1798,6 +1817,16 @@ function triggerEmergencyRevivePrompt() {
   gameState = 'DEFEAT';
   musicSetDucked(true);
   reviveRemainingSeconds = 3;
+
+  const victoryScreen = document.getElementById('victoryScreen');
+  if (victoryScreen) victoryScreen.classList.add('hidden');
+
+  const reviveTimerContainer = document.getElementById('reviveTimerContainer');
+  if (reviveTimerContainer) reviveTimerContainer.classList.remove('hidden');
+
+  const tacticalTipsWidget = document.getElementById('tacticalTipsWidget');
+  if (tacticalTipsWidget) tacticalTipsWidget.classList.add('hidden');
+
   const reviveBtn = document.getElementById('reviveBtn');
   const skipBtn = document.getElementById('reviveSkipBtn');
   const retryBtn = document.getElementById('defeatRetryBtn');
@@ -1848,6 +1877,13 @@ function finishRevivePromptWindow() {
   if (reviveSkipShowTimer) { clearTimeout(reviveSkipShowTimer); reviveSkipShowTimer = null; }
   musicSetDucked(false);
   music('lose');
+
+  const reviveTimerContainer = document.getElementById('reviveTimerContainer');
+  if (reviveTimerContainer) reviveTimerContainer.classList.add('hidden');
+
+  const tacticalTipsWidget = document.getElementById('tacticalTipsWidget');
+  if (tacticalTipsWidget) tacticalTipsWidget.classList.remove('hidden');
+
   const reviveBtn = document.getElementById('reviveBtn');
   const skipBtn = document.getElementById('reviveSkipBtn');
   const retryBtn = document.getElementById('defeatRetryBtn');
