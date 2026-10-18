@@ -1451,18 +1451,18 @@ function triggerVictory() {
     const isFirstOverdriveClear = !overdriveClearedLevels[currentLevel];
     let gainedPrisms = 0;
     let gainedDiamonds = 0;
-    let odRewardLabel = 'OVERDRIVE FARM';
+    let odRewardLabel = 'HARDCORE FARM';
 
     if (isFirstOverdriveClear) {
       const isBossLvl = (currentLevel % LEVELS_PER_SECTION === 0);
       gainedPrisms = isBossLvl ? 5 : 3;
       gainedDiamonds = isBossLvl ? 30 : 15;
-      odRewardLabel = 'OVERDRIVE CLEAR';
+      odRewardLabel = 'HARDCORE CLEAR';
       overdriveClearedLevels[currentLevel] = true;
     } else {
       gainedDiamonds = 3;
       gainedPrisms = 0;
-      odRewardLabel = 'OVERDRIVE FARM';
+      odRewardLabel = 'HARDCORE FARM';
     }
 
     diamonds += gainedDiamonds;
