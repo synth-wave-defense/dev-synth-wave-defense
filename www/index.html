@@ -805,9 +805,16 @@
     </div>
     
     <div class="settings-combat-actions hidden" id="settingsCombatActions">
-      <button class="result-btn result-btn-primary" onclick="closeSettings()"><span>RESUME</span></button>
-      <button class="result-btn" onclick="retryLevel()"><span>RETRY</span></button>
-      <button class="result-btn" onclick="giveUpMatch()"><span>GIVE UP</span></button>
+      <button class="result-btn result-btn-resume" onclick="closeSettings()"><span>RESUME</span></button>
+      <button class="result-btn result-btn-dark" onclick="retryLevel()"><span>RETRY</span></button>
+      <button class="result-btn result-btn-dark result-btn-giveup" onclick="giveUpMatch()">
+        <svg class="giveup-flag-icon" viewBox="0 0 16 18" fill="none">
+          <line x1="2" y1="1" x2="2" y2="17" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" />
+          <polygon points="2,2 14,2 11,6.5 14,11 2,11" fill="#ffffff" stroke="#ffffff" stroke-width="1" stroke-linejoin="round" />
+          <circle cx="2" cy="1" r="1.3" fill="#ffffff" />
+        </svg>
+        <span>GIVE UP</span>
+      </button>
     </div>
 
     <div class="loadout-anchor" id="loadoutAnchor-pause"></div>
@@ -1244,7 +1251,7 @@
       <span>RETRY</span>
     </button>
     <button class="result-btn seq-in seq-d5" id="victoryUpgradesBtn" onclick="showUpgradesScreen('victory')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;">
         <rect x="3" y="11" width="18" height="10" rx="2"/>
         <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
       </svg>
@@ -1338,7 +1345,7 @@
     </button>
 
     <button class="result-btn seq-in seq-d2" id="defeatUpgradesBtn" onclick="showUpgradesScreen('defeat')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;">
         <rect x="3" y="11" width="18" height="10" rx="2"/>
         <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
       </svg>
