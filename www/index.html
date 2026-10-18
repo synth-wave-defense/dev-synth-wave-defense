@@ -805,8 +805,19 @@
     </div>
     
     <div class="settings-combat-actions hidden" id="settingsCombatActions">
-      <button class="result-btn result-btn-resume" onclick="closeSettings()"><span>RESUME</span></button>
-      <button class="result-btn result-btn-dark" onclick="retryLevel()"><span>RETRY</span></button>
+      <button class="result-btn result-btn-resume" onclick="closeSettings()">
+        <svg class="resume-play-icon" viewBox="0 0 12 14" fill="#00e5ff">
+          <polygon points="2,1 11,7 2,13"/>
+        </svg>
+        <span>RESUME</span>
+      </button>
+      <button class="result-btn result-btn-dark" onclick="retryLevel()">
+        <svg class="retry-reload-icon" viewBox="0 0 16 16" fill="none">
+          <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5c2.2 0 4.2.9 5.5 2.5" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+          <polyline points="10 5 14 5 14 1" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>RETRY</span>
+      </button>
       <button class="result-btn result-btn-dark result-btn-giveup" onclick="giveUpMatch()">
         <svg class="giveup-flag-icon" viewBox="0 0 16 18" fill="none">
           <line x1="2" y1="1" x2="2" y2="17" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" />

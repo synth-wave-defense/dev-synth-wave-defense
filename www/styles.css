@@ -4597,6 +4597,19 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   gap: 10px;
 }
 
+.resume-play-icon {
+  flex: none;
+  width: 11px;
+  height: 13px;
+  filter: drop-shadow(0 0 4px rgba(0, 229, 255, 0.8));
+}
+
+.retry-reload-icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+
 .giveup-flag-icon {
   flex: none;
   width: 14px;
