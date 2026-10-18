@@ -1414,7 +1414,7 @@ function selectLevelMode(mode) {
   if (mode === 'overdrive') {
     if (!isOverdriveUnlocked()) {
       if (typeof sfx === 'function') sfx('denied');
-      if (typeof showHintToast === 'function') showHintToast('Complete Sector 1 to unlock OVERDRIVE');
+      if (typeof showHintToast === 'function') showHintToast('Complete Sector 1 to unlock HARDCORE');
       return;
     }
   } else if (mode === 'endless') {
@@ -1431,7 +1431,11 @@ function selectLevelMode(mode) {
   isEndlessMode = (mode === 'endless');
 
   updateModeSwitcherUI();
-  renderLevelsGrid();
+  if (mode === 'endless') {
+    renderEndlessDashboardUI();
+  } else {
+    renderLevelsGrid();
+  }
 }
 
 function updateModeSwitcherUI() {
@@ -1474,23 +1478,58 @@ function updateModeSwitcherUI() {
 
 function renderEndlessDashboardUI() {
   const valEl = document.getElementById('endlessRecordVal');
-  const subEl = document.getElementById('endlessRecordSub');
   const mapEl = document.getElementById('endlessMapText');
   const ticketEl = document.getElementById('endlessDeployTicketText');
+  const fillEl = document.getElementById('highwayTrackFill');
+  const thumbEl = document.getElementById('highwayThumbPin');
+  const startEl = document.getElementById('highwayStartLabel');
+  const currEl = document.getElementById('highwayCurrLabel');
+  const endEl = document.getElementById('highwayEndLabel');
+  const rewardEl = document.getElementById('highwayRewardBadge');
 
   const bestWave = endlessBestWave || 0;
-  if (valEl) valEl.textContent = `WAVE ${bestWave}`;
+  if (valEl) valEl.textContent = `BEST : WAVE ${bestWave}`;
 
-  const nextMilestone = bestWave < 50 ? 50 : Math.ceil((bestWave + 1) / 50) * 50;
-  if (subEl) subEl.textContent = `Next Milestone: Wave ${nextMilestone} (+5 🔮 Prisms Bonus)`;
+  const startWave = bestWave > 0 ? Math.floor(Math.max(0, bestWave - 1) / 10) * 10 + 1 : 1;
+  const endWave = startWave + 9;
+  const pct = bestWave >= startWave ? Math.min(100, Math.max(0, ((bestWave - startWave + 1) / 10) * 100)) : 0;
 
-  if (mapEl) mapEl.textContent = `< MAP: SECTOR ${currentLevelSection} ARENA >`;
+  if (startEl) startEl.textContent = startWave;
+  if (currEl) currEl.textContent = `W${bestWave}`;
+  if (endEl) endEl.textContent = endWave;
+
+  if (fillEl) fillEl.style.width = `${pct}%`;
+  if (thumbEl) thumbEl.style.left = `${pct}%`;
+
+  if (rewardEl) {
+    const prismReward = (endWave % 50 === 0) ? '+5' : '+1';
+    rewardEl.innerHTML = `
+      <span class="reward-val">${prismReward}</span>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2" stroke-linejoin="round">
+        <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.4)"/>
+      </svg>
+    `;
+  }
+
+  if (mapEl) mapEl.textContent = `CHAPTER ${currentLevelSection}`;
 
   if (ticketEl) {
-    const status = (typeof getEndlessEntryStatus === 'function') ? getEndlessEntryStatus() : { text: 'FREE (1/1 REMAINING)' };
-    ticketEl.textContent = `DAILY TICKET: ${status.text.toUpperCase()}`;
+    const status = (typeof getEndlessEntryStatus === 'function') ? getEndlessEntryStatus() : { text: 'FREE (1/1)' };
+    let statusText = status.text ? status.text.toUpperCase() : 'FREE (1/1)';
+    if (statusText.includes('REMAINING')) statusText = statusText.replace(' REMAINING', '');
+    ticketEl.textContent = statusText;
   }
 }
+
+function navEndlessLevel(dir) {
+  let nextSec = currentLevelSection + dir;
+  if (nextSec < 1) nextSec = 1;
+  if (nextSec > TOTAL_SECTIONS) nextSec = TOTAL_SECTIONS;
+  currentLevelSection = nextSec;
+  if (typeof sfx === 'function') sfx('click');
+  renderEndlessDashboardUI();
+}
+window.navEndlessLevel = navEndlessLevel;
 
 window.selectLevelMode = selectLevelMode;
 
@@ -1631,12 +1670,7 @@ function renderLevelsGrid() {
   const nextBtn = document.getElementById('partNavNext');
   const nextSecUnlocked = devMode || maxUnlockedLevel > currentLevelSection * LEVELS_PER_SECTION;
 
-  const sectorName = currentLevelSection === 1 ? 'NEON DAWN' : `SECTOR ${currentLevelSection}`;
-  const sectorTitle = (currentLevelMode === 'overdrive')
-    ? `SECTOR ${currentLevelSection}: OVERDRIVE`
-    : `SECTOR ${currentLevelSection}: ${sectorName}`;
-
-  if (partLabel) partLabel.textContent = `< ${sectorTitle} >`;
+  if (partLabel) partLabel.textContent = `CHAPTER ${currentLevelSection}`;
 
   if (prevBtn) {
     const canGoPrev = currentLevelSection > 1;
@@ -1647,16 +1681,21 @@ function renderLevelsGrid() {
     nextBtn.disabled = !canGoNext;
   }
 
-  const subInfo = document.getElementById('levelsSubInfo');
-  const hazardPill = document.getElementById('overdriveHazardPill');
-  const progressPillText = document.getElementById('sectorProgressText');
+  const swipeHint = document.getElementById('chapterSwipeHint');
+  const canSwipe = (maxUnlockedLevel >= 11 || devMode) && TOTAL_SECTIONS > 1 && currentLevelMode !== 'endless';
+  if (swipeHint) {
+    swipeHint.classList.toggle('hidden', !canSwipe);
+  }
 
-  if (currentLevelMode === 'overdrive') {
-    if (subInfo) subInfo.classList.add('hidden');
-    if (hazardPill) hazardPill.classList.remove('hidden');
-  } else {
-    if (subInfo) subInfo.classList.remove('hidden');
-    if (hazardPill) hazardPill.classList.add('hidden');
+  const rulesBanner = document.getElementById('modeRulesBanner');
+  if (rulesBanner) {
+    if (currentLevelMode === 'overdrive') {
+      rulesBanner.className = 'mode-rules-banner hardcore-rules';
+      rulesBanner.innerHTML = `1 💖 BASE  -  1.2 SPEED & ENRAGED MOBS`;
+    } else {
+      rulesBanner.className = 'mode-rules-banner normal-rules';
+      rulesBanner.innerHTML = `Standard Campaign Rules • Earn 💎 Diamonds`;
+    }
   }
 
   const startLvl = (currentLevelSection - 1) * LEVELS_PER_SECTION + 1;
@@ -1691,49 +1730,52 @@ function renderLevelsGrid() {
       } else {
         btn.className = 'level-card-btn locked';
         btn.disabled = true;
-        btn.innerHTML = `<span class="level-num">🔒</span>`;
+        btn.innerHTML = `
+          <svg width="20" height="20" viewBox="0 0 24 24" stroke="#475569" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M 7,10 V 6 C 7,3.5 9,2 12,2 C 15,2 17,3.5 17,6 V 10" />
+            <rect x="4" y="10" width="16" height="12" rx="3" fill="#080e1a" />
+          </svg>
+        `;
       }
     } else {
       const isUnlockedInNormal = devMode || clearedLevels.includes(lvl);
       const isOdCleared = !!overdriveClearedLevels[lvl];
+      const isCurrentOd = isUnlockedInNormal && !isOdCleared && (lvl === 1 || !!overdriveClearedLevels[lvl - 1] || devMode);
       if (isOdCleared) sectionOdCleared++;
 
       if (isUnlockedInNormal) {
-        btn.className = 'level-card-btn overdrive-card' + (isOdCleared ? ' cleared' : '');
-        const isBossLvl = (lvl % LEVELS_PER_SECTION === 0);
-        const rewardText = isBossLvl ? '+5 🔮' : '+3 🔮';
-
+        btn.className = 'level-card-btn' + (isCurrentOd ? ' current' : (isOdCleared ? ' cleared' : ''));
         if (isOdCleared) {
           btn.innerHTML = `
             <span class="level-num">${lvl}</span>
-            <div class="level-card-overdrive-badge filled" title="Overdrive Cleared">
-              <span class="od-clear-skull">💀✓</span>
+            <div class="level-card-overdrive-badge filled" title="Hardcore Cleared">
+              <span class="od-reward-tag" style="color:#ffd1f4;">+3</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.4)"/></svg>
+              <span style="color:#2dd4bf; font-weight:bold; font-size:11px;">✓</span>
             </div>
           `;
         } else {
           btn.innerHTML = `
             <span class="level-num">${lvl}</span>
             <div class="level-card-overdrive-badge empty">
-              <span class="od-reward-tag">${rewardText}</span>
+              <span class="od-reward-tag" style="color:#ffb3ea;">+3</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.8" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="#1a061c"/></svg>
             </div>
           `;
         }
         btn.onclick = () => startSpecificLevel(lvl);
       } else {
-        btn.className = 'level-card-btn locked overdrive-card';
+        btn.className = 'level-card-btn locked';
         btn.disabled = true;
-        btn.innerHTML = `<span class="level-num">🔒</span>`;
+        btn.innerHTML = `
+          <svg width="20" height="20" viewBox="0 0 24 24" stroke="#52274b" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M 7,10 V 6 C 7,3.5 9,2 12,2 C 15,2 17,3.5 17,6 V 10" />
+            <rect x="4" y="10" width="16" height="12" rx="3" fill="#120412" />
+          </svg>
+        `;
       }
     }
     levelsGrid.appendChild(btn);
-  }
-
-  if (progressPillText) {
-    if (currentLevelMode === 'overdrive') {
-      progressPillText.textContent = `OVERDRIVE CLEARED: ${sectionOdCleared} / ${LEVELS_PER_SECTION} 💀 (+3 🔮 / LVL)`;
-    } else {
-      progressPillText.textContent = `SECTOR STARS: ${sectionStars} / ${LEVELS_PER_SECTION * 3} ★`;
-    }
   }
 }
 
