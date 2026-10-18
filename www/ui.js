@@ -2581,9 +2581,9 @@ function showSettings(fromSource = 'start') {
 
   const versionLabel = document.getElementById('settingsVersionLabel');
   if (versionLabel) {
-    const liveVersion = (window.OtaDiagnostics && window.OtaDiagnostics.localVersion && window.OtaDiagnostics.localVersion !== '—')
+    const liveVersion = (window.OtaDiagnostics && window.OtaDiagnostics.localVersion && window.OtaDiagnostics.localVersion !== '—' && window.OtaDiagnostics.localVersion !== 'ERROR')
       ? window.OtaDiagnostics.localVersion
-      : '1.36.24';
+      : '1.36.35';
     versionLabel.textContent = `Version: ${liveVersion}`;
   }
 }
