@@ -1694,7 +1694,8 @@ function renderLevelsGrid() {
       rulesBanner.innerHTML = `1 💖 BASE  -  1.2 SPEED & ENRAGED MOBS`;
     } else {
       rulesBanner.className = 'mode-rules-banner normal-rules';
-      rulesBanner.innerHTML = `Standard Campaign Rules • Earn 💎 Diamonds`;
+      const diamondIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 1px 2px 1px;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
+      rulesBanner.innerHTML = `Standard Campaign Rules • Earn ${diamondIcon} Diamonds`;
     }
   }
 
