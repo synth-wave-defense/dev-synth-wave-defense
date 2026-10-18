@@ -1148,20 +1148,20 @@ body {
 
 .result-kicker {
   font-family: 'Montserrat', sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
-  letter-spacing: 7px;
-  color: #8ef3ff;
+  letter-spacing: 4px;
+  color: #00e5ff;
   text-transform: uppercase;
 }
 .result-title {
   font-family: 'Montserrat', sans-serif;
   font-size: 34px;
   font-weight: 900;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
   color: #ffffff;
   text-transform: uppercase;
-  text-shadow: 0 0 22px rgba(0, 229, 255, 0.85);
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.9), 0 0 24px rgba(0, 229, 255, 0.6);
   text-align: center;
 }
 .result-screen.is-fail .result-kicker { color: #f28eae; }
@@ -3606,7 +3606,7 @@ body {
   position: absolute;
   cursor: pointer;
   top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #1f2945;
+  background-color: #2d3d52;
   border-radius: 24px;
   transition: 0.2s;
 }
@@ -3617,12 +3617,12 @@ body {
   width: 18px;
   left: 3px;
   bottom: 3px;
-  background-color: #94a3b8;
+  background-color: #71869e;
   border-radius: 50%;
   transition: 0.2s;
 }
 input:checked + .slider { background-color: #00e5ff; }
-input:checked + .slider:before { transform: translateX(20px); background-color: #06070d; }
+input:checked + .slider:before { transform: translateX(20px); background-color: #020e16; }
 
 .setting-row-slider {
   flex-direction: column;
@@ -3648,30 +3648,30 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 5px;
-  border-radius: 3px;
-  background: rgba(140, 200, 255, 0.2);
+  height: 3px;
+  border-radius: 1.5px;
+  background: #1b3344;
   outline: none;
   touch-action: pan-y;
 }
 .vol-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 19px;
-  height: 19px;
+  width: 15px;
+  height: 15px;
   border-radius: 50%;
-  background: #0b1020;
-  border: 2px solid #00e5ff;
-  box-shadow: 0 0 12px rgba(0, 229, 255, 0.7);
+  background: #020e16;
+  border: 2.5px solid #00e5ff;
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
   cursor: pointer;
 }
 .vol-range::-moz-range-thumb {
-  width: 19px;
-  height: 19px;
+  width: 15px;
+  height: 15px;
   border-radius: 50%;
-  background: #0b1020;
-  border: 2px solid #00e5ff;
-  box-shadow: 0 0 12px rgba(0, 229, 255, 0.7);
+  background: #020e16;
+  border: 2.5px solid #00e5ff;
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
   cursor: pointer;
 }
 .vol-range.is-muted::-webkit-slider-thumb {
@@ -4537,13 +4537,78 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
   margin-top: 4px;
 }
 
 .settings-combat-actions.hidden {
   display: none !important;
+}
+
+/* Pill Action Buttons for Pause / Settings Screen */
+.result-btn-pill {
+  width: 264px;
+  max-width: 90%;
+  height: 48px;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13.5px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.result-btn-pill:active {
+  transform: scale(0.96);
+}
+
+.result-btn-resume {
+  background: linear-gradient(180deg, rgba(0, 229, 255, 0.18) 0%, rgba(0, 74, 96, 0.12) 100%);
+  border: 1.8px solid #00e5ff;
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.35);
+}
+
+.result-btn-resume:hover {
+  box-shadow: 0 0 22px rgba(0, 229, 255, 0.55);
+}
+
+.result-btn-retry {
+  background: linear-gradient(180deg, rgba(8, 21, 36, 0.85) 0%, rgba(4, 11, 19, 0.95) 100%);
+  border: 1.4px solid #0e2a3b;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.result-btn-retry:hover {
+  border-color: rgba(0, 229, 255, 0.3);
+}
+
+.result-btn-giveup {
+  background: linear-gradient(180deg, rgba(8, 21, 36, 0.85) 0%, rgba(4, 11, 19, 0.95) 100%);
+  border: 1.4px solid #0e2a3b;
+  color: #f05f9f;
+  font-weight: 900;
+}
+
+.result-btn-giveup:hover {
+  border-color: rgba(240, 95, 159, 0.35);
+}
+
+.giveup-flag-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
 }
 
 #settingsScreen #settingsBackBtn {
@@ -4561,10 +4626,10 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   width: 100%;
   max-width: 320px;
   margin: 4px auto;
-  background: rgba(10, 14, 28, 0.6);
+  background: linear-gradient(180deg, rgba(4, 26, 41, 0.95) 0%, rgba(3, 16, 25, 0.98) 100%);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(140, 200, 255, 0.2);
+  border: 1.3px solid #0e3a52;
   border-radius: 18px;
   overflow: hidden;
   box-sizing: border-box !important;
