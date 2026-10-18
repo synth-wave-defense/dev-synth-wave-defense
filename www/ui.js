@@ -1719,11 +1719,9 @@ function renderLevelsGrid() {
         btn.innerHTML = `
           <span class="level-num">${lvl}</span>
           <div class="level-card-stars">
-            ${isCurrent ? '<span class="level-next-tag">NEXT</span>' : `
-              <span class="mini-star ${earnedStars >= 1 ? 'filled' : 'empty'}">★</span>
-              <span class="mini-star ${earnedStars >= 2 ? 'filled' : 'empty'}">★</span>
-              <span class="mini-star ${earnedStars >= 3 ? 'filled' : 'empty'}">★</span>
-            `}
+            <span class="mini-star ${earnedStars >= 1 ? 'filled' : 'empty'}">★</span>
+            <span class="mini-star ${earnedStars >= 2 ? 'filled' : 'empty'}">★</span>
+            <span class="mini-star ${earnedStars >= 3 ? 'filled' : 'empty'}">★</span>
           </div>
         `;
         btn.onclick = () => startSpecificLevel(lvl);
