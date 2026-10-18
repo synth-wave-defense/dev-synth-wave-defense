@@ -290,7 +290,7 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  padding: 0;
+  z-index: 150;
   color: #8ef3ff;
   user-select: none;
   -webkit-tap-highlight-color: transparent;

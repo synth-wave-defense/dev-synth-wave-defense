@@ -2111,8 +2111,8 @@ function updateHudSpeedWidget() {
   const widget = document.getElementById('hudSpeedWidget');
   if (!widget) return;
 
-  const isCombatPause = (gameState === 'PAUSED' && (typeof settingsPreviousSource === 'undefined' || settingsPreviousSource === 'combat' || settingsPreviousSource === 'pause'));
-  const isBattle = (gameState === 'PLAYING' || isCombatPause);
+  const isSettingsOpen = !document.getElementById('settingsScreen')?.classList.contains('hidden');
+  const isBattle = (gameState === 'PLAYING' && !isSettingsOpen);
 
   const showWidget = isBattle && ((typeof timeModTier !== 'undefined' && timeModTier > 0) || devMode);
   widget.classList.toggle('hidden', !showWidget);
@@ -2369,8 +2369,7 @@ function showStartScreen() {
   document.getElementById('econHpSplitBadge').classList.add('hidden');
   document.getElementById('levelWaveSplitBadge').classList.add('hidden');
   document.getElementById('hudRightGroup').classList.remove('hidden');
-  const quickDailyBtn = document.getElementById('dailyBonusQuickBtn');
-  if (quickDailyBtn) quickDailyBtn.classList.remove('hidden');
+  updateDailyBonusBtnVisibility();
   updateStartChapterLabel(true);
   document.getElementById('controlsWrapper').classList.add('hidden');
 
@@ -2466,29 +2465,35 @@ function toggleSettingsAccordion(forceState) {
   }
 }
 
+function updateDailyBonusBtnVisibility() {
+  const quickDailyBtn = document.getElementById('dailyBonusQuickBtn');
+  if (!quickDailyBtn) return;
+  const isSettingsOpen = !document.getElementById('settingsScreen')?.classList.contains('hidden');
+  const isUpgradesOpen = !document.getElementById('upgradesScreen')?.classList.contains('hidden');
+  const isShopOpen = !document.getElementById('shopScreen')?.classList.contains('hidden');
+  const isBPOpen = !document.getElementById('battlePassScreen')?.classList.contains('hidden');
+  const isDailyModalOpen = !document.getElementById('dailyLoginModal')?.classList.contains('hidden');
+
+  const shouldShow = (gameState === 'START') && !isSettingsOpen && !isUpgradesOpen && !isShopOpen && !isBPOpen && !isDailyModalOpen;
+  quickDailyBtn.classList.toggle('hidden', !shouldShow);
+}
+
 function handleHudSettingsClick() {
-  const isDevHost = window.location.hostname.includes('dev-synth-wave-defense') ||
-                    window.location.hostname === 'localhost' ||
-                    window.location.protocol === 'file:';
-
-  if (gameState === 'START' || isDevHost) {
-    devSettingsTapCount++;
-    if (devSettingsTapTimer) clearTimeout(devSettingsTapTimer);
-    devSettingsTapTimer = setTimeout(() => {
-      devSettingsTapCount = 0;
-      devSettingsTapTimer = null;
-    }, 1800);
-
-    if (devSettingsTapCount >= 7) {
-      devSettingsTapCount = 0;
-      if (devMode) {
-        if (typeof closeDevMode === 'function') closeDevMode();
-      } else {
-        if (typeof openDevMode === 'function') openDevMode();
-      }
-    }
-  } else {
+  devSettingsTapCount++;
+  if (devSettingsTapTimer) clearTimeout(devSettingsTapTimer);
+  devSettingsTapTimer = setTimeout(() => {
     devSettingsTapCount = 0;
+    devSettingsTapTimer = null;
+  }, 2500);
+
+  if (devSettingsTapCount >= 7) {
+    devSettingsTapCount = 0;
+    if (devMode) {
+      if (typeof closeDevMode === 'function') closeDevMode();
+    } else {
+      if (typeof openDevMode === 'function') openDevMode();
+    }
+    return;
   }
 
   const settingsSc = document.getElementById('settingsScreen');
@@ -2509,6 +2514,7 @@ function handleHudSettingsClick() {
 }
 
 function showSettings(fromSource = 'start') {
+  updateDailyBonusBtnVisibility();
   settingsPreviousSource = fromSource;
   if (fromSource === 'combat' || fromSource === 'pause') {
     musicSetDucked(true);
@@ -2960,6 +2966,7 @@ function devToggleBpPremium() {
 function closeSettings() {
   const settingsSc = document.getElementById('settingsScreen');
   if (settingsSc) settingsSc.classList.add('hidden');
+  updateDailyBonusBtnVisibility();
 
   ['startScreen', 'victoryScreen', 'defeatScreen'].forEach(id => {
     const el = document.getElementById(id);
@@ -3184,8 +3191,7 @@ function showLevelSelect() {
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
   document.getElementById('startScreen').classList.add('hidden');
   document.getElementById('levelsScreen').classList.remove('hidden');
-  const quickDailyBtn = document.getElementById('dailyBonusQuickBtn');
-  if (quickDailyBtn) quickDailyBtn.classList.add('hidden');
+  updateDailyBonusBtnVisibility();
   document.getElementById('econHpSplitBadge').classList.add('hidden');
   document.getElementById('levelWaveSplitBadge').classList.add('hidden');
   document.getElementById('hudRightGroup').classList.remove('hidden');
