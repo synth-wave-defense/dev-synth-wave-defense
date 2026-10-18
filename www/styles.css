@@ -1197,12 +1197,33 @@ body {
   text-transform: uppercase;
   transition: transform 0.06s ease-out, background 0.06s ease-out, border-color 0.06s ease-out, box-shadow 0.06s ease-out;
 }
-.result-btn:active:not(:disabled),
-.result-btn.btn-pushed:not(:disabled) {
+.result-btn:active:not(:disabled):not(.no-press-feedback):not(.btn-locked),
+.result-btn.btn-pushed:not(:disabled):not(.no-press-feedback):not(.btn-locked) {
   transform: scale(0.92) translateY(2px) !important;
   border-color: #00e5ff !important;
   color: #ffffff !important;
   box-shadow: 0 0 24px rgba(0, 229, 255, 0.6), inset 0 0 10px rgba(0, 229, 255, 0.25) !important;
+}
+.result-btn.no-press-feedback,
+.result-btn.btn-locked {
+  background: rgba(8, 12, 24, 0.4) !important;
+  border-color: rgba(140, 200, 255, 0.08) !important;
+  color: #55637d !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+.result-btn.no-press-feedback:hover,
+.result-btn.no-press-feedback:active,
+.result-btn.no-press-feedback:focus,
+.result-btn.btn-locked:hover,
+.result-btn.btn-locked:active,
+.result-btn.btn-locked:focus {
+  background: rgba(8, 12, 24, 0.4) !important;
+  border-color: rgba(140, 200, 255, 0.08) !important;
+  color: #55637d !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 .result-btn-primary {
   padding: 15px 26px;
@@ -4539,7 +4560,8 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   align-items: center;
   gap: 12px;
   width: 100%;
-  margin-top: 4px;
+  max-width: 264px;
+  margin: 12px auto 6px auto;
 }
 
 .settings-combat-actions.hidden {
@@ -4605,9 +4627,22 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   border-color: rgba(240, 95, 159, 0.35);
 }
 
+.resume-play-icon {
+  flex: none;
+  width: 11px;
+  height: 13px;
+  filter: drop-shadow(0 0 4px rgba(0, 229, 255, 0.8));
+}
+
+.retry-reload-icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+
 .giveup-flag-icon {
   flex: none;
-  width: 16px;
+  width: 14px;
   height: 16px;
 }
 
