@@ -2253,9 +2253,34 @@ body {
 }
 
 .mode-3way-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
   max-width: 340px;
   margin: 0 auto 10px auto;
+}
+
+.mode-3way-header {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: #ffffff;
+  min-width: 126px;
+  text-align: center;
+  text-shadow: 0 0 16px rgba(0, 229, 255, 0.6);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+#levelsScreen.mode-overdrive-active .mode-3way-header,
+#levelsScreen.overdrive-active .mode-3way-header {
+  text-shadow: 0 0 14px rgba(255, 47, 208, 0.8);
+}
+
+#levelsScreen.mode-endless-active .mode-3way-header {
+  text-shadow: 0 0 14px rgba(217, 70, 239, 0.8);
 }
 
 .mode-3way-switcher {
