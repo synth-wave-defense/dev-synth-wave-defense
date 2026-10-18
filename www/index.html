@@ -805,9 +805,16 @@
     </div>
     
     <div class="settings-combat-actions hidden" id="settingsCombatActions">
-      <button class="result-btn result-btn-primary" onclick="closeSettings()"><span>RESUME</span></button>
-      <button class="result-btn" onclick="retryLevel()"><span>RETRY</span></button>
-      <button class="result-btn" onclick="giveUpMatch()"><span>GIVE UP</span></button>
+      <button class="result-btn-pill result-btn-resume" onclick="closeSettings()"><span>RESUME</span></button>
+      <button class="result-btn-pill result-btn-retry" onclick="retryLevel()"><span>RETRY</span></button>
+      <button class="result-btn-pill result-btn-giveup" onclick="giveUpMatch()">
+        <svg class="giveup-flag-icon" width="16" height="16" viewBox="0 0 16 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <line x1="2" y1="1" x2="2" y2="17" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" />
+          <polygon points="2,2 14,2 11,6.5 14,11 2,11" fill="#ffffff" stroke="#ffffff" stroke-width="1" stroke-linejoin="round" />
+          <circle cx="2" cy="1" r="1.3" fill="#ffffff" />
+        </svg>
+        <span>GIVE UP</span>
+      </button>
     </div>
 
     <div class="loadout-anchor" id="loadoutAnchor-pause"></div>
@@ -1023,7 +1030,7 @@
 
 <div class="loadout-widget hidden" id="loadoutWidget">
   <div class="loadout-widget-header" onclick="toggleLoadoutWidgetExpanded()">
-    <span class="loadout-widget-label">TOWERS SELECTED</span>
+    <span class="loadout-widget-label">SELECTED TOWERS</span>
     <div class="loadout-widget-right">
       <div class="loadout-widget-mini-icons" id="loadoutWidgetMiniIcons"></div>
       <span class="loadout-widget-count hidden" id="loadoutWidgetCount">0/3</span>
