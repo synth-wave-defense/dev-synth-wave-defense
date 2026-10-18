@@ -182,8 +182,8 @@ body {
 }
 
 .daily-bonus-quick-btn {
-  position: fixed;
-  top: max(78px, calc(env(safe-area-inset-top) + 62px));
+  position: absolute;
+  top: max(68px, calc(env(safe-area-inset-top) + 54px));
   right: max(16px, env(safe-area-inset-right));
   width: 36px;
   height: 36px;

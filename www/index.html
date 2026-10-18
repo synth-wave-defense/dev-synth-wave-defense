@@ -233,15 +233,6 @@
   </div>
 </div>
 
-<button class="daily-bonus-quick-btn hidden" id="dailyBonusQuickBtn" onclick="openDailyLoginModal()" title="Daily Bonus">
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="daily-btn-svg">
-    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-    <line x1="16" y1="2" x2="16" y2="6"/>
-    <line x1="8" y1="2" x2="8" y2="6"/>
-    <line x1="3" y1="10" x2="21" y2="10"/>
-  </svg>
-  <span class="scout-notification-dot hidden" id="dailyBonusBadgeDot"></span>
-</button>
 
 <div class="incoming-alert-banner" id="incomingAlertBanner">
   <span class="incoming-alert-text" id="incomingAlertText">Boss Incoming</span>
@@ -534,6 +525,15 @@
 
 <!-- [HTM107] Navigation & Menu Overlays: Main menu, tech tree, shop, settings/pause, level selection, and match result screens. -->
 <div class="overlay-screen transparent-bg" id="startScreen">
+  <button class="daily-bonus-quick-btn hidden" id="dailyBonusQuickBtn" onclick="openDailyLoginModal()" title="Daily Bonus">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="daily-btn-svg">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+      <line x1="16" y1="2" x2="16" y2="6"/>
+      <line x1="8" y1="2" x2="8" y2="6"/>
+      <line x1="3" y1="10" x2="21" y2="10"/>
+    </svg>
+    <span class="scout-notification-dot hidden" id="dailyBonusBadgeDot"></span>
+  </button>
   <div class="start-screen-container">
     <div class="start-screen-top-zone seq-in" style="animation-delay:.18s;">
       <div class="start-sub-title">Synth Wave</div>
