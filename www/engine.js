@@ -968,6 +968,7 @@ function startEndlessMatch() {
   isEndlessMode = true;
   isOverdriveMode = false;
   currentLevel = 1;
+  if (typeof updateDailyBonusBtnVisibility === 'function') updateDailyBonusBtnVisibility();
 
   if (typeof battleStartedOnce !== 'undefined') battleStartedOnce = false;
   if (typeof battlePathAlpha !== 'undefined') battlePathAlpha = 1.0;
@@ -1023,6 +1024,7 @@ function startEndlessMatch() {
 
 function reallyStartLevel(lvl) {
   isEndlessMode = false;
+  if (typeof updateDailyBonusBtnVisibility === 'function') updateDailyBonusBtnVisibility();
 	// Сброс анимации дорожки для нового боя:
   if (typeof battleStartedOnce !== 'undefined') battleStartedOnce = false;
   if (typeof battlePathAlpha !== 'undefined') battlePathAlpha = 1.0;

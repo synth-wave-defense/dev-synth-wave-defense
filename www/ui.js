@@ -2468,13 +2468,16 @@ function toggleSettingsAccordion(forceState) {
 function updateDailyBonusBtnVisibility() {
   const quickDailyBtn = document.getElementById('dailyBonusQuickBtn');
   if (!quickDailyBtn) return;
+  const startScreen = document.getElementById('startScreen');
+  const isStartScreenVisible = startScreen && !startScreen.classList.contains('hidden');
+
   const isSettingsOpen = !document.getElementById('settingsScreen')?.classList.contains('hidden');
   const isUpgradesOpen = !document.getElementById('upgradesScreen')?.classList.contains('hidden');
   const isShopOpen = !document.getElementById('shopScreen')?.classList.contains('hidden');
   const isBPOpen = !document.getElementById('battlePassScreen')?.classList.contains('hidden');
   const isDailyModalOpen = !document.getElementById('dailyLoginModal')?.classList.contains('hidden');
 
-  const shouldShow = (gameState === 'START') && !isSettingsOpen && !isUpgradesOpen && !isShopOpen && !isBPOpen && !isDailyModalOpen;
+  const shouldShow = isStartScreenVisible && (gameState === 'START') && !isSettingsOpen && !isUpgradesOpen && !isShopOpen && !isBPOpen && !isDailyModalOpen;
   quickDailyBtn.classList.toggle('hidden', !shouldShow);
 }
 
@@ -2679,6 +2682,7 @@ function showBattlePassScreen(fromSource = 'start') {
   const bpScreen = document.getElementById('battlePassScreen');
   if (bpScreen) bpScreen.classList.remove('hidden');
   gameState = 'BATTLE_PASS';
+  updateDailyBonusBtnVisibility();
 
   renderBattlePassScreen();
 }
@@ -2705,6 +2709,7 @@ function closeBattlePassScreen() {
     document.getElementById('startScreen').classList.remove('hidden');
     gameState = 'START';
   }
+  updateDailyBonusBtnVisibility();
   updateBpProgressUI();
 }
 
@@ -3276,6 +3281,7 @@ function showLevelSelectFromGame() {
   if (revSc) revSc.classList.add('hidden');
 
   document.getElementById('levelsScreen').classList.remove('hidden');
+  updateDailyBonusBtnVisibility();
   document.getElementById('econHpSplitBadge').classList.add('hidden');
   document.getElementById('levelWaveSplitBadge').classList.add('hidden');
   document.getElementById('hudRightGroup').classList.remove('hidden');
@@ -3596,6 +3602,7 @@ function showUpgradesScreen(fromSource) {
   upg.classList.toggle('from-main', !isResultBg);
   upg.classList.remove('hidden');
   gameState = 'UPGRADES';
+  updateDailyBonusBtnVisibility();
   updateHudSpeedWidget();
   renderUpgradeTree();
 }
@@ -3624,6 +3631,7 @@ function closeUpgradesScreen() {
     document.getElementById('startScreen').classList.remove('hidden');
     gameState = 'START';
   }
+  updateDailyBonusBtnVisibility();
 }
 
 function showShopScreen(fromSource) {
@@ -3663,6 +3671,7 @@ function showShopScreen(fromSource) {
   shopEl.classList.toggle('from-main', !isResultBg);
   shopEl.classList.remove('hidden');
   gameState = 'SHOP';
+  updateDailyBonusBtnVisibility();
 
   updateHudSpeedWidget();
   renderShopScreen();
@@ -3689,6 +3698,7 @@ function closeShopScreen() {
     document.getElementById('startScreen').classList.remove('hidden');
     gameState = 'START';
   }
+  updateDailyBonusBtnVisibility();
 }
 
 function renderShopScreen() {
@@ -4051,6 +4061,7 @@ function openDailyLoginModal() {
   const modal = document.getElementById('dailyLoginModal');
   if (!modal) return;
   modal.classList.remove('hidden');
+  updateDailyBonusBtnVisibility();
   renderDailyLoginModal();
   sfx('confirm');
 }
@@ -4059,6 +4070,7 @@ function closeDailyLoginModal() {
   dailyLoginDismissedThisSession = true;
   const modal = document.getElementById('dailyLoginModal');
   if (modal) modal.classList.add('hidden');
+  updateDailyBonusBtnVisibility();
 }
 
 function claimDailyLoginReward(isDouble) {
