@@ -2382,7 +2382,7 @@ body {
   display: flex;
   justify-content: center;
   width: 100%;
-  max-width: 360px;
+  max-width: 340px;
   margin: 0 auto 10px auto;
 }
 
@@ -2403,7 +2403,7 @@ body {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: 365px;
+  max-width: 340px;
   margin: 0 auto 4px auto;
 }
 
@@ -2457,7 +2457,7 @@ body {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 365px;
+  max-width: 340px;
   margin: 0 auto 16px auto;
 }
 
@@ -2610,7 +2610,7 @@ body {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 365px;
+  max-width: 340px;
   margin: 0 auto;
 }
 
@@ -3166,8 +3166,8 @@ body {
 .levels-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-  max-width: 365px;
+  gap: 6px;
+  max-width: 340px;
   width: 100%;
   margin: 0 auto;
   flex: none;
@@ -3211,16 +3211,16 @@ body {
   animation: gridSwipeInLeft 0.22s cubic-bezier(0, 0, 0.2, 1) forwards;
 }
 .level-card-btn {
-  height: 64px;
+  aspect-ratio: 1 / 1;
   background: rgba(8, 12, 24, 0.72);
   border: 1px solid rgba(0, 229, 255, 0.45);
-  border-radius: 18px;
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4px 0;
-  gap: 4px;
+  padding: 2px 0;
+  gap: 2px;
   cursor: pointer;
   transition: all 0.15s;
   outline: none;
@@ -3261,12 +3261,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  width: 80%;
+  gap: 3px;
+  width: 100%;
   line-height: 1;
 }
 .mini-star {
-  font-size: 10px;
+  font-size: 8px;
   text-shadow: none;
 }
 .mini-star.filled {
