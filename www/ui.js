@@ -1165,7 +1165,7 @@ function renderUpgradeTree() {
   container.innerHTML = '';
 
   const maxStep = devMode ? 10 : getMaxUpgradeStep();
-  const isPhase2UnlockedGlobally = devMode || getLoadoutReferenceLevel() > 30 || maxUnlockedLevel > 30 || (typeof clearedLevels !== 'undefined' && clearedLevels.includes(30));
+  const isPhase2UnlockedGlobally = devMode || getLoadoutReferenceLevel() >= 31 || maxUnlockedLevel >= 31 || (typeof clearedLevels !== 'undefined' && clearedLevels.includes(30));
 
   const towerRows = UPGRADE_BRANCH_SPECS.towers.map(card => {
     const towerType = card.icon;
@@ -1206,18 +1206,15 @@ function renderUpgradeTree() {
       if (nextStep <= 10) {
         if (nextStep > maxStep) {
           isSectorGated = true;
-          if (nextStep > 8) lvlNeeded = 41;
-          else if (nextStep > 6) lvlNeeded = 31;
-          else if (nextStep > 3) lvlNeeded = 21;
+          if (nextStep > 8) lvlNeeded = 31;
+          else if (nextStep > 6) lvlNeeded = 21;
           else lvlNeeded = 11;
         }
-      } else if (nextStep <= 15) {
+      } else {
         if (!isPhase2UnlockedGlobally) {
           isSectorGated = true;
           lvlNeeded = 31;
         }
-      } else {
-        isSectorGated = false;
       }
     }
 
@@ -2971,11 +2968,11 @@ function buyBpTierWithDiamonds() {
     showHintToast('Synth Pass already at Max Tier!');
     return;
   }
-  if (diamonds < 15) {
-    showHintToast('Not enough Diamonds! (15 required)');
+  if (diamonds < 30) {
+    showHintToast('Not enough Diamonds! (30 required)');
     return;
   }
-  diamonds -= 15;
+  diamonds -= 30;
   addBpXp(100);
   updateDiamondUI();
   sfx('confirm');
