@@ -2045,9 +2045,9 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   justify-content: flex-end;
-  max-width: 55%;
+  max-width: 60%;
 }
 
 .bp-palette-label {
@@ -2060,8 +2060,8 @@ body {
 }
 
 #bpPaletteSelect {
-  max-width: 115px;
-  font-size: 11px;
+  max-width: 105px;
+  font-size: 10px;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
@@ -3640,6 +3640,20 @@ body {
   font-size: 14px;
   font-weight: 700;
   color: #ffffff;
+}
+.setting-row > span {
+  flex: 1 1 50%;
+  min-width: 0;
+}
+.setting-row > select {
+  flex: 0 0 50%;
+  width: 50%;
+  max-width: 50%;
+  text-align: right;
+  text-align-last: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .setting-row.disabled { opacity: 0.4; }
 .setting-version-label {
