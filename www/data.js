@@ -311,6 +311,8 @@ function getUpgradeEffectiveLevel(key) {
     return lvl;
   } else if (lvl === 15) {
     return 15 * 1.10;
+  } else if (key === 'base_hp') {
+    return 17 + (lvl - 15);
   } else {
     return (15 * 1.10) * (1 + (lvl - 15) * 0.01);
   }

@@ -756,9 +756,8 @@ let perfSampleTime = 0;
 function getMaxUpgradeStep() {
   const lvl = getLoadoutReferenceLevel();
   if (lvl < 11) return 0;
-  if (lvl <= 20) return 3;
-  if (lvl <= 30) return 6;
-  if (lvl <= 40) return 8;
+  if (lvl <= 20) return 6;
+  if (lvl <= 30) return 8;
   return 10;
 }
 
@@ -784,19 +783,18 @@ function handleNodeClick(key, stepIndex) {
   }
 
   const maxStep = getMaxUpgradeStep();
-  const isPhase2UnlockedGlobally = getLoadoutReferenceLevel() > 30 || maxUnlockedLevel > 30 || (typeof clearedLevels !== 'undefined' && clearedLevels.includes(30));
+  const isPhase2UnlockedGlobally = getLoadoutReferenceLevel() >= 31 || maxUnlockedLevel >= 31 || (typeof clearedLevels !== 'undefined' && clearedLevels.includes(30));
 
   if (targetStep <= 10) {
     if (targetStep > maxStep) {
       let lvlNeeded = 11;
-      if (targetStep > 8) lvlNeeded = 41;
-      else if (targetStep > 6) lvlNeeded = 31;
-      else if (targetStep > 3) lvlNeeded = 21;
+      if (targetStep > 8) lvlNeeded = 31;
+      else if (targetStep > 6) lvlNeeded = 21;
       sfx('denied');
       showHintToast(`Unlocks on Level ${lvlNeeded}`);
       return;
     }
-  } else if (targetStep <= 15) {
+  } else {
     if (!isPhase2UnlockedGlobally) {
       sfx('denied');
       showHintToast('Unlocks on Level 31');
@@ -1293,7 +1291,9 @@ function calculateLevelStarsAndReward(lvl, currentHp, startingHp) {
       clearedLevels.push(lvl);
     }
   } else {
-    rewardDiamonds = 1;
+    if (lvl <= 20) rewardDiamonds = 1;
+    else if (lvl <= 40) rewardDiamonds = 2;
+    else rewardDiamonds = 3;
     rewardLabel = 'FARM REWARD';
   }
 
@@ -1465,7 +1465,9 @@ function triggerVictory() {
       odRewardLabel = 'HARDCORE CLEAR';
       overdriveClearedLevels[currentLevel] = true;
     } else {
-      gainedDiamonds = 3;
+      if (currentLevel <= 20) gainedDiamonds = 3;
+      else if (currentLevel <= 40) gainedDiamonds = 4;
+      else gainedDiamonds = 5;
       gainedPrisms = 0;
       odRewardLabel = 'HARDCORE FARM';
     }
