@@ -1471,6 +1471,23 @@ function updateModeSwitcherUI() {
     if (campaignView) campaignView.classList.remove('hidden');
     if (endlessView) endlessView.classList.add('hidden');
   }
+
+  const rulesBanner = document.getElementById('modeRulesBanner');
+  if (rulesBanner) {
+    if (currentLevelMode === 'overdrive') {
+      rulesBanner.className = 'mode-rules-banner hardcore-rules';
+      rulesBanner.innerHTML = `1 💖 BASE  -  1.2 SPEED & ENRAGED MOBS`;
+    } else if (currentLevelMode === 'endless') {
+      rulesBanner.className = 'mode-rules-banner endless-rules';
+      const prismIcon = typeof getPrismSvg === 'function' ? getPrismSvg(13, 'vertical-align: middle; display: inline-block; margin: 0 1px 2px 1px;') : '';
+      const diamondIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 1px 2px 1px;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
+      rulesBanner.innerHTML = `Procedural Waves • Earn ${prismIcon} Prisms & ${diamondIcon} Diamonds`;
+    } else {
+      rulesBanner.className = 'mode-rules-banner normal-rules';
+      const diamondIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 1px 2px 1px;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
+      rulesBanner.innerHTML = `Standard Campaign Rules • Earn ${diamondIcon} Diamonds`;
+    }
+  }
 }
 
 function renderEndlessDashboardUI() {
@@ -1686,18 +1703,6 @@ function renderLevelsGrid() {
   const canSwipe = (maxUnlockedLevel >= 11 || devMode) && TOTAL_SECTIONS > 1 && currentLevelMode !== 'endless';
   if (swipeHint) {
     swipeHint.classList.toggle('hidden', !canSwipe);
-  }
-
-  const rulesBanner = document.getElementById('modeRulesBanner');
-  if (rulesBanner) {
-    if (currentLevelMode === 'overdrive') {
-      rulesBanner.className = 'mode-rules-banner hardcore-rules';
-      rulesBanner.innerHTML = `1 💖 BASE  -  1.2 SPEED & ENRAGED MOBS`;
-    } else {
-      rulesBanner.className = 'mode-rules-banner normal-rules';
-      const diamondIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 1px 2px 1px;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
-      rulesBanner.innerHTML = `Standard Campaign Rules • Earn ${diamondIcon} Diamonds`;
-    }
   }
 
   const startLvl = (currentLevelSection - 1) * LEVELS_PER_SECTION + 1;
