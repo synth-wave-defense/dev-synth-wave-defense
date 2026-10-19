@@ -2512,13 +2512,18 @@ function handleHudSettingsClick() {
       devSettingsTapTimer = null;
     }, 1800);
 
-    if (devSettingsTapCount >= 7) {
+    if (devSettingsTapCount >= 5) {
       devSettingsTapCount = 0;
+      if (devSettingsTapTimer) {
+        clearTimeout(devSettingsTapTimer);
+        devSettingsTapTimer = null;
+      }
       if (devMode) {
         if (typeof closeDevMode === 'function') closeDevMode();
       } else {
         if (typeof openDevMode === 'function') openDevMode();
       }
+      return;
     }
   } else {
     devSettingsTapCount = 0;
@@ -2616,7 +2621,7 @@ function showSettings(fromSource = 'start') {
   if (versionLabel) {
     const liveVersion = (window.OtaDiagnostics && window.OtaDiagnostics.localVersion && window.OtaDiagnostics.localVersion !== '—' && window.OtaDiagnostics.localVersion !== 'ERROR')
       ? window.OtaDiagnostics.localVersion
-      : '1.36.35';
+      : '1.36.36';
     versionLabel.textContent = `Version: ${liveVersion}`;
   }
 
