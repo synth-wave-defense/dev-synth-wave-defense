@@ -2023,8 +2023,8 @@ body {
 }
 
 .bp-header-top {
-  display: grid;
-  grid-template-columns: 1fr 50px 1fr;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 8px;
   width: 100%;
@@ -2038,16 +2038,16 @@ body {
   color: #ffffff;
   text-shadow: 0 0 12px var(--neon-primary, #00e5ff);
   white-space: nowrap;
-  grid-column: 1 / 3;
+  flex: 0 0 auto;
 }
 
 .bp-palette-picker-wrap {
   display: flex;
   align-items: center;
-  gap: 6px;
-  grid-column: 3;
+  gap: 4px;
+  flex: 0 0 auto;
   justify-content: flex-end;
-  width: 100%;
+  max-width: 55%;
 }
 
 .bp-palette-label {
@@ -2055,6 +2055,16 @@ body {
   font-size: 10px;
   font-weight: 800;
   color: #8ea3c4;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+#bpPaletteSelect {
+  max-width: 115px;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .bp-xp-bar-container {
