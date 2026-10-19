@@ -2453,22 +2453,17 @@ function showStartScreen() {
 function updateUpgradeButtonsLock() {
   const unlockLevel = getLoadoutStartLevel();
   const isUpgradesUnlocked = devMode || getLoadoutReferenceLevel() >= unlockLevel;
-  const mainTechTreeIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><line x1="7" y1="21" x2="17" y2="21"/><line x1="12" y1="21" x2="12" y2="18"/><line x1="8" y1="21" x2="6" y2="23"/><line x1="16" y1="21" x2="18" y2="23"/><line x1="12" y1="18" x2="12" y2="11" stroke-width="2.2"/><circle cx="12" cy="18" r="1" fill="currentColor"/><path d="M12 11L7 7V4"/><path d="M12 11L17 7V4"/><path d="M12 11V5"/><path d="M7 7L4 5"/><path d="M17 7L20 5"/><circle cx="12" cy="11" r="1.2" fill="currentColor"/><polygon points="12,2 14,5 12,8 10,5" fill="currentColor" fill-opacity="0.3"/><polygon points="7,2 8.5,4 7,6 5.5,4" fill="currentColor" fill-opacity="0.3"/><polygon points="17,2 18.5,4 17,6 15.5,4" fill="currentColor" fill-opacity="0.3"/><polygon points="4,3 5,4.5 4,6 3,4.5" fill="currentColor" fill-opacity="0.3"/><polygon points="20,3 21,4.5 20,6 19,4.5" fill="currentColor" fill-opacity="0.3"/></svg>`;
-  const mainLockIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
-
-  const resTechTreeIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none; margin-right: 4px;"><line x1="7" y1="21" x2="17" y2="21"/><line x1="12" y1="21" x2="12" y2="18"/><line x1="8" y1="21" x2="6" y2="23"/><line x1="16" y1="21" x2="18" y2="23"/><line x1="12" y1="18" x2="12" y2="11" stroke-width="2.2"/><circle cx="12" cy="18" r="1" fill="currentColor"/><path d="M12 11L7 7V4"/><path d="M12 11L17 7V4"/><path d="M12 11V5"/><path d="M7 7L4 5"/><path d="M17 7L20 5"/><circle cx="12" cy="11" r="1.2" fill="currentColor"/><polygon points="12,2 14,5 12,8 10,5" fill="currentColor" fill-opacity="0.3"/><polygon points="7,2 8.5,4 7,6 5.5,4" fill="currentColor" fill-opacity="0.3"/><polygon points="17,2 18.5,4 17,6 15.5,4" fill="currentColor" fill-opacity="0.3"/><polygon points="4,3 5,4.5 4,6 3,4.5" fill="currentColor" fill-opacity="0.3"/><polygon points="20,3 21,4.5 20,6 19,4.5" fill="currentColor" fill-opacity="0.3"/></svg>`;
-  const resLockIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none; margin-right: 4px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
+  const mainTechTreeIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><path d="M12 21 v-5 l-4 -3.5 v-4 m4 7.5 l4 -3.5 v-4 m-4 7.5 v-8" /><circle cx="12" cy="21" r="1.5" fill="currentColor" stroke="none" /><circle cx="8" cy="8.5" r="1.5" fill="currentColor" stroke="none" /><circle cx="16" cy="8.5" r="1.5" fill="currentColor" stroke="none" /><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none" /></svg>`;
+  const resTechTreeIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:none; margin-right: 4px;"><path d="M12 21 v-5 l-4 -3.5 v-4 m4 7.5 l4 -3.5 v-4 m-4 7.5 v-8" /><circle cx="12" cy="21" r="1.5" fill="currentColor" stroke="none" /><circle cx="8" cy="8.5" r="1.5" fill="currentColor" stroke="none" /><circle cx="16" cy="8.5" r="1.5" fill="currentColor" stroke="none" /><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none" /></svg>`;
 
   ['mainUpgradesBtn', 'victoryUpgradesBtn', 'defeatUpgradesBtn'].forEach(id => {
     const btn = document.getElementById(id);
     if (!btn) return;
+    btn.disabled = !isUpgradesUnlocked;
     btn.classList.toggle('no-press-feedback', !isUpgradesUnlocked);
     btn.classList.toggle('btn-locked', !isUpgradesUnlocked);
-    btn.disabled = false;
     const isMain = id === 'mainUpgradesBtn';
-    const activeIcon = isUpgradesUnlocked
-      ? (isMain ? mainTechTreeIcon : resTechTreeIcon)
-      : (isMain ? mainLockIcon : resLockIcon);
+    const activeIcon = isMain ? mainTechTreeIcon : resTechTreeIcon;
     btn.innerHTML = activeIcon + '<span>TECH TREE</span>';
   });
 }
@@ -2497,33 +2492,25 @@ function toggleSettingsAccordion(forceState) {
 }
 
 function handleHudSettingsClick() {
-  const isDevHost = window.location.hostname.includes('dev-synth-wave-defense') ||
-                    window.location.hostname === 'localhost' ||
-                    window.location.protocol === 'file:';
-
-  if (gameState === 'START' || isDevHost) {
-    devSettingsTapCount++;
-    if (devSettingsTapTimer) clearTimeout(devSettingsTapTimer);
-    devSettingsTapTimer = setTimeout(() => {
-      devSettingsTapCount = 0;
-      devSettingsTapTimer = null;
-    }, 1800);
-
-    if (devSettingsTapCount >= 5) {
-      devSettingsTapCount = 0;
-      if (devSettingsTapTimer) {
-        clearTimeout(devSettingsTapTimer);
-        devSettingsTapTimer = null;
-      }
-      if (devMode) {
-        if (typeof closeDevMode === 'function') closeDevMode();
-      } else {
-        if (typeof openDevMode === 'function') openDevMode();
-      }
-      return;
-    }
-  } else {
+  devSettingsTapCount++;
+  if (devSettingsTapTimer) clearTimeout(devSettingsTapTimer);
+  devSettingsTapTimer = setTimeout(() => {
     devSettingsTapCount = 0;
+    devSettingsTapTimer = null;
+  }, 1800);
+
+  if (devSettingsTapCount >= 5) {
+    devSettingsTapCount = 0;
+    if (devSettingsTapTimer) {
+      clearTimeout(devSettingsTapTimer);
+      devSettingsTapTimer = null;
+    }
+    if (devMode) {
+      if (typeof closeDevMode === 'function') closeDevMode();
+    } else {
+      if (typeof openDevMode === 'function') openDevMode();
+    }
+    return;
   }
 
   const settingsSc = document.getElementById('settingsScreen');
