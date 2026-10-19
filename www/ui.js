@@ -1367,13 +1367,24 @@ function renderUpgradeTree() {
   baseRows.forEach(addRow);
 }
 
+function isSectionUnlocked(sec) {
+  if (typeof devMode !== 'undefined' && devMode) return true;
+  if (sec <= 1) return true;
+  if (typeof currentLevelMode !== 'undefined' && currentLevelMode === 'overdrive') {
+    const prevSecLastLvl = (sec - 1) * LEVELS_PER_SECTION;
+    return !!(typeof overdriveClearedLevels !== 'undefined' && overdriveClearedLevels[prevSecLastLvl]);
+  }
+  const reqLevel = (sec - 1) * LEVELS_PER_SECTION + 1;
+  return typeof maxUnlockedLevel !== 'undefined' && maxUnlockedLevel >= reqLevel;
+}
+
 let isNavigatingSection = false;
 
 function navLevelSection(dir) {
   if (isNavigatingSection) return;
   const target = currentLevelSection + dir;
   if (target < 1 || target > TOTAL_SECTIONS) return;
-  const isTargetUnlocked = devMode || maxUnlockedLevel > (target - 1) * LEVELS_PER_SECTION;
+  const isTargetUnlocked = isSectionUnlocked(target);
   if (!isTargetUnlocked) return;
 
   const grid = document.getElementById('levelsGrid');
@@ -1460,6 +1471,23 @@ function updateModeSwitcherUI() {
     levelsScreen.classList.toggle('mode-endless-active', currentLevelMode === 'endless');
   }
 
+  const rulesBanner = document.getElementById('modeRulesBanner');
+  if (rulesBanner) {
+    const diamondIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 1px 2px 1px;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
+    const prismIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 1px 2px 1px;"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="22" x2="12" y2="22"/></svg>`;
+
+    if (currentLevelMode === 'overdrive') {
+      rulesBanner.className = 'mode-rules-banner hardcore-rules';
+      rulesBanner.innerHTML = `1 💖 BASE  -  1.2 SPEED & ENRAGED MOBS`;
+    } else if (currentLevelMode === 'endless') {
+      rulesBanner.className = 'mode-rules-banner endless-rules';
+      rulesBanner.innerHTML = `Survival Arena • Earn ${diamondIcon} Diamonds & ${prismIcon} Prisms`;
+    } else {
+      rulesBanner.className = 'mode-rules-banner normal-rules';
+      rulesBanner.innerHTML = `Standard Campaign Rules • Earn ${diamondIcon} Diamonds`;
+    }
+  }
+
   const campaignView = document.getElementById('levelsCampaignView');
   const endlessView = document.getElementById('endlessDashboardView');
 
@@ -1476,6 +1504,8 @@ function updateModeSwitcherUI() {
 function renderEndlessDashboardUI() {
   const valEl = document.getElementById('endlessRecordVal');
   const mapEl = document.getElementById('endlessMapText');
+  const prevBtn = document.getElementById('endlessNavPrev');
+  const nextBtn = document.getElementById('endlessNavNext');
   const ticketEl = document.getElementById('endlessDeployTicketText');
   const fillEl = document.getElementById('highwayTrackFill');
   const thumbEl = document.getElementById('highwayThumbPin');
@@ -1510,6 +1540,14 @@ function renderEndlessDashboardUI() {
 
   if (mapEl) mapEl.textContent = `CHAPTER ${currentLevelSection}`;
 
+  if (prevBtn) {
+    prevBtn.disabled = currentLevelSection <= 1;
+  }
+  if (nextBtn) {
+    const nextSecUnlocked = isSectionUnlocked(currentLevelSection + 1);
+    nextBtn.disabled = currentLevelSection >= TOTAL_SECTIONS || !nextSecUnlocked;
+  }
+
   if (ticketEl) {
     const status = (typeof getEndlessEntryStatus === 'function') ? getEndlessEntryStatus() : { text: 'FREE (1/1)' };
     let statusText = status.text ? status.text.toUpperCase() : 'FREE (1/1)';
@@ -1520,8 +1558,8 @@ function renderEndlessDashboardUI() {
 
 function navEndlessLevel(dir) {
   let nextSec = currentLevelSection + dir;
-  if (nextSec < 1) nextSec = 1;
-  if (nextSec > TOTAL_SECTIONS) nextSec = TOTAL_SECTIONS;
+  if (nextSec < 1 || nextSec > TOTAL_SECTIONS) return;
+  if (!isSectionUnlocked(nextSec)) return;
   currentLevelSection = nextSec;
   if (typeof sfx === 'function') sfx('click');
   renderEndlessDashboardUI();
@@ -1669,7 +1707,7 @@ function renderLevelsGrid() {
   const partLabel = document.getElementById('partNavLabel');
   const prevBtn = document.getElementById('partNavPrev');
   const nextBtn = document.getElementById('partNavNext');
-  const nextSecUnlocked = devMode || maxUnlockedLevel > currentLevelSection * LEVELS_PER_SECTION;
+  const nextSecUnlocked = isSectionUnlocked(currentLevelSection + 1);
 
   if (partLabel) partLabel.textContent = `CHAPTER ${currentLevelSection}`;
 
@@ -1688,17 +1726,6 @@ function renderLevelsGrid() {
     swipeHint.classList.toggle('hidden', !canSwipe);
   }
 
-  const rulesBanner = document.getElementById('modeRulesBanner');
-  if (rulesBanner) {
-    if (currentLevelMode === 'overdrive') {
-      rulesBanner.className = 'mode-rules-banner hardcore-rules';
-      rulesBanner.innerHTML = `1 💖 BASE  -  1.2 SPEED & ENRAGED MOBS`;
-    } else {
-      rulesBanner.className = 'mode-rules-banner normal-rules';
-      const diamondIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 1px 2px 1px;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
-      rulesBanner.innerHTML = `Standard Campaign Rules • Earn ${diamondIcon} Diamonds`;
-    }
-  }
 
   const startLvl = (currentLevelSection - 1) * LEVELS_PER_SECTION + 1;
   const endLvl = currentLevelSection * LEVELS_PER_SECTION;
@@ -3257,6 +3284,9 @@ function showLevelSelect() {
   document.getElementById('startScreen').classList.add('hidden');
   document.getElementById('levelsScreen').classList.remove('hidden');
 
+  const topHud = document.getElementById('topHud');
+  if (topHud) topHud.classList.add('hidden');
+
   document.getElementById('econHpSplitBadge').classList.add('hidden');
   document.getElementById('levelWaveSplitBadge').classList.add('hidden');
   document.getElementById('hudRightGroup').classList.remove('hidden');
@@ -3343,6 +3373,10 @@ function showLevelSelectFromGame() {
   if (revSc) revSc.classList.add('hidden');
 
   document.getElementById('levelsScreen').classList.remove('hidden');
+
+  const topHud = document.getElementById('topHud');
+  if (topHud) topHud.classList.add('hidden');
+
   document.getElementById('econHpSplitBadge').classList.add('hidden');
   document.getElementById('levelWaveSplitBadge').classList.add('hidden');
   document.getElementById('hudRightGroup').classList.remove('hidden');

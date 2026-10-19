@@ -993,6 +993,9 @@ function startEndlessMatch() {
   document.getElementById('settingsScreen').classList.add('hidden');
   document.getElementById('upgradesScreen').classList.add('hidden');
 
+  const topHud = document.getElementById('topHud');
+  if (topHud) topHud.classList.remove('hidden');
+
   document.getElementById('econHpSplitBadge').classList.remove('hidden');
   document.getElementById('levelWaveSplitBadge').classList.remove('hidden');
   document.getElementById('hudRightGroup').classList.remove('hidden');
