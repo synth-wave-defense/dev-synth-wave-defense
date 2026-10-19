@@ -1552,11 +1552,15 @@ function openEndlessLoadoutModal() {
   updateEndlessModalButton();
 
   modal.classList.remove('hidden');
+
+  updateDailyBonusBtnVisibility();
 }
 
 function closeEndlessLoadoutModal() {
   const modal = document.getElementById('endlessLoadoutModal');
   if (modal) modal.classList.add('hidden');
+
+  updateDailyBonusBtnVisibility();
 }
 
 function updateEndlessModalButton() {
@@ -2333,6 +2337,8 @@ function toggleLivePause() {
       btn.classList.remove('paused');
     }
   }
+
+  updateDailyBonusBtnVisibility();
 }
 
 function updateStartChapterLabel(show, text) {
@@ -2352,6 +2358,32 @@ function updateStartChapterLabel(show, text) {
 }
 
 // [UI117] Navigation screen display and menu visibility controllers.
+
+function updateDailyBonusBtnVisibility() {
+  const btn = document.getElementById('dailyBonusQuickBtn');
+  if (!btn) return;
+  const startScreen = document.getElementById('startScreen');
+  const isStartVisible = startScreen && !startScreen.classList.contains('hidden');
+
+  const modals = [
+    'settingsScreen', 'upgradesScreen', 'shopScreen', 'battlePassScreen',
+    'dailyLoginModal', 'levelsScreen', 'endlessLoadoutModal',
+    'giveUpConfirmModal', 'gameCompletionModal', 'recommendationsModal',
+    'milestoneScreen', 'victoryScreen', 'defeatScreen'
+  ];
+
+  const isAnyModalOpen = modals.some(id => {
+    const el = document.getElementById(id);
+    return el && !el.classList.contains('hidden');
+  });
+
+  if (isStartVisible && gameState === 'START' && !isAnyModalOpen) {
+    btn.classList.remove('hidden');
+  } else {
+    btn.classList.add('hidden');
+  }
+}
+
 function showStartScreen() {
   isEndlessMode = false;
   music('menu');
@@ -2369,8 +2401,7 @@ function showStartScreen() {
   document.getElementById('econHpSplitBadge').classList.add('hidden');
   document.getElementById('levelWaveSplitBadge').classList.add('hidden');
   document.getElementById('hudRightGroup').classList.remove('hidden');
-  const quickDailyBtn = document.getElementById('dailyBonusQuickBtn');
-  if (quickDailyBtn) quickDailyBtn.classList.remove('hidden');
+
   updateStartChapterLabel(true);
   document.getElementById('controlsWrapper').classList.add('hidden');
 
@@ -2418,6 +2449,8 @@ function showStartScreen() {
   if (typeof warmUpNebulaAndHideLoader === 'function') {
     warmUpNebulaAndHideLoader();
   }
+
+  updateDailyBonusBtnVisibility();
 }
 
 function updateUpgradeButtonsLock() {
@@ -2586,6 +2619,8 @@ function showSettings(fromSource = 'start') {
       : '1.36.35';
     versionLabel.textContent = `Version: ${liveVersion}`;
   }
+
+  updateDailyBonusBtnVisibility();
 }
 
 // [UI122] Synth Pass & Custom Neon Color Palette UI Handlers.
@@ -2675,6 +2710,8 @@ function showBattlePassScreen(fromSource = 'start') {
   gameState = 'BATTLE_PASS';
 
   renderBattlePassScreen();
+
+  updateDailyBonusBtnVisibility();
 }
 
 function closeBattlePassScreen() {
@@ -2700,6 +2737,8 @@ function closeBattlePassScreen() {
     gameState = 'START';
   }
   updateBpProgressUI();
+
+  updateDailyBonusBtnVisibility();
 }
 
 function renderBattlePassScreen() {
@@ -2996,6 +3035,8 @@ function closeSettings() {
     gameState = 'START';
     music('menu');
   }
+
+  updateDailyBonusBtnVisibility();
 }
 
 function toggleSettingHp(isChecked) { settings.showEnemyHp = isChecked; saveGameSoon(); }
@@ -3184,8 +3225,7 @@ function showLevelSelect() {
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
   document.getElementById('startScreen').classList.add('hidden');
   document.getElementById('levelsScreen').classList.remove('hidden');
-  const quickDailyBtn = document.getElementById('dailyBonusQuickBtn');
-  if (quickDailyBtn) quickDailyBtn.classList.add('hidden');
+
   document.getElementById('econHpSplitBadge').classList.add('hidden');
   document.getElementById('levelWaveSplitBadge').classList.add('hidden');
   document.getElementById('hudRightGroup').classList.remove('hidden');
@@ -3203,6 +3243,8 @@ function showLevelSelect() {
   showLoadoutWidgetIn('loadoutAnchor-levels');
   gameState = 'LEVELS';
   updateHudSpeedWidget();
+
+  updateDailyBonusBtnVisibility();
 }
 
 function giveUpMatch() {
@@ -3287,6 +3329,8 @@ function showLevelSelectFromGame() {
   showLoadoutWidgetIn('loadoutAnchor-levels');
   gameState = 'LEVELS';
   updateHudSpeedWidget();
+
+  updateDailyBonusBtnVisibility();
 }
 
 // [UI119] Player loadout slot configuration and milestone sequence manager.
@@ -3592,6 +3636,8 @@ function showUpgradesScreen(fromSource) {
   gameState = 'UPGRADES';
   updateHudSpeedWidget();
   renderUpgradeTree();
+
+  updateDailyBonusBtnVisibility();
 }
 
 function closeUpgradesScreen() {
@@ -3618,6 +3664,8 @@ function closeUpgradesScreen() {
     document.getElementById('startScreen').classList.remove('hidden');
     gameState = 'START';
   }
+
+  updateDailyBonusBtnVisibility();
 }
 
 function showShopScreen(fromSource) {
@@ -3660,6 +3708,8 @@ function showShopScreen(fromSource) {
 
   updateHudSpeedWidget();
   renderShopScreen();
+
+  updateDailyBonusBtnVisibility();
 }
 
 function closeShopScreen() {
@@ -3683,6 +3733,8 @@ function closeShopScreen() {
     document.getElementById('startScreen').classList.remove('hidden');
     gameState = 'START';
   }
+
+  updateDailyBonusBtnVisibility();
 }
 
 function renderShopScreen() {
@@ -4047,12 +4099,16 @@ function openDailyLoginModal() {
   modal.classList.remove('hidden');
   renderDailyLoginModal();
   sfx('confirm');
+
+  updateDailyBonusBtnVisibility();
 }
 
 function closeDailyLoginModal() {
   dailyLoginDismissedThisSession = true;
   const modal = document.getElementById('dailyLoginModal');
   if (modal) modal.classList.add('hidden');
+
+  updateDailyBonusBtnVisibility();
 }
 
 function claimDailyLoginReward(isDouble) {
