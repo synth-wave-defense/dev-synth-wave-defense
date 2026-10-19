@@ -3825,6 +3825,28 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   border-color: #f59e0b;
   box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
 }
+.shop-card-icon.prism-glow {
+  border-color: #d946ef;
+  box-shadow: 0 0 12px rgba(217, 70, 239, 0.35);
+}
+
+.upgrades-row-group-label.prism-group-label {
+  color: #d946ef;
+}
+
+.shop-card-prism {
+  background: linear-gradient(135deg, rgba(24, 10, 36, 0.75), rgba(12, 5, 20, 0.8));
+  border: 1px solid rgba(217, 70, 239, 0.28);
+}
+.shop-card-prism:hover {
+  border-color: rgba(217, 70, 239, 0.5);
+}
+
+.shop-card-max {
+  border-color: rgba(217, 70, 239, 0.6);
+  background: linear-gradient(135deg, rgba(38, 12, 54, 0.8), rgba(12, 5, 20, 0.85));
+  box-shadow: 0 0 16px rgba(217, 70, 239, 0.25);
+}
 
 .shop-card-info {
   display: flex;
@@ -3850,6 +3872,10 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   font-weight: 600;
   color: #8ea3c4;
 }
+.shop-card-sub.prism-sub {
+  color: #f0abfc;
+  font-weight: 700;
+}
 
 .shop-badge {
   font-size: 9px;
@@ -3860,6 +3886,11 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   padding: 1px 6px;
   border-radius: 6px;
   text-transform: uppercase;
+}
+.shop-badge.shop-badge-purple {
+  background: #d946ef;
+  color: #04060e;
+  box-shadow: 0 0 8px rgba(217, 70, 239, 0.5);
 }
 
 .shop-item-btn {
@@ -3909,6 +3940,41 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   border-color: #00e5ff;
   color: #00e5ff;
   box-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
+}
+
+.shop-btn-prism {
+  background: rgba(27, 10, 42, 0.85);
+  border: 1.5px solid rgba(217, 70, 239, 0.4);
+  color: #ffffff;
+}
+.shop-btn-prism:hover {
+  border-color: #d946ef;
+  color: #f0abfc;
+  box-shadow: 0 0 12px rgba(217, 70, 239, 0.4);
+}
+
+.shop-btn-prism-accent {
+  background: linear-gradient(135deg, #d946ef, #a855f7);
+  color: #04060d;
+  border: none;
+  box-shadow: 0 0 14px rgba(217, 70, 239, 0.5);
+}
+.shop-btn-prism-accent:hover {
+  box-shadow: 0 0 20px rgba(217, 70, 239, 0.75);
+  color: #02060d;
+}
+
+.shop-btn-exchange.dimmed,
+.shop-btn-buy.dimmed {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  box-shadow: none !important;
+}
+
+.exchange-cost-val.cost-red {
+  color: #f04878 !important;
+  text-shadow: 0 0 6px rgba(240, 72, 120, 0.6);
 }
 
 .shop-btn-claimed {

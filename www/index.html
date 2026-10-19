@@ -722,11 +722,52 @@
         </button>
       </div>
 
+      <div class="upgrades-row-group-label">Currency Exchange</div>
+
+      <div class="shop-card">
+        <div class="shop-card-left">
+          <div class="shop-card-icon prism-glow">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round">
+              <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.3)"/>
+              <polyline points="3 12 12 15 21 12"/>
+              <line x1="12" y1="2" x2="12" y2="22"/>
+            </svg>
+          </div>
+          <div class="shop-card-info">
+            <span class="shop-card-title">Synthesize Prism</span>
+            <span class="shop-card-sub">Convert 20 Diamonds to +1 Prism</span>
+          </div>
+        </div>
+        <button id="synthPrismBtn" class="shop-item-btn shop-btn-buy shop-btn-exchange" onclick="synthesizePrism()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" style="flex:none;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>
+          <span id="synthPrismCostVal" class="exchange-cost-val">20</span>
+        </button>
+      </div>
+
+      <div class="shop-card">
+        <div class="shop-card-left">
+          <div class="shop-card-icon diamond-glow">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round">
+              <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.3)"/>
+              <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
+            </svg>
+          </div>
+          <div class="shop-card-info">
+            <span class="shop-card-title">Deconstruct Prism</span>
+            <span class="shop-card-sub">Convert 1 Prism to +15 Diamonds</span>
+          </div>
+        </div>
+        <button id="deconstructPrismBtn" class="shop-item-btn shop-btn-buy shop-btn-prism shop-btn-exchange" onclick="deconstructPrism()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" style="flex:none;"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.3)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
+          <span id="deconstructPrismCostVal" class="exchange-cost-val">1</span>
+        </button>
+      </div>
+
       <div class="upgrades-row-group-label">Diamond Bundles</div>
       
       <div class="shop-card">
         <div class="shop-card-left">
-          <div class="shop-card-icon">
+          <div class="shop-card-icon diamond-glow">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2">
               <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.2)"/>
               <polyline points="2 9 12 13 22 9"/>
@@ -735,17 +776,17 @@
           </div>
           <div class="shop-card-info">
             <span class="shop-card-title">Pouch of Diamonds</span>
-            <span class="shop-card-sub">+50 Diamonds</span>
+            <span class="shop-card-sub">+75 Diamonds</span>
           </div>
         </div>
-        <button class="shop-item-btn shop-btn-buy" onclick="buyShopIAP('diamonds_50')">
+        <button class="shop-item-btn shop-btn-buy" onclick="buyShopIAP('diamonds_75')">
           <span>$0.49</span>
         </button>
       </div>
 
       <div class="shop-card">
         <div class="shop-card-left">
-          <div class="shop-card-icon">
+          <div class="shop-card-icon diamond-glow">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2">
               <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.3)"/>
               <polyline points="2 9 12 13 22 9"/>
@@ -754,11 +795,11 @@
           </div>
           <div class="shop-card-info">
             <span class="shop-card-title">Bag of Diamonds</span>
-            <span class="shop-card-sub">+100 Diamonds</span>
+            <span class="shop-card-sub">+180 Diamonds</span>
           </div>
         </div>
-        <button class="shop-item-btn shop-btn-buy" onclick="buyShopIAP('diamonds_100')">
-          <span>$0.89</span>
+        <button class="shop-item-btn shop-btn-buy" onclick="buyShopIAP('diamonds_180')">
+          <span>$0.99</span>
         </button>
       </div>
 
@@ -772,11 +813,70 @@
           </div>
           <div class="shop-card-info">
             <span class="shop-card-title">Chest of Diamonds <span class="shop-badge">BEST VALUE</span></span>
-            <span class="shop-card-sub">+500 Diamonds</span>
+            <span class="shop-card-sub">+800 Diamonds</span>
           </div>
         </div>
-        <button class="shop-item-btn shop-btn-buy" onclick="buyShopIAP('diamonds_500')">
+        <button class="shop-item-btn shop-btn-buy" onclick="buyShopIAP('diamonds_800')">
           <span>$3.49</span>
+        </button>
+      </div>
+
+      <div class="upgrades-row-group-label prism-group-label">Prism Bundles</div>
+
+      <div class="shop-card shop-card-prism">
+        <div class="shop-card-left">
+          <div class="shop-card-icon prism-glow">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2">
+              <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/>
+              <polyline points="3 12 12 15 21 12"/>
+              <line x1="12" y1="2" x2="12" y2="22"/>
+            </svg>
+          </div>
+          <div class="shop-card-info">
+            <span class="shop-card-title">Cluster of Prisms</span>
+            <span class="shop-card-sub prism-sub">+12 Prisms</span>
+          </div>
+        </div>
+        <button class="shop-item-btn shop-btn-buy shop-btn-prism" onclick="buyShopIAP('prisms_12')">
+          <span>$0.99</span>
+        </button>
+      </div>
+
+      <div class="shop-card shop-card-prism">
+        <div class="shop-card-left">
+          <div class="shop-card-icon prism-glow">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2">
+              <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.35)"/>
+              <polyline points="3 12 12 15 21 12"/>
+              <line x1="12" y1="2" x2="12" y2="22"/>
+            </svg>
+          </div>
+          <div class="shop-card-info">
+            <span class="shop-card-title">Core of Prisms</span>
+            <span class="shop-card-sub prism-sub">+35 Prisms</span>
+          </div>
+        </div>
+        <button class="shop-item-btn shop-btn-buy shop-btn-prism" onclick="buyShopIAP('prisms_35')">
+          <span>$1.99</span>
+        </button>
+      </div>
+
+      <div class="shop-card shop-card-prism shop-card-max">
+        <div class="shop-card-left">
+          <div class="shop-card-icon prism-glow">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.4">
+              <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.5)"/>
+              <polyline points="3 12 12 15 21 12"/>
+              <line x1="12" y1="2" x2="12" y2="22"/>
+            </svg>
+          </div>
+          <div class="shop-card-info">
+            <span class="shop-card-title">Matrix of Prisms <span class="shop-badge shop-badge-purple">MAX POWER</span></span>
+            <span class="shop-card-sub prism-sub">+100 Prisms</span>
+          </div>
+        </div>
+        <button class="shop-item-btn shop-btn-buy shop-btn-prism shop-btn-prism-accent" onclick="buyShopIAP('prisms_100')">
+          <span>$3.99</span>
         </button>
       </div>
     </div>
