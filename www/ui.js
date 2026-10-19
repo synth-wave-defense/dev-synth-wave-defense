@@ -1414,7 +1414,7 @@ function selectLevelMode(mode) {
   if (mode === 'overdrive') {
     if (!isOverdriveUnlocked()) {
       if (typeof sfx === 'function') sfx('denied');
-      if (typeof showHintToast === 'function') showHintToast('Complete Sector 1 to unlock HARDCORE');
+      if (typeof showHintToast === 'function') showHintToast('Complete Campaign Level 20 to unlock HARDCORE!');
       return;
     }
   } else if (mode === 'endless') {
@@ -2621,7 +2621,7 @@ function showSettings(fromSource = 'start') {
   if (versionLabel) {
     const liveVersion = (window.OtaDiagnostics && window.OtaDiagnostics.localVersion && window.OtaDiagnostics.localVersion !== '—' && window.OtaDiagnostics.localVersion !== 'ERROR')
       ? window.OtaDiagnostics.localVersion
-      : '1.36.36';
+      : '1.36.37';
     versionLabel.textContent = `Version: ${liveVersion}`;
   }
 
@@ -4493,8 +4493,8 @@ function updateInspectUI() {
   if (!selectedTower) return;
   const t = selectedTower;
   const lvlConfig = LEVELS_DATA[currentLevel];
-  const isL1FirstTime = (currentLevel === 1 && !hasClearedLevelBefore(1) && !devMode);
-  const canUpgradeLevel = (!lvlConfig || lvlConfig.canUpgrade !== false) && !isL1FirstTime;
+  const isL1FirstTime = (currentLevel === 1 && !isEndlessMode && !isOverdriveMode && !hasClearedLevelBefore(1) && !devMode);
+  const canUpgradeLevel = !(lvlConfig && lvlConfig.canUpgrade === false && isL1FirstTime);
 
   const iconBox = document.getElementById('inspectIconBox');
   if (iconBox) {
