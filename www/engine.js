@@ -2772,10 +2772,52 @@ function claimDailyGiftsPack() {
   }
 }
 
+function synthesizePrism() {
+  if (diamonds < 20) {
+    showHintToast('Not enough Diamonds! (20 required)');
+    sfx('denied');
+    return;
+  }
+  diamonds -= 20;
+  prisms = (prisms || 0) + 1;
+  updateDiamondUI();
+  if (typeof updatePrismUI === 'function') updatePrismUI();
+  saveGame();
+  sfx('reward');
+  if (typeof renderShopScreen === 'function') renderShopScreen();
+  showHintToast('+1 Prism synthesized!');
+}
+
+function deconstructPrism() {
+  const isUnlocked = (typeof devMode !== 'undefined' && devMode) || (typeof maxUnlockedLevel !== 'undefined' && maxUnlockedLevel >= 31) || (typeof clearedLevels !== 'undefined' && clearedLevels.includes(30));
+  if (!isUnlocked) {
+    showHintToast('Locked! Requires Level 31');
+    sfx('denied');
+    return;
+  }
+  if (prisms < 1) {
+    showHintToast('Not enough Prisms! (1 required)');
+    sfx('denied');
+    return;
+  }
+  prisms -= 1;
+  diamonds = (diamonds || 0) + 15;
+  updateDiamondUI();
+  if (typeof updatePrismUI === 'function') updatePrismUI();
+  saveGame();
+  sfx('reward');
+  if (typeof renderShopScreen === 'function') renderShopScreen();
+  showHintToast('+15 Diamonds deconstructed!');
+}
+
 // Заглушка покупок (симуляция Google Play Billing)
 function buyShopIAP(productId) {
   sfx('confirm');
-  if (productId === 'time_mod_t1') {
+  if (productId === 'synth_prism') {
+    synthesizePrism();
+  } else if (productId === 'deconstruct_prism') {
+    deconstructPrism();
+  } else if (productId === 'time_mod_t1') {
     if (timeModTier >= 1) {
       showHintToast('Already unlocked!');
       return;
@@ -2820,27 +2862,48 @@ function buyShopIAP(productId) {
     saveGame();
     renderShopScreen();
     showHintToast('No Voluntary Ads unlocked!');
-  } else if (productId === 'diamonds_50') {
-    diamonds += 50;
+  } else if (productId === 'diamonds_75' || productId === 'diamonds_50') {
+    diamonds += 75;
     updateDiamondUI();
     saveGame();
     sfx('reward');
     renderShopScreen();
-    showHintToast('+50 Diamonds purchased!');
-  } else if (productId === 'diamonds_100') {
-    diamonds += 100;
+    showHintToast('+75 Diamonds purchased!');
+  } else if (productId === 'diamonds_180' || productId === 'diamonds_100') {
+    diamonds += 180;
     updateDiamondUI();
     saveGame();
     sfx('reward');
     renderShopScreen();
-    showHintToast('+100 Diamonds purchased!');
-  } else if (productId === 'diamonds_500') {
-    diamonds += 500;
+    showHintToast('+180 Diamonds purchased!');
+  } else if (productId === 'diamonds_800' || productId === 'diamonds_500') {
+    diamonds += 800;
     updateDiamondUI();
     saveGame();
     sfx('reward');
     renderShopScreen();
-    showHintToast('+500 Diamonds purchased!');
+    showHintToast('+800 Diamonds purchased!');
+  } else if (productId === 'prisms_12' || productId === 'prisms_10') {
+    prisms += 12;
+    if (typeof updatePrismUI === 'function') updatePrismUI();
+    saveGame();
+    sfx('reward');
+    renderShopScreen();
+    showHintToast('+12 Prisms purchased!');
+  } else if (productId === 'prisms_35' || productId === 'prisms_25') {
+    prisms += 35;
+    if (typeof updatePrismUI === 'function') updatePrismUI();
+    saveGame();
+    sfx('reward');
+    renderShopScreen();
+    showHintToast('+35 Prisms purchased!');
+  } else if (productId === 'prisms_100') {
+    prisms += 100;
+    if (typeof updatePrismUI === 'function') updatePrismUI();
+    saveGame();
+    sfx('reward');
+    renderShopScreen();
+    showHintToast('+100 Prisms purchased!');
   }
 }
 
