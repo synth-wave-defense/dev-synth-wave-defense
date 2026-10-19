@@ -2318,22 +2318,40 @@ body {
 .levels-bg {
   background: rgba(4, 6, 14, 0.65) !important;
   backdrop-filter: blur(8px) !important;
-  padding-top: max(80px, calc(env(safe-area-inset-top) + 72px)) !important;
+  padding-top: max(16px, calc(env(safe-area-inset-top) + 12px)) !important;
   padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
-  justify-content: center !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
   overflow-y: auto;
   touch-action: pan-y;
   gap: 12px !important;
 }
 
 .levels-top-bar {
+  flex: none;
+  height: 52px;
+  border-radius: 26px;
+  background: rgba(10, 14, 28, 0.5);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(140, 200, 255, 0.18);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55);
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: 340px;
+  max-width: 360px;
+  box-sizing: border-box;
   margin: 0 auto 8px auto;
-  padding: 0;
+  padding: 0 16px;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+#levelsScreen.mode-overdrive-active .levels-top-bar {
+  border-color: rgba(255, 47, 208, 0.35);
+}
+
+#levelsScreen.mode-endless-active .levels-top-bar {
+  border-color: rgba(217, 70, 239, 0.35);
 }
 
 .levels-back-pill {
@@ -2388,51 +2406,6 @@ body {
 }
 
 /* Revamped Top Bar, 3-Way Switcher & Mode Rules */
-
-.levels-top-res-capsule {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  background: #060c18;
-  border: 1.3px solid rgba(0, 229, 255, 0.6);
-  border-radius: 17px;
-  padding: 6px 16px;
-  transition: border-color 0.2s, background 0.2s;
-}
-
-#levelsScreen.mode-overdrive-active .levels-top-res-capsule {
-  background: #180415;
-  border-color: rgba(255, 47, 208, 0.6);
-}
-
-#levelsScreen.mode-endless-active .levels-top-res-capsule {
-  background: #180422;
-  border-color: rgba(217, 70, 239, 0.6);
-}
-
-.levels-top-gear {
-  background: rgba(8, 12, 24, 0.6);
-  border: 1.3px solid rgba(0, 229, 255, 0.4);
-  border-radius: 50%;
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #00e5ff;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-#levelsScreen.mode-overdrive-active .levels-top-gear {
-  border-color: rgba(255, 47, 208, 0.5);
-  color: #ff2fd0;
-}
-
-#levelsScreen.mode-endless-active .levels-top-gear {
-  border-color: rgba(217, 70, 239, 0.5);
-  color: #d946ef;
-}
 
 .mode-3way-container {
   display: flex;
