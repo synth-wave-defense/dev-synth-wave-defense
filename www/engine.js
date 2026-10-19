@@ -243,7 +243,7 @@ function resetEndlessDailyRunsIfNeeded() {
 function isEndlessUnlocked() {
   if (typeof devMode !== 'undefined' && devMode) return true;
   if (typeof localStorage !== 'undefined' && localStorage.getItem("dev_auth_token") === "MTMzNw==") return true;
-  if (typeof maxUnlockedLevel === 'number' && maxUnlockedLevel > 15) return true;
+  if (typeof maxUnlockedLevel === 'number' && maxUnlockedLevel >= 16) return true;
   if (Array.isArray(clearedLevels) && clearedLevels.includes(15)) return true;
   return false;
 }
@@ -350,8 +350,8 @@ function generateEndlessWaveData(w) {
 
 function isOverdriveUnlocked() {
   if (typeof devMode !== 'undefined' && devMode) return true;
-  if (typeof clearedLevels !== 'undefined' && (clearedLevels.includes(LEVELS_PER_SECTION) || clearedLevels.some(l => l >= LEVELS_PER_SECTION))) return true;
-  if (typeof maxUnlockedLevel === 'number' && maxUnlockedLevel > LEVELS_PER_SECTION) return true;
+  if (typeof clearedLevels !== 'undefined' && (clearedLevels.includes(20) || clearedLevels.some(l => l >= 20))) return true;
+  if (typeof maxUnlockedLevel === 'number' && maxUnlockedLevel >= 21) return true;
   return false;
 }
 let upgradesPreviousSource = 'main';
@@ -858,17 +858,19 @@ function getPlayerUnlockedTowers() {
 
 function getBuildPanelPool(lvl) {
   if (devMode) return Object.keys(TOWER_CONFIGS);
-  const highestLvl = Math.max(maxUnlockedLevel || 1, lvl || 1);
-  const loadoutStart = getLoadoutStartLevel(); // 11
+  if (!isEndlessMode && !isOverdriveMode) {
+    const highestLvl = Math.max(maxUnlockedLevel || 1, lvl || 1);
+    const loadoutStart = getLoadoutStartLevel(); // 11
 
-  // Если игрок в принципе еще не дошел до 11 уровня (ранняя игра) —
-  // показываем 3 первыe башни (Gatling, Laser, Mortar), блокируя незаблокированные по уровню
-  if (highestLvl < loadoutStart) {
-    return ['gun', 'laser', 'mortar'];
+    // Если игрок в принципе еще не дошел до 11 уровня (ранняя игра) —
+    // показываем 3 первыe башни (Gatling, Laser, Mortar), блокируя незаблокированные по уровню
+    if (highestLvl < loadoutStart) {
+      return ['gun', 'laser', 'mortar'];
+    }
   }
 
-  // Если игрок дошел до 11 уровня и выше — на ЛЮБОМ уровне используются
-  // башни из его зафиксированного боевого лодаута
+  // В Endless, Hardcore или если игрок дошел до 11 уровня —
+  // используются башни из его зафиксированного боевого лодаута
   const pool = (activeBattleLoadout && activeBattleLoadout.length > 0)
     ? activeBattleLoadout
     : selectedLoadout;
@@ -879,13 +881,13 @@ function isTowerActiveThisLevel(type) {
   if (devMode) return true;
   const loadoutStart = getLoadoutStartLevel();
 
-  // До 11 уровня: активны только те башни, которые разблокированы на ТЕКУЩЕМ уровне
-  if (currentLevel < loadoutStart) {
+  // В обычной кампании до 11 уровня: активны только те башни, которые разблокированы на ТЕКУЩЕМ уровне
+  if (!isEndlessMode && !isOverdriveMode && currentLevel < loadoutStart) {
     const curUnlocked = (LEVELS_DATA[currentLevel] && LEVELS_DATA[currentLevel].unlockedTowers) || ['gun'];
     return curUnlocked.includes(type);
   }
 
-  // После 11 уровня: активны ровно те башни, которые выбраны в лодаут
+  // В Endless, Hardcore и после 11 уровня: активны ровно те башни, которые выбраны в лодаут
   const pool = (activeBattleLoadout && activeBattleLoadout.length > 0)
     ? activeBattleLoadout
     : selectedLoadout;
@@ -2121,9 +2123,11 @@ function getUpgradeCost(towerOrType, level) {
 
 function upgradeSelectedTower() {
   const lvlConfig = LEVELS_DATA[currentLevel];
-  if (lvlConfig && lvlConfig.canUpgrade === false) return;
-  // На L1 апгрейды заблокированы только если игрок проходит его впервые
-  if (currentLevel === 1 && !hasClearedLevelBefore(1) && !devMode) return;
+  if (!isEndlessMode && !isOverdriveMode) {
+    if (lvlConfig && lvlConfig.canUpgrade === false) return;
+    // На L1 апгрейды заблокированы только если игрок проходит его впервые
+    if (currentLevel === 1 && !hasClearedLevelBefore(1) && !devMode) return;
+  }
   if (!selectedTower || selectedTower.level >= 3) return;
   const cost = getUpgradeCost(selectedTower.type, selectedTower.level);
   if (gold >= cost) {

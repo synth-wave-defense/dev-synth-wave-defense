@@ -1414,13 +1414,13 @@ function selectLevelMode(mode) {
   if (mode === 'overdrive') {
     if (!isOverdriveUnlocked()) {
       if (typeof sfx === 'function') sfx('denied');
-      if (typeof showHintToast === 'function') showHintToast('Complete Sector 1 to unlock HARDCORE');
+      if (typeof showHintToast === 'function') showHintToast('Reach Campaign Level 21 to unlock HARDCORE!');
       return;
     }
   } else if (mode === 'endless') {
     if (!isEndlessUnlocked()) {
       if (typeof sfx === 'function') sfx('denied');
-      if (typeof showHintToast === 'function') showHintToast('Complete Campaign Level 15 to unlock Endless Arena!');
+      if (typeof showHintToast === 'function') showHintToast('Reach Campaign Level 16 to unlock Endless Arena!');
       return;
     }
   }
@@ -1536,7 +1536,7 @@ window.selectLevelMode = selectLevelMode;
 function openEndlessLoadoutModal() {
   const unlocked = (typeof isEndlessUnlocked === 'function') ? isEndlessUnlocked() : false;
   if (!unlocked) {
-    if (typeof showHintToast === 'function') showHintToast('Complete Campaign Level 15 to unlock Endless Arena!');
+    if (typeof showHintToast === 'function') showHintToast('Reach Campaign Level 16 to unlock Endless Arena!');
     return;
   }
 
@@ -4494,7 +4494,7 @@ function updateInspectUI() {
   const t = selectedTower;
   const lvlConfig = LEVELS_DATA[currentLevel];
   const isL1FirstTime = (currentLevel === 1 && !hasClearedLevelBefore(1) && !devMode);
-  const canUpgradeLevel = (!lvlConfig || lvlConfig.canUpgrade !== false) && !isL1FirstTime;
+  const canUpgradeLevel = (typeof isEndlessMode !== 'undefined' && isEndlessMode) || (typeof isOverdriveMode !== 'undefined' && isOverdriveMode) || ((!lvlConfig || lvlConfig.canUpgrade !== false) && !isL1FirstTime);
 
   const iconBox = document.getElementById('inspectIconBox');
   if (iconBox) {
