@@ -30,7 +30,7 @@ const BATTLE_PASS_TIERS = [
   { tier: 7,  freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'diamonds', amount: 40 } },
   { tier: 8,  freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'prisms', amount: 4 } },
   { tier: 9,  freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'diamonds', amount: 40 } },
-  { tier: 10, freeReward: { type: 'prisms', amount: 3 }, premReward: { type: 'prisms', amount: 6 } },
+  { tier: 10, freeReward: { type: 'combo', paletteId: 'matrix_green', prisms: 3, title: 'Matrix Green + 3 🔮' }, premReward: { type: 'prisms', amount: 6 } },
   { tier: 11, freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'diamonds', amount: 45 } },
   { tier: 12, freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'prisms', amount: 5 } },
   { tier: 13, freeReward: { type: 'diamonds', amount: 25 }, premReward: { type: 'diamonds', amount: 45 } },
@@ -62,13 +62,23 @@ const NEON_PALETTES = {
     glow: 'rgba(0, 229, 255, 0.75)',
     bgGlow: 'rgba(0, 229, 255, 0.25)'
   },
+  matrix_green: {
+    id: 'matrix_green',
+    name: 'Matrix Green',
+    primary: '#00ff66',
+    secondary: '#facc15',
+    glow: 'rgba(0, 255, 102, 0.85)',
+    bgGlow: 'rgba(250, 204, 21, 0.35)',
+    unlockHint: 'Free Pass Tier 10'
+  },
   cyber_gold: {
     id: 'cyber_gold',
     name: 'Cyber Gold',
     primary: '#ffd700',
     secondary: '#9d4edd',
     glow: 'rgba(255, 215, 0, 0.85)',
-    bgGlow: 'rgba(157, 78, 221, 0.35)'
+    bgGlow: 'rgba(157, 78, 221, 0.35)',
+    unlockHint: 'Premium Pass Tier 1'
   },
   blood_moon: {
     id: 'blood_moon',
@@ -76,7 +86,8 @@ const NEON_PALETTES = {
     primary: '#f05f9f',
     secondary: '#ff8a00',
     glow: 'rgba(240, 95, 159, 0.85)',
-    bgGlow: 'rgba(255, 138, 0, 0.35)'
+    bgGlow: 'rgba(255, 138, 0, 0.35)',
+    unlockHint: 'Premium Pass Tier 30'
   }
 };
 

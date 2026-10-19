@@ -403,7 +403,12 @@ function applyPaletteColors(paletteId) {
 
   // Synchronize tower laser/theme color definitions dynamically
   if (typeof TOWER_CONFIGS !== 'undefined' && TOWER_CONFIGS.gun) {
-    if (pId === 'cyber_gold') {
+    if (pId === 'matrix_green') {
+      TOWER_CONFIGS.gun.color = '#00ff66';
+      TOWER_CONFIGS.gun.glow = '#00ff66';
+      TOWER_CONFIGS.laser.color = '#facc15';
+      TOWER_CONFIGS.laser.glow = '#facc15';
+    } else if (pId === 'cyber_gold') {
       TOWER_CONFIGS.gun.color = '#ffd700';
       TOWER_CONFIGS.gun.glow = '#ffd700';
       TOWER_CONFIGS.laser.color = '#9d4edd';

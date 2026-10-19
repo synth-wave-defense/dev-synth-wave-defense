@@ -2649,7 +2649,12 @@ function updatePaletteSelectDropdown(selectId) {
     const isUnlocked = unlockedPalettes.includes(pId);
     const opt = document.createElement('option');
     opt.value = pId;
-    opt.textContent = isUnlocked ? pal.name : `🔒 ${pal.name}`;
+    if (isUnlocked) {
+      opt.textContent = pal.name;
+    } else {
+      const hint = pal.unlockHint ? ` (${pal.unlockHint})` : '';
+      opt.textContent = `🔒 ${pal.name}${hint}`;
+    }
     if (pId === activePalette) opt.selected = true;
     if (!isUnlocked) opt.disabled = true;
     selectEl.appendChild(opt);
@@ -2790,6 +2795,7 @@ function renderBattlePassScreen() {
     if (fr.type === 'diamonds') freeTitle = `+${fr.amount} ${diamondIcon}`;
     else if (fr.type === 'prisms') freeTitle = `+${fr.amount} ${prismIcon}`;
     else if (fr.type === 'ad_capsule') freeTitle = `Ad-Capsule (+2 ${prismIcon})`;
+    else if (fr.title) freeTitle = fr.title;
 
     let freeBtnHtml = '';
     if (isFreeClaimed) {
@@ -2867,6 +2873,20 @@ function claimBpFreeReward(t) {
     } else if (fr.type === 'ad_capsule') {
       prisms += fr.prisms;
       toast = `Ad-Capsule: +${fr.prisms} Prisms claimed!`;
+    } else if (fr.type === 'combo' || fr.paletteId || fr.type === 'palette') {
+      if (fr.paletteId) {
+        if (!unlockedPalettes.includes(fr.paletteId)) {
+          unlockedPalettes.push(fr.paletteId);
+        }
+        applyPaletteColors(fr.paletteId);
+      }
+      if (fr.prisms) {
+        prisms += fr.prisms;
+      }
+      if (fr.diamonds) {
+        diamonds += fr.diamonds;
+      }
+      toast = fr.title ? `${fr.title} claimed!` : `Unlocked ${NEON_PALETTES[fr.paletteId] ? NEON_PALETTES[fr.paletteId].name : fr.paletteId}!`;
     }
     updateDiamondUI();
     updatePrismUI();
