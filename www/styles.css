@@ -2382,7 +2382,7 @@ body {
   display: flex;
   justify-content: center;
   width: 100%;
-  max-width: 360px;
+  max-width: 340px;
   margin: 0 auto 10px auto;
 }
 
@@ -2404,7 +2404,7 @@ body {
   justify-content: space-between;
   width: 100%;
   max-width: 340px;
-  margin: 0 auto 10px auto;
+  margin: 0 auto 4px auto;
 }
 
 .levels-top-res-capsule {
@@ -2458,7 +2458,7 @@ body {
   align-items: center;
   width: 100%;
   max-width: 340px;
-  margin: 0 auto 10px auto;
+  margin: 0 auto 16px auto;
 }
 
 .mode-3way-header {
@@ -2470,7 +2470,7 @@ body {
   min-width: 126px;
   text-align: center;
   text-shadow: 0 0 16px rgba(0, 229, 255, 0.6);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   text-transform: uppercase;
 }
 
@@ -2494,14 +2494,14 @@ body {
 
 .mode-3way-tab {
   flex: 1;
-  background: transparent;
-  border: 1.5px solid transparent;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1.2px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
   padding: 8px 4px;
   font-family: 'Montserrat', sans-serif;
   font-size: 10.5px;
   font-weight: 800;
-  color: #64748b;
+  color: #ffffff;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -2516,29 +2516,49 @@ body {
   flex: none;
 }
 
+/* Mode-colored icons for available (unlocked) tabs */
+.mode-3way-tab.tab-normal:not(.locked) .tab-icon {
+  color: #00e5ff;
+}
+
+.mode-3way-tab.tab-endless:not(.locked) .tab-icon {
+  color: #d946ef;
+}
+
+.mode-3way-tab.tab-hardcore:not(.locked) .tab-icon {
+  color: #ff2fd0;
+}
+
 .mode-3way-tab.tab-normal.active {
   background: linear-gradient(180deg, rgba(0, 229, 255, 0.3) 0%, rgba(0, 102, 136, 0.15) 100%);
   border-color: #00e5ff;
-  color: #00e5ff;
+  color: #ffffff;
   box-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
 }
 
 .mode-3way-tab.tab-hardcore.active {
   background: linear-gradient(180deg, rgba(255, 47, 208, 0.32) 0%, rgba(128, 0, 64, 0.18) 100%);
   border-color: #ff2fd0;
-  color: #ff2fd0;
+  color: #ffffff;
   box-shadow: 0 0 12px rgba(255, 47, 208, 0.35);
 }
 
 .mode-3way-tab.tab-endless.active {
   background: linear-gradient(180deg, rgba(217, 70, 239, 0.32) 0%, rgba(88, 12, 107, 0.18) 100%);
   border-color: #d946ef;
-  color: #f0abfc;
+  color: #ffffff;
   box-shadow: 0 0 12px rgba(217, 70, 239, 0.35);
 }
 
 .mode-3way-tab.locked {
   opacity: 0.5;
+  background: transparent;
+  border-color: transparent;
+  color: #64748b;
+}
+
+.mode-3way-tab.locked .tab-icon {
+  color: #64748b !important;
 }
 
 /* Chapter Navigator & Swipe Hint */
@@ -2563,7 +2583,8 @@ body {
   font-size: 9.5px;
   font-weight: 700;
   text-align: center;
-  margin-bottom: 10px;
+  margin-top: 6px;
+  margin-bottom: 0;
   min-height: 16px;
   display: flex;
   align-items: center;
@@ -2578,6 +2599,10 @@ body {
 
 .mode-rules-banner.hardcore-rules {
   color: #ffd1f4;
+}
+
+.mode-rules-banner.endless-rules {
+  color: #f0abfc;
 }
 
 /* Endless Arena Dashboard & Highway Card (Option 1) */
@@ -2778,7 +2803,7 @@ body {
   background: linear-gradient(180deg, rgba(15, 27, 45, 0.8) 0%, rgba(9, 16, 29, 0.9) 100%);
   border: 1.4px solid rgba(0, 229, 255, 0.8);
   box-shadow: 0 0 14px rgba(0, 229, 255, 0.35);
-  color: #00e5ff;
+  color: #ffffff;
   font-family: 'Montserrat', sans-serif;
   font-size: 12px;
   font-weight: 800;
@@ -2792,18 +2817,22 @@ body {
   transition: all 0.2s ease;
 }
 
+.levels-main-menu-btn svg {
+  stroke: #ffffff;
+}
+
 #levelsScreen.mode-overdrive-active .levels-main-menu-btn {
   background: linear-gradient(180deg, rgba(38, 8, 34, 0.8) 0%, rgba(18, 3, 16, 0.9) 100%);
   border-color: rgba(255, 47, 208, 0.8);
   box-shadow: 0 0 14px rgba(255, 47, 208, 0.35);
-  color: #ffd1f4;
+  color: #ffffff;
 }
 
 #levelsScreen.mode-endless-active .levels-main-menu-btn {
   background: linear-gradient(180deg, rgba(30, 8, 40, 0.8) 0%, rgba(15, 3, 20, 0.9) 100%);
   border-color: rgba(217, 70, 239, 0.8);
   box-shadow: 0 0 14px rgba(217, 70, 239, 0.35);
-  color: #f0abfc;
+  color: #ffffff;
 }
 
 .od-clear-skull {
@@ -3137,7 +3166,7 @@ body {
 .levels-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
+  gap: 6px;
   max-width: 340px;
   width: 100%;
   margin: 0 auto;
@@ -3182,10 +3211,10 @@ body {
   animation: gridSwipeInLeft 0.22s cubic-bezier(0, 0, 0.2, 1) forwards;
 }
 .level-card-btn {
-  height: 56px;
+  aspect-ratio: 1 / 1;
   background: rgba(8, 12, 24, 0.72);
   border: 1px solid rgba(0, 229, 255, 0.45);
-  border-radius: 18px;
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3232,11 +3261,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
+  width: 100%;
   line-height: 1;
 }
 .mini-star {
-  font-size: 9px;
+  font-size: 8px;
   text-shadow: none;
 }
 .mini-star.filled {
