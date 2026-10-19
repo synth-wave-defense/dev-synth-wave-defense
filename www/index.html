@@ -619,7 +619,13 @@
       <span class="upgrades-top-label">TECH TREE</span>
     </div>
     <div class="upgrades-row-list" id="upgradesTreeBody"></div>
-    <button class="menu-btn-glass-capsule upgrades-back-btn" onclick="closeUpgradesScreen()"><span>BACK</span></button>
+    <button class="menu-btn-glass-capsule upgrades-back-btn" onclick="closeUpgradesScreen()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      <span>TO MAIN MENU</span>
+    </button>
   </div>
 </div>
 
@@ -881,7 +887,13 @@
       </div>
     </div>
     
-    <button class="menu-btn-glass-capsule upgrades-back-btn" onclick="closeShopScreen()"><span>BACK</span></button>
+    <button class="menu-btn-glass-capsule upgrades-back-btn" onclick="closeShopScreen()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      <span>TO MAIN MENU</span>
+    </button>
   </div>
 </div>
 
@@ -971,7 +983,7 @@
                    oninput="setSfxVolume(this.value)">
           </div>
           <div class="setting-row">
-            <span>Neon Visual Theme</span>
+            <span>VISUAL THEME</span>
             <select id="settingPaletteSelect" class="hud-select-dropdown" onchange="selectPalette(this.value)"></select>
           </div>
           <div class="setting-version-label" id="settingsVersionLabel">Version: 1.36.37</div>
@@ -1204,8 +1216,8 @@
     <div class="bp-header-card">
       <div class="bp-header-top">
         <div class="bp-tier-badge" id="bpTierBadgeText">TIER 1 / 30</div>
-        <div class="bp-palette-picker-wrap">
-          <span class="bp-palette-label">THEME:</span>
+        <div class="bp-palette-picker-wrap" id="bpPalettePickerWrap" onclick="handleBpThemeClick(event)">
+          <span class="bp-palette-label">VISUAL THEME:</span>
           <select id="bpPaletteSelect" class="hud-select-dropdown" onchange="selectPalette(this.value)"></select>
         </div>
       </div>
@@ -1219,7 +1231,9 @@
         </button>
         <button class="bp-action-btn bp-btn-buy-tier" onclick="buyBpTierWithDiamonds()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>
-          <span>+1 TIER (30 💎)</span>
+          <span>+1 TIER (30</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" style="flex:none; margin-left:1px;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>
+          <span>)</span>
         </button>
       </div>
       <div class="bp-dev-controls hidden" id="bpDevControls">
@@ -1231,7 +1245,13 @@
     <!-- 30 tiers scrollable list -->
     <div class="upgrades-row-list bp-tier-list" id="bpTierListBody"></div>
 
-    <button class="menu-btn-glass-capsule upgrades-back-btn" onclick="closeBattlePassScreen()"><span>BACK</span></button>
+    <button class="menu-btn-glass-capsule upgrades-back-btn" onclick="closeBattlePassScreen()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      <span>TO MAIN MENU</span>
+    </button>
   </div>
 </div>
 

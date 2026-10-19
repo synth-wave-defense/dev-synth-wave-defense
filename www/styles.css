@@ -2024,23 +2024,30 @@ body {
 
 .bp-header-top {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
 }
 
 .bp-tier-badge {
   font-family: 'Montserrat', sans-serif;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 900;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
   color: #ffffff;
   text-shadow: 0 0 12px var(--neon-primary, #00e5ff);
+  white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .bp-palette-picker-wrap {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  flex: 0 1 auto;
+  justify-content: flex-end;
+  max-width: 60%;
 }
 
 .bp-palette-label {
@@ -2048,6 +2055,16 @@ body {
   font-size: 10px;
   font-weight: 800;
   color: #8ea3c4;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+#bpPaletteSelect {
+  max-width: 105px;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .bp-xp-bar-container {
@@ -3597,6 +3614,11 @@ body {
 .upgrades-back-btn {
   align-self: center;
   margin-top: 4px;
+  min-width: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 /* [CSS106.04] In-game settings modal and volume sliders */
@@ -3618,6 +3640,20 @@ body {
   font-size: 14px;
   font-weight: 700;
   color: #ffffff;
+}
+.setting-row > span {
+  flex: 1 1 50%;
+  min-width: 0;
+}
+.setting-row > select {
+  flex: 0 0 50%;
+  width: 50%;
+  max-width: 50%;
+  text-align: right;
+  text-align-last: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .setting-row.disabled { opacity: 0.4; }
 .setting-version-label {
