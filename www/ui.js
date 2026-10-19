@@ -1810,7 +1810,6 @@ function openDevMode() {
   
   updateDiamondUI();
   updatePrismUI();
-  showHintToast('Dev Mode: Enabled');
 }
 
 function closeDevMode() {
@@ -1859,7 +1858,6 @@ function closeDevMode() {
 
   updateDiamondUI();
   updatePrismUI();
-  showHintToast('Dev Mode: Disabled');
 }
 
 function toggleDevPanelExpand() {
@@ -2700,7 +2698,12 @@ function showBattlePassScreen(fromSource = 'start') {
   if (topHud) topHud.classList.add('hidden');
 
   const bpScreen = document.getElementById('battlePassScreen');
-  if (bpScreen) bpScreen.classList.remove('hidden');
+  if (bpScreen) {
+    const isResultBg = (bgScreenId === 'victoryScreen' || bgScreenId === 'defeatScreen');
+    bpScreen.classList.toggle('from-result', isResultBg);
+    bpScreen.classList.toggle('from-main', !isResultBg);
+    bpScreen.classList.remove('hidden');
+  }
   gameState = 'BATTLE_PASS';
 
   renderBattlePassScreen();
@@ -2795,7 +2798,7 @@ function renderBattlePassScreen() {
     if (fr.type === 'diamonds') freeTitle = `+${fr.amount} ${diamondIcon}`;
     else if (fr.type === 'prisms') freeTitle = `+${fr.amount} ${prismIcon}`;
     else if (fr.type === 'ad_capsule') freeTitle = `Ad-Capsule (+2 ${prismIcon})`;
-    else if (fr.title) freeTitle = fr.title;
+    else if (fr.title) freeTitle = fr.title.replace(/🔮/g, prismIcon).replace(/💎/g, diamondIcon);
 
     let freeBtnHtml = '';
     if (isFreeClaimed) {
@@ -2826,7 +2829,9 @@ function renderBattlePassScreen() {
     const pr = item.premReward;
     if (pr.type === 'diamonds') premTitle = `+${pr.amount} ${diamondIcon}`;
     else if (pr.type === 'prisms') premTitle = `+${pr.amount} ${prismIcon}`;
-    else if (pr.type === 'palette' || pr.type === 'perk' || pr.type === 'ultimate') premTitle = pr.title;
+    else if (pr.type === 'palette' || pr.type === 'perk' || pr.type === 'ultimate') {
+      premTitle = pr.title ? pr.title.replace(/🔮/g, prismIcon).replace(/💎/g, diamondIcon) : '';
+    }
 
     let premBtnHtml = '';
     if (isPremClaimed) {

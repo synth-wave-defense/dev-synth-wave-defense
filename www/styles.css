@@ -2026,21 +2026,28 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+  width: 100%;
 }
 
 .bp-tier-badge {
   font-family: 'Montserrat', sans-serif;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 900;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
   color: #ffffff;
   text-shadow: 0 0 12px var(--neon-primary, #00e5ff);
+  white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .bp-palette-picker-wrap {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex: 0 0 auto;
+  max-width: 60%;
+  justify-content: flex-end;
 }
 
 .bp-palette-label {
@@ -3597,6 +3604,11 @@ body {
 .upgrades-back-btn {
   align-self: center;
   margin-top: 4px;
+  min-width: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 /* [CSS106.04] In-game settings modal and volume sliders */
