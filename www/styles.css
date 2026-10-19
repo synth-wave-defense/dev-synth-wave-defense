@@ -2403,7 +2403,7 @@ body {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: 340px;
+  max-width: 365px;
   margin: 0 auto 4px auto;
 }
 
@@ -2457,7 +2457,7 @@ body {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 340px;
+  max-width: 365px;
   margin: 0 auto 16px auto;
 }
 
@@ -2610,7 +2610,7 @@ body {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 340px;
+  max-width: 365px;
   margin: 0 auto;
 }
 
@@ -2803,7 +2803,7 @@ body {
   background: linear-gradient(180deg, rgba(15, 27, 45, 0.8) 0%, rgba(9, 16, 29, 0.9) 100%);
   border: 1.4px solid rgba(0, 229, 255, 0.8);
   box-shadow: 0 0 14px rgba(0, 229, 255, 0.35);
-  color: #00e5ff;
+  color: #ffffff;
   font-family: 'Montserrat', sans-serif;
   font-size: 12px;
   font-weight: 800;
@@ -2817,18 +2817,22 @@ body {
   transition: all 0.2s ease;
 }
 
+.levels-main-menu-btn svg {
+  stroke: #ffffff;
+}
+
 #levelsScreen.mode-overdrive-active .levels-main-menu-btn {
   background: linear-gradient(180deg, rgba(38, 8, 34, 0.8) 0%, rgba(18, 3, 16, 0.9) 100%);
   border-color: rgba(255, 47, 208, 0.8);
   box-shadow: 0 0 14px rgba(255, 47, 208, 0.35);
-  color: #ffd1f4;
+  color: #ffffff;
 }
 
 #levelsScreen.mode-endless-active .levels-main-menu-btn {
   background: linear-gradient(180deg, rgba(30, 8, 40, 0.8) 0%, rgba(15, 3, 20, 0.9) 100%);
   border-color: rgba(217, 70, 239, 0.8);
   box-shadow: 0 0 14px rgba(217, 70, 239, 0.35);
-  color: #f0abfc;
+  color: #ffffff;
 }
 
 .od-clear-skull {
@@ -3162,8 +3166,8 @@ body {
 .levels-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
-  max-width: 340px;
+  gap: 8px;
+  max-width: 365px;
   width: 100%;
   margin: 0 auto;
   flex: none;
@@ -3207,7 +3211,7 @@ body {
   animation: gridSwipeInLeft 0.22s cubic-bezier(0, 0, 0.2, 1) forwards;
 }
 .level-card-btn {
-  height: 56px;
+  height: 64px;
   background: rgba(8, 12, 24, 0.72);
   border: 1px solid rgba(0, 229, 255, 0.45);
   border-radius: 18px;
@@ -3215,8 +3219,8 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2px 0;
-  gap: 2px;
+  padding: 4px 0;
+  gap: 4px;
   cursor: pointer;
   transition: all 0.15s;
   outline: none;
@@ -3257,11 +3261,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 7px;
+  width: 80%;
   line-height: 1;
 }
 .mini-star {
-  font-size: 9px;
+  font-size: 10px;
   text-shadow: none;
 }
 .mini-star.filled {
