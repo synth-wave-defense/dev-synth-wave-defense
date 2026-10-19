@@ -2642,6 +2642,9 @@ function updatePaletteSelectDropdown(selectId) {
   if (!selectEl || typeof NEON_PALETTES === 'undefined') return;
   selectEl.innerHTML = '';
 
+  const totalUnlocked = unlockedPalettes.length;
+  const forceDisabled = totalUnlocked <= 1 && !devMode;
+
   Object.keys(NEON_PALETTES).forEach(pId => {
     const pal = NEON_PALETTES[pId];
     const isUnlocked = unlockedPalettes.includes(pId);
@@ -2657,6 +2660,20 @@ function updatePaletteSelectDropdown(selectId) {
     if (!isUnlocked) opt.disabled = true;
     selectEl.appendChild(opt);
   });
+
+  if (forceDisabled) {
+    selectEl.disabled = true;
+  } else {
+    selectEl.disabled = false;
+  }
+}
+
+function handleBpThemeClick(e) {
+  const selectEl = document.getElementById('bpPaletteSelect');
+  if (unlockedPalettes.length <= 1 && !devMode) {
+    sfx('denied');
+    showHintToast('You have only 1 Theme now. Unlock new tiers and buy premium to have more Themes.');
+  }
 }
 
 function selectPalette(paletteId) {

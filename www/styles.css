@@ -2023,10 +2023,10 @@ body {
 }
 
 .bp-header-top {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 50px 1fr;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
 }
 
@@ -2038,16 +2038,16 @@ body {
   color: #ffffff;
   text-shadow: 0 0 12px var(--neon-primary, #00e5ff);
   white-space: nowrap;
-  flex: 0 0 auto;
+  grid-column: 1 / 3;
 }
 
 .bp-palette-picker-wrap {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex: 0 0 auto;
-  max-width: 60%;
+  grid-column: 3;
   justify-content: flex-end;
+  width: 100%;
 }
 
 .bp-palette-label {
