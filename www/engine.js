@@ -261,12 +261,37 @@ function getEndlessEntryStatus() {
 window.getEndlessEntryStatus = getEndlessEntryStatus;
 
 function generateEndlessWaveData(w) {
-  const hpScalingMult = w >= 30 ? (1 + (w - 1) * 0.22 + Math.pow((w - 1) / 7, 1.3) + Math.pow((w - 29) / 2, 1.5)) : (1 + (w - 1) * 0.22 + Math.pow((w - 1) / 7, 1.3));
+  // 1. КУСОЧНО-ЭКСПОНЕНЦИАЛЬНЫЙ РОСТ HP (HP WALL)
+  let hpScalingMult = 1.0;
+  if (w <= 10) {
+    // 1-10: Умеренный рост для прохождения без Tech Tree.
+    hpScalingMult = Math.pow(1.18, w - 1); 
+  } else if (w <= 30) {
+    // 11-30: Ускоренный рост (Tech Tree 1-10).
+    hpScalingMult = Math.pow(1.18, 9) * Math.pow(1.16, w - 10);
+  } else {
+    // 31+: Стена Вознесения (Death Ramp).
+    hpScalingMult = Math.pow(1.18, 9) * Math.pow(1.16, 20) * Math.pow(1.20, w - 30);
+  }
+
+  // Скорость мобов постепенно растет
   const spdMult = Math.min(1.85, 1 + (w - 1) * 0.018);
   const spawns = [];
 
+  // 2. ЗАТУХАНИЕ ЗОЛОТА НА ВОЛНУ (GOLD SOFT-CAP / BOUNTY DECAY)
+  // Базовая награда за волну падает по мере роста волны.
+  // Максимум ~75-90 базового золота за волну после 10 волны.
+  const targetWaveBounty = w <= 10 ? 75 : Math.max(20, 85 - (w - 10) * 1.5); 
+
   if (w % 10 === 0) {
-    const bossHp = Math.round(1000 * hpScalingMult);
+    // ВОЛНА БОССА
+    // Для 1-го босса (волна 10) нужно ~3200-3500 HP, чтобы без Tech Tree нельзя было пройти.
+    const baseBossHp = w === 10 ? 3200 : 1000;
+    const bossHp = Math.round(baseBossHp * (w === 10 ? 1 : hpScalingMult));
+    
+    // Босс дает фиксированную большую награду
+    const bossBounty = Math.round(targetWaveBounty * 0.7); 
+
     spawns.push({
       type: 'titan_core',
       isBoss: true,
@@ -274,13 +299,17 @@ function generateEndlessWaveData(w) {
       count: 1,
       hp: bossHp,
       speed: Math.round(28 * spdMult),
-      bounty: Math.round(50 + w * 2),
+      bounty: bossBounty,
       interval: 1.5,
       shape: 'octagon',
       color: '#ff0055',
       glow: '#ff0055'
     });
+
     const gruntCount = Math.min(59, 4 + Math.floor(w / 5));
+    // Оставшееся золото делим на свиту босса
+    const gruntBounty = Math.max(1, Math.floor((targetWaveBounty * 0.3) / gruntCount));
+
     spawns.push({
       type: 'grunt',
       isBoss: false,
@@ -288,10 +317,11 @@ function generateEndlessWaveData(w) {
       count: gruntCount,
       hp: Math.round(35 * hpScalingMult),
       speed: Math.round(45 * spdMult),
-      bounty: Math.round(8 + w),
+      bounty: gruntBounty,
       interval: 0.6
     });
   } else {
+    // ОБЫЧНАЯ ВОЛНА
     const types = ['grunt', 'scout', 'tank', 'swarm', 'emp_bomber'];
     const availableTypes = types.slice(0, Math.min(types.length, 1 + Math.floor(w / 3)));
     const primaryType = availableTypes[Math.floor((w * 3 + 1) % availableTypes.length)] || 'grunt';
@@ -317,7 +347,14 @@ function generateEndlessWaveData(w) {
     }
 
     const proto = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[primaryType]) ? ENEMY_CONFIGS[primaryType] : { baseHp: 30, baseSpeed: 50, baseBounty: 5, shape: 'circle', color: '#00e5ff', glow: '#00e5ff' };
-
+    
+    // Распределяем targetWaveBounty между мобами
+    // Swarm (если есть) стоит меньше, основная награда у primaryType
+    let primaryBountyRatio = secCount > 0 ? 0.7 : 1.0;
+    if (primaryType === 'swarm') primaryBountyRatio = 0.3; // Swarm дает мало денег
+    
+    const primaryBounty = Math.max(1, Math.floor((targetWaveBounty * primaryBountyRatio) / totalCount));
+    
     spawns.push({
       type: primaryType,
       isBoss: false,
@@ -325,12 +362,14 @@ function generateEndlessWaveData(w) {
       count: totalCount,
       hp: Math.round(proto.baseHp * hpScalingMult),
       speed: Math.min(160, Math.round(proto.baseSpeed * spdMult)),
-      bounty: Math.max(1, Math.round(proto.baseBounty * (1 + w * 0.05))),
+      bounty: primaryBounty,
       interval: Math.max(0.2, 0.8 - w * 0.01)
     });
 
     if (secType && secCount > 0) {
       const secProto = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[secType]) ? ENEMY_CONFIGS[secType] : proto;
+      const secBounty = Math.max(1, Math.floor((targetWaveBounty * (1 - primaryBountyRatio)) / secCount));
+
       spawns.push({
         type: secType,
         isBoss: false,
@@ -338,7 +377,7 @@ function generateEndlessWaveData(w) {
         count: secCount,
         hp: Math.round(secProto.baseHp * hpScalingMult * 0.85),
         speed: Math.min(160, Math.round(secProto.baseSpeed * spdMult)),
-        bounty: Math.max(1, Math.round(secProto.baseBounty * (1 + w * 0.05))),
+        bounty: secBounty,
         interval: 0.6
       });
     }
