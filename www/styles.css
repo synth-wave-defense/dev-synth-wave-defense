@@ -3025,6 +3025,12 @@ body {
   box-shadow: 0 0 14px rgba(0, 229, 255, 0.3);
 }
 
+.mode-overdrive-active .level-card-btn.cleared,
+.overdrive-active .level-card-btn.cleared,
+.mode-overdrive-active .level-card-btn.current,
+.overdrive-active .level-card-btn.current {
+  box-shadow: none !important;
+}
 
 .level-card-overdrive-badge {
   display: flex;
@@ -3183,22 +3189,23 @@ body {
 
 /* 3. Жестко растягиваем саму кнопку */
 .level-card-btn {
-  width: 100%; /* ЗАСТАВЛЯЕМ кнопку растянуться на всю ширину своей колонки (1fr) */
+  width: 100%;
   aspect-ratio: 1 / 1; 
   height: auto; 
   background: rgba(8, 12, 24, 0.72);
   border: 1px solid rgba(0, 229, 255, 0.45);
   border-radius: 12px; 
+  box-shadow: none; /* Гарантирует, что кнопки в покое не светятся */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 0; /* Убираем padding, который мог сжимать контент */
+  padding: 0;
   gap: 4px;
   cursor: pointer;
   transition: all 0.15s;
   outline: none;
-  box-sizing: border-box; /* Гарантируем правильный расчет ширины */
+  box-sizing: border-box;
 }
 
 .level-card-btn:hover:not(:disabled) {

@@ -2002,7 +2002,7 @@ function refreshDevDropdowns() {
     for (let w = 1; w <= endlessMax; w++) {
       const opt = document.createElement('option');
       opt.value = w;
-      opt.textContent = `W${w}`;
+      opt.textContent = `${w}/∞`;
       if (w === wave) opt.selected = true;
       waveSelect.appendChild(opt);
     }
@@ -4643,8 +4643,10 @@ function updateUI() {
   document.getElementById('goldVal').textContent = gold;
   document.getElementById('hpVal').textContent = baseHp;
   if (typeof isEndlessMode !== 'undefined' && isEndlessMode) {
-    document.getElementById('levelText').textContent = 'ENDLESS';
-    document.getElementById('waveText').textContent = `${wave}`;
+    // Вместо длинного слова 'ENDLESS' выводим номер текущей главы арены: LVL 1, LVL 2 и т.д.
+    document.getElementById('levelText').textContent = `${currentLevelSection || 1}`;
+    // Текущая волна x со знаком бесконечности: x/∞
+    document.getElementById('waveText').textContent = `${wave}/∞`;
   } else {
     document.getElementById('levelText').textContent = `${currentLevel}`;
     document.getElementById('waveText').textContent = `${Math.min(wave, maxW)}/${maxW}`;
@@ -5145,38 +5147,46 @@ function renderNebulaCache(w, h, dpr) {
   const ph = Math.max(1, Math.round(h * effectiveDpr));
   const S = Math.min(w, h);
 
-  const maxRes = isLowPerf ? NEBULA_LOWRES_PERF : NEBULA_LOWRES_MAX;
-  const k = Math.min(1, maxRes / Math.max(w, h));
-  const lw = Math.max(2, Math.round(w * k));
-  const lh = Math.max(2, Math.round(h * k));
-  const low = new Float32Array(lw * lh * 3);
+  const off = document.createElement('canvas');
+  off.width = pw;
+  off.height = ph;
+  const c = off.getContext('2d');
+  const img = c.createImageData(pw, ph);
+  const d = img.data;
 
-  const cl = NEBULA_CLUSTERS.map(c => ({
-    c: c,
-    cx: c.cx * w, cy: c.cy * h,
-    R: c.scale * S,
-    cs: Math.cos(c.angle), sn: Math.sin(c.angle),
-    intensity: c.intensity !== undefined ? c.intensity : 1.0
+  const cl = NEBULA_CLUSTERS.map(cluster => ({
+    c: cluster,
+    cx: cluster.cx * w,
+    cy: cluster.cy * h,
+    R: cluster.scale * S,
+    cs: Math.cos(cluster.angle),
+    sn: Math.sin(cluster.angle),
+    intensity: cluster.intensity !== undefined ? cluster.intensity : 1.0
   }));
   const env = new Float32Array(cl.length);
 
   const octMain = isLowPerf ? 4 : 5;
   const octRidge = isLowPerf ? 3 : 4;
 
-  for (let y = 0; y < lh; y++) {
-    const py = (y + 0.5) / k;
+  // Прямой расчет 1:1 по пикселям экрана без даунскейла и размывающего апскейла
+  for (let Y = 0; Y < ph; Y++) {
+    const py = (Y + 0.5) / effectiveDpr;
     const t = py / h;
     let bgR, bgG, bgB;
     if (t < 0.5) {
       const q = t / 0.5;
-      bgR = 6 + (5 - 6) * q; bgG = 9 + (7 - 9) * q; bgB = 20 + (17 - 20) * q;
+      bgR = 6 + (5 - 6) * q;
+      bgG = 9 + (7 - 9) * q;
+      bgB = 20 + (17 - 20) * q;
     } else {
       const q = (t - 0.5) / 0.5;
-      bgR = 5 + (2 - 5) * q; bgG = 7 + (3 - 7) * q; bgB = 17 + (8 - 17) * q;
+      bgR = 5 + (2 - 5) * q;
+      bgG = 7 + (3 - 7) * q;
+      bgB = 17 + (8 - 17) * q;
     }
 
-    for (let x = 0; x < lw; x++) {
-      const px = (x + 0.5) / k;
+    for (let X = 0; X < pw; X++) {
+      const px = (X + 0.5) / effectiveDpr;
 
       let maxEnv = 0;
       for (let i = 0; i < cl.length; i++) {
@@ -5206,11 +5216,11 @@ function renderNebulaCache(w, h, dpr) {
           const e = env[i];
           if (e < 0.01) continue;
           const q = cl[i].c;
-          const off = i * 53.7;
+          const offShift = i * 53.7;
 
-          const n01 = 0.5 + 1.1 * fbm(wx * 3.0 + off, wy * 3.0 + off * 0.7, octMain);
+          const n01 = 0.5 + 1.1 * fbm(wx * 3.0 + offShift, wy * 3.0 + offShift * 0.7, octMain);
           const dens = smoothstep(0.28, 0.82, n01);
-          const fil = Math.pow(clamp01(ridged(wx * 3.6 + off + 7.1, wy * 3.6 + off - 3.9, octRidge) * 1.7), 1.4);
+          const fil = Math.pow(clamp01(ridged(wx * 3.6 + offShift + 7.1, wy * 3.6 + offShift - 3.9, octRidge) * 1.7), 1.4);
 
           let I = e * (0.28 + 0.95 * dens) * (0.5 + 0.95 * fil);
           I *= 1 - 0.7 * dust * Math.min(1, e * 3);
@@ -5236,52 +5246,16 @@ function renderNebulaCache(w, h, dpr) {
       g = g * (1 - vt) + 3 * vt;
       b = b * (1 - vt) + 8 * vt;
 
-      const o = (y * lw + x) * 3;
-      low[o] = r; low[o + 1] = g; low[o + 2] = b;
-    }
-  }
-
-  // Bilinear scaling to full resolution with fine film grain.
-  const x0 = new Int32Array(pw), x1 = new Int32Array(pw), fx = new Float32Array(pw);
-  for (let X = 0; X < pw; X++) {
-    let s = (X + 0.5) * lw / pw - 0.5;
-    s = Math.max(0, Math.min(lw - 1, s));
-    const i = Math.floor(s);
-    x0[X] = i; x1[X] = Math.min(i + 1, lw - 1); fx[X] = s - i;
-  }
-
-  const off = document.createElement('canvas');
-  off.width = pw; off.height = ph;
-  const c = off.getContext('2d');
-  const img = c.createImageData(pw, ph);
-  const d = img.data;
-
-  for (let Y = 0; Y < ph; Y++) {
-    let sy = (Y + 0.5) * lh / ph - 0.5;
-    sy = Math.max(0, Math.min(lh - 1, sy));
-    const y0 = Math.floor(sy);
-    const y1 = Math.min(y0 + 1, lh - 1);
-    const fy = sy - y0;
-    const row0 = y0 * lw, row1 = y1 * lw;
-
-    for (let X = 0; X < pw; X++) {
-      const a = x0[X], b = x1[X], f = fx[X];
-      const i00 = (row0 + a) * 3, i10 = (row0 + b) * 3;
-      const i01 = (row1 + a) * 3, i11 = (row1 + b) * 3;
+      const nGrain = (Math.random() + Math.random() - 1) * 1.6;
       const o = (Y * pw + X) * 4;
-
-      const n = (Math.random() + Math.random() - 1) * 1.6;
-
-      for (let ch = 0; ch < 3; ch++) {
-        const top = low[i00 + ch] + (low[i10 + ch] - low[i00 + ch]) * f;
-        const bot = low[i01 + ch] + (low[i11 + ch] - low[i01 + ch]) * f;
-        d[o + ch] = top + (bot - top) * fy + n + 0.5;
-      }
+      d[o]     = Math.min(255, Math.max(0, r + nGrain));
+      d[o + 1] = Math.min(255, Math.max(0, g + nGrain));
+      d[o + 2] = Math.min(255, Math.max(0, b + nGrain));
       d[o + 3] = 255;
     }
   }
 
-  // Micro star dust layer.
+  // Микро-звездная пыль
   const dustCount = Math.floor(pw * ph / 700);
   for (let i = 0; i < dustCount; i++) {
     const X = Math.floor(Math.random() * pw);
@@ -5295,9 +5269,9 @@ function renderNebulaCache(w, h, dpr) {
 
   c.putImageData(img, 0, 0);
 
-  // [UI210] Pre-render static starfield directly into background canvas.
+  // Впекание статических звезд строго в сетку 1:1
   ensureStarSprites(effectiveDpr);
-  const bakeRand = mulberry32(4242); // Deterministic PRNG to prevent star displacement on window resize.
+  const bakeRand = mulberry32(4242);
   c.save();
   c.globalCompositeOperation = 'lighter';
   for (let i = 0; i < BAKED_STAR_COUNT; i++) {
@@ -5369,8 +5343,14 @@ function drawCosmicNebulaBackground(w, h, customDim = null) {
     nebulaCache = renderNebulaCache(w, h, dpr);
     nebulaCacheKey = key;
   }
+  
+  // Отрисовка кэша туманности с отключением фильтрации
+  ctx.save();
+  ctx.imageSmoothingEnabled = false; // Отключает замыливание пикселей при наложении
   ctx.drawImage(nebulaCache, 0, 0, w, h);
+  ctx.restore();
 
+  // Плавное динамическое затемнение в бою (сохраняем оригинальную логику)
   const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
   const dt = Math.min((now - lastDimUpdateTime) / 1000, 0.1);
   lastDimUpdateTime = now;
@@ -5518,7 +5498,8 @@ function renderTriangleLogoCache(w, horizonY, dpr) {
 
   const cx = w * 0.5;
   const tipY = horizonY - 24;
-  const topY = Math.max(82, horizonY * 0.22);
+  // Опускаем верхнюю грань на 16px (1/3 высоты кнопки меню)
+  const topY = Math.max(98, horizonY * 0.26);
   const halfW = Math.min(w * 0.35, (tipY - topY) * 0.65);
 
   const A = { x: cx,         y: tipY };   // Bottom tip.
@@ -5584,18 +5565,7 @@ function renderTriangleLogoCache(w, horizonY, dpr) {
   c.beginPath();
   c.arc(C.x, C.y, cornerR, 0, Math.PI * 2);
   c.fill();
-
-  // Bottom tip lens flare.
-  const tipR = halfW * 0.40;
-  const fl = c.createRadialGradient(cx, tipY, 0, cx, tipY, tipR);
-  fl.addColorStop(0.00, 'rgba(255, 255, 255, 0.52)');
-  fl.addColorStop(0.28, 'rgba(190, 150, 255, 0.22)');
-  fl.addColorStop(0.65, 'rgba(0, 229, 255, 0.07)');
-  fl.addColorStop(1.00, 'rgba(0, 229, 255, 0)');
-  c.fillStyle = fl;
-  c.beginPath();
-  c.arc(cx, tipY, tipR, 0, Math.PI * 2);
-  c.fill();
+  
   c.restore();
 
   // [UI212.02] Multi-layered Gaussian glow contour stroke renderer.
