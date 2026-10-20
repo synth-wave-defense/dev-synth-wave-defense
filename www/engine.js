@@ -227,7 +227,8 @@ let levelStars = {};
 let matchStartBaseHp = 10;
 
 let isEndlessMode = false;
-let endlessBestWave = 0;
+let endlessBestWavesBySection = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+let endlessBestWave = 0; // Оставляем для обратной совместимости
 let endlessDailyRunsUsed = 0;
 let endlessDailyRunsDate = '';
 let endlessMilestonesClaimed = {};
@@ -261,155 +262,175 @@ function getEndlessEntryStatus() {
 window.getEndlessEntryStatus = getEndlessEntryStatus;
 
 function generateEndlessWaveData(w) {
-  // Базовая проверка текущей арены (от 1 до 5)
   const arena = (typeof currentLevelSection !== 'undefined') ? currentLevelSection : 1;
 
-  // 1. АГРЕССИВНЫЙ РОСТ HP (Разный для каждой арены)
+  // 1. УСКОРЕННАЯ И БОЛЕЕ АГРЕССИВНАЯ КРИВАЯ HP
+  // Без глобальных апгрейдов игрок физически упрется в стену к 8-10 волне
   let hpScalingMult = 1.0;
-  let hpBaseExponent = 1.22; // Сильнее, чем раньше (было 1.18)
-
-  if (arena === 2) hpBaseExponent = 1.20; // Много мобов = чуть меньше хп
-  if (arena === 3) hpBaseExponent = 1.26; // Мало мобов = очень много хп (Танки)
-  if (arena === 4) hpBaseExponent = 1.24; // Блинкеры
-  if (arena === 5) hpBaseExponent = 1.25; // Смешанная элита
-
   if (w <= 10) {
-    hpScalingMult = Math.pow(hpBaseExponent, w - 1); 
-  } else if (w <= 30) {
-    hpScalingMult = Math.pow(hpBaseExponent, 9) * Math.pow(1.18, w - 10);
+    hpScalingMult = Math.pow(1.26, w - 1); // Очень быстрый разгон до 1-го босса
   } else {
-    hpScalingMult = Math.pow(hpBaseExponent, 9) * Math.pow(1.18, 20) * Math.pow(1.22, w - 30);
+    hpScalingMult = Math.pow(1.26, 9) * Math.pow(1.20, w - 10);
   }
 
-  // 2. БЮДЖЕТ ЗОЛОТА НА ВОЛНУ (Ограничитель экономики)
-  // Игрок не должен получать больше ~70-85 золота за волну после 10-й
-  const targetWaveBounty = w <= 10 ? 80 : Math.max(25, 90 - (w - 10) * 1.5); 
-  
-  // Скорость растет умеренно (на 2-й арене растет быстрее)
-  const spdExponent = (arena === 2) ? 0.025 : 0.018;
-  const spdMult = Math.min(arena === 2 ? 2.2 : 1.85, 1 + (w - 1) * spdExponent);
+  // Рост скорости мобов
+  const spdMult = Math.min(1.9, 1 + (w - 1) * 0.02);
+
+  // 2. БЮДЖЕТ ЗОЛОТА ЗА ВОЛНУ (Затухание экономики)
+  // Не дает застроить всю карту даже при выживании до 40+ волны
+  const targetWaveBounty = w <= 10 ? 80 : Math.max(25, 90 - (w - 10) * 1.6);
   const spawns = [];
 
-  // --- ВОЛНА БОССА (Каждая 10-я) ---
+  // ==========================================
+  // КАЖДАЯ 10-Я ВОЛНА: БОСС + СВИТА
+  // ==========================================
   if (w % 10 === 0) {
-    const baseBossHp = w === 10 ? 4000 : 1200; // На 10-й волне 4000 HP, без апгрейдов не убить
-    const bossHp = Math.round(baseBossHp * (w === 10 ? 1 : hpScalingMult));
-    const bossBounty = Math.round(targetWaveBounty * 0.6); 
+    const bossList = ['titan_core', 'hive_empress', 'chronos_warp', 'emp_overlord'];
+    const bossIdx = Math.floor((w / 10 - 1) + (arena - 1)) % bossList.length;
+    const bossType = bossList[bossIdx];
 
-    let bossType = 'titan_core';
-    let bossShape = 'octagon';
-    let bossColor = '#ff0055';
+    // HP первого босса (10 волна) ~ 5200 HP
+    const baseBossHp = (w === 10) ? 5200 : (1800 * hpScalingMult);
+    const bossBounty = Math.round(targetWaveBounty * 0.65);
 
-    if (arena === 2) { bossType = 'hive_empress'; bossShape = 'diamond'; bossColor = '#00ffcc'; }
-    else if (arena === 4) { bossType = 'chronos_warp'; bossShape = 'hexagon'; bossColor = '#8b5cf6'; }
-    else if (arena === 5) { bossType = 'emp_overlord'; bossShape = 'square'; bossColor = '#f05f9f'; }
+    let bColor = '#ff0055', bShape = 'octagon';
+    if (bossType === 'hive_empress') { bColor = '#00ffcc'; bShape = 'diamond'; }
+    else if (bossType === 'chronos_warp') { bColor = '#8b5cf6'; bShape = 'hexagon'; }
+    else if (bossType === 'emp_overlord') { bColor = '#f05f9f'; bShape = 'square'; }
 
     spawns.push({
       type: bossType,
       isBoss: true,
       isMiniBoss: false,
       count: 1,
-      hp: bossHp,
-      speed: Math.round((arena === 2 ? 38 : 28) * spdMult),
+      hp: Math.round(baseBossHp),
+      speed: Math.round(30 * spdMult),
       bounty: bossBounty,
-      interval: 1.5,
-      shape: bossShape,
-      color: bossColor,
-      glow: bossColor
+      interval: 2.0,
+      shape: bShape,
+      color: bColor,
+      glow: bColor
     });
 
-    const gruntCount = Math.min(50, 4 + Math.floor(w / 4));
-    const gruntBounty = Math.max(1, Math.floor((targetWaveBounty * 0.4) / gruntCount));
+    // Свита босса
+    const escortType = (w % 20 === 0) ? 'tank' : 'scout';
+    const escortCount = Math.min(20, 4 + Math.floor(w / 4));
+    const escortBounty = Math.max(1, Math.floor((targetWaveBounty * 0.35) / escortCount));
+    const protoEscort = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[escortType]) 
+      ? ENEMY_CONFIGS[escortType] : { baseHp: 35, baseSpeed: 50 };
 
     spawns.push({
-      type: 'grunt',
+      type: escortType,
       isBoss: false,
       isMiniBoss: false,
-      count: gruntCount,
-      hp: Math.round(35 * hpScalingMult),
-      speed: Math.round(45 * spdMult),
-      bounty: gruntBounty,
-      interval: 0.5
+      count: escortCount,
+      hp: Math.round(protoEscort.baseHp * hpScalingMult * 0.8),
+      speed: Math.round(protoEscort.baseSpeed * spdMult),
+      bounty: escortBounty,
+      // Раскидываем свиту, чтобы не накладывалась друг на друга
+      interval: (escortType === 'tank') ? 1.6 : 0.6
     });
 
-  } else {
-    // --- ОБЫЧНЫЕ ВОЛНЫ (Уникальные для арен) ---
-    let types = ['grunt', 'scout'];
-    if (arena === 1) types = ['grunt', 'scout', 'tank'];
-    if (arena === 2) types = ['scout', 'swarm', 'grunt'];
-    if (arena === 3) types = ['tank', 'goliath', 'grunt'];
-    if (arena === 4) types = ['blinker', 'scout', 'tank'];
-    if (arena === 5) types = ['tank', 'blinker', 'emp_bomber', 'swarm'];
-
-    // Выбираем основной и второстепенный тип мобов
-    const primaryType = types[Math.floor((w * 3) % types.length)];
-    let secType = null;
-    if (w > 3 && types.length > 1) {
-      secType = types[Math.floor((w * 5 + 1) % types.length)];
-      if (secType === primaryType) secType = null;
-    }
-
-    // Постепенное увеличение количества (в зависимости от арены)
-    let totalCount = 6 + Math.floor(w * 1.5); // Больше мобов со временем
-    if (arena === 2) totalCount = 10 + Math.floor(w * 2.5); // На Арене 2 (Рой) мобов еще больше
-    if (arena === 3) totalCount = 4 + Math.floor(w * 0.8);  // На Арене 3 (Танки) мобов меньше
-
-    let secCount = secType ? Math.floor(totalCount * 0.4) : 0;
-    if (secType) totalCount -= secCount;
-
-    // ОГРАНИЧЕНИЯ И СПЕЦИАЛЬНЫЕ ПРАВИЛА:
-
-    // 1. Swarm (Пачки по 10-15 штук)
-    if (primaryType === 'swarm') totalCount = Math.max(15, totalCount * 2);
-    if (secType === 'swarm') secCount = Math.max(10, secCount * 2);
-
-    // 2. EMP Bomber (Строгий лимит и редкий спавн)
-    if (primaryType === 'emp_bomber') {
-      totalCount = Math.min(4, 1 + Math.floor(w / 15)); // Максимум 4 штуки
-    }
-    if (secType === 'emp_bomber') {
-      secCount = Math.min(2, 1 + Math.floor(w / 20)); // Максимум 2 штуки
-    }
-
-    // Расчет наград (чтобы не превышать targetWaveBounty)
-    let primaryBountyRatio = secCount > 0 ? 0.65 : 1.0;
-    if (primaryType === 'swarm') primaryBountyRatio = 0.2; // За мелких роевиков платим копейки
-    
-    const primaryBounty = Math.max(1, Math.floor((targetWaveBounty * primaryBountyRatio) / totalCount));
-    const proto1 = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[primaryType]) ? ENEMY_CONFIGS[primaryType] : { baseHp: 30, baseSpeed: 50 };
-
-    spawns.push({
-      type: primaryType,
-      isBoss: false,
-      isMiniBoss: false,
-      count: totalCount,
-      hp: Math.round(proto1.baseHp * hpScalingMult * (primaryType === 'swarm' ? 0.3 : 1.0)),
-      speed: Math.min(180, Math.round(proto1.baseSpeed * spdMult)),
-      bounty: primaryBounty,
-      // Swarm спавнится плотно (0.05с), EMP - очень редко (1.8с), остальные обычно (0.6с)
-      interval: primaryType === 'swarm' ? 0.05 : (primaryType === 'emp_bomber' ? 1.8 : Math.max(0.2, 0.7 - w * 0.01)),
-      clumps: primaryType === 'swarm' ? Math.ceil(totalCount / 10) : 0 // Для роя можно использовать логику кластеров
-    });
-
-    if (secType && secCount > 0) {
-      const secBounty = Math.max(1, Math.floor((targetWaveBounty * (1 - primaryBountyRatio)) / secCount));
-      const proto2 = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[secType]) ? ENEMY_CONFIGS[secType] : { baseHp: 30, baseSpeed: 50 };
-
-      spawns.push({
-        type: secType,
-        isBoss: false,
-        isMiniBoss: false,
-        count: secCount,
-        hp: Math.round(proto2.baseHp * hpScalingMult * (secType === 'swarm' ? 0.3 : 0.85)),
-        speed: Math.min(180, Math.round(proto2.baseSpeed * spdMult)),
-        bounty: secBounty,
-        interval: secType === 'swarm' ? 0.05 : (secType === 'emp_bomber' ? 2.0 : 0.6),
-        clumps: secType === 'swarm' ? Math.ceil(secCount / 10) : 0
-      });
-    }
+    return { wave: w, delayAfter: 6.0, spawns };
   }
 
-  return { wave: w, delayAfter: 6.0, spawns };
+  // ==========================================
+  // ОБЫЧНЫЕ ВОЛНЫ: 4 ДИНАМИЧЕСКИХ АРХЕТИПА
+  // ==========================================
+  // Чередуем тип волны в зависимости от номера (w) и арены (arena)
+  const archetypePattern = (w + arena) % 4;
+
+  let group1Type = 'grunt', group1Count = 6, group1Interval = 0.65;
+  let group2Type = null, group2Count = 0, group2Interval = 0.65;
+
+  if (archetypePattern === 0) {
+    // АРХЕТИП 1: Роевой прорыв (Swarm + Scout)
+    group1Type = 'swarm';
+    group1Count = 14 + Math.min(30, Math.floor(w * 1.5)); // Пачка по 14-40 штук
+    group1Interval = 0.05; // Сверхплотный рой!
+
+    group2Type = 'scout';
+    group2Count = 4 + Math.floor(w * 0.6);
+    group2Interval = 0.45;
+  } 
+  else if (archetypePattern === 1) {
+    // АРХЕТИП 2: Бронетанковая колонна (Tank/Goliath + Grunt)
+    // Танки раскиданы с увеличенным интервалом 1.6 - 1.8 с!
+    group1Type = (w >= 15 && Math.random() < 0.5) ? 'goliath' : 'tank';
+    group1Count = Math.min(10, 2 + Math.floor(w * 0.35));
+    group1Interval = (group1Type === 'goliath') ? 2.2 : 1.6; // Больше никакой скученности!
+
+    group2Type = 'grunt';
+    group2Count = 5 + Math.floor(w * 0.7);
+    group2Interval = 0.6;
+  } 
+  else if (archetypePattern === 2) {
+    // АРХЕТИП 3: Техно-диверсия (Blinker со щитами + одиночные редкие EMP)
+    group1Type = (w >= 6) ? 'blinker' : 'scout';
+    group1Count = 4 + Math.floor(w * 0.5);
+    group1Interval = 0.85;
+
+    // EMP Bomber выходят строго ограниченно и с огромным разрывом
+    if (w >= 8) {
+      group2Type = 'emp_bomber';
+      group2Count = Math.min(3, 1 + Math.floor(w / 14)); // Максимум 2-3 штуки
+      group2Interval = 2.4; // 2.4 сек между EMP, чтобы не глушить всю карту разом!
+    } else {
+      group2Type = 'grunt';
+      group2Count = 6 + Math.floor(w * 0.5);
+      group2Interval = 0.6;
+    }
+  } 
+  else {
+    // АРХЕТИП 4: Смешанный авангард (Scout + Tank)
+    group1Type = 'scout';
+    group1Count = 6 + Math.floor(w * 0.8);
+    group1Interval = 0.4;
+
+    group2Type = 'tank';
+    group2Count = Math.min(8, 2 + Math.floor(w * 0.4));
+    group2Interval = 1.7; // Танки снова идут на расстоянии
+  }
+
+  // Расчет наград за каждого моба в рамках лимита targetWaveBounty
+  let g1BountyShare = group2Type ? 0.6 : 1.0;
+  if (group1Type === 'swarm') g1BountyShare = 0.25; // Роевики дают копейки
+
+  const g1Bounty = Math.max(1, Math.floor((targetWaveBounty * g1BountyShare) / group1Count));
+  const proto1 = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[group1Type]) 
+    ? ENEMY_CONFIGS[group1Type] : { baseHp: 30, baseSpeed: 50 };
+
+  spawns.push({
+    type: group1Type,
+    isBoss: false,
+    isMiniBoss: false,
+    count: group1Count,
+    hp: Math.round(proto1.baseHp * hpScalingMult * (group1Type === 'swarm' ? 0.35 : 1.0)),
+    speed: Math.min(170, Math.round(proto1.baseSpeed * spdMult)),
+    bounty: g1Bounty,
+    interval: group1Interval,
+    clumps: (group1Type === 'swarm') ? Math.ceil(group1Count / 10) : 0
+  });
+
+  if (group2Type && group2Count > 0) {
+    const g2Bounty = Math.max(1, Math.floor((targetWaveBounty * (1 - g1BountyShare)) / group2Count));
+    const proto2 = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[group2Type]) 
+      ? ENEMY_CONFIGS[group2Type] : { baseHp: 30, baseSpeed: 50 };
+
+    spawns.push({
+      type: group2Type,
+      isBoss: false,
+      isMiniBoss: false,
+      count: group2Count,
+      hp: Math.round(proto2.baseHp * hpScalingMult * (group2Type === 'swarm' ? 0.35 : 0.9)),
+      speed: Math.min(170, Math.round(proto2.baseSpeed * spdMult)),
+      bounty: g2Bounty,
+      interval: group2Interval,
+      clumps: (group2Type === 'swarm') ? Math.ceil(group2Count / 10) : 0
+    });
+  }
+
+  return { wave: w, delayAfter: 5.5, spawns };
 }
 
 function isOverdriveUnlocked() {
@@ -570,7 +591,7 @@ function serializeSaveData() {
     bpClaimedPrem: Object.assign({}, bpClaimedPrem),
     unlockedPalettes: unlockedPalettes.slice(),
     activePalette,
-    endlessBestWave,
+    endlessBestWavesBySection: Object.assign({}, endlessBestWavesBySection),
     endlessDailyRunsUsed,
     endlessDailyRunsDate,
     endlessMilestonesClaimed: Object.assign({}, endlessMilestonesClaimed)
@@ -661,7 +682,12 @@ async function loadGame() {
   if (data.levelStars && typeof data.levelStars === 'object') {
     levelStars = data.levelStars;
   }
-  if (typeof data.endlessBestWave === 'number' && data.endlessBestWave >= 0) endlessBestWave = data.endlessBestWave;
+  if (data.endlessBestWavesBySection && typeof data.endlessBestWavesBySection === 'object') {
+    endlessBestWavesBySection = Object.assign({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, data.endlessBestWavesBySection);
+  } else if (typeof data.endlessBestWave === 'number') {
+    // Миграция старого сохранения
+    endlessBestWavesBySection[1] = data.endlessBestWave;
+  }
   if (typeof data.endlessDailyRunsUsed === 'number' && data.endlessDailyRunsUsed >= 0) endlessDailyRunsUsed = data.endlessDailyRunsUsed;
   if (typeof data.endlessDailyRunsDate === 'string') endlessDailyRunsDate = data.endlessDailyRunsDate;
   if (data.endlessMilestonesClaimed && typeof data.endlessMilestonesClaimed === 'object') {
@@ -1660,7 +1686,13 @@ function triggerDefeat() {
   if (reviveTimerContainer) reviveTimerContainer.classList.add('hidden');
 
   const tacticalTipsWidget = document.getElementById('tacticalTipsWidget');
-  if (tacticalTipsWidget) tacticalTipsWidget.classList.remove('hidden');
+  if (tacticalTipsWidget) {
+    if (isEndlessMode) {
+      tacticalTipsWidget.classList.add('hidden');
+    } else {
+      tacticalTipsWidget.classList.remove('hidden');
+    }
+  }
 
   const reviveBtn = document.getElementById('reviveBtn');
   const skipBtn = document.getElementById('reviveSkipBtn');
@@ -1681,7 +1713,12 @@ function triggerDefeat() {
   updateUpgradeButtonsLock();
   updateDefeatWaveLine();
   document.getElementById('defeatScreen').classList.remove('hidden');
-  replayDefeatFlash();
+  if (!isEndlessMode) {
+    replayDefeatFlash();
+  } else {
+    const existingFlash = document.getElementById('defeatFlash');
+    if (existingFlash) existingFlash.remove();
+  }
   showLoadoutWidgetIn('loadoutAnchor-defeat');
   registerDefeatOutcome();
 }
@@ -1777,27 +1814,42 @@ function updateDefeatWaveLine() {
   const recBadge = document.getElementById('endlessNewRecordBadge');
   const lootLine = document.getElementById('endlessLootLine');
   const doubleBtn = document.getElementById('endlessDoubleBtn');
+  const tacticalTipsWidget = document.getElementById('tacticalTipsWidget');
 
   if (isEndlessMode) {
+    // 1. Убираем класс дефолтного поражения и вешаем стиль триумфального Endless
+    if (defeatScreen) {
+      defeatScreen.classList.add('endless-result-active');
+    }
+
+    // 9. Полностью скрываем блок Tactical Tip на экране Endless
+    if (tacticalTipsWidget) {
+      tacticalTipsWidget.classList.add('hidden');
+    }
+
     const clearedWaves = Math.max(0, wave - 1);
-    const isNewRecord = clearedWaves > endlessBestWave;
+    const sec = currentLevelSection || 1;
+    const currentMapBest = endlessBestWavesBySection[sec] || 0;
+    const isNewRecord = clearedWaves > currentMapBest;
     if (isNewRecord) {
-      endlessBestWave = clearedWaves;
+      endlessBestWavesBySection[sec] = clearedWaves;
+      endlessBestWave = Math.max(...Object.values(endlessBestWavesBySection));
       saveGameSoon();
     }
 
+    // 2. Кикер ENDLESS ARENA
     if (kicker) kicker.textContent = 'ENDLESS ARENA';
+
+    // 3. Заголовок теперь всегда RUN COMPLETE
     if (title) {
-      if (clearedWaves >= 5) {
-        title.textContent = `RUN COMPLETE — WAVE ${wave}`;
-        title.setAttribute('data-text', `RUN COMPLETE — WAVE ${wave}`);
-      } else {
-        title.textContent = 'DEFEAT';
-        title.setAttribute('data-text', 'DEFEAT');
-      }
+      title.textContent = 'RUN COMPLETE';
+      title.setAttribute('data-text', 'RUN COMPLETE');
     }
+
+    // 5. Оставляем волны
     if (el) el.textContent = `WAVE ${wave} REACHED (${clearedWaves} CLEARED)`;
 
+    // Начисление наград
     lastEndlessEarnedDiamonds = clearedWaves * 2;
     const basePrisms = Math.floor(clearedWaves / 10);
     let milestonePrisms = 0;
@@ -1821,27 +1873,37 @@ function updateDefeatWaveLine() {
     endlessHasClaimedDouble = false;
 
     if (rewardsBox) rewardsBox.classList.remove('hidden');
-    if (recBadge) {
-      if (isNewRecord && clearedWaves > 0) recBadge.classList.remove('hidden');
-      else recBadge.classList.add('hidden');
-    }
-    if (lootLine) {
-      const diamondSvg = `<svg class="loot-res-svg diamond" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.3)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
-      const prismSvg = `<svg class="loot-res-svg prism" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.3)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
 
-      lootLine.innerHTML = `REWARDS: +${lastEndlessEarnedDiamonds} ${diamondSvg} <span class="loot-line-sep">|</span> +${totalPrismsGranted} ${prismSvg}`;
+    // 6. Текст REWARDS фиолетовым цветом
+    if (lootLine) {
+      // Иконки со своими оригинальными цветами:
+      const diamondSvg = `<svg class="loot-res-svg diamond" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: -2px; margin-left: 2px;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.3)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
+      const prismSvg = `<svg class="loot-res-svg prism" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: -2px; margin-left: 2px;"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.3)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="22" x2="12" y2="22"/></svg>`;
+
+      lootLine.innerHTML = `<span style="color:#ffffff; font-weight:800; margin-right:6px; letter-spacing:0.5px;">REWARDS:</span><span style="color:#ffffff; font-weight:700;">+${lastEndlessEarnedDiamonds}</span> ${diamondSvg} <span class="loot-line-sep" style="color:rgba(255,255,255,0.3); margin: 0 6px;">|</span><span style="color:#ffffff; font-weight:700;">+${totalPrismsGranted}</span> ${prismSvg}`;
     }
+
+    // 7. Кнопка с белой иконкой видеорекламы и текстом CLAIM x2
     if (doubleBtn) {
       if (lastEndlessEarnedDiamonds > 0 || lastEndlessEarnedPrisms > 0) {
         doubleBtn.classList.remove('hidden');
         doubleBtn.disabled = false;
-        const btnText = noAdsPurchased ? 'DOUBLE REWARDS (FREE)' : 'DOUBLE REWARDS (WATCH AD)';
-        doubleBtn.innerHTML = `<span>${btnText}</span>`;
+        doubleBtn.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linejoin="round" style="flex:none; margin-right:6px;">
+            <rect x="2" y="4" width="20" height="16" rx="3" stroke="#ffffff" fill="none"/>
+            <polygon points="10 9 16 12 10 15" fill="#ffffff" stroke="none"/>
+          </svg>
+          <span style="color:#ffffff; font-weight:800; letter-spacing:1px;">CLAIM X2</span>
+        `;
       } else {
         doubleBtn.classList.add('hidden');
       }
     }
   } else {
+    // В обычной кампании снимаем режим Endless
+    if (defeatScreen) {
+      defeatScreen.classList.remove('endless-result-active');
+    }
     if (kicker) kicker.textContent = 'Level';
     if (title) {
       title.textContent = 'Failed';
@@ -3185,7 +3247,11 @@ if (e.type === 'chronos_warp') {
         let simX = e.x;
         let simY = e.y;
         let simWp = e.wpIndex;
-        let dashRemaining = 140;
+
+        // На 1-й арене Endless уменьшаем дальность прыжка в 2 раза (70px вместо 140px)
+        const isEndlessArena1 = (typeof isEndlessMode !== 'undefined' && isEndlessMode) && 
+                                ((typeof currentLevelSection === 'undefined') || currentLevelSection === 1);
+        let dashRemaining = isEndlessArena1 ? 70 : 140;
 
         while (dashRemaining > 0 && simWp < WAYPOINTS.length) {
           const twp = WAYPOINTS[simWp];

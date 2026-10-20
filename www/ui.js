@@ -1480,7 +1480,7 @@ function updateModeSwitcherUI() {
       rulesBanner.innerHTML = `1 ${hpHeartSvg} BASE  —  1.2 SPEED & ENRAGED MOBS`;
     } else if (currentLevelMode === 'endless') {
       rulesBanner.className = 'mode-rules-banner endless-rules';
-      const prismIcon = typeof getPrismSvg === 'function' ? getPrismSvg(13, 'vertical-align: middle; display: inline-block; margin: 0 1px 2px 1px;') : '';
+      const prismIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 1px 2px 2px;"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="22" x2="12" y2="22"/></svg>`;
       const diamondIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 1px 2px 1px;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
       rulesBanner.innerHTML = `Procedural Waves • Earn ${prismIcon} Prisms & ${diamondIcon} Diamonds`;
     } else {
@@ -1502,7 +1502,10 @@ function renderEndlessDashboardUI() {
   const endEl = document.getElementById('highwayEndLabel');
   const rewardEl = document.getElementById('highwayRewardBadge');
 
-  const bestWave = endlessBestWave || 0;
+  const sec = currentLevelSection || 1;
+  const bestWave = (typeof endlessBestWavesBySection !== 'undefined' && endlessBestWavesBySection[sec]) 
+    ? endlessBestWavesBySection[sec] 
+    : 0;
   if (valEl) valEl.textContent = `BEST : WAVE ${bestWave}`;
 
   const startWave = bestWave > 0 ? Math.floor(Math.max(0, bestWave - 1) / 10) * 10 + 1 : 1;

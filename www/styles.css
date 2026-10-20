@@ -1292,11 +1292,20 @@ body {
   height: 100%;
 }
 
-.revive-timer-progress {
-  transition: stroke-dashoffset 1s linear;
-  filter: drop-shadow(0 0 6px #f05f9f);
+/* Фоновая полупрозрачная бирюзовая дорожка */
+.revive-timer-svg circle:first-child,
+.revive-timer-track {
+  stroke: rgba(0, 229, 255, 0.2);
 }
 
+/* Бирюзовый анимированный круг */
+.revive-timer-progress {
+  stroke: #00e5ff;
+  transition: stroke-dashoffset 1s linear;
+  filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.85));
+}
+
+/* Цифра с бирюзовым неоновым свечением */
 .revive-timer-number {
   position: relative;
   z-index: 2;
@@ -1304,18 +1313,12 @@ body {
   font-size: 28px;
   font-weight: 900;
   color: #ffffff;
-  text-shadow: 0 0 12px rgba(240, 95, 159, 0.8);
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.8);
 }
 
+/* Полностью скрываем паразитный текст, который накладывался на кнопку */
 .revive-timer-label {
-  position: absolute;
-  bottom: -22px;
-  white-space: nowrap;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 9.5px;
-  font-weight: 800;
-  letter-spacing: 0.8px;
-  color: #fbcfe8;
+  display: none !important;
 }
 
 /* Tactical Tip Accordion Widget */
@@ -2294,6 +2297,32 @@ body {
   color: #64748b;
 }
 
+#reviveBtn,
+.revive-btn {
+  background: linear-gradient(180deg, rgba(7, 38, 58, 0.95) 0%, rgba(4, 22, 36, 0.98) 100%) !important;
+  border: 1.5px solid #00e5ff !important;
+  box-shadow: 
+    0 0 16px rgba(0, 229, 255, 0.55),
+    inset 0 0 12px rgba(0, 229, 255, 0.25) !important;
+  color: #ffffff !important;
+}
+
+#reviveBtn:active,
+.revive-btn:active {
+  transform: scale(0.97);
+  background: linear-gradient(180deg, rgba(10, 52, 80, 0.98) 0%, rgba(6, 30, 48, 1.0) 100%) !important;
+  box-shadow: 
+    0 0 22px rgba(0, 229, 255, 0.8),
+    inset 0 0 16px rgba(0, 229, 255, 0.4) !important;
+}
+
+/* Иконка видео/плей внутри кнопки — чистый белый цвет */
+#reviveBtn svg,
+.revive-btn svg {
+  stroke: #ffffff !important;
+  fill: #ffffff !important;
+}
+
 .revive-skip-btn {
   -webkit-tap-highlight-color: transparent;
   background: rgba(8, 10, 18, 0.94);
@@ -2382,26 +2411,6 @@ body {
   gap: 8px;
 }
 
-/* 3-Way Mode Switcher */
-.mode-3way-container {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  max-width: 340px;
-  margin: 0 auto 10px auto;
-}
-
-.mode-3way-switcher {
-  display: flex;
-  width: 100%;
-  background: #060c17;
-  border: 1.5px solid #1e293b;
-  border-radius: 12px;
-  padding: 3px;
-  gap: 4px;
-  box-sizing: border-box;
-}
-
 /* Revamped Top Bar, 3-Way Switcher & Mode Rules */
 .levels-top-bar {
   display: flex;
@@ -2457,15 +2466,6 @@ body {
   color: #d946ef;
 }
 
-.mode-3way-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  max-width: 380px; /* Было 340px */
-  margin: 0 auto 16px auto;
-}
-
 .mode-3way-header {
   font-family: 'Montserrat', sans-serif;
   font-size: 15px;
@@ -2488,13 +2488,26 @@ body {
   text-shadow: 0 0 14px rgba(217, 70, 239, 0.8);
 }
 
+.mode-3way-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto 16px auto;
+  box-sizing: border-box;
+}
+
 .mode-3way-switcher {
   display: flex;
+  width: 100%;
+  max-width: 380px;
   background: #080d1a;
   border: 1.2px solid #1e293b;
   border-radius: 10px;
   padding: 3px;
   gap: 3px;
+  box-sizing: border-box;
 }
 
 .mode-3way-tab {
@@ -2530,8 +2543,77 @@ body {
   color: #d946ef;
 }
 
-.mode-3way-tab.tab-hardcore:not(.locked) .tab-icon {
-  color: #ff2fd0;
+
+.mode-3way-tab.tab-endless:not(.locked) .tab-icon {
+  color: #d946ef;
+}
+
+/* Цветные иконки для доступных (unlocked), но еще не выбранных табов */
+.mode-3way-tab.tab-normal:not(.locked):not(:disabled) .tab-icon {
+  color: #00e5ff !important;
+  fill: #00e5ff !important;
+}
+
+.mode-3way-tab.tab-endless:not(.locked):not(:disabled) .tab-icon {
+  color: #d946ef !important;
+  fill: #d946ef !important;
+}
+
+/* 1. ENABLED (не выбран): розовая иконка в цвет HP, серый текст и неактивная рамка */
+.mode-3way-tab.tab-hardcore:not(.locked):not(:disabled) .tab-icon,
+.mode-3way-tab.tab-hardcore:not(.locked):not(:disabled) svg {
+  color: #f05f9f !important;
+  fill: #f05f9f !important;
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 4px rgba(240, 95, 159, 0.5));
+}
+
+/* 2. DISABLED / LOCKED: полностью серая иконка и серый текст */
+.mode-3way-tab.locked .tab-icon,
+.mode-3way-tab:disabled .tab-icon,
+.mode-3way-tab.tab-hardcore.locked svg,
+.mode-3way-tab.tab-hardcore:disabled svg {
+  color: #64748b !important;
+  fill: #64748b !important;
+  filter: none !important;
+  opacity: 0.55 !important;
+}
+
+.mode-3way-tab.locked,
+.mode-3way-tab:disabled {
+  opacity: 0.65;
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  color: #64748b !important;
+}
+
+/* 3. SELECTED (активен): цветная иконка, белый текст и цветная подсветка */
+.mode-3way-tab.tab-normal.active {
+  background: linear-gradient(180deg, rgba(0, 229, 255, 0.3) 0%, rgba(0, 102, 136, 0.15) 100%);
+  border-color: #00e5ff !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
+}
+
+.mode-3way-tab.tab-endless.active {
+  background: linear-gradient(180deg, rgba(217, 70, 239, 0.32) 0%, rgba(88, 12, 107, 0.18) 100%);
+  border-color: #d946ef !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(217, 70, 239, 0.35);
+}
+
+.mode-3way-tab.tab-hardcore.active {
+  background: linear-gradient(180deg, rgba(80, 15, 45, 0.75) 0%, rgba(35, 6, 20, 0.9) 100%) !important;
+  border-color: #f05f9f !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 16px rgba(240, 95, 159, 0.5), inset 0 0 8px rgba(240, 95, 159, 0.2) !important;
+}
+
+.mode-3way-tab.tab-hardcore.active .tab-icon,
+.mode-3way-tab.tab-hardcore.active svg {
+  color: #f05f9f !important;
+  fill: #f05f9f !important;
+  filter: drop-shadow(0 0 8px rgba(240, 95, 159, 0.9)) !important;
 }
 
 .mode-3way-tab.tab-normal.active {
@@ -2539,13 +2621,6 @@ body {
   border-color: #00e5ff;
   color: #ffffff;
   box-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
-}
-
-.mode-3way-tab.tab-hardcore.active {
-  background: linear-gradient(180deg, rgba(255, 47, 208, 0.32) 0%, rgba(128, 0, 64, 0.18) 100%);
-  border-color: #ff2fd0;
-  color: #ffffff;
-  box-shadow: 0 0 12px rgba(255, 47, 208, 0.35);
 }
 
 .mode-3way-tab.tab-endless.active {
@@ -2558,7 +2633,7 @@ body {
 .mode-3way-tab.locked {
   opacity: 0.5;
   background: transparent;
-  border-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.16);
   color: #64748b;
 }
 
@@ -2760,18 +2835,19 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(90deg, #9333ea 0%, #ec4899 100%);
-  border: 1.4px solid #f5d0fe;
+  background: linear-gradient(180deg, rgba(88, 28, 135, 0.75) 0%, rgba(59, 7, 100, 0.88) 100%);
+  border: 1.5px solid rgba(217, 70, 239, 0.85);
   border-radius: 14px;
   padding: 12px 20px;
-  width: 100%;
+  width: 82%;
+  max-width: 290px;
   cursor: pointer;
   box-shadow: 0 0 18px rgba(217, 70, 239, 0.4);
   color: #ffffff;
   transition: transform 0.12s ease, box-shadow 0.12s ease;
   box-sizing: border-box;
+  margin: 0 auto 8px auto; /* 0 сверху, auto слева и справа (центрирование), 8px снизу */
   gap: 16px;
-  margin-bottom: 8px;
 }
 
 .endless-battle-btn:active {
@@ -3025,11 +3101,26 @@ body {
   box-shadow: 0 0 14px rgba(0, 229, 255, 0.3);
 }
 
-.mode-overdrive-active .level-card-btn.cleared,
-.overdrive-active .level-card-btn.cleared,
-.mode-overdrive-active .level-card-btn.current,
-.overdrive-active .level-card-btn.current {
+/* Кнопки уровней в режиме HARDCORE: матовый темный фон без градиента + розовая рамка таба */
+#levelsScreen.mode-overdrive-active .level-card-btn,
+.mode-overdrive-active .level-card-btn {
+  background: rgba(12, 8, 20, 0.85) !important;
+  background-image: none !important;
+  border: 1px solid rgba(240, 95, 159, 0.65) !important;
   box-shadow: none !important;
+}
+
+/* При нажатии / активном текущем уровне */
+#levelsScreen.mode-overdrive-active .level-card-btn:active,
+#levelsScreen.mode-overdrive-active .level-card-btn.current {
+  border-color: #f05f9f !important;
+  box-shadow: 0 0 14px rgba(240, 95, 159, 0.45) !important;
+}
+
+/* Номер уровня и звездочки внутри кнопки Hardcore */
+#levelsScreen.mode-overdrive-active .level-card-btn .level-num {
+  color: #ffffff !important;
+  text-shadow: 0 0 8px rgba(240, 95, 159, 0.35);
 }
 
 .level-card-overdrive-badge {
@@ -4608,9 +4699,11 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 
 /* [CSS110] Collapsible accordion loadout and settings widgets */
 #settingsScreen .settings-box {
-  margin: 6px auto;
+  background: transparent;
+  border: none;
+  padding: 0;
   width: 100%;
-  max-width: 320px;
+  max-width: 100%;
 }
 
 .settings-combat-actions {
@@ -4684,6 +4777,97 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 
 .result-btn-giveup:hover {
   border-color: rgba(240, 95, 159, 0.35);
+}
+
+/* ==ENDLESS ARENA: TRIUMPHANT RUN COMPLETE MODAL==*/
+
+/* 1. Полностью гасим красные полосы и красную сетку на фоне */
+#defeatScreen.endless-result-active {
+  /* Перебиваем бордовые сканлайны чистым темным нейтрально-космическим градиентом */
+  background: radial-gradient(circle at 50% 30%, rgba(12, 16, 32, 0.96) 0%, rgba(4, 6, 14, 0.99) 100%) !important;
+  background-image: none !important; /* Убирает красные линейные полосы фонового градиента */
+}
+#defeatScreen.endless-result-active .defeat-flash {
+  display: none !important;
+}
+
+/* Фиолетовые лучи (как на победном экране, но фиолетовые) */
+#defeatScreen.endless-result-active .result-stack::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 340px;
+  height: 340px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.28) 0%, rgba(139, 92, 246, 0.12) 45%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  animation: endlessPulseGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes endlessPulseGlow {
+  0% { transform: translateX(-50%) scale(0.95); opacity: 0.7; }
+  100% { transform: translateX(-50%) scale(1.08); opacity: 1; }
+}
+
+/* 2. Текст ENDLESS ARENA - фиолетовый */
+#defeatScreen.endless-result-active .result-kicker {
+  color: #c084fc !important;
+  text-shadow: 0 0 10px rgba(192, 132, 252, 0.6) !important;
+  letter-spacing: 2.2px;
+}
+
+/* 3 & 4. Заголовок RUN COMPLETE с циановой подсветкой */
+#defeatScreen.endless-result-active .result-title {
+  color: #ffffff !important;
+  text-shadow: 
+    0 0 8px rgba(0, 229, 255, 0.9),
+    0 0 20px rgba(0, 229, 255, 0.55),
+    0 0 35px rgba(0, 229, 255, 0.35) !important;
+  letter-spacing: 2px;
+}
+
+/* 2. REWARDS и цифры — Циан */
+#defeatScreen.endless-result-active #endlessRewardsBox,
+#defeatScreen.endless-result-active #endlessLootLine,
+#defeatScreen.endless-result-active #endlessLootLine span {
+  color: #ffffff !important;
+}
+
+/* 3. Кнопка CLAIM X2: глубокая сине-бирюзовая заливка (как в SELECTED TOWERS), 
+      но сочная, контрастная и с яркой циановой неоновой каймой */
+#defeatScreen.endless-result-active #endlessDoubleBtn {
+  background: linear-gradient(180deg, rgba(7, 38, 58, 0.92) 0%, rgba(4, 22, 36, 0.96) 100%) !important;
+  border: 1.5px solid #00e5ff !important;
+  box-shadow: 
+    0 0 16px rgba(0, 229, 255, 0.55),
+    inset 0 0 12px rgba(0, 229, 255, 0.22) !important;
+  color: #ffffff !important;
+}
+
+#defeatScreen.endless-result-active #endlessDoubleBtn:active {
+  transform: scale(0.97);
+  background: linear-gradient(180deg, rgba(10, 52, 80, 0.95) 0%, rgba(6, 30, 48, 0.98) 100%) !important;
+  box-shadow: 
+    0 0 22px rgba(0, 229, 255, 0.75),
+    inset 0 0 16px rgba(0, 229, 255, 0.35) !important;
+}
+
+/* 8. Кнопка RETRY без подсветки, иконка и текст белые */
+#defeatScreen.endless-result-active #defeatRetryBtn {
+  background: rgba(18, 22, 36, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+}
+#defeatScreen.endless-result-active #defeatRetryBtn svg {
+  stroke: #ffffff !important;
+}
+
+/* 4. Принудительно глушим Tactical Tips в Endless */
+#defeatScreen.endless-result-active #tacticalTipsWidget {
+  display: none !important;
 }
 
 .resume-play-icon {
@@ -4837,14 +5021,6 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 .settings-collapsible-widget.plain-mode .settings-collapsible-body {
   border-top: none;
   padding: 14px;
-}
-
-#settingsScreen .settings-box {
-  background: transparent !important;
-  border: none !important;
-  padding: 0 !important;
-  width: 100% !important;
-  max-width: 100% !important;
 }
 
 #loadoutWidgetGrid,
