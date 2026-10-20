@@ -5309,16 +5309,16 @@ function renderNebulaCache(w, h, dpr) {
     const px = Math.round(sx * pw);
     const py = Math.round(sy * ph);
     c.globalAlpha = alpha;
-    if (cls >= 3) {
-      c.fillStyle = STAR_TINTS[tintIdx].c || '#ffffff';
-      c.fillRect(px - 1, py, 3, 1);
-      c.fillRect(px, py - 1, 1, 3);
-      c.fillStyle = '#ffffff';
-      c.fillRect(px, py, 1, 1);
-    } else {
-      c.fillStyle = '#ffffff';
-      c.fillRect(px, py, cls >= 1 ? 2 : 1, cls >= 1 ? 2 : 1);
-    }
+
+    let bakeBrightness;
+    if (cls >= 4) bakeBrightness = '#ffffff';
+    else if (cls >= 3) bakeBrightness = '#e2e8f0';
+    else if (cls >= 2) bakeBrightness = '#cbd5e1';
+    else if (cls >= 1) bakeBrightness = '#94a3b8';
+    else bakeBrightness = '#64748b';
+
+    c.fillStyle = bakeBrightness;
+    c.fillRect(px, py, 1, 1);
   }
   c.restore();
 
@@ -5487,25 +5487,22 @@ function updateAndDrawStars(w, h, now) {
       ? STAR_TINTS[star.tint].c || STAR_TINTS[star.tint] 
       : '#cfe6ff';
 
-    // Рендерим четкие геометрические ядра звезд в зависимости от величины (star.cls)
-    if (star.cls >= 3) {
-      // Крупные яркие звезды (классы 3 и 4): резкий белый центр + микро-лучики
-      ctx.fillStyle = starColor;
-      ctx.fillRect(px - 1, py, 3, 1);
-      ctx.fillRect(px, py - 1, 1, 3);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(px, py, 1, 1);
+    // Градация цвета/яркости по классу звезды (от глубокого серого до чистого белого)
+    let starBrightness;
+    if (star.cls >= 4) {
+      starBrightness = '#ffffff'; // Максимально яркая звезда
+    } else if (star.cls >= 3) {
+      starBrightness = '#e2e8f0'; // Яркая белая
+    } else if (star.cls >= 2) {
+      starBrightness = '#cbd5e1'; // Светло-серая
     } else if (star.cls >= 1) {
-      // Средние звезды (классы 1 и 2): плотное ядро 2x2 пикселя
-      ctx.fillStyle = starColor;
-      ctx.fillRect(px, py, 2, 2);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(px, py, 1, 1);
+      starBrightness = '#94a3b8'; // Умеренно-серая
     } else {
-      // Мелкие фоновые звезды (класс 0): резкая точечная искра 1x1 пиксель
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(px, py, 1, 1);
+      starBrightness = '#64748b'; // Далекая тусклая фоновая звезда
     }
+
+    ctx.fillStyle = starBrightness;
+    ctx.fillRect(px, py, 1, 1);
   }
   ctx.restore();
 }
