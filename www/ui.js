@@ -2420,6 +2420,9 @@ function showStartScreen() {
   if (revSc) revSc.classList.add('hidden');
   document.getElementById('startScreen').classList.remove('hidden');
 
+  const topHud = document.getElementById('topHud');
+  if (topHud) topHud.classList.remove('hidden');
+
   document.getElementById('econHpSplitBadge').classList.add('hidden');
   document.getElementById('levelWaveSplitBadge').classList.add('hidden');
   document.getElementById('hudRightGroup').classList.remove('hidden');
