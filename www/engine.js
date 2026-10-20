@@ -261,54 +261,65 @@ function getEndlessEntryStatus() {
 window.getEndlessEntryStatus = getEndlessEntryStatus;
 
 function generateEndlessWaveData(w) {
-  // 1. КУСОЧНО-ЭКСПОНЕНЦИАЛЬНЫЙ РОСТ HP (HP WALL)
+  // Базовая проверка текущей арены (от 1 до 5)
+  const arena = (typeof currentLevelSection !== 'undefined') ? currentLevelSection : 1;
+
+  // 1. АГРЕССИВНЫЙ РОСТ HP (Разный для каждой арены)
   let hpScalingMult = 1.0;
+  let hpBaseExponent = 1.22; // Сильнее, чем раньше (было 1.18)
+
+  if (arena === 2) hpBaseExponent = 1.20; // Много мобов = чуть меньше хп
+  if (arena === 3) hpBaseExponent = 1.26; // Мало мобов = очень много хп (Танки)
+  if (arena === 4) hpBaseExponent = 1.24; // Блинкеры
+  if (arena === 5) hpBaseExponent = 1.25; // Смешанная элита
+
   if (w <= 10) {
-    // 1-10: Умеренный рост для прохождения без Tech Tree.
-    hpScalingMult = Math.pow(1.18, w - 1); 
+    hpScalingMult = Math.pow(hpBaseExponent, w - 1); 
   } else if (w <= 30) {
-    // 11-30: Ускоренный рост (Tech Tree 1-10).
-    hpScalingMult = Math.pow(1.18, 9) * Math.pow(1.16, w - 10);
+    hpScalingMult = Math.pow(hpBaseExponent, 9) * Math.pow(1.18, w - 10);
   } else {
-    // 31+: Стена Вознесения (Death Ramp).
-    hpScalingMult = Math.pow(1.18, 9) * Math.pow(1.16, 20) * Math.pow(1.20, w - 30);
+    hpScalingMult = Math.pow(hpBaseExponent, 9) * Math.pow(1.18, 20) * Math.pow(1.22, w - 30);
   }
 
-  // Скорость мобов постепенно растет
-  const spdMult = Math.min(1.85, 1 + (w - 1) * 0.018);
+  // 2. БЮДЖЕТ ЗОЛОТА НА ВОЛНУ (Ограничитель экономики)
+  // Игрок не должен получать больше ~70-85 золота за волну после 10-й
+  const targetWaveBounty = w <= 10 ? 80 : Math.max(25, 90 - (w - 10) * 1.5); 
+  
+  // Скорость растет умеренно (на 2-й арене растет быстрее)
+  const spdExponent = (arena === 2) ? 0.025 : 0.018;
+  const spdMult = Math.min(arena === 2 ? 2.2 : 1.85, 1 + (w - 1) * spdExponent);
   const spawns = [];
 
-  // 2. ЗАТУХАНИЕ ЗОЛОТА НА ВОЛНУ (GOLD SOFT-CAP / BOUNTY DECAY)
-  // Базовая награда за волну падает по мере роста волны.
-  // Максимум ~75-90 базового золота за волну после 10 волны.
-  const targetWaveBounty = w <= 10 ? 75 : Math.max(20, 85 - (w - 10) * 1.5); 
-
+  // --- ВОЛНА БОССА (Каждая 10-я) ---
   if (w % 10 === 0) {
-    // ВОЛНА БОССА
-    // Для 1-го босса (волна 10) нужно ~3200-3500 HP, чтобы без Tech Tree нельзя было пройти.
-    const baseBossHp = w === 10 ? 3200 : 1000;
+    const baseBossHp = w === 10 ? 4000 : 1200; // На 10-й волне 4000 HP, без апгрейдов не убить
     const bossHp = Math.round(baseBossHp * (w === 10 ? 1 : hpScalingMult));
-    
-    // Босс дает фиксированную большую награду
-    const bossBounty = Math.round(targetWaveBounty * 0.7); 
+    const bossBounty = Math.round(targetWaveBounty * 0.6); 
+
+    let bossType = 'titan_core';
+    let bossShape = 'octagon';
+    let bossColor = '#ff0055';
+
+    if (arena === 2) { bossType = 'hive_empress'; bossShape = 'diamond'; bossColor = '#00ffcc'; }
+    else if (arena === 4) { bossType = 'chronos_warp'; bossShape = 'hexagon'; bossColor = '#8b5cf6'; }
+    else if (arena === 5) { bossType = 'emp_overlord'; bossShape = 'square'; bossColor = '#f05f9f'; }
 
     spawns.push({
-      type: 'titan_core',
+      type: bossType,
       isBoss: true,
       isMiniBoss: false,
       count: 1,
       hp: bossHp,
-      speed: Math.round(28 * spdMult),
+      speed: Math.round((arena === 2 ? 38 : 28) * spdMult),
       bounty: bossBounty,
       interval: 1.5,
-      shape: 'octagon',
-      color: '#ff0055',
-      glow: '#ff0055'
+      shape: bossShape,
+      color: bossColor,
+      glow: bossColor
     });
 
-    const gruntCount = Math.min(59, 4 + Math.floor(w / 5));
-    // Оставшееся золото делим на свиту босса
-    const gruntBounty = Math.max(1, Math.floor((targetWaveBounty * 0.3) / gruntCount));
+    const gruntCount = Math.min(50, 4 + Math.floor(w / 4));
+    const gruntBounty = Math.max(1, Math.floor((targetWaveBounty * 0.4) / gruntCount));
 
     spawns.push({
       type: 'grunt',
@@ -318,72 +329,87 @@ function generateEndlessWaveData(w) {
       hp: Math.round(35 * hpScalingMult),
       speed: Math.round(45 * spdMult),
       bounty: gruntBounty,
-      interval: 0.6
+      interval: 0.5
     });
+
   } else {
-    // ОБЫЧНАЯ ВОЛНА
-    const types = ['grunt', 'scout', 'tank', 'swarm', 'emp_bomber'];
-    const availableTypes = types.slice(0, Math.min(types.length, 1 + Math.floor(w / 3)));
-    const primaryType = availableTypes[Math.floor((w * 3 + 1) % availableTypes.length)] || 'grunt';
-    let totalCount = 6 + Math.floor(w * 1.2);
-    let secCount = 0;
+    // --- ОБЫЧНЫЕ ВОЛНЫ (Уникальные для арен) ---
+    let types = ['grunt', 'scout'];
+    if (arena === 1) types = ['grunt', 'scout', 'tank'];
+    if (arena === 2) types = ['scout', 'swarm', 'grunt'];
+    if (arena === 3) types = ['tank', 'goliath', 'grunt'];
+    if (arena === 4) types = ['blinker', 'scout', 'tank'];
+    if (arena === 5) types = ['tank', 'blinker', 'emp_bomber', 'swarm'];
+
+    // Выбираем основной и второстепенный тип мобов
+    const primaryType = types[Math.floor((w * 3) % types.length)];
     let secType = null;
-
-    if (w > 3) {
-      secType = availableTypes[Math.floor((w * 5 + 2) % availableTypes.length)];
-      if (secType && secType !== primaryType) {
-        secCount = 3 + Math.floor(w * 0.5);
-      } else {
-        secType = null;
-      }
+    if (w > 3 && types.length > 1) {
+      secType = types[Math.floor((w * 5 + 1) % types.length)];
+      if (secType === primaryType) secType = null;
     }
 
-    if (totalCount + secCount > 60) {
-      const overflow = (totalCount + secCount) - 60;
-      totalCount = Math.max(10, totalCount - overflow);
-      if (totalCount + secCount > 60) {
-        secCount = Math.max(0, 60 - totalCount);
-      }
+    // Постепенное увеличение количества (в зависимости от арены)
+    let totalCount = 6 + Math.floor(w * 1.5); // Больше мобов со временем
+    if (arena === 2) totalCount = 10 + Math.floor(w * 2.5); // На Арене 2 (Рой) мобов еще больше
+    if (arena === 3) totalCount = 4 + Math.floor(w * 0.8);  // На Арене 3 (Танки) мобов меньше
+
+    let secCount = secType ? Math.floor(totalCount * 0.4) : 0;
+    if (secType) totalCount -= secCount;
+
+    // ОГРАНИЧЕНИЯ И СПЕЦИАЛЬНЫЕ ПРАВИЛА:
+
+    // 1. Swarm (Пачки по 10-15 штук)
+    if (primaryType === 'swarm') totalCount = Math.max(15, totalCount * 2);
+    if (secType === 'swarm') secCount = Math.max(10, secCount * 2);
+
+    // 2. EMP Bomber (Строгий лимит и редкий спавн)
+    if (primaryType === 'emp_bomber') {
+      totalCount = Math.min(4, 1 + Math.floor(w / 15)); // Максимум 4 штуки
+    }
+    if (secType === 'emp_bomber') {
+      secCount = Math.min(2, 1 + Math.floor(w / 20)); // Максимум 2 штуки
     }
 
-    const proto = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[primaryType]) ? ENEMY_CONFIGS[primaryType] : { baseHp: 30, baseSpeed: 50, baseBounty: 5, shape: 'circle', color: '#00e5ff', glow: '#00e5ff' };
-    
-    // Распределяем targetWaveBounty между мобами
-    // Swarm (если есть) стоит меньше, основная награда у primaryType
-    let primaryBountyRatio = secCount > 0 ? 0.7 : 1.0;
-    if (primaryType === 'swarm') primaryBountyRatio = 0.3; // Swarm дает мало денег
+    // Расчет наград (чтобы не превышать targetWaveBounty)
+    let primaryBountyRatio = secCount > 0 ? 0.65 : 1.0;
+    if (primaryType === 'swarm') primaryBountyRatio = 0.2; // За мелких роевиков платим копейки
     
     const primaryBounty = Math.max(1, Math.floor((targetWaveBounty * primaryBountyRatio) / totalCount));
-    
+    const proto1 = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[primaryType]) ? ENEMY_CONFIGS[primaryType] : { baseHp: 30, baseSpeed: 50 };
+
     spawns.push({
       type: primaryType,
       isBoss: false,
       isMiniBoss: false,
       count: totalCount,
-      hp: Math.round(proto.baseHp * hpScalingMult),
-      speed: Math.min(160, Math.round(proto.baseSpeed * spdMult)),
+      hp: Math.round(proto1.baseHp * hpScalingMult * (primaryType === 'swarm' ? 0.3 : 1.0)),
+      speed: Math.min(180, Math.round(proto1.baseSpeed * spdMult)),
       bounty: primaryBounty,
-      interval: Math.max(0.2, 0.8 - w * 0.01)
+      // Swarm спавнится плотно (0.05с), EMP - очень редко (1.8с), остальные обычно (0.6с)
+      interval: primaryType === 'swarm' ? 0.05 : (primaryType === 'emp_bomber' ? 1.8 : Math.max(0.2, 0.7 - w * 0.01)),
+      clumps: primaryType === 'swarm' ? Math.ceil(totalCount / 10) : 0 // Для роя можно использовать логику кластеров
     });
 
     if (secType && secCount > 0) {
-      const secProto = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[secType]) ? ENEMY_CONFIGS[secType] : proto;
       const secBounty = Math.max(1, Math.floor((targetWaveBounty * (1 - primaryBountyRatio)) / secCount));
+      const proto2 = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[secType]) ? ENEMY_CONFIGS[secType] : { baseHp: 30, baseSpeed: 50 };
 
       spawns.push({
         type: secType,
         isBoss: false,
         isMiniBoss: false,
         count: secCount,
-        hp: Math.round(secProto.baseHp * hpScalingMult * 0.85),
-        speed: Math.min(160, Math.round(secProto.baseSpeed * spdMult)),
+        hp: Math.round(proto2.baseHp * hpScalingMult * (secType === 'swarm' ? 0.3 : 0.85)),
+        speed: Math.min(180, Math.round(proto2.baseSpeed * spdMult)),
         bounty: secBounty,
-        interval: 0.6
+        interval: secType === 'swarm' ? 0.05 : (secType === 'emp_bomber' ? 2.0 : 0.6),
+        clumps: secType === 'swarm' ? Math.ceil(secCount / 10) : 0
       });
     }
   }
 
-  return { wave: w, delayAfter: 5.0, spawns };
+  return { wave: w, delayAfter: 6.0, spawns };
 }
 
 function isOverdriveUnlocked() {
