@@ -5306,11 +5306,19 @@ function renderNebulaCache(w, h, dpr) {
       if (tr <= 0) { tintIdx = t; break; }
     }
 
-    const sp = starSprites[cls][tintIdx];
-    const px = sx * pw;
-    const py = sy * ph;
+    const px = Math.round(sx * pw);
+    const py = Math.round(sy * ph);
     c.globalAlpha = alpha;
-    c.drawImage(sp.canvas, px - sp.half, py - sp.half);
+    if (cls >= 3) {
+      c.fillStyle = STAR_TINTS[tintIdx].c || '#ffffff';
+      c.fillRect(px - 1, py, 3, 1);
+      c.fillRect(px, py - 1, 1, 3);
+      c.fillStyle = '#ffffff';
+      c.fillRect(px, py, 1, 1);
+    } else {
+      c.fillStyle = '#ffffff';
+      c.fillRect(px, py, cls >= 1 ? 2 : 1, cls >= 1 ? 2 : 1);
+    }
   }
   c.restore();
 
@@ -5318,9 +5326,10 @@ function renderNebulaCache(w, h, dpr) {
 }
 
 function getDpr() {
-  let a = 1;
-  try { a = ctx.getTransform().a; } catch (e) {}
-  return Math.min(2, a || 1);
+  if (typeof window !== 'undefined' && window.devicePixelRatio) {
+    return window.devicePixelRatio;
+  }
+  return 1;
 }
 
 function isMenuSceneActive() {
@@ -5444,9 +5453,6 @@ function updateAndDrawStars(w, h, now) {
   lastStarUpdateTime = now;
   const time = now / 1000;
 
-  const dpr = getDpr();
-  ensureStarSprites(dpr);
-
   const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low');
   const activeCount = isLowPerf ? Math.min(synthStars.length, TWINKLE_STAR_COUNT_LOW) : synthStars.length;
 
@@ -5464,22 +5470,45 @@ function updateAndDrawStars(w, h, now) {
     const lifeProgress = star.life / star.maxLife;
     const fade = Math.min(1, Math.sin(lifeProgress * Math.PI) * 3);
 
-    // выразительное мягкое мерцание (в битве приглушаем яркость на 45%)
+    // Выразительное мерцание (в битве приглушаем яркость на 45%)
     const combatStarMult = isMenuSceneActive() ? 1.0 : 0.55;
     const twinkle = 0.55 + 0.45 * Math.sin(time * star.twinkleSpeed + star.twinklePhase);
     const alpha = star.baseAlpha * twinkle * fade * combatStarMult;
     if (alpha <= 0.02) continue;
 
-    const sp = starSprites[star.cls][star.tint];
-    const px = star.x * w;
-    const py = star.y * h;
+    // Выравниваем координаты строго по физическим пикселям экрана (устраняет расфокус)
+    const px = Math.round(star.x * w);
+    const py = Math.round(star.y * h);
 
     ctx.globalAlpha = alpha;
-    ctx.drawImage(sp.canvas, px - sp.half / dpr, py - sp.half / dpr, sp.size / dpr, sp.size / dpr);
+
+    // Определяем цвет звезды по ее классу и оттенку
+    const starColor = (typeof STAR_TINTS !== 'undefined' && STAR_TINTS[star.tint]) 
+      ? STAR_TINTS[star.tint].c || STAR_TINTS[star.tint] 
+      : '#cfe6ff';
+
+    // Рендерим четкие геометрические ядра звезд в зависимости от величины (star.cls)
+    if (star.cls >= 3) {
+      // Крупные яркие звезды (классы 3 и 4): резкий белый центр + микро-лучики
+      ctx.fillStyle = starColor;
+      ctx.fillRect(px - 1, py, 3, 1);
+      ctx.fillRect(px, py - 1, 1, 3);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px, py, 1, 1);
+    } else if (star.cls >= 1) {
+      // Средние звезды (классы 1 и 2): плотное ядро 2x2 пикселя
+      ctx.fillStyle = starColor;
+      ctx.fillRect(px, py, 2, 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px, py, 1, 1);
+    } else {
+      // Мелкие фоновые звезды (класс 0): резкая точечная искра 1x1 пиксель
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(px, py, 1, 1);
+    }
   }
   ctx.restore();
 }
-//------------------------------------------------------------
 
 let triangleLogoCache = null;
 let triangleLogoCacheKey = '';
