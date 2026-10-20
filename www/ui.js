@@ -1476,7 +1476,8 @@ function updateModeSwitcherUI() {
   if (rulesBanner) {
     if (currentLevelMode === 'overdrive') {
       rulesBanner.className = 'mode-rules-banner hardcore-rules';
-      rulesBanner.innerHTML = `1 💖 BASE  -  1.2 SPEED & ENRAGED MOBS`;
+      const hpHeartSvg = `<span style="display:inline-flex; align-items:center; vertical-align:middle; filter:drop-shadow(0 0 5px rgba(240,95,159,0.8)); margin:0 2px;"><svg width="13" height="12" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#f05f9f"/></svg></span>`;
+      rulesBanner.innerHTML = `1 ${hpHeartSvg} BASE  —  1.2 SPEED & ENRAGED MOBS`;
     } else if (currentLevelMode === 'endless') {
       rulesBanner.className = 'mode-rules-banner endless-rules';
       const prismIcon = typeof getPrismSvg === 'function' ? getPrismSvg(13, 'vertical-align: middle; display: inline-block; margin: 0 1px 2px 1px;') : '';
@@ -3086,7 +3087,8 @@ function toggleSettingPerf(isChecked) {
     const levelsScreen = document.getElementById('levelsScreen');
     if (!levelsScreen || levelsScreen.classList.contains('hidden')) return;
 
-    if (e.target && e.target.closest && e.target.closest('button, .part-nav-btn, .level-card')) {
+    // Игнорируем только стрелки пагинации, переключатель режимов и кнопку выхода
+    if (e.target && e.target.closest && e.target.closest('.part-nav-btn, .mode-3way-tab, .levels-main-menu-btn, .hud-gear-btn')) {
       isPointerDown = false;
       return;
     }
@@ -5008,8 +5010,8 @@ function ridged(x, y, oct) {
 // [UI208] Cosmic nebula and baked starfield texture renderer.
 
 const NEBULA_DENSITY = 1.0;        // Overall nebula brightness and density (0.7 - 1.6).
-const NEBULA_LOWRES_MAX = 560;     // Nebula resolution cap in high-performance mode.
-const NEBULA_LOWRES_PERF = 340;    // Reduced nebula resolution cap for low-performance mode.
+const NEBULA_LOWRES_MAX = 1280;     // Nebula resolution cap in high-performance mode.
+const NEBULA_LOWRES_PERF = 640;    // Reduced nebula resolution cap for low-performance mode.
 
 // [UI208.01] Nebula color clusters aligned with logo gradient (pink-purple left, cyan right, muted bottom).
 const NEBULA_CLUSTERS = [

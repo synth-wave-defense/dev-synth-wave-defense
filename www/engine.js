@@ -1020,8 +1020,6 @@ function startEndlessMatch() {
   gameState = 'PLAYING';
   lastTime = performance.now();
   safeTrack('endless_start', { runsUsed: endlessDailyRunsUsed });
-
-  startWave();
 }
 
 function reallyStartLevel(lvl) {

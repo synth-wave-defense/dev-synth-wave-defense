@@ -183,8 +183,13 @@ body {
 
 .daily-bonus-quick-btn {
   position: fixed;
-  top: max(78px, calc(env(safe-area-inset-top) + 62px));
-  right: max(16px, env(safe-area-inset-right));
+/* Ровно под нижней кромкой верхней панели с аккуратным отступом */
+  top: max(78px, calc(env(safe-area-inset-top) + 64px));
+  
+  /* Идеальное выравнивание по центру шестеренки:
+     на узких экранах отступ равен правому паддингу бара (9px + safe-area),
+     на экранах шире 960px кнопка жестко фиксируется ровно под шестеренкой */
+  right: max(max(25px, calc(env(safe-area-inset-right) + 9px)), calc(50vw - 480px + 9px));
   width: 36px;
   height: 36px;
   border-radius: 12px;
@@ -196,7 +201,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #00e5ff;
+  color: #8ef3ff;
   cursor: pointer;
   z-index: 300;
   box-sizing: border-box;
@@ -3008,50 +3013,18 @@ body {
 
 .mode-overdrive-active .part-nav-btn,
 .overdrive-active .part-nav-btn {
-  background: #0a172c;
-  border-color: rgba(255, 47, 208, 0.6);
-  color: #ff2fd0;
+  background: rgba(8, 12, 24, 0.6);
+  border-color: rgba(140, 200, 255, 0.2);
+  color: #dff9ff;
 }
 
 .mode-overdrive-active .part-nav-btn:hover:not(:disabled),
 .overdrive-active .part-nav-btn:hover:not(:disabled) {
-  background: rgba(255, 47, 208, 0.2);
-  border-color: #ff2fd0;
-  box-shadow: 0 0 14px rgba(255, 47, 208, 0.4);
+  background: rgba(140, 200, 255, 0.2);
+  border-color: #00e5ff;
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.3);
 }
 
-.mode-overdrive-active .level-card-btn,
-.overdrive-active .level-card-btn {
-  border-color: rgba(255, 47, 208, 0.4);
-  background: #140412;
-}
-
-.mode-overdrive-active .level-card-btn:hover:not(:disabled),
-.overdrive-active .level-card-btn:hover:not(:disabled) {
-  border-color: #ff2fd0;
-  box-shadow: 0 0 16px rgba(255, 47, 208, 0.5);
-}
-
-.mode-overdrive-active .level-card-btn.current,
-.overdrive-active .level-card-btn.current {
-  background: linear-gradient(180deg, rgba(255, 47, 208, 0.25) 0%, rgba(102, 0, 59, 0.12) 100%);
-  border: 1.8px solid #ff2fd0;
-  box-shadow: 0 0 20px rgba(255, 47, 208, 0.55);
-}
-
-.mode-overdrive-active .level-card-btn.cleared,
-.overdrive-active .level-card-btn.cleared {
-  border-color: #ff2fd0;
-  box-shadow: 0 0 14px rgba(255, 47, 208, 0.3);
-  background: linear-gradient(180deg, rgba(42, 8, 36, 0.95) 0%, rgba(20, 4, 18, 0.95) 100%);
-}
-
-.mode-overdrive-active .level-card-btn.locked,
-.overdrive-active .level-card-btn.locked {
-  background: #120412;
-  border-color: #2b0a26;
-  opacity: 0.7;
-}
 
 .level-card-overdrive-badge {
   display: flex;
