@@ -1527,6 +1527,19 @@ function renderEndlessDashboardUI() {
 
   if (mapEl) mapEl.textContent = `CHAPTER ${currentLevelSection}`;
 
+  // НОВЫЙ БЛОК: Визуально выключаем стрелки, если идти некуда
+  const prevBtn = document.getElementById('endlessNavPrev');
+  const nextBtn = document.getElementById('endlessNavNext');
+  
+  if (prevBtn) {
+    prevBtn.disabled = currentLevelSection <= 1;
+  }
+  if (nextBtn) {
+    const nextSecUnlocked = (typeof devMode !== 'undefined' && devMode) || maxUnlockedLevel > currentLevelSection * LEVELS_PER_SECTION;
+    nextBtn.disabled = currentLevelSection >= (typeof TOTAL_SECTIONS !== 'undefined' ? TOTAL_SECTIONS : 5) || !nextSecUnlocked;
+  }
+  // КОНЕЦ НОВОГО БЛОКА
+
   if (ticketEl) {
     const status = (typeof getEndlessEntryStatus === 'function') ? getEndlessEntryStatus() : { text: 'FREE (1/1)' };
     let statusText = status.text ? status.text.toUpperCase() : 'FREE (1/1)';
@@ -1536,104 +1549,31 @@ function renderEndlessDashboardUI() {
 }
 
 function navEndlessLevel(dir) {
-  let nextSec = currentLevelSection + dir;
-  if (nextSec < 1) nextSec = 1;
-  if (nextSec > TOTAL_SECTIONS) nextSec = TOTAL_SECTIONS;
-  currentLevelSection = nextSec;
+  const target = currentLevelSection + dir;
+  if (target < 1 || (typeof TOTAL_SECTIONS !== 'undefined' && target > TOTAL_SECTIONS)) return;
+  
+  // Проверяем, открыта ли следующая глава (сектор) у игрока
+  const isTargetUnlocked = (typeof devMode !== 'undefined' && devMode) || maxUnlockedLevel > (target - 1) * LEVELS_PER_SECTION;
+  if (!isTargetUnlocked) {
+    if (typeof showHintToast === 'function') showHintToast('Chapter locked!');
+    return;
+  }
+  
+  currentLevelSection = target;
   if (typeof sfx === 'function') sfx('click');
   renderEndlessDashboardUI();
 }
+
 window.navEndlessLevel = navEndlessLevel;
 
 window.selectLevelMode = selectLevelMode;
 
-function openEndlessLoadoutModal() {
-  const unlocked = (typeof isEndlessUnlocked === 'function') ? isEndlessUnlocked() : false;
-  if (!unlocked) {
+function confirmStartEndlessRun() {
+  if (!isEndlessUnlocked()) {
     if (typeof showHintToast === 'function') showHintToast('Complete Campaign Level 15 to unlock Endless Arena!');
     return;
   }
 
-  const modal = document.getElementById('endlessLoadoutModal');
-  if (!modal) return;
-
-  if (typeof refreshLoadoutForProgress === 'function') refreshLoadoutForProgress();
-
-  const bestEl = document.getElementById('endlessModalBest');
-  if (bestEl) bestEl.textContent = `BEST: WAVE ${endlessBestWave || 0}`;
-
-  renderEndlessModalGrid();
-  updateEndlessModalButton();
-
-  modal.classList.remove('hidden');
-
-  updateDailyBonusBtnVisibility();
-}
-
-function closeEndlessLoadoutModal() {
-  const modal = document.getElementById('endlessLoadoutModal');
-  if (modal) modal.classList.add('hidden');
-
-  updateDailyBonusBtnVisibility();
-}
-
-function updateEndlessModalButton() {
-  const countEl = document.getElementById('endlessModalCount');
-  const btnText = document.getElementById('endlessStartBtnText');
-
-  if (countEl) {
-    countEl.textContent = `${selectedLoadout.length}/${LOADOUT_SIZE} TOWERS SELECTED`;
-  }
-
-  if (btnText) {
-    const status = (typeof getEndlessEntryStatus === 'function') ? getEndlessEntryStatus() : { text: 'FREE ENTRY' };
-    btnText.textContent = `ENTER ARENA (${status.text})`;
-  }
-}
-
-function renderEndlessModalGrid() {
-  const grid = document.getElementById('endlessModalGrid');
-  if (!grid) return;
-  const pool = (typeof getPlayerUnlockedTowers === 'function') ? getPlayerUnlockedTowers() : ['gun'];
-
-  grid.innerHTML = '';
-  pool.forEach(type => {
-    const conf = TOWER_CONFIGS[type];
-    if (!conf) return;
-    const isSelected = selectedLoadout.includes(type);
-    const isFull = selectedLoadout.length >= LOADOUT_SIZE;
-
-    const btn = document.createElement('div');
-    btn.className = 'loadout-tower-btn'
-      + (isSelected ? ' selected' : '')
-      + (!isSelected && isFull ? ' blocked' : '');
-    btn.innerHTML = `
-      <div class="tower-btn-icon">${TOWER_ICONS[type] || ''}</div>
-      <span class="tower-btn-title">${TOWER_NAMES[type] || type}</span>
-    `;
-    btn.onclick = (e) => { e.stopPropagation(); toggleEndlessLoadoutTower(type); };
-    grid.appendChild(btn);
-  });
-}
-
-function toggleEndlessLoadoutTower(type) {
-  if (typeof sfx === 'function') sfx('tap');
-  const idx = selectedLoadout.indexOf(type);
-  if (idx !== -1) {
-    selectedLoadout.splice(idx, 1);
-  } else {
-    if (selectedLoadout.length >= LOADOUT_SIZE) {
-      if (typeof showHintToast === 'function') showHintToast(`Deselect a tower first (${LOADOUT_SIZE} max)`);
-      return;
-    }
-    selectedLoadout.push(type);
-  }
-  renderEndlessModalGrid();
-  updateEndlessModalButton();
-  if (typeof saveGameSoon === 'function') saveGameSoon();
-}
-
-function confirmStartEndlessRun() {
   if (!selectedLoadout || selectedLoadout.length === 0) {
     if (typeof showHintToast === 'function') showHintToast('Select at least 1 tower!');
     return;
@@ -1644,7 +1584,6 @@ function confirmStartEndlessRun() {
   const launch = () => {
     endlessDailyRunsUsed++;
     if (typeof saveGame === 'function') saveGame();
-    closeEndlessLoadoutModal();
     if (typeof startEndlessMatch === 'function') startEndlessMatch();
   };
 
@@ -1668,11 +1607,9 @@ function confirmStartEndlessRun() {
     launch();
   }
 }
+window.confirmStartEndlessRun = confirmStartEndlessRun;
 
 // Global Exports
-window.openEndlessLoadoutModal = openEndlessLoadoutModal;
-window.closeEndlessLoadoutModal = closeEndlessLoadoutModal;
-window.confirmStartEndlessRun = confirmStartEndlessRun;
 if (typeof getEndlessEntryStatus !== 'undefined') {
   window.getEndlessEntryStatus = getEndlessEntryStatus;
 }
@@ -2367,8 +2304,8 @@ function updateDailyBonusBtnVisibility() {
 
   const modals = [
     'settingsScreen', 'upgradesScreen', 'shopScreen', 'battlePassScreen',
-    'dailyLoginModal', 'levelsScreen', 'endlessLoadoutModal',
-    'giveUpConfirmModal', 'gameCompletionModal', 'recommendationsModal',
+    'dailyLoginModal', 'levelsScreen',
+    'giveUpConfirmModal', 'gameCompletionModal',
     'milestoneScreen', 'victoryScreen', 'defeatScreen'
   ];
 

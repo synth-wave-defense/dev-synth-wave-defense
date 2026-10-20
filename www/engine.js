@@ -459,7 +459,6 @@ function applyPaletteColors(paletteId) {
   }
 }
 
-let consecutiveFails = 0;
 let reviveUsedThisMatch = false;
 let reviveTimerInterval = null;
 let reviveRemainingSeconds = 3;
@@ -498,7 +497,6 @@ function serializeSaveData() {
     dailyGiftsClaimedDate,
     dailyGiftsClaimedCount,
     timeModTier,
-    consecutiveFails,
     lastLoginClaimDate,
     loginStreakDay,
     bpXp,
@@ -571,7 +569,6 @@ async function loadGame() {
   if (typeof data.dailyGiftsClaimedDate === 'string') dailyGiftsClaimedDate = data.dailyGiftsClaimedDate;
   if (typeof data.dailyGiftsClaimedCount === 'number') dailyGiftsClaimedCount = data.dailyGiftsClaimedCount;
   if (typeof data.timeModTier === 'number') timeModTier = data.timeModTier;
-  if (typeof data.consecutiveFails === 'number' && data.consecutiveFails >= 0) consecutiveFails = data.consecutiveFails;
   if (typeof data.lastLoginClaimDate === 'string') lastLoginClaimDate = data.lastLoginClaimDate;
   if (typeof data.loginStreakDay === 'number' && data.loginStreakDay >= 1 && data.loginStreakDay <= 7) loginStreakDay = data.loginStreakDay;
 
@@ -1214,12 +1211,6 @@ function handleHardwareBack() {
     return;
   }
 
-  const endlessModal = document.getElementById('endlessLoadoutModal');
-  if (endlessModal && !endlessModal.classList.contains('hidden')) {
-    if (typeof closeEndlessLoadoutModal === 'function') closeEndlessLoadoutModal();
-    return;
-  }
-
   const bpScreen = document.getElementById('battlePassScreen');
   if (bpScreen && !bpScreen.classList.contains('hidden')) {
     if (typeof closeBattlePassScreen === 'function') closeBattlePassScreen();
@@ -1431,7 +1422,6 @@ function triggerVictory() {
   lastVictoryDiamondsReward = reward;
   hasClaimedX2ThisLevel = false;
 
-  consecutiveFails = 0;
 
   if (!isOverdriveMode) {
     restoreNormalVictoryRewardBox();
@@ -1635,12 +1625,6 @@ function triggerDefeat() {
 
 function registerDefeatOutcome() {
   safeTrack('level_failed', { level: currentLevel, wave });
-  consecutiveFails++;
-  if (consecutiveFails >= 3) {
-    consecutiveFails = 0;
-    showRecommendationsModal();
-  }
-  saveGameSoon();
 }
 
 function showGameCompletionModal() {
@@ -1650,25 +1634,6 @@ function showGameCompletionModal() {
 
 function closeGameCompletionModal() {
   const modal = document.getElementById('gameCompletionModal');
-  if (modal) modal.classList.add('hidden');
-}
-
-function showRecommendationsModal() {
-  const modal = document.getElementById('recommendationsModal');
-  const maxTechItem = document.getElementById('recMaxTechItem');
-  if (!modal) return;
-
-  const lvl = (typeof currentLevel !== 'undefined') ? currentLevel : 1;
-  const showMaxTech = lvl >= 11;
-  if (maxTechItem) {
-    maxTechItem.style.display = showMaxTech ? 'list-item' : 'none';
-  }
-
-  modal.classList.remove('hidden');
-}
-
-function closeRecommendationsModal() {
-  const modal = document.getElementById('recommendationsModal');
   if (modal) modal.classList.add('hidden');
 }
 
@@ -1798,7 +1763,10 @@ function updateDefeatWaveLine() {
       else recBadge.classList.add('hidden');
     }
     if (lootLine) {
-      lootLine.textContent = `REWARDS: +${lastEndlessEarnedDiamonds} 💎 | +${totalPrismsGranted} 🔮`;
+      const diamondSvg = `<svg class="loot-res-svg diamond" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.3)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
+      const prismSvg = `<svg class="loot-res-svg prism" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.3)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
+
+      lootLine.innerHTML = `REWARDS: +${lastEndlessEarnedDiamonds} ${diamondSvg} <span class="loot-line-sep">|</span> +${totalPrismsGranted} ${prismSvg}`;
     }
     if (doubleBtn) {
       if (lastEndlessEarnedDiamonds > 0 || lastEndlessEarnedPrisms > 0) {
@@ -2660,7 +2628,6 @@ function handleClearSaveClick() {
   dailyGiftsClaimedDate = '';
   dailyGiftsClaimedCount = 0;
   timeModTier = 0;
-  consecutiveFails = 0;
   lastLoginClaimDate = '';
   loginStreakDay = 1;
 

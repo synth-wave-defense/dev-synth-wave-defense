@@ -2403,7 +2403,7 @@ body {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: 340px;
+  max-width: 340px; /* Было 340px */
   margin: 0 auto 4px auto;
 }
 
@@ -2457,7 +2457,7 @@ body {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 340px;
+  max-width: 380px; /* Было 340px */
   margin: 0 auto 16px auto;
 }
 
@@ -2598,11 +2598,11 @@ body {
 }
 
 .mode-rules-banner.hardcore-rules {
-  color: #ffd1f4;
+  color: #94a3b8;
 }
 
 .mode-rules-banner.endless-rules {
-  color: #f0abfc;
+  color: #94a3b8;
 }
 
 /* Endless Arena Dashboard & Highway Card (Option 1) */
@@ -2610,7 +2610,7 @@ body {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 340px;
+  max-width: 380px;
   margin: 0 auto;
 }
 
@@ -2819,20 +2819,6 @@ body {
 
 .levels-main-menu-btn svg {
   stroke: #ffffff;
-}
-
-#levelsScreen.mode-overdrive-active .levels-main-menu-btn {
-  background: linear-gradient(180deg, rgba(38, 8, 34, 0.8) 0%, rgba(18, 3, 16, 0.9) 100%);
-  border-color: rgba(255, 47, 208, 0.8);
-  box-shadow: 0 0 14px rgba(255, 47, 208, 0.35);
-  color: #ffffff;
-}
-
-#levelsScreen.mode-endless-active .levels-main-menu-btn {
-  background: linear-gradient(180deg, rgba(30, 8, 40, 0.8) 0%, rgba(15, 3, 20, 0.9) 100%);
-  border-color: rgba(217, 70, 239, 0.8);
-  box-shadow: 0 0 14px rgba(217, 70, 239, 0.35);
-  color: #ffffff;
 }
 
 .od-clear-skull {
@@ -3163,12 +3149,23 @@ body {
   50%      { opacity: 0.95; transform: scale(1.02); }
 }
 
+/* 1. Убираем ограничение с родительских контейнеров */
+.levels-content-zone,
+.levels-campaign-view {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 2. Жестко растягиваем сетку */
 .levels-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 6px;
-  max-width: 340px;
-  width: 100%;
+  gap: 10px; /* Ваш старый отступ */
+  width: 100%; /* Заставляем сетку занять 100% доступной ширины */
+  min-width: 320px; /* Гарантируем минимальную ширину */
+  max-width: 340px; /* Ограничитель, чтобы на планшетах они не стали гигантскими */
   margin: 0 auto;
   flex: none;
   will-change: transform, opacity;
@@ -3210,21 +3207,27 @@ body {
 .grid-swipe-in-left {
   animation: gridSwipeInLeft 0.22s cubic-bezier(0, 0, 0.2, 1) forwards;
 }
+
+/* 3. Жестко растягиваем саму кнопку */
 .level-card-btn {
-  aspect-ratio: 1 / 1;
+  width: 100%; /* ЗАСТАВЛЯЕМ кнопку растянуться на всю ширину своей колонки (1fr) */
+  aspect-ratio: 1 / 1; 
+  height: auto; 
   background: rgba(8, 12, 24, 0.72);
   border: 1px solid rgba(0, 229, 255, 0.45);
-  border-radius: 16px;
+  border-radius: 12px; 
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2px 0;
-  gap: 2px;
+  padding: 0; /* Убираем padding, который мог сжимать контент */
+  gap: 4px;
   cursor: pointer;
   transition: all 0.15s;
   outline: none;
+  box-sizing: border-box; /* Гарантируем правильный расчет ширины */
 }
+
 .level-card-btn:hover:not(:disabled) {
   border-color: #00e5ff;
   box-shadow: 0 0 14px rgba(0, 229, 255, 0.4);
@@ -3364,74 +3367,6 @@ body {
 .endless-arena-banner.locked .endless-banner-title {
   color: #94a3b8;
   text-shadow: none;
-}
-
-/* Endless Loadout Modal */
-.endless-modal-card {
-  background: rgba(10, 14, 28, 0.96);
-  border: 1px solid rgba(0, 229, 255, 0.4);
-  border-radius: 20px;
-  padding: 20px;
-  width: 90%;
-  max-width: 360px;
-  box-shadow: 0 0 32px rgba(0, 229, 255, 0.25);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  box-sizing: border-box;
-}
-.endless-modal-badge {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 2px;
-  color: #d946ef;
-  text-shadow: 0 0 8px rgba(217, 70, 239, 0.8);
-}
-.endless-modal-title {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 22px;
-  font-weight: 900;
-  letter-spacing: 1.5px;
-  color: #00e5ff;
-  text-shadow: 0 0 14px rgba(0, 229, 255, 0.9);
-  margin-top: 2px;
-}
-.endless-modal-best {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 13px;
-  font-weight: 800;
-  color: #f472b6;
-  margin-top: 4px;
-}
-.endless-modal-subtitle {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  color: #94a3b8;
-  margin: 14px 0 10px 0;
-}
-.endless-modal-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  width: 100%;
-  margin-bottom: 12px;
-}
-.endless-modal-count {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 12px;
-  font-weight: 800;
-  color: #00e5ff;
-  margin-bottom: 16px;
-}
-.endless-modal-actions {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
 /* [CSS106.03] Global tech tree upgrade cards and branch lists */
@@ -5439,4 +5374,32 @@ input:focus,
   cursor: not-allowed;
   box-shadow: none !important;
   transform: none !important;
+}
+
+/* Выравнивание и свечение иконок ресурсов в строке наград Endless */
+.endless-loot-line {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.loot-res-svg {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+  margin-top: -1px;
+}
+
+.loot-res-svg.diamond {
+  filter: drop-shadow(0 0 5px rgba(0, 229, 255, 0.75));
+}
+
+.loot-res-svg.prism {
+  filter: drop-shadow(0 0 5px rgba(217, 70, 239, 0.75));
+}
+
+.loot-line-sep {
+  opacity: 0.45;
+  margin: 0 4px;
 }

@@ -1118,8 +1118,8 @@
         </div>
       </div>
 
-      <!-- Battle CTA Button -->
-      <button class="endless-battle-btn" id="endlessDeployBtn" onclick="openEndlessLoadoutModal()">
+<!-- Battle CTA Button -->
+      <button class="endless-battle-btn" id="endlessDeployBtn" onclick="confirmStartEndlessRun()">
         <span class="battle-btn-text">BATTLE</span>
         <span class="battle-btn-divider"></span>
         <div class="battle-btn-status" id="endlessDeployTicketText">FREE (1/1)</div>
@@ -1153,28 +1153,6 @@
   </div>
 </div>
 
-<!-- Endless Loadout Selection Modal -->
-<div class="overlay-screen result-screen hidden" id="endlessLoadoutModal" style="z-index: 10001;">
-  <div class="endless-modal-card">
-    <div class="endless-modal-header">
-      <div class="endless-modal-badge">SURVIVAL ARENA</div>
-      <div class="endless-modal-title">ENDLESS ARENA</div>
-      <div class="endless-modal-best" id="endlessModalBest">BEST: WAVE 0</div>
-    </div>
-    <div class="endless-modal-subtitle">SELECT YOUR LOADOUT</div>
-    <div class="endless-modal-grid" id="endlessModalGrid"></div>
-    <div class="endless-modal-count" id="endlessModalCount">3/3 TOWERS SELECTED</div>
-    <div class="endless-modal-actions">
-      <button class="result-btn result-btn-primary" id="endlessStartBtn" onclick="confirmStartEndlessRun()">
-        <span id="endlessStartBtnText">ENTER ARENA</span>
-      </button>
-      <button class="result-btn" onclick="closeEndlessLoadoutModal()" style="margin-top: 8px;">
-        <span>CANCEL</span>
-      </button>
-    </div>
-  </div>
-</div>
-
 <div class="overlay-screen result-screen hidden" id="giveUpConfirmModal" style="z-index: 10000;">
   <div class="result-stack" style="background: rgba(10, 14, 28, 0.95); border: 1px solid rgba(0, 229, 255, 0.3); border-radius: 16px; padding: 24px; max-width: 320px;">
     <div class="result-heading seq-in" style="margin-bottom: 12px;">
@@ -1183,8 +1161,25 @@
     <div class="result-subline" style="text-align: center; margin-bottom: 16px; color: #94a3b8;">
       Progress in battle will be lost.
     </div>
-    <button class="result-btn result-btn-primary" onclick="confirmGiveUp()"><span>Give Up</span></button>
-    <button class="result-btn" onclick="cancelGiveUp()" style="margin-top: 8px;"><span>Cancel</span></button>
+
+    <!-- Точно такая же кнопка сдачи, как в меню паузы: те же классы, стили и белый флажок -->
+    <button class="result-btn-pill result-btn-giveup" onclick="confirmGiveUp()">
+      <svg class="giveup-flag-icon" viewBox="0 0 16 18" fill="none">
+        <line x1="2" y1="1" x2="2" y2="17" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
+        <polygon points="2,2 14,2 11,6.5 14,11 2,11" fill="#ffffff" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"/>
+        <circle cx="2" cy="1" r="1.3" fill="#ffffff"/>
+      </svg>
+      <span>GIVE UP</span>
+    </button>
+
+    <!-- Кнопка Cancel со стрелкой назад, как в меню перехода -->
+    <button class="result-btn" onclick="cancelGiveUp()" style="margin-top: 8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      <span>CANCEL</span>
+    </button>
   </div>
 </div>
 
@@ -1294,24 +1289,6 @@
       Thank you!
     </div>
     <button class="result-btn result-btn-primary" onclick="closeGameCompletionModal()" style="width: 100%;"><span>OK</span></button>
-  </div>
-</div>
-
-<div class="overlay-screen result-screen hidden" id="recommendationsModal" style="z-index: 10005;">
-  <div class="result-stack" style="background: rgba(10, 14, 28, 0.96); border: 1px solid rgba(0, 229, 255, 0.35); border-radius: 16px; padding: 22px; max-width: 340px; text-align: left;">
-    <div class="result-heading seq-in" style="margin-bottom: 12px; text-align: center;">
-      <div class="result-title" style="font-size: 22px; color: #00e5ff;">TO WIN TRY</div>
-    </div>
-    <ul id="recommendationsList" style="margin: 0 0 14px 20px; padding: 0; color: #f1f5f9; font-size: 14px; line-height: 1.6; list-style-type: disc;">
-      <li>different towers</li>
-      <li>various positions</li>
-      <li>upgrading first</li>
-      <li id="recMaxTechItem" style="display:none;">maxing tech tree</li>
-    </ul>
-    <div style="font-size: 13px; color: #94a3b8; line-height: 1.5; margin-bottom: 18px; text-align: center;">
-      To get diamonds (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 1px;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>) complete previous easier levels, visit GIFTS & SHOP.
-    </div>
-    <button class="result-btn result-btn-primary" onclick="closeRecommendationsModal()" style="width: 100%;"><span>OK</span></button>
   </div>
 </div>
 
@@ -1455,8 +1432,8 @@
     </button>
     <button class="result-skip-btn hidden" id="reviveSkipBtn" onclick="skipEmergencyRevive()">Skip</button>
 
-    <button class="result-btn result-btn-grunt seq-in seq-d2" id="defeatRetryBtn" onclick="retryLevel()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;">
+<button class="result-btn result-btn-primary seq-in seq-d2" id="defeatRetryBtn" onclick="retryLevel()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;">
         <path d="M21.5 2v6h-6M2.5 22v-6h6"/>
         <path d="M2 11.5a10 10 0 0 1 18.8-4.3L21.5 8M2.5 16l1 1.2A10 10 0 0 0 22 12.5"/>
       </svg>
