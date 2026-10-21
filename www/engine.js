@@ -256,7 +256,7 @@ function getEndlessEntryStatus() {
     const remainingAdRuns = 3 - endlessDailyRunsUsed;
     return { type: 'ad', text: `WATCH AD (${remainingAdRuns}/2)`, label: `WATCH AD (${remainingAdRuns}/2)`, cost: 0 };
   } else {
-    return { type: 'diamonds', text: '15 💎', label: '15 💎', cost: 15 };
+	return { type: 'diamonds', text: '15 DIAMONDS', label: '15 DIAMONDS', cost: 15 };
   }
 }
 window.getEndlessEntryStatus = getEndlessEntryStatus;
@@ -1698,7 +1698,13 @@ function claimOverdriveBonusPrism() {
     if (typeof updatePrismUI === 'function') updatePrismUI();
     if (claimBtn) {
       claimBtn.disabled = true;
-      claimBtn.innerHTML = '<span>CLAIMED (+1 🔮)</span>';
+      const prismSvg = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 3px;">
+          <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.35)"/>
+          <polyline points="3 12 12 15 21 12"/>
+          <line x1="12" y1="2" x2="12" y2="22"/>
+        </svg>`;
+      claimBtn.innerHTML = `<span style="display:inline-flex; align-items:center;">CLAIMED +1 ${prismSvg}</span>`;
     }
     sfx('reward');
     saveGame();
@@ -1843,13 +1849,24 @@ function triggerVictory() {
     if (claimBtn) {
       claimBtn.disabled = false;
       claimBtn.classList.remove('hidden');
-      const btnText = noAdsPurchased ? 'FREE: +1 BONUS PRISM' : 'WATCH AD: +1 BONUS PRISM';
+
+      const adSvg = !noAdsPurchased ? `
+        <svg width="16" height="13" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:6px;">
+          <rect x="0" y="0" width="16" height="13" rx="2.5" fill="none" stroke="#ffffff" stroke-width="1.6"/>
+          <polygon points="6,3.5 11,6.5 6,9.5" fill="#ffffff"/>
+        </svg>` : '';
+
+      const prismSvg = `
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 4px;">
+          <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.35)"/>
+          <polyline points="3 12 12 15 21 12"/>
+          <line x1="12" y1="2" x2="12" y2="22"/>
+        </svg>`;
+
+      const prefix = noAdsPurchased ? 'FREE: ' : '';
       claimBtn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="vertical-align:middle; margin-right:4px;">
-          <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.3)"/>
-          <polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/>
-        </svg>
-        <span>${btnText}</span>
+        ${adSvg}
+        <span style="display:inline-flex; align-items:center;">${prefix}CLAIM +1 ${prismSvg}</span>
       `;
       claimBtn.onclick = claimOverdriveBonusPrism;
     }

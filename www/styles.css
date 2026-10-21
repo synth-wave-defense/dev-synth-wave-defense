@@ -1460,6 +1460,30 @@ body {
 .star-slot:nth-child(3).filled::before,
 .star-slot:nth-child(3).filled::after { animation-delay: 0.52s; }
 
+.star-slot.overdrive-victory-badge {
+  width: 96px;
+  height: 76px;
+}
+
+.star-slot.overdrive-victory-badge svg {
+  width: 96px;
+  height: 76px;
+}
+
+.star-slot.overdrive-victory-badge.filled::before {
+  width: 80px;
+  height: 80px;
+  margin: -40px 0 0 -40px;
+  border-color: rgba(0, 229, 255, 0.95);
+}
+
+.star-slot.overdrive-victory-badge.filled::after {
+  width: 80px;
+  height: 80px;
+  margin: -40px 0 0 -40px;
+  background: radial-gradient(circle, rgba(240, 95, 159, 0.6), transparent 70%);
+}
+
 @keyframes starArrive {
   0%   { opacity: 0; transform: scale(0.25) rotate(-38deg);
          filter: drop-shadow(0 0 0 rgba(245, 158, 11, 0)); }

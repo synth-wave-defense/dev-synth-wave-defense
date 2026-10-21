@@ -2712,7 +2712,7 @@ function renderBattlePassScreen() {
     if (fr.type === 'diamonds') freeTitle = `+${fr.amount} ${diamondIcon}`;
     else if (fr.type === 'prisms') freeTitle = `+${fr.amount} ${prismIcon}`;
     else if (fr.type === 'ad_capsule') freeTitle = `Ad-Capsule (+2 ${prismIcon})`;
-    else if (fr.title) freeTitle = fr.title.replace(/🔮/g, prismIcon).replace(/💎/g, diamondIcon);
+    else if (fr.title) freeTitle = fr.title.replace(/[\u{1F52E}🔮]/gu, prismIcon).replace(/[\u{1F48E}💎]/gu, diamondIcon);
 
     let freeBtnHtml = '';
     if (isFreeClaimed) {
@@ -2744,7 +2744,7 @@ function renderBattlePassScreen() {
     if (pr.type === 'diamonds') premTitle = `+${pr.amount} ${diamondIcon}`;
     else if (pr.type === 'prisms') premTitle = `+${pr.amount} ${prismIcon}`;
     else if (pr.type === 'palette' || pr.type === 'perk' || pr.type === 'ultimate') {
-      premTitle = pr.title ? pr.title.replace(/🔮/g, prismIcon).replace(/💎/g, diamondIcon) : '';
+      premTitle = pr.title ? pr.title.replace(/[\u{1F52E}🔮]/gu, prismIcon).replace(/[\u{1F48E}💎]/gu, diamondIcon) : '';
     }
 
     let premBtnHtml = '';
@@ -2862,7 +2862,7 @@ function claimBpPremReward(t) {
     prisms += pr.prisms;
     diamonds += pr.diamonds;
     applyPaletteColors(pr.paletteId);
-    toast = 'ULTIMATE REWARD CLAIMED! Blood Moon + 25 🔮 + 150 💎';
+    toast = 'ULTIMATE REWARD CLAIMED! Blood Moon + 25 Prisms + 150 Diamonds';
   }
 
   updateDiamondUI();
@@ -3680,13 +3680,13 @@ function renderShopScreen() {
   const giftSub = document.getElementById('dailyGiftSubText');
   const giftBtn = document.getElementById('dailyGiftClaimBtn');
 
-  if (giftTitle) {
+if (giftTitle) {
     if (dailyGiftsClaimedCount === 0) {
-      giftTitle.textContent = '+10 Diamonds';
+      giftTitle.innerHTML = `+10 ${getDailyDiamondSvg(14)}`;
     } else if (dailyGiftsClaimedCount === 1) {
-      giftTitle.textContent = '+15 Diamonds';
+      giftTitle.innerHTML = `+15 ${getDailyDiamondSvg(14)}`;
     } else if (dailyGiftsClaimedCount === 2) {
-      giftTitle.textContent = '+20 💎 + 1 🔮 Prism';
+      giftTitle.innerHTML = `+20 ${getDailyDiamondSvg(14)} + 1 ${getDailyPrismSvg(14)}`;
     } else {
       giftTitle.textContent = 'Daily Gifts Completed';
     }
@@ -3694,11 +3694,11 @@ function renderShopScreen() {
 
   if (giftSub) {
     if (dailyGiftsClaimedCount === 0) {
-      giftSub.textContent = 'Next pack: 10 💎 (1/3)';
+      giftSub.innerHTML = `Next pack: 10 ${getDailyDiamondSvg(12)} (1/3)`;
     } else if (dailyGiftsClaimedCount === 1) {
-      giftSub.textContent = 'Next pack: 15 💎 (2/3)';
+      giftSub.innerHTML = `Next pack: 15 ${getDailyDiamondSvg(12)} (2/3)`;
     } else if (dailyGiftsClaimedCount === 2) {
-      giftSub.textContent = 'Next pack: 20 💎 + 1 🔮 Prism!';
+      giftSub.innerHTML = `Next pack: 20 ${getDailyDiamondSvg(12)} + 1 ${getDailyPrismSvg(12)}`;
     } else {
       giftSub.textContent = 'Claimed today: 3/3 packs';
     }
@@ -4101,8 +4101,8 @@ function claimDailyLoginReward(isDouble) {
 
     let toastText = isDouble ? `x2 Bonus: ` : `Day ${claimedDay}: `;
     const parts = [];
-    if (addDiamonds > 0) parts.push(`+${addDiamonds} 💎`);
-    if (addPrisms > 0) parts.push(`+${addPrisms} 🔮`);
+    if (addDiamonds > 0) parts.push(`+${addDiamonds} Diamonds`);
+    if (addPrisms > 0) parts.push(`+${addPrisms} Prisms`);
     toastText += parts.join(' ');
     showHintToast(toastText);
 
@@ -4121,13 +4121,35 @@ function renderVictoryStars(starsCount) {
   if (!row) return;
   row.innerHTML = '';
 
-  if (isOverdriveMode) {
+if (isOverdriveMode) {
     const slot = document.createElement('span');
     slot.className = 'star-slot filled overdrive-victory-badge';
     setTimeout(() => sfx('star'), 160);
     slot.innerHTML = `
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="#f04878" stroke="#f04878" stroke-width="1.8" style="filter: drop-shadow(0 0 12px #f04878);">
-        <polygon points="12 2 21 12 12 22 3 12"/>
+      <svg width="96" height="76" viewBox="0 0 48 38" fill="none" style="filter: drop-shadow(0 0 16px rgba(0, 229, 255, 0.95)) drop-shadow(0 0 32px rgba(240, 95, 159, 0.65));">
+        <!-- Левая крошечная микро-звезда (полностью белая) -->
+        <g transform="translate(1.5, 19.5) scale(0.18)">
+          <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" 
+            fill="#ffffff" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" style="filter: drop-shadow(0 0 4px #ffffff);"/>
+        </g>
+
+        <!-- Правая крошечная микро-звезда (полностью белая) -->
+        <g transform="translate(42.5, 19.5) scale(0.18)">
+          <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" 
+            fill="#ffffff" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" style="filter: drop-shadow(0 0 4px #ffffff);"/>
+        </g>
+
+        <!-- Главная звезда: центр Розовый (#f05f9f), окаймление Бирюзовое (#00e5ff) -->
+        <g transform="translate(12, 4) scale(1.0)">
+          <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" 
+            fill="#f05f9f" stroke="#00e5ff" stroke-width="1.6" stroke-linejoin="round"/>
+        </g>
+
+        <!-- 3-я микро-звезда по центру поверх основной звезды (полностью белая) -->
+        <g transform="translate(21.8, 14.5) scale(0.18)">
+          <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" 
+            fill="#ffffff" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" style="filter: drop-shadow(0 0 6px #ffffff);"/>
+        </g>
       </svg>`;
     row.appendChild(slot);
     return;
