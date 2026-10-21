@@ -2354,7 +2354,7 @@ function updateUpgradeButtonsLock() {
   ['mainUpgradesBtn', 'victoryUpgradesBtn', 'defeatUpgradesBtn'].forEach(id => {
     const btn = document.getElementById(id);
     if (!btn) return;
-    btn.disabled = !isUpgradesUnlocked;
+    btn.disabled = false;
     btn.classList.toggle('no-press-feedback', !isUpgradesUnlocked);
     btn.classList.toggle('btn-locked', !isUpgradesUnlocked);
     const isMain = id === 'mainUpgradesBtn';
