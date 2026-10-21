@@ -286,44 +286,6 @@ function getSmokeSprite() {
   return c;
 }
 
-// [UI106] Anamorphic flare and cross sprite cache.
-const FLARE_SPRITES = Object.create(null);
-function getFlareSprite(color) {
-  if (FLARE_SPRITES[color]) return FLARE_SPRITES[color];
-  const size = 128;
-  const c = document.createElement('canvas');
-  c.width = size;
-  c.height = size;
-  const fCtx = c.getContext('2d');
-  const half = size / 2;
-
-  const rad = fCtx.createRadialGradient(half, half, 2, half, half, 32);
-  rad.addColorStop(0, '#ffffff');
-  rad.addColorStop(0.3, color);
-  rad.addColorStop(1, 'transparent');
-  fCtx.fillStyle = rad;
-  fCtx.beginPath();
-  fCtx.arc(half, half, 32, 0, Math.PI * 2);
-  fCtx.fill();
-
-  const hGrad = fCtx.createLinearGradient(0, half, size, half);
-  hGrad.addColorStop(0, 'transparent');
-  hGrad.addColorStop(0.5, '#ffffff');
-  hGrad.addColorStop(1, 'transparent');
-  fCtx.fillStyle = hGrad;
-  fCtx.fillRect(0, half - 2, size, 4);
-
-  const vGrad = fCtx.createLinearGradient(half, 0, half, size);
-  vGrad.addColorStop(0, 'transparent');
-  vGrad.addColorStop(0.5, color);
-  vGrad.addColorStop(1, 'transparent');
-  fCtx.fillStyle = vGrad;
-  fCtx.fillRect(half - 1.5, 0, 3, size);
-
-  FLARE_SPRITES[color] = c;
-  return c;
-}
-
 function getGlowSprite(color) {
   if (!GLOW_SPRITES[color]) {
     GLOW_SPRITES[color] = createGlowSprite(color);
@@ -867,12 +829,6 @@ function pushParticle(p) {
   }
   particles.push(p);
 }
-
-const PRISM_ICON_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="flex:none;">
-  <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/>
-  <polyline points="3 12 12 15 21 12"/>
-  <line x1="12" y1="2" x2="12" y2="22"/>
-</svg>`;
 
 function updateDiamondUI() {
   const el = document.getElementById('globalDiamondsVal');
@@ -1649,16 +1605,12 @@ function renderLevelsGrid() {
   const startLvl = (currentLevelSection - 1) * LEVELS_PER_SECTION + 1;
   const endLvl = currentLevelSection * LEVELS_PER_SECTION;
 
-  let sectionStars = 0;
-  let sectionOdCleared = 0;
-
   for (let lvl = startLvl; lvl <= endLvl; lvl++) {
     const btn = document.createElement('button');
 
     if (currentLevelMode !== 'overdrive') {
       const isUnlocked = devMode || lvl <= maxUnlockedLevel;
       const earnedStars = levelStars[lvl] || 0;
-      sectionStars += earnedStars;
       const isCleared = clearedLevels.includes(lvl) || earnedStars > 0;
       const isCurrent = lvl === maxUnlockedLevel && !isCleared;
 
@@ -1687,7 +1639,6 @@ function renderLevelsGrid() {
       const isUnlockedInNormal = devMode || clearedLevels.includes(lvl);
       const isOdCleared = !!overdriveClearedLevels[lvl];
       const isCurrentOd = isUnlockedInNormal && !isOdCleared && (lvl === 1 || !!overdriveClearedLevels[lvl - 1] || devMode);
-      if (isOdCleared) sectionOdCleared++;
 
       if (isUnlockedInNormal) {
         btn.className = 'level-card-btn' + (isCurrentOd ? ' current' : (isOdCleared ? ' cleared' : ''));
@@ -3884,10 +3835,6 @@ function updateMenuBadges() {
   }
 }
 
-function updateDailyLoginBadge() {
-  updateMenuBadges();
-}
-
 function getDailyDiamondSvg(size = 20, opacity = 1) {
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2" stroke-linejoin="round"${opacity < 1 ? ` style="opacity:${opacity};"` : ''}><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,0.28)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
 }
@@ -4149,7 +4096,7 @@ function claimDailyLoginReward(isDouble) {
     saveGame();
     sfx('reward');
 
-    updateDailyLoginBadge();
+    updateMenuBadges();
     renderDailyLoginModal();
 
     let toastText = isDouble ? `x2 Bonus: ` : `Day ${claimedDay}: `;
@@ -4910,27 +4857,6 @@ function createShockwave(x, y, maxRadius, color) {
   shockwaves.push({ x, y, maxRadius, color, duration: 0.32, elapsed: 0 });
 }
 
-function createTeleportGhostFx(startX, startY, endX, endY, enemy) {
-  const count = 3;
-  for (let k = 1; k <= count; k++) {
-    const t = k / (count + 1);
-    const gx = startX + (endX - startX) * t;
-    const gy = startY + (endY - startY) * t;
-    particles.push({
-      x: gx,
-      y: gy,
-      vx: 0, vy: 0,
-      radius: enemy.radius || 17,
-      color: enemy.color || "#f97316",
-      glow: enemy.glow || "#fb923c",
-      shape: enemy.shape || "octagon",
-      angle: enemy.angle || 0,
-      life: 0.35,
-      maxLife: 0.35,
-      isTeleportGhost: true
-    });
-  }
-}
 // [UI207] Math and random generator utilities for procedural background generation.
 
 function mulberry32(a) {
@@ -5015,8 +4941,6 @@ function ridged(x, y, oct) {
 // [UI208] Cosmic nebula and baked starfield texture renderer.
 
 const NEBULA_DENSITY = 1.0;        // Overall nebula brightness and density (0.7 - 1.6).
-const NEBULA_LOWRES_MAX = 1280;     // Nebula resolution cap in high-performance mode.
-const NEBULA_LOWRES_PERF = 640;    // Reduced nebula resolution cap for low-performance mode.
 
 // [UI208.01] Nebula color clusters aligned with logo gradient (pink-purple left, cyan right, muted bottom).
 const NEBULA_CLUSTERS = [
@@ -5066,60 +4990,8 @@ const STAR_CLASSES = [
   { sigma: 1.25, halo: 0.20, spike: 0.35, len: 12, alpha: [0.90, 1.00] }
 ];
 
-let starSprites = null;
-let starSpritesDpr = 0;
 let synthStars = [];
 let lastStarUpdateTime = performance.now();
-
-function buildStarSprite(cls, tint, dpr) {
-  const Hcss = Math.ceil(Math.max(cls.sigma * 7, cls.len)) + 1;
-  const Hd = Math.ceil(Hcss * dpr);
-  const size = Hd * 2 + 1;
-
-  const cv = document.createElement('canvas');
-  cv.width = size; cv.height = size;
-  const c = cv.getContext('2d');
-  const img = c.createImageData(size, size);
-  const d = img.data;
-
-  const sg = cls.sigma;
-  const L = cls.len * 0.35;
-
-  for (let j = 0; j < size; j++) {
-    for (let i = 0; i < size; i++) {
-      const dx = (i - Hd) / dpr;
-      const dy = (j - Hd) / dpr;
-      const dist2 = dx * dx + dy * dy;
-      const dist = Math.sqrt(dist2);
-
-      let I = Math.exp(-dist2 / (2 * sg * sg));
-      if (cls.halo > 0) I += cls.halo * Math.exp(-dist / (sg * 3.5));
-      if (cls.spike > 0) {
-        I += cls.spike * (
-          Math.exp(-Math.abs(dx) / L) * Math.exp(-(dy * dy) / (2 * 0.45 * 0.45)) +
-          Math.exp(-Math.abs(dy) / L) * Math.exp(-(dx * dx) / (2 * 0.45 * 0.45))
-        );
-      }
-      I = Math.min(1, I);
-
-      // Core whitens at high intensity while edges retain spectral tint.
-      const white = I * I * 0.7;
-      const o = (j * size + i) * 4;
-      d[o]     = tint[0] + (255 - tint[0]) * white;
-      d[o + 1] = tint[1] + (255 - tint[1]) * white;
-      d[o + 2] = tint[2] + (255 - tint[2]) * white;
-      d[o + 3] = I * 255;
-    }
-  }
-  c.putImageData(img, 0, 0);
-  return { canvas: cv, half: Hd + 0.5, size: size };
-}
-
-function ensureStarSprites(dpr) {
-  if (starSprites && starSpritesDpr === dpr) return;
-  starSprites = STAR_CLASSES.map(cls => STAR_TINTS.map(t => buildStarSprite(cls, t.rgb, dpr)));
-  starSpritesDpr = dpr;
-}
 
 function pickTint() {
   let r = Math.random();
@@ -5273,7 +5145,6 @@ function renderNebulaCache(w, h, dpr) {
   c.putImageData(img, 0, 0);
 
   // Впекание статических звезд строго в сетку 1:1
-  ensureStarSprites(effectiveDpr);
   const bakeRand = mulberry32(4242);
   c.save();
   c.globalCompositeOperation = 'lighter';
@@ -5484,11 +5355,6 @@ function updateAndDrawStars(w, h, now) {
     const py = Math.round(star.y * h);
 
     ctx.globalAlpha = alpha;
-
-    // Определяем цвет звезды по ее классу и оттенку
-    const starColor = (typeof STAR_TINTS !== 'undefined' && STAR_TINTS[star.tint]) 
-      ? STAR_TINTS[star.tint].c || STAR_TINTS[star.tint] 
-      : '#cfe6ff';
 
     // Градация цвета/яркости по классу звезды (от глубокого серого до чистого белого)
     let starBrightness;
@@ -6960,27 +6826,6 @@ function render(now) {
       ctx.globalAlpha = rawProg * (pt.alphaMult || 0.4);
       const glowSprite = getGlowSprite(pt.color || '#ff9100');
       ctx.drawImage(glowSprite, pt.x - pt.radius, pt.y - pt.radius, pt.radius * 2, pt.radius * 2);
-    } else if (pt.isTeleportGhost) {
-      ctx.globalAlpha = rawProg * 0.75;
-      ctx.save();
-      ctx.translate(pt.x, pt.y);
-      ctx.rotate(pt.angle || 0);
-      ctx.strokeStyle = pt.color || "#f97316";
-      ctx.fillStyle = (pt.glow || "#fb923c") + "55";
-      ctx.lineWidth = 3.5;
-      if (typeof setGlow === "function") setGlow(pt.color || "#f97316", 14 * rawProg);
-      const rad = pt.radius || 17;
-      ctx.beginPath();
-      for (let oc = 0; oc < 8; oc++) {
-        const a = (oc * Math.PI) / 4;
-        const ocX = Math.cos(a) * rad * 1.2;
-        const ocY = Math.sin(a) * rad * 1.2;
-        if (oc === 0) ctx.moveTo(ocX, ocY); else ctx.lineTo(ocX, ocY);
-      }
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
     } else if (pt.isStreak) {
       ctx.globalAlpha = rawProg * 0.85;
       ctx.save();

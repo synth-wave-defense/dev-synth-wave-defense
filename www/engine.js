@@ -1076,7 +1076,6 @@ function startEndlessMatch() {
   document.getElementById('levelsScreen').classList.add('hidden');
   document.getElementById('victoryScreen').classList.add('hidden');
   document.getElementById('defeatScreen').classList.add('hidden');
-  document.getElementById('pauseScreen')?.classList.add('hidden');
   document.getElementById('startScreen').classList.add('hidden');
   document.getElementById('settingsScreen').classList.add('hidden');
   document.getElementById('upgradesScreen').classList.add('hidden');
@@ -1133,12 +1132,9 @@ function reallyStartLevel(lvl) {
   document.getElementById('levelsScreen').classList.add('hidden');
   document.getElementById('victoryScreen').classList.add('hidden');
   document.getElementById('defeatScreen').classList.add('hidden');
-  document.getElementById('pauseScreen')?.classList.add('hidden');
   document.getElementById('startScreen').classList.add('hidden');
   document.getElementById('settingsScreen').classList.add('hidden');
   document.getElementById('upgradesScreen').classList.add('hidden');
-  const revSc = document.getElementById('reviveScreen');
-  if (revSc) revSc.classList.add('hidden');
 
   document.getElementById('econHpSplitBadge').classList.remove('hidden');
   document.getElementById('levelWaveSplitBadge').classList.remove('hidden');
@@ -1700,7 +1696,6 @@ function triggerDefeat() {
   const upgBtn = document.getElementById('defeatUpgradesBtn');
   const levelsBtn = document.getElementById('defeatLevelsBtn');
   const shopBtn = document.getElementById('defeatShopBtn');
-  const settingsBtn = document.getElementById('defeatSettingsBtn');
 
   if (reviveBtn) reviveBtn.classList.add('hidden');
   if (skipBtn) skipBtn.classList.add('hidden');
@@ -1708,7 +1703,6 @@ function triggerDefeat() {
   if (upgBtn) upgBtn.classList.remove('hidden');
   if (levelsBtn) levelsBtn.classList.remove('hidden');
   if (shopBtn) shopBtn.classList.remove('hidden');
-  if (settingsBtn) settingsBtn.classList.remove('hidden');
 
   updateUpgradeButtonsLock();
   updateDefeatWaveLine();
@@ -1937,7 +1931,6 @@ function triggerEmergencyRevivePrompt() {
   const upgBtn = document.getElementById('defeatUpgradesBtn');
   const levelsBtn = document.getElementById('defeatLevelsBtn');
   const shopBtn = document.getElementById('defeatShopBtn');
-  const settingsBtn = document.getElementById('defeatSettingsBtn');
 
   // Видна ТОЛЬКО кнопка Revive
   if (reviveBtn) {
@@ -1949,7 +1942,6 @@ function triggerEmergencyRevivePrompt() {
   if (upgBtn) upgBtn.classList.add('hidden');
   if (levelsBtn) levelsBtn.classList.add('hidden');
   if (shopBtn) shopBtn.classList.add('hidden');
-  if (settingsBtn) settingsBtn.classList.add('hidden');
 
   updateDefeatWaveLine();
   const loadoutWidget = document.getElementById('loadoutWidget');
@@ -1994,7 +1986,6 @@ function finishRevivePromptWindow() {
   const upgBtn = document.getElementById('defeatUpgradesBtn');
   const levelsBtn = document.getElementById('defeatLevelsBtn');
   const shopBtn = document.getElementById('defeatShopBtn');
-  const settingsBtn = document.getElementById('defeatSettingsBtn');
 
   if (reviveBtn) reviveBtn.classList.add('hidden');
   if (skipBtn) skipBtn.classList.add('hidden');
@@ -2002,7 +1993,6 @@ function finishRevivePromptWindow() {
   if (upgBtn) upgBtn.classList.remove('hidden');
   if (levelsBtn) levelsBtn.classList.remove('hidden');
   if (shopBtn) shopBtn.classList.remove('hidden');
-  if (settingsBtn) settingsBtn.classList.remove('hidden');
 
   updateUpgradeButtonsLock();
   showLoadoutWidgetIn('loadoutAnchor-defeat');
@@ -2543,80 +2533,16 @@ function handleDevSpawnClick() {
   const typeSel = document.getElementById('devSpawnType');
   const countEl = document.getElementById('devSpawnCount');
   const intEl = document.getElementById('devSpawnInterval');
-  const hpEl = document.getElementById('devSpawnHpMult');
-  const spdEl = document.getElementById('devSpawnSpeedMult');
-  const hpAbsEl = document.getElementById('devSpawnHpAbs');
-  const spdAbsEl = document.getElementById('devSpawnSpeedAbs');
   
   if (typeSel && countEl && intEl) {
     const type = typeSel.value;
     const count = parseInt(countEl.value, 10) || 1;
     const interval = parseFloat(intEl.value) || 0.5;
-    const proto = ENEMY_CONFIGS[type] || ENEMY_CONFIGS.grunt;
-
-    let hpMult = hpEl ? parseFloat(hpEl.value) : 1.0;
-    if (hpAbsEl && (!hpEl || isNaN(hpMult))) {
-      const absHp = parseFloat(hpAbsEl.value) || proto.baseHp;
-      hpMult = absHp / proto.baseHp;
-    }
-    if (isNaN(hpMult) || hpMult <= 0) hpMult = 1.0;
-
-    let speedMult = spdEl ? parseFloat(spdEl.value) : 1.0;
-    if (spdAbsEl && (!spdEl || isNaN(speedMult))) {
-      const absSpd = parseFloat(spdAbsEl.value) || proto.baseSpeed;
-      speedMult = absSpd / proto.baseSpeed;
-    }
-    if (isNaN(speedMult) || speedMult <= 0) speedMult = 1.0;
-    
-    injectCustomSpawn(type, count, interval, hpMult, speedMult);
+    injectCustomSpawn(type, count, interval, 1.0, 1.0);
   }
-}
-
-function initDevSpawnerSync() {
-  const typeSel = document.getElementById('devSpawnType');
-  const hpMultEl = document.getElementById('devSpawnHpMult');
-  const hpAbsEl = document.getElementById('devSpawnHpAbs');
-  const spdMultEl = document.getElementById('devSpawnSpeedMult');
-  const spdAbsEl = document.getElementById('devSpawnSpeedAbs');
-
-  if (!typeSel) return;
-  if (typeSel.dataset.syncBound === '1') {
-    syncFromMult();
-    return;
-  }
-  typeSel.dataset.syncBound = '1';
-
-  function syncFromMult() {
-    const proto = ENEMY_CONFIGS[typeSel.value] || ENEMY_CONFIGS.grunt;
-    const hpM = (hpMultEl && parseFloat(hpMultEl.value)) ? parseFloat(hpMultEl.value) : 1.0;
-    const spdM = (spdMultEl && parseFloat(spdMultEl.value)) ? parseFloat(spdMultEl.value) : 1.0;
-    if (hpAbsEl) hpAbsEl.value = Math.max(1, Math.round(proto.baseHp * hpM));
-    if (spdAbsEl) spdAbsEl.value = Math.max(1, Math.round(proto.baseSpeed * spdM));
-  }
-
-  function syncFromAbsHp() {
-    const proto = ENEMY_CONFIGS[typeSel.value] || ENEMY_CONFIGS.grunt;
-    const absHp = (hpAbsEl && parseFloat(hpAbsEl.value)) ? parseFloat(hpAbsEl.value) : proto.baseHp;
-    if (hpMultEl) hpMultEl.value = (absHp / proto.baseHp).toFixed(2);
-  }
-
-  function syncFromAbsSpeed() {
-    const proto = ENEMY_CONFIGS[typeSel.value] || ENEMY_CONFIGS.grunt;
-    const absSpd = (spdAbsEl && parseFloat(spdAbsEl.value)) ? parseFloat(spdAbsEl.value) : proto.baseSpeed;
-    if (spdMultEl) spdMultEl.value = (absSpd / proto.baseSpeed).toFixed(2);
-  }
-
-  typeSel.addEventListener('change', syncFromMult);
-  if (hpMultEl) hpMultEl.addEventListener('input', syncFromMult);
-  if (spdMultEl) spdMultEl.addEventListener('input', syncFromMult);
-  if (hpAbsEl) hpAbsEl.addEventListener('input', syncFromAbsHp);
-  if (spdAbsEl) spdAbsEl.addEventListener('input', syncFromAbsSpeed);
-
-  syncFromMult();
 }
 
 function onDomReady() {
-  initDevSpawnerSync();
   if (window.AppUpdater && typeof window.AppUpdater.init === 'function') {
     window.AppUpdater.init();
   }
@@ -2779,35 +2705,6 @@ function handleClearSaveClick() {
   console.log('SectorDefenseTD: save cleared, state reset.');
 }
 
-function handleDevGoldClick() {
-  if (!devMode) return;
-  devInputOpen = true;
-  const val = prompt("Set Gold:", gold);
-  devInputOpen = false;
-  suppressBackgroundPause();
-  if (val !== null) {
-    const parsed = parseInt(val, 10);
-    if (!isNaN(parsed) && parsed >= 0) {
-      gold = parsed;
-      updateUI();
-    }
-  }
-}
-
-function handleDevHpClick() {
-  if (!devMode) return;
-  devInputOpen = true;
-  const val = prompt("Set Lives (HP):", baseHp);
-  devInputOpen = false;
-  suppressBackgroundPause();
-  if (val !== null) {
-    const parsed = parseInt(val, 10);
-    if (!isNaN(parsed) && parsed > 0) {
-      baseHp = parsed;
-      updateUI();
-    }
-  }
-}
 
 // [ENG111] Daily Rewards & In-App Purchases (IAP): Daily gifts login packs, shop state, and simulated IAP transactions.
 function getTodayDateString() {
@@ -2905,11 +2802,7 @@ function deconstructPrism() {
 // Заглушка покупок (симуляция Google Play Billing)
 function buyShopIAP(productId) {
   sfx('confirm');
-  if (productId === 'synth_prism') {
-    synthesizePrism();
-  } else if (productId === 'deconstruct_prism') {
-    deconstructPrism();
-  } else if (productId === 'time_mod_t1') {
+  if (productId === 'time_mod_t1') {
     if (timeModTier >= 1) {
       showHintToast('Already unlocked!');
       return;
@@ -2954,35 +2847,35 @@ function buyShopIAP(productId) {
     saveGame();
     renderShopScreen();
     showHintToast('No Voluntary Ads unlocked!');
-  } else if (productId === 'diamonds_75' || productId === 'diamonds_50') {
+  } else if (productId === 'diamonds_75') {
     diamonds += 75;
     updateDiamondUI();
     saveGame();
     sfx('reward');
     renderShopScreen();
     showHintToast('+75 Diamonds purchased!');
-  } else if (productId === 'diamonds_180' || productId === 'diamonds_100') {
+  } else if (productId === 'diamonds_180') {
     diamonds += 180;
     updateDiamondUI();
     saveGame();
     sfx('reward');
     renderShopScreen();
     showHintToast('+180 Diamonds purchased!');
-  } else if (productId === 'diamonds_800' || productId === 'diamonds_500') {
+  } else if (productId === 'diamonds_800') {
     diamonds += 800;
     updateDiamondUI();
     saveGame();
     sfx('reward');
     renderShopScreen();
     showHintToast('+800 Diamonds purchased!');
-  } else if (productId === 'prisms_12' || productId === 'prisms_10') {
+  } else if (productId === 'prisms_12') {
     prisms += 12;
     if (typeof updatePrismUI === 'function') updatePrismUI();
     saveGame();
     sfx('reward');
     renderShopScreen();
     showHintToast('+12 Prisms purchased!');
-  } else if (productId === 'prisms_35' || productId === 'prisms_25') {
+  } else if (productId === 'prisms_35') {
     prisms += 35;
     if (typeof updatePrismUI === 'function') updatePrismUI();
     saveGame();
@@ -3000,20 +2893,6 @@ function buyShopIAP(productId) {
 }
 
 // [ENG112] Navigation & Screen Transition Helpers: Start screen, level selection, and chapter label controllers.
-function updateStartChapterLabel(show) {
-  const el = document.getElementById('startChapterLabel');
-  if (!el) return;
-  if (show) {
-    const sector = Math.max(1, Math.min(TOTAL_SECTIONS,
-      Math.ceil(Math.min(maxUnlockedLevel, TOTAL_LEVELS) / LEVELS_PER_SECTION)));
-    el.textContent = `CHAPTER ${sector}`;
-    el.classList.remove('hidden');
-  } else {
-    el.classList.add('hidden');
-  }
-}
-
-
 // [ENG113] Simulation Step Update Pipeline: Enemy movement, tower targeting, projectile physics, and status effects.
 // javascript-obfuscator: disable
 function update(dt) {

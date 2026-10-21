@@ -360,27 +360,6 @@
 </div>
 
 <!-- [HTM106] Developer Tools Overlay: Developer bar with game speed, custom enemy spawner, and save tools. -->
-<label class="dev-mode-toggle" id="devModeToggle">
-  <input type="checkbox" id="devModeCheckbox" onchange="toggleDevMode(this.checked)">
-  <span>DEV MODE</span>
-</label>
-
-<select id="speedContainerFloating" class="dev-speed-floating hidden" onchange="setGameSpeed(parseFloat(this.value))">
-  <option value="0.5">0.5x</option>
-  <option value="0.75">0.75x</option>
-  <option value="0.9">0.9x</option>
-  <option value="1" selected>1x</option>
-  <option value="1.25">1.25x</option>
-  <option value="1.5">1.5x</option>
-  <option value="2">2x</option>
-  <option value="4">4x</option>
-  <option value="8">8x</option>
-</select>
-
-<button class="dev-clearsave-floating hidden" id="devClearSaveBtnFloating" onclick="handleClearSaveClick()" title="Wipe localStorage and reset all progress to a fresh install">
-  <span>🗑 Clear Save</span>
-</button>
-
 <div class="dev-bar hidden" id="devBar" style="width: 210px; max-width: 92vw; box-sizing: border-box;">
   <div class="dev-bar-top" style="display:flex; align-items:center; justify-content:space-between; gap:3px;">
     <div class="dev-fps-badge" id="devFpsBadge" style="font-size:11px; min-width:48px;">FPS: 60</div>
