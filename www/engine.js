@@ -1884,7 +1884,7 @@ function updateDefeatWaveLine() {
         doubleBtn.disabled = false;
         doubleBtn.innerHTML = `
           <svg width="18" height="14" viewBox="0 0 24 24" style="flex:none; margin-right:6px;"><rect x="2" y="4" width="20" height="16" rx="3" fill="none" stroke="#ffffff" stroke-width="2"/><polygon points="10,9 16,12 10,15" fill="#ffffff"/></svg>
-          <span style="color:#ffffff; font-weight:800; letter-spacing:1px;">CLAIM X2</span>
+          <span style="color:#ffffff; font-weight:800; letter-spacing:1px;">CLAIM x2</span>
         `;
       } else {
         doubleBtn.classList.add('hidden');

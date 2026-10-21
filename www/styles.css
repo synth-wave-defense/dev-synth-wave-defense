@@ -4299,23 +4299,17 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   color: #ffffff !important;
 }
 
-/* 3. Кнопка CLAIM X2: глубокая сине-бирюзовая заливка (как в SELECTED TOWERS), 
-      но сочная, контрастная и с яркой циановой неоновой каймой */
+/* 3. Кнопка CLAIM X2: градиент победы как на всех экранах victory-claim-btn */
 #defeatScreen.endless-result-active #endlessDoubleBtn {
-  background: linear-gradient(180deg, rgba(7, 38, 58, 0.92) 0%, rgba(4, 22, 36, 0.96) 100%) !important;
-  border: 1.5px solid #00e5ff !important;
-  box-shadow: 
-    0 0 16px rgba(0, 229, 255, 0.55),
-    inset 0 0 12px rgba(0, 229, 255, 0.22) !important;
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.4) 0%, rgba(168, 85, 247, 0.4) 50%, rgba(240, 95, 159, 0.4) 100%) !important;
+  border: 1.8px solid #00e5ff !important;
+  box-shadow: 0 0 24px rgba(0, 229, 255, 0.45) !important;
   color: #ffffff !important;
 }
 
 #defeatScreen.endless-result-active #endlessDoubleBtn:active {
   transform: scale(0.97);
-  background: linear-gradient(180deg, rgba(10, 52, 80, 0.95) 0%, rgba(6, 30, 48, 0.98) 100%) !important;
-  box-shadow: 
-    0 0 22px rgba(0, 229, 255, 0.75),
-    inset 0 0 16px rgba(0, 229, 255, 0.35) !important;
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.65) !important;
 }
 
 /* 8. Кнопка RETRY без подсветки, иконка и текст белые */
