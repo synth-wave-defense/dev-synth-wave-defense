@@ -262,171 +262,422 @@ function getEndlessEntryStatus() {
 window.getEndlessEntryStatus = getEndlessEntryStatus;
 
 function generateEndlessWaveData(w) {
-  const arena = (typeof currentLevelSection !== 'undefined') ? currentLevelSection : 1;
+  const arena = (typeof currentLevelSection !== 'undefined') ? Math.min(5, Math.max(1, currentLevelSection)) : 1;
+  const cWave = ((w - 1) % 20) + 1; // Позиция внутри 20-волнового цикла (1..20)
+  const isSecondHalf = cWave > 10;  // Вторые 10 волн цикла сложнее первых 10
 
-  // 1. УСКОРЕННАЯ И БОЛЕЕ АГРЕССИВНАЯ КРИВАЯ HP
-  // Без глобальных апгрейдов игрок физически упрется в стену к 8-10 волне
+  // 1. СТУПЕНЧАТАЯ КРИВАЯ HP С ЗАПАСОМ СЛОЖНОСТИ (Контрольные стены: 10 / 20 / 40 / 60 / 80 / <100)
   let hpScalingMult = 1.0;
-  if (w <= 10) {
-    hpScalingMult = Math.pow(1.26, w - 1); // Очень быстрый разгон до 1-го босса
+  if (w === 1) {
+    hpScalingMult = 0.90; // Мягкий старт на 1-й волне
+  } else if (w === 2) {
+    hpScalingMult = 1.15;
+  } else if (w === 3) {
+    hpScalingMult = 1.45;
+  } else if (w <= 10) {
+    // Волны 4–10: крутой разгон к стене 10-й волны (потолок для 0/10 Tech Tree)
+    hpScalingMult = 1.45 * Math.pow(1.31, w - 3);
+  } else if (w <= 20) {
+    // Волны 11–20: стена 20-й волны (потолок для 4/10 Tech Tree)
+    const w10 = 1.45 * Math.pow(1.31, 7); // ~9.62
+    hpScalingMult = w10 * Math.pow(1.135, w - 10);
+  } else if (w <= 40) {
+    // Волны 21–40: стена 40-й волны (потолок для 6/10 Tech Tree)
+    const w20 = 1.45 * Math.pow(1.31, 7) * Math.pow(1.135, 10); // ~34.1
+    hpScalingMult = w20 * Math.pow(1.062, w - 20);
+  } else if (w <= 60) {
+    // Волны 41–60: стена 60-й волны (потолок для 8/10 Tech Tree)
+    const w40 = 1.45 * Math.pow(1.31, 7) * Math.pow(1.135, 10) * Math.pow(1.062, 20); // ~113.6
+    hpScalingMult = w40 * Math.pow(1.055, w - 40);
+  } else if (w <= 80) {
+    // Волны 61–80: стена 80-й волны (потолок для 10/10 Tech Tree)
+    const w60 = 1.45 * Math.pow(1.31, 7) * Math.pow(1.135, 10) * Math.pow(1.062, 20) * Math.pow(1.055, 20); // ~331.5
+    hpScalingMult = w60 * Math.pow(1.058, w - 60);
   } else {
-    hpScalingMult = Math.pow(1.26, 9) * Math.pow(1.20, w - 10);
+    // Волны 81+: Финальный заслон для Ascended 15/15 + SYNTH (непроходимо к 95–100 волне)
+    const w80 = 1.45 * Math.pow(1.31, 7) * Math.pow(1.135, 10) * Math.pow(1.062, 20) * Math.pow(1.055, 20) * Math.pow(1.058, 20); // ~1024
+    hpScalingMult = w80 * Math.pow(1.14, w - 80);
   }
 
-  // Рост скорости мобов
-  const spdMult = Math.min(1.9, 1 + (w - 1) * 0.02);
+  // Надбавка сложности во второй половине 20-волнового цикла (волны 11-19 цикла плотнее на 12%)
+  if (isSecondHalf && cWave !== 20) {
+    hpScalingMult *= 1.12;
+  }
 
-  // 2. БЮДЖЕТ ЗОЛОТА ЗА ВОЛНУ (Затухание экономики)
-  // Не дает застроить всю карту даже при выживании до 40+ волны
-  const targetWaveBounty = w <= 10 ? 80 : Math.max(25, 90 - (w - 10) * 1.6);
+  // Множитель HP от самой Арены (чем выше глава карты, тем крепче враги со старта)
+  const arenaHpFactor = [1.0, 1.0, 1.12, 1.25, 1.38, 1.50][arena] || 1.0;
+  hpScalingMult *= arenaHpFactor;
+
+  // 2. ПРОГРЕССИЯ СКОРОСТИ И КОЛИЧЕСТВА МОБОВ
+  const spdMult = Math.min(2.05, 1 + (w - 1) * 0.015 + (isSecondHalf ? 0.05 : 0));
+
+  // Масштаб толпы: на 1-3 волнах мало врагов, к 40-80 волнам идут массированные армии
+  const crowdScale = Math.min(4.2, 1 + (w - 1) * 0.055 + (isSecondHalf ? 0.25 : 0));
+
+  // 3. ЭКОНОМИКА С УЧЕТОМ РАСТУЩЕГО БОНУСА КНОПКИ "GO"
+  // Так как бонус за ранний вызов волны (15 + w * 1.5) растет, награда за самих мобов плавно сжимается,
+  // чтобы игрок не смог застроить мусорные краевые слоты
+  const targetWaveBounty = w <= 6 ? 75 : Math.max(18, Math.round(78 - (w - 6) * 1.15));
+
   const spawns = [];
 
   // ==========================================
-  // КАЖДАЯ 10-Я ВОЛНА: БОСС + СВИТА
+  // БОССЫ ЦИКЛА: ВОЛНА 10 (МЛАДШИЙ БОСС) И ВОЛНА 20 (СТАРШИЙ БОСС)
   // ==========================================
-  if (w % 10 === 0) {
-    const bossList = ['titan_core', 'hive_empress', 'chronos_warp', 'emp_overlord'];
-    const bossIdx = Math.floor((w / 10 - 1) + (arena - 1)) % bossList.length;
-    const bossType = bossList[bossIdx];
+  if (cWave === 10 || cWave === 20) {
+    const isMajorBoss = (cWave === 20); // На 20, 40, 60, 80, 100 волнах — главный босс!
 
-    // HP первого босса (10 волна) ~ 5200 HP
-    const baseBossHp = (w === 10) ? 5200 : (1800 * hpScalingMult);
-    const bossBounty = Math.round(targetWaveBounty * 0.65);
+    // Выбор босса строго по главам Normal Mode для каждой Арены
+    let bossType = 'tank';
+    if (arena === 1) {
+      // Арена 1 (Главы 1–2): W10 -> Mega Tank (босс Гл.1), W20 -> Hive Empress (босс Гл.2)
+      bossType = isMajorBoss ? 'hive_empress' : 'tank';
+    } else if (arena === 2) {
+      // Арена 2 (Главы 1–3): W10 -> Hive Empress (Гл.2), W20 -> Chronos Warp (босс Гл.3)
+      bossType = isMajorBoss ? 'chronos_warp' : 'hive_empress';
+    } else if (arena === 3) {
+      // Арена 3 (Главы 1–4): W10 -> Chronos Warp (Гл.3), W20 -> Titan Core (босс Гл.4)
+      bossType = isMajorBoss ? 'titan_core' : 'chronos_warp';
+    } else if (arena === 4) {
+      // Арена 4 (Главы 1–5): W10 -> Titan Core (Гл.4), W20 -> EMP Overlord (босс Гл.5)
+      bossType = isMajorBoss ? 'emp_overlord' : 'titan_core';
+    } else {
+      // Арена 5 (Главы 1–5, Альтернативная): W10 -> чередование Titan / Chronos, W20 -> EMP Overlord
+      bossType = isMajorBoss ? 'emp_overlord' : ((Math.floor(w / 20) % 2 === 0) ? 'titan_core' : 'chronos_warp');
+    }
 
-    let bColor = '#ff0055', bShape = 'octagon';
-    if (bossType === 'hive_empress') { bColor = '#00ffcc'; bShape = 'diamond'; }
-    else if (bossType === 'chronos_warp') { bColor = '#8b5cf6'; bShape = 'hexagon'; }
-    else if (bossType === 'emp_overlord') { bColor = '#f05f9f'; bShape = 'square'; }
+    let bColor = '#ff0055', bShape = 'octagon', bBaseSpeed = 30;
+    if (bossType === 'tank') { bColor = '#a06fdc'; bShape = 'square'; bBaseSpeed = 29; }
+    else if (bossType === 'hive_empress') { bColor = '#00ffcc'; bShape = 'diamond'; bBaseSpeed = 36; }
+    else if (bossType === 'chronos_warp') { bColor = '#3b82f6'; bShape = 'hexagon'; bBaseSpeed = 38; }
+    else if (bossType === 'titan_core') { bColor = '#f97316'; bShape = 'octagon'; bBaseSpeed = 28; }
+    else if (bossType === 'emp_overlord') { bColor = '#38bdf8'; bShape = 'triangle_inverted'; bBaseSpeed = 28; }
+
+    // База HP босса: на 10-й волне ~5800 HP (непроходимо с 0/10 Tech Tree), на 20-й волне Старший Босс еще мощнее
+    const bossMultiplier = isMajorBoss ? 680 : 580;
+    const bossHp = Math.round(bossMultiplier * hpScalingMult);
+    const bossBounty = Math.round(targetWaveBounty * 0.60);
+
+    // Свита босса (зависит от арены и половины цикла)
+    let escortType = isMajorBoss ? 'tank' : 'grunt';
+    if (arena >= 2 && isMajorBoss) escortType = 'blinker';
+    if (arena >= 3 && isMajorBoss && w >= 40) escortType = 'goliath';
+
+    const escortCount = isMajorBoss
+      ? Math.min(28, Math.round(6 + w * 0.28))
+      : Math.min(20, Math.round(5 + w * 0.22));
+    const escortBounty = Math.max(1, Math.floor((targetWaveBounty * 0.40) / escortCount));
+    const protoEscort = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[escortType])
+      ? ENEMY_CONFIGS[escortType] : { baseHp: 40, baseSpeed: 50 };
+
+    // Сначала запускаем часть авангарда, затем Босса
+    spawns.push({
+      type: escortType,
+      isBoss: false,
+      isMiniBoss: false,
+      count: escortCount,
+      hp: Math.round(protoEscort.baseHp * hpScalingMult * 0.85),
+      speed: Math.min(165, Math.round(protoEscort.baseSpeed * spdMult)),
+      bounty: escortBounty,
+      interval: (escortType === 'tank' || escortType === 'goliath') ? 1.7 : 0.65
+    });
 
     spawns.push({
       type: bossType,
       isBoss: true,
       isMiniBoss: false,
       count: 1,
-      hp: Math.round(baseBossHp),
-      speed: Math.round(30 * spdMult),
+      hp: bossHp,
+      speed: Math.min(85, Math.round(bBaseSpeed * Math.min(1.5, spdMult))),
       bounty: bossBounty,
       interval: 2.0,
       shape: bShape,
       color: bColor,
-      glow: bColor
+      glow: bossType === 'emp_overlord' ? '#f05f9f' : bColor
     });
 
-    // Свита босса
-    const escortType = (w % 20 === 0) ? 'tank' : 'scout';
-    const escortCount = Math.min(20, 4 + Math.floor(w / 4));
-    const escortBounty = Math.max(1, Math.floor((targetWaveBounty * 0.35) / escortCount));
-    const protoEscort = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[escortType]) 
-      ? ENEMY_CONFIGS[escortType] : { baseHp: 35, baseSpeed: 50 };
-
-    spawns.push({
-      type: escortType,
-      isBoss: false,
-      isMiniBoss: false,
-      count: escortCount,
-      hp: Math.round(protoEscort.baseHp * hpScalingMult * 0.8),
-      speed: Math.round(protoEscort.baseSpeed * spdMult),
-      bounty: escortBounty,
-      // Раскидываем свиту, чтобы не накладывалась друг на друга
-      interval: (escortType === 'tank') ? 1.6 : 0.6
-    });
-
-    return { wave: w, delayAfter: 6.0, spawns };
+    return { wave: w, delayAfter: 6.5, spawns };
   }
 
   // ==========================================
-  // ОБЫЧНЫЕ ВОЛНЫ: 4 ДИНАМИЧЕСКИХ АРХЕТИПА
+  // ОБЫЧНЫЕ ВОЛНЫ: 20-ВОЛНОВОЙ ЦИКЛ ДЛЯ КАЖДОЙ ИЗ 5 КАРТ
   // ==========================================
-  // Чередуем тип волны в зависимости от номера (w) и арены (arena)
-  const archetypePattern = (w + arena) % 4;
+  let g1Type = 'grunt', g1BaseCount = 5, g1Interval = 0.65, g1HpMod = 1.0;
+  let g2Type = null,    g2BaseCount = 0, g2Interval = 0.65, g2HpMod = 0.9;
 
-  let group1Type = 'grunt', group1Count = 6, group1Interval = 0.65;
-  let group2Type = null, group2Count = 0, group2Interval = 0.65;
-
-  if (archetypePattern === 0) {
-    // АРХЕТИП 1: Роевой прорыв (Swarm + Scout)
-    group1Type = 'swarm';
-    group1Count = 14 + Math.min(30, Math.floor(w * 1.5)); // Пачка по 14-40 штук
-    group1Interval = 0.05; // Сверхплотный рой!
-
-    group2Type = 'scout';
-    group2Count = 4 + Math.floor(w * 0.6);
-    group2Interval = 0.45;
-  } 
-  else if (archetypePattern === 1) {
-    // АРХЕТИП 2: Бронетанковая колонна (Tank/Goliath + Grunt)
-    // Танки раскиданы с увеличенным интервалом 1.6 - 1.8 с!
-    group1Type = (w >= 15 && Math.random() < 0.5) ? 'goliath' : 'tank';
-    group1Count = Math.min(10, 2 + Math.floor(w * 0.35));
-    group1Interval = (group1Type === 'goliath') ? 2.2 : 1.6; // Больше никакой скученности!
-
-    group2Type = 'grunt';
-    group2Count = 5 + Math.floor(w * 0.7);
-    group2Interval = 0.6;
-  } 
-  else if (archetypePattern === 2) {
-    // АРХЕТИП 3: Техно-диверсия (Blinker со щитами + одиночные редкие EMP)
-    group1Type = (w >= 6) ? 'blinker' : 'scout';
-    group1Count = 4 + Math.floor(w * 0.5);
-    group1Interval = 0.85;
-
-    // EMP Bomber выходят строго ограниченно и с огромным разрывом
-    if (w >= 8) {
-      group2Type = 'emp_bomber';
-      group2Count = Math.min(3, 1 + Math.floor(w / 14)); // Максимум 2-3 штуки
-      group2Interval = 2.4; // 2.4 сек между EMP, чтобы не глушить всю карту разом!
+  // ------------------------------------------
+  // АРЕНА 1 (Главы 1–2): ТОЛЬКО grunt, scout, tank, swarm
+  // ------------------------------------------
+  if (arena === 1) {
+    if (!isSecondHalf) {
+      // Волны 1–9 цикла (Попроще): знакомство со скоростями и первыми танками
+      const step = cWave % 4;
+      if (cWave === 1) {
+        g1Type = 'grunt'; g1BaseCount = 5; g1Interval = 0.75;
+      } else if (cWave === 2) {
+        g1Type = 'grunt'; g1BaseCount = 5; g1Interval = 0.65;
+        g2Type = 'scout'; g2BaseCount = 3; g2Interval = 0.50;
+      } else if (step === 3) {
+        g1Type = 'scout'; g1BaseCount = 7; g1Interval = 0.45;
+      } else if (step === 0) {
+        g1Type = 'tank';  g1BaseCount = 2; g1Interval = 1.75; // Танки идут свободно
+        g2Type = 'grunt'; g2BaseCount = 5; g2Interval = 0.60;
+      } else if (step === 1) {
+        g1Type = 'swarm'; g1BaseCount = 12; g1Interval = 0.05; // Плотная пачка роя
+        g2Type = 'grunt'; g2BaseCount = 4;  g2Interval = 0.65;
+      } else {
+        g1Type = 'grunt'; g1BaseCount = 7; g1Interval = 0.58;
+        g2Type = 'scout'; g2BaseCount = 5; g2Interval = 0.45;
+      }
     } else {
-      group2Type = 'grunt';
-      group2Count = 6 + Math.floor(w * 0.5);
-      group2Interval = 0.6;
+      // Волны 11–19 цикла (Посложнее): плотные комбо танков, быстрых скаутов и двойного роя
+      const step = cWave % 4;
+      if (step === 3) {
+        g1Type = 'tank';  g1BaseCount = 4; g1Interval = 1.65;
+        g2Type = 'scout'; g2BaseCount = 8; g2Interval = 0.40;
+      } else if (step === 0) {
+        g1Type = 'swarm'; g1BaseCount = 22; g1Interval = 0.045;
+        g2Type = 'scout'; g2BaseCount = 7;  g2Interval = 0.42;
+      } else if (step === 1) {
+        g1Type = 'tank';  g1BaseCount = 3;  g1Interval = 1.70;
+        g2Type = 'swarm'; g2BaseCount = 16; g2Interval = 0.05;
+      } else {
+        g1Type = 'grunt'; g1BaseCount = 10; g1Interval = 0.50;
+        g2Type = 'tank';  g2BaseCount = 3;  g2Interval = 1.65;
+      }
     }
-  } 
+  }
+  // ------------------------------------------
+  // АРЕНА 2 (Главы 1–3): + blinker (фазовые щиты)
+  // ------------------------------------------
+  else if (arena === 2) {
+    if (!isSecondHalf) {
+      // Волны 1–9 цикла: акцент на скорость, рой и первые выходы блинкеров
+      const step = cWave % 4;
+      if (cWave === 1) {
+        g1Type = 'scout'; g1BaseCount = 6; g1Interval = 0.50;
+      } else if (step === 2) {
+        g1Type = 'swarm'; g1BaseCount = 14; g1Interval = 0.05;
+        g2Type = 'grunt'; g2BaseCount = 5;  g2Interval = 0.60;
+      } else if (step === 3) {
+        g1Type = 'blinker'; g1BaseCount = 3; g1Interval = 0.95;
+        g2Type = 'scout';   g2BaseCount = 5; g2Interval = 0.45;
+      } else if (step === 0) {
+        g1Type = 'tank';  g1BaseCount = 3; g1Interval = 1.70;
+        g2Type = 'grunt'; g2BaseCount = 6; g2Interval = 0.58;
+      } else {
+        g1Type = 'blinker'; g1BaseCount = 4; g1Interval = 0.90;
+        g2Type = 'grunt';   g2BaseCount = 6; g2Interval = 0.58;
+      }
+    } else {
+      // Волны 11–19 цикла: массированные атаки блинкеров под прикрытием роя и танков
+      const step = cWave % 4;
+      if (step === 3) {
+        g1Type = 'blinker'; g1BaseCount = 6;  g1Interval = 0.82;
+        g2Type = 'swarm';   g2BaseCount = 20; g2Interval = 0.045;
+      } else if (step === 0) {
+        g1Type = 'tank';    g1BaseCount = 4; g1Interval = 1.65;
+        g2Type = 'blinker'; g2BaseCount = 5; g2Interval = 0.85;
+      } else if (step === 1) {
+        g1Type = 'swarm'; g1BaseCount = 26; g1Interval = 0.045;
+        g2Type = 'scout'; g2BaseCount = 9;  g2Interval = 0.38;
+      } else {
+        g1Type = 'blinker'; g1BaseCount = 6; g1Interval = 0.80;
+        g2Type = 'scout';   g2BaseCount = 8; g2Interval = 0.40;
+      }
+    }
+  }
+  // ------------------------------------------
+  // АРЕНА 3 (Главы 1–4): + goliath (сверхтяжелая броня)
+  // ------------------------------------------
+  else if (arena === 3) {
+    if (!isSecondHalf) {
+      // Волны 1–9 цикла: пехота, танки, блинкеры и одиночные голиафы с 5-й волны
+      const step = cWave % 4;
+      if (cWave <= 2) {
+        g1Type = 'grunt'; g1BaseCount = 6; g1Interval = 0.60;
+        g2Type = 'scout'; g2BaseCount = 4; g2Interval = 0.48;
+      } else if (step === 3) {
+        g1Type = 'tank';  g1BaseCount = 3; g1Interval = 1.70;
+        g2Type = 'scout'; g2BaseCount = 6; g2Interval = 0.45;
+      } else if (step === 0) {
+        g1Type = (cWave >= 6) ? 'goliath' : 'tank';
+        g1BaseCount = (g1Type === 'goliath') ? 2 : 3;
+        g1Interval = (g1Type === 'goliath') ? 2.30 : 1.70;
+        g2Type = 'grunt'; g2BaseCount = 6; g2Interval = 0.58;
+      } else if (step === 1) {
+        g1Type = 'blinker'; g1BaseCount = 4;  g1Interval = 0.88;
+        g2Type = 'swarm';   g2BaseCount = 15; g2Interval = 0.05;
+      } else {
+        g1Type = 'tank';    g1BaseCount = 3; g1Interval = 1.65;
+        g2Type = 'blinker'; g2BaseCount = 4; g2Interval = 0.90;
+      }
+    } else {
+      // Волны 11–19 цикла: тяжелые осадные колонны голиафов и танков
+      const step = cWave % 4;
+      if (step === 3) {
+        g1Type = 'goliath'; g1BaseCount = 3; g1Interval = 2.20;
+        g2Type = 'blinker'; g2BaseCount = 5; g2Interval = 0.82;
+      } else if (step === 0) {
+        g1Type = 'goliath'; g1BaseCount = 2; g1Interval = 2.30;
+        g2Type = 'tank';    g2BaseCount = 4; g2Interval = 1.65;
+      } else if (step === 1) {
+        g1Type = 'swarm';   g1BaseCount = 24; g1Interval = 0.045;
+        g2Type = 'goliath'; g2BaseCount = 2;  g2Interval = 2.20;
+      } else {
+        g1Type = 'tank';  g1BaseCount = 5; g1Interval = 1.60;
+        g2Type = 'scout'; g2BaseCount = 9; g2Interval = 0.38;
+      }
+    }
+  }
+  // ------------------------------------------
+  // АРЕНА 4 (Главы 1–5): + emp_bomber (отключают башни во 2-й половине цикла)
+  // ------------------------------------------
+  else if (arena === 4) {
+    if (!isSecondHalf) {
+      // Волны 1–9 цикла: без EMP, но плотные связки 1–4 глав
+      const step = cWave % 4;
+      if (cWave === 1) {
+        g1Type = 'grunt'; g1BaseCount = 7; g1Interval = 0.58;
+      } else if (step === 2) {
+        g1Type = 'blinker'; g1BaseCount = 4; g1Interval = 0.85;
+        g2Type = 'scout';   g2BaseCount = 6; g2Interval = 0.42;
+      } else if (step === 3) {
+        g1Type = 'goliath'; g1BaseCount = 2; g1Interval = 2.25;
+        g2Type = 'grunt';   g2BaseCount = 6; g2Interval = 0.55;
+      } else if (step === 0) {
+        g1Type = 'swarm'; g1BaseCount = 18; g1Interval = 0.045;
+        g2Type = 'tank';  g2BaseCount = 3;  g2Interval = 1.70;
+      } else {
+        g1Type = 'tank';    g1BaseCount = 4; g1Interval = 1.65;
+        g2Type = 'blinker'; g2BaseCount = 4; g2Interval = 0.85;
+      }
+    } else {
+      // Волны 11–19 цикла: подключаются EMP Bomber (строго дозированно, с интервалом 2.5с)
+      const step = cWave % 4;
+      if (step === 3) {
+        g1Type = 'goliath';    g1BaseCount = 3; g1Interval = 2.20;
+        g2Type = 'emp_bomber'; g2BaseCount = 2; g2Interval = 2.50;
+      } else if (step === 0) {
+        g1Type = 'blinker';    g1BaseCount = 6; g1Interval = 0.80;
+        g2Type = 'emp_bomber'; g2BaseCount = 2; g2Interval = 2.60;
+      } else if (step === 1) {
+        g1Type = 'swarm';   g1BaseCount = 26; g1Interval = 0.045;
+        g2Type = 'blinker'; g2BaseCount = 5;  g2Interval = 0.82;
+      } else {
+        g1Type = 'tank';    g1BaseCount = 5; g1Interval = 1.60;
+        g2Type = 'goliath'; g2BaseCount = 2; g2Interval = 2.20;
+      }
+    }
+  }
+  // ------------------------------------------
+  // АРЕНА 5 (Главы 1–5, Финальный Апекс): альтернативная последовательность элиты
+  // ------------------------------------------
   else {
-    // АРХЕТИП 4: Смешанный авангард (Scout + Tank)
-    group1Type = 'scout';
-    group1Count = 6 + Math.floor(w * 0.8);
-    group1Interval = 0.4;
-
-    group2Type = 'tank';
-    group2Count = Math.min(8, 2 + Math.floor(w * 0.4));
-    group2Interval = 1.7; // Танки снова идут на расстоянии
+    if (!isSecondHalf) {
+      // Волны 1–9 цикла: сразу быстрые и бронированные комбинации в обратном порядке
+      const step = cWave % 4;
+      if (cWave === 1) {
+        g1Type = 'scout'; g1BaseCount = 8; g1Interval = 0.45;
+      } else if (step === 2) {
+        g1Type = 'tank';    g1BaseCount = 3; g1Interval = 1.65;
+        g2Type = 'blinker'; g2BaseCount = 4; g2Interval = 0.85;
+      } else if (step === 3) {
+        g1Type = 'swarm'; g1BaseCount = 20; g1Interval = 0.045;
+        g2Type = 'scout'; g2BaseCount = 6;  g2Interval = 0.40;
+      } else if (step === 0) {
+        g1Type = 'goliath';    g1BaseCount = 2; g1Interval = 2.20;
+        g2Type = 'emp_bomber'; g2BaseCount = 1; g2Interval = 2.60;
+      } else {
+        g1Type = 'blinker'; g1BaseCount = 5; g1Interval = 0.82;
+        g2Type = 'grunt';   g2BaseCount = 7; g2Interval = 0.52;
+      }
+    } else {
+      // Волны 11–19 цикла: тотальный штурм всеми типами войск
+      const step = cWave % 4;
+      if (step === 3) {
+        g1Type = 'swarm';      g1BaseCount = 30; g1Interval = 0.04;
+        g2Type = 'emp_bomber'; g2BaseCount = 2;  g2Interval = 2.50;
+      } else if (step === 0) {
+        g1Type = 'goliath'; g1BaseCount = 4; g1Interval = 2.10;
+        g2Type = 'blinker'; g2BaseCount = 6; g2Interval = 0.78;
+      } else if (step === 1) {
+        g1Type = 'tank';       g1BaseCount = 5; g1Interval = 1.55;
+        g2Type = 'emp_bomber'; g2BaseCount = 2; g2Interval = 2.50;
+      } else {
+        g1Type = 'goliath'; g1BaseCount = 3;  g1Interval = 2.15;
+        g2Type = 'swarm';   g2BaseCount = 24; g2Interval = 0.045;
+      }
+    }
   }
 
-  // Расчет наград за каждого моба в рамках лимита targetWaveBounty
-  let g1BountyShare = group2Type ? 0.6 : 1.0;
-  if (group1Type === 'swarm') g1BountyShare = 0.25; // Роевики дают копейки
+  // Масштабируем численность групп с ростом номера волны (от малого на старте к огромным армиям на 40+)
+  let g1Count = Math.round(g1BaseCount * crowdScale);
+  if (g1Type === 'swarm') {
+    g1Count = Math.min(60, Math.max(12, Math.round(g1BaseCount * (0.9 + w * 0.045))));
+    g1HpMod = 0.35;
+  } else if (g1Type === 'goliath') {
+    g1Count = Math.min(12, Math.max(1, Math.round(g1BaseCount * (0.8 + w * 0.025))));
+  } else if (g1Type === 'tank') {
+    g1Count = Math.min(16, Math.max(2, Math.round(g1BaseCount * (0.85 + w * 0.03))));
+  } else if (g1Type === 'emp_bomber') {
+    g1Count = Math.min(4, 1 + Math.floor(w / 22));
+  } else {
+    g1Count = Math.min(35, Math.max(4, g1Count));
+  }
 
-  const g1Bounty = Math.max(1, Math.floor((targetWaveBounty * g1BountyShare) / group1Count));
-  const proto1 = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[group1Type]) 
-    ? ENEMY_CONFIGS[group1Type] : { baseHp: 30, baseSpeed: 50 };
+  let g2Count = 0;
+  if (g2Type && g2BaseCount > 0) {
+    g2Count = Math.round(g2BaseCount * crowdScale);
+    if (g2Type === 'swarm') {
+      g2Count = Math.min(50, Math.max(10, Math.round(g2BaseCount * (0.9 + w * 0.04))));
+      g2HpMod = 0.35;
+    } else if (g2Type === 'goliath') {
+      g2Count = Math.min(8, Math.max(1, Math.round(g2BaseCount * (0.8 + w * 0.02))));
+    } else if (g2Type === 'tank') {
+      g2Count = Math.min(12, Math.max(2, Math.round(g2BaseCount * (0.85 + w * 0.025))));
+    } else if (g2Type === 'emp_bomber') {
+      g2Count = Math.min(3, 1 + Math.floor(w / 25)); // Не больше 1-3 штук, чтобы не глушить всю карту
+    } else {
+      g2Count = Math.min(28, Math.max(3, g2Count));
+    }
+  }
+
+  // Распределение бюджета золота за волну между группами
+  let g1BountyShare = (g2Type && g2Count > 0) ? 0.60 : 1.0;
+  if (g1Type === 'swarm' && g2Type) g1BountyShare = 0.30;
+
+  const g1Bounty = Math.max(1, Math.floor((targetWaveBounty * g1BountyShare) / g1Count));
+  const proto1 = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[g1Type])
+    ? ENEMY_CONFIGS[g1Type] : { baseHp: 40, baseSpeed: 55 };
 
   spawns.push({
-    type: group1Type,
+    type: g1Type,
     isBoss: false,
     isMiniBoss: false,
-    count: group1Count,
-    hp: Math.round(proto1.baseHp * hpScalingMult * (group1Type === 'swarm' ? 0.35 : 1.0)),
-    speed: Math.min(170, Math.round(proto1.baseSpeed * spdMult)),
+    count: g1Count,
+    hp: Math.max(10, Math.round(proto1.baseHp * hpScalingMult * g1HpMod)),
+    speed: Math.min(180, Math.round(proto1.baseSpeed * spdMult)),
     bounty: g1Bounty,
-    interval: group1Interval,
-    clumps: (group1Type === 'swarm') ? Math.ceil(group1Count / 10) : 0
+    interval: g1Interval,
+    clumps: (g1Type === 'swarm') ? Math.max(2, Math.ceil(g1Count / 10)) : 0
   });
 
-  if (group2Type && group2Count > 0) {
-    const g2Bounty = Math.max(1, Math.floor((targetWaveBounty * (1 - g1BountyShare)) / group2Count));
-    const proto2 = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[group2Type]) 
-      ? ENEMY_CONFIGS[group2Type] : { baseHp: 30, baseSpeed: 50 };
+  if (g2Type && g2Count > 0) {
+    const g2Bounty = Math.max(1, Math.floor((targetWaveBounty * (1 - g1BountyShare)) / g2Count));
+    const proto2 = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[g2Type])
+      ? ENEMY_CONFIGS[g2Type] : { baseHp: 40, baseSpeed: 55 };
 
     spawns.push({
-      type: group2Type,
+      type: g2Type,
       isBoss: false,
       isMiniBoss: false,
-      count: group2Count,
-      hp: Math.round(proto2.baseHp * hpScalingMult * (group2Type === 'swarm' ? 0.35 : 0.9)),
-      speed: Math.min(170, Math.round(proto2.baseSpeed * spdMult)),
+      count: g2Count,
+      hp: Math.max(10, Math.round(proto2.baseHp * hpScalingMult * g2HpMod)),
+      speed: Math.min(180, Math.round(proto2.baseSpeed * spdMult)),
       bounty: g2Bounty,
-      interval: group2Interval,
-      clumps: (group2Type === 'swarm') ? Math.ceil(group2Count / 10) : 0
+      interval: g2Interval,
+      clumps: (g2Type === 'swarm') ? Math.max(2, Math.ceil(g2Count / 10)) : 0
     });
   }
 
