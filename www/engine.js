@@ -1986,7 +1986,6 @@ function finishRevivePromptWindow() {
   const upgBtn = document.getElementById('defeatUpgradesBtn');
   const levelsBtn = document.getElementById('defeatLevelsBtn');
   const shopBtn = document.getElementById('defeatShopBtn');
-  const settingsBtn = document.getElementById('defeatSettingsBtn');
 
   if (reviveBtn) reviveBtn.classList.add('hidden');
   if (skipBtn) skipBtn.classList.add('hidden');
@@ -1994,7 +1993,6 @@ function finishRevivePromptWindow() {
   if (upgBtn) upgBtn.classList.remove('hidden');
   if (levelsBtn) levelsBtn.classList.remove('hidden');
   if (shopBtn) shopBtn.classList.remove('hidden');
-  if (settingsBtn) settingsBtn.classList.remove('hidden');
 
   updateUpgradeButtonsLock();
   showLoadoutWidgetIn('loadoutAnchor-defeat');
