@@ -1529,7 +1529,7 @@ function triggerVictory() {
     if (claimBtn) {
       claimBtn.disabled = false;
       claimBtn.classList.remove('hidden');
-      claimBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3" fill="none" stroke="#ffffff" stroke-width="2"/><polygon points="10,9 16,12 10,15" fill="#ffffff"/></svg><span>CLAIM x2</span>';
+      claimBtn.innerHTML = '<svg width="18" height="14" viewBox="0 0 24 24" style="flex:none; margin-right:6px;"><rect x="2" y="4" width="20" height="16" rx="3" fill="none" stroke="#ffffff" stroke-width="2"/><polygon points="10,9 16,12 10,15" fill="#ffffff"/></svg><span>CLAIM x2</span>';
       claimBtn.onclick = claimX2Reward;
     }
   } else {
@@ -1883,10 +1883,7 @@ function updateDefeatWaveLine() {
         doubleBtn.classList.remove('hidden');
         doubleBtn.disabled = false;
         doubleBtn.innerHTML = `
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linejoin="round" style="flex:none; margin-right:6px;">
-            <rect x="2" y="4" width="20" height="16" rx="3" stroke="#ffffff" fill="none"/>
-            <polygon points="10 9 16 12 10 15" fill="#ffffff" stroke="none"/>
-          </svg>
+          <svg width="18" height="14" viewBox="0 0 24 24" style="flex:none; margin-right:6px;"><rect x="2" y="4" width="20" height="16" rx="3" fill="none" stroke="#ffffff" stroke-width="2"/><polygon points="10,9 16,12 10,15" fill="#ffffff"/></svg>
           <span style="color:#ffffff; font-weight:800; letter-spacing:1px;">CLAIM X2</span>
         `;
       } else {
