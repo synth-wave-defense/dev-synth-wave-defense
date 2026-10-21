@@ -2779,35 +2779,6 @@ function handleClearSaveClick() {
   console.log('SectorDefenseTD: save cleared, state reset.');
 }
 
-function handleDevGoldClick() {
-  if (!devMode) return;
-  devInputOpen = true;
-  const val = prompt("Set Gold:", gold);
-  devInputOpen = false;
-  suppressBackgroundPause();
-  if (val !== null) {
-    const parsed = parseInt(val, 10);
-    if (!isNaN(parsed) && parsed >= 0) {
-      gold = parsed;
-      updateUI();
-    }
-  }
-}
-
-function handleDevHpClick() {
-  if (!devMode) return;
-  devInputOpen = true;
-  const val = prompt("Set Lives (HP):", baseHp);
-  devInputOpen = false;
-  suppressBackgroundPause();
-  if (val !== null) {
-    const parsed = parseInt(val, 10);
-    if (!isNaN(parsed) && parsed > 0) {
-      baseHp = parsed;
-      updateUI();
-    }
-  }
-}
 
 // [ENG111] Daily Rewards & In-App Purchases (IAP): Daily gifts login packs, shop state, and simulated IAP transactions.
 function getTodayDateString() {
@@ -3000,20 +2971,6 @@ function buyShopIAP(productId) {
 }
 
 // [ENG112] Navigation & Screen Transition Helpers: Start screen, level selection, and chapter label controllers.
-function updateStartChapterLabel(show) {
-  const el = document.getElementById('startChapterLabel');
-  if (!el) return;
-  if (show) {
-    const sector = Math.max(1, Math.min(TOTAL_SECTIONS,
-      Math.ceil(Math.min(maxUnlockedLevel, TOTAL_LEVELS) / LEVELS_PER_SECTION)));
-    el.textContent = `CHAPTER ${sector}`;
-    el.classList.remove('hidden');
-  } else {
-    el.classList.add('hidden');
-  }
-}
-
-
 // [ENG113] Simulation Step Update Pipeline: Enemy movement, tower targeting, projectile physics, and status effects.
 // javascript-obfuscator: disable
 function update(dt) {
