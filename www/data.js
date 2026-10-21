@@ -281,7 +281,6 @@ const TOWER_UNLOCK_BLURBS = {
   railgun: 'Fires a piercing beam down a straight line, hitting every enemy it crosses. Slow, but devastating in long corridors.'
 };
 
-const UPGRADE_STEPS_PER_SECTOR = 2;
 const UPGRADE_STEP_COSTS = [6, 7, 8, 9, 10, 11, 12, 13, 15, 19];
 
 // [DAT101.01] Tech Tree Upgrade Cost & Effective Level Calculators: Phase 1 (1-10), Phase 2 (11-15), Phase 3 (16+) spend and stat formulas.
@@ -310,7 +309,7 @@ function getUpgradeCostForLevel(nextLvl) {
 
 function isScalingBranch(key) {
   if (!key) return false;
-  if (key.endsWith('_power') || key === 'base_hp' || key === 'base_gold' || key === 'shield' || key === 'damage') {
+  if (key.endsWith('_power') || key === 'base_hp' || key === 'base_gold') {
     return true;
   }
   return false;
@@ -345,10 +344,6 @@ function swarmClumpSizeFor(lvl) {
 const SWARM_CLUMP_INTERVAL = 0.03;
 const SWARM_CLUMP_GAP = 3.2;
 const SWARM_BOUNTY_SCALE = 0.62;
-
-function swarmClumpsFor(lvl, w) {
-  return Math.min(4, 2 + Math.floor(Math.max(0, lvl - 11) / 10) + (w > 5 ? 1 : 0));
-}
 
 const ENEMY_CONFIGS = {
   grunt: { shape: 'circle', color: '#f05f9f', glow: '#f05f9f', size: 11, baseSpeed: 55, baseHp: 40, baseBounty: 7 },
@@ -418,128 +413,3 @@ const MAP_CATALOG = {
   L50: { name: "Final Apex", cols: 20, rows: 17, path: [{c: 0, r: 16}, {c: 0, r: 11}, {c: 6, r: 11}, {c: 6, r: 16}, {c: 1, r: 16}, {c: 1, r: 12}, {c: 5, r: 12}, {c: 5, r: 15}, {c: 2, r: 15}, {c: 2, r: 10}, {c: 19, r: 10}, {c: 19, r: 16}, {c: 14, r: 16}, {c: 14, r: 11}, {c: 18, r: 11}, {c: 18, r: 15}, {c: 15, r: 15}, {c: 15, r: 12}, {c: 17, r: 12}, {c: 17, r: 2}, {c: 14, r: 2}, {c: 14, r: 5}, {c: 18, r: 5}, {c: 18, r: 1}, {c: 13, r: 1}, {c: 13, r: 6}, {c: 19, r: 6}, {c: 19, r: 0}, {c: 0, r: 0}, {c: 0, r: 6}, {c: 6, r: 6}, {c: 6, r: 1}, {c: 1, r: 1}, {c: 1, r: 5}, {c: 5, r: 5}, {c: 5, r: 2}, {c: 2, r: 2}, {c: 2, r: 8}, {c: 10, r: 8}], blocked: [{c: 0, r: 10}, {c: 1, r: 10}, {c: 1, r: 9}, {c: 1, r: 8}, {c: 1, r: 7}, {c: 0, r: 7}, {c: 0, r: 8}, {c: 0, r: 9}, {c: 7, r: 16}, {c: 8, r: 16}, {c: 9, r: 16}, {c: 10, r: 16}, {c: 11, r: 16}, {c: 12, r: 16}, {c: 13, r: 16}, {c: 13, r: 15}, {c: 13, r: 14}, {c: 13, r: 13}, {c: 13, r: 12}, {c: 13, r: 11}, {c: 12, r: 11}, {c: 11, r: 11}, {c: 10, r: 11}, {c: 9, r: 11}, {c: 8, r: 11}, {c: 7, r: 11}, {c: 7, r: 12}, {c: 7, r: 13}, {c: 7, r: 14}, {c: 7, r: 15}, {c: 8, r: 15}, {c: 9, r: 15}, {c: 10, r: 15}, {c: 11, r: 15}, {c: 12, r: 15}, {c: 12, r: 14}, {c: 11, r: 14}, {c: 10, r: 14}, {c: 9, r: 14}, {c: 8, r: 14}, {c: 8, r: 13}, {c: 9, r: 13}, {c: 10, r: 13}, {c: 11, r: 13}, {c: 12, r: 12}, {c: 12, r: 13}, {c: 11, r: 12}, {c: 10, r: 12}, {c: 9, r: 12}, {c: 8, r: 12}, {c: 7, r: 1}, {c: 8, r: 1}, {c: 9, r: 1}, {c: 10, r: 1}, {c: 11, r: 1}, {c: 12, r: 1}, {c: 12, r: 2}, {c: 12, r: 3}, {c: 12, r: 4}, {c: 12, r: 5}, {c: 12, r: 6}, {c: 11, r: 6}, {c: 10, r: 6}, {c: 9, r: 6}, {c: 8, r: 6}, {c: 7, r: 6}, {c: 7, r: 5}, {c: 7, r: 4}, {c: 7, r: 3}, {c: 7, r: 2}, {c: 8, r: 2}, {c: 9, r: 2}, {c: 10, r: 2}, {c: 11, r: 2}, {c: 11, r: 3}, {c: 10, r: 3}, {c: 9, r: 3}, {c: 8, r: 3}, {c: 8, r: 4}, {c: 9, r: 4}, {c: 10, r: 4}, {c: 11, r: 4}, {c: 11, r: 5}, {c: 10, r: 5}, {c: 9, r: 5}, {c: 8, r: 5}, {c: 18, r: 9}, {c: 19, r: 9}, {c: 19, r: 8}, {c: 19, r: 7}, {c: 18, r: 7}, {c: 18, r: 8}, {c: 16, r: 9}, {c: 16, r: 8}, {c: 16, r: 7}, {c: 15, r: 7}, {c: 14, r: 7}, {c: 14, r: 8}, {c: 15, r: 8}, {c: 15, r: 9}, {c: 14, r: 9}, {c: 13, r: 9}, {c: 13, r: 8}, {c: 13, r: 7}, {c: 12, r: 7}, {c: 12, r: 8}, {c: 12, r: 9}, {c: 2, r: 9}, {c: 3, r: 7}, {c: 4, r: 7}, {c: 5, r: 7}, {c: 6, r: 7}, {c: 7, r: 7}, {c: 3, r: 9}, {c: 4, r: 9}, {c: 5, r: 9}, {c: 6, r: 9}, {c: 7, r: 9}, {c: 8, r: 9}, {c: 8, r: 7}] },
 };
 
-// [DAT106] Level Scaling & Spawn Factory: Continuous level speed and count scaling helpers, plus enemy spawn object factory.
-function getLevelSpeedMult(lvl) {
-  const t = Math.max(0, Math.min(1, (lvl - 11) / 39));
-  return 1.0 + t * 0.35;
-}
-function getLevelCountBonus(lvl) {
-  const t = Math.max(0, Math.min(1, (lvl - 11) / 39));
-  return Math.floor(t * 6);
-}
-
-function createEnemySpawn(type, count, opts = {}) {
-  const cfg = ENEMY_CONFIGS[type] || ENEMY_CONFIGS.grunt;
-  const isBoss = !!opts.isBoss;
-  const isMiniBoss = !!opts.isMiniBoss;
-  const hpMult = opts.hpMult ?? (isBoss ? 3.5 : (isMiniBoss ? 2.0 : 1.0));
-  const speedMult = opts.speedMult ?? (isBoss ? 0.72 : (isMiniBoss ? 0.85 : 1.0));
-  const bountyMult = opts.bountyMult ?? (isBoss ? 4.5 : (isMiniBoss ? 2.5 : 1.0));
-  const calculatedHp = opts.hp !== undefined ? opts.hp : Math.round(cfg.baseHp * hpMult);
-  const calculatedSpeed = opts.speed !== undefined ? opts.speed : Math.round(cfg.baseSpeed * speedMult);
-  return {
-    type,
-    isBoss,
-    isMiniBoss,
-    count,
-    hp: calculatedHp,
-    speed: calculatedSpeed,
-    interval: opts.interval ?? (type === 'swarm' ? 0.15 : (type === 'scout' ? 0.48 : (type === 'tank' ? 1.3 : (type === 'goliath' ? 1.5 : 0.7)))),
-    clumps: opts.clumps,
-    bounty: Math.max(1, Math.round(cfg.baseBounty * bountyMult))
-  };
-}
-
-// [DAT106.01] Standard Level Generator: Constructs wave definitions, enemy compositions, and boss encounters for campaign levels.
-function generateStandardLevel(lvl, mapId, wavesCount, sGold, baseHpScale, bossHpVal, bossType, tune = {}) {
-  const mobHpMult = tune.mobHpMult ?? 1.0;
-  const miniBossHpMult = tune.miniBossHpMult ?? 1.0;
-  const wavesArr = [];
-  const isBossLevel = (lvl % 10 === 0);
-
-  for (let w = 1; w <= wavesCount; w++) {
-    const isLastWave = (w === wavesCount);
-    const spawns = [];
-    const count = 6 + w * 2;
-    const hpScale = (baseHpScale / ENEMY_CONFIGS.grunt.baseHp) * Math.pow(1.08, w - 1);
-    const bountyScale = Math.max(0.45, 1 - (lvl - 1) * 0.035 - (w - 1) * 0.025);
-
-    if (w % 2 === 0) {
-      const heavyType = lvl > 40 ? 'emp_bomber' : (lvl > 30 ? 'goliath' : (lvl > 20 ? 'blinker' : (lvl > 10 ? 'swarm' : 'tank')));
-      const heavyInterval = heavyType === 'tank' ? 1.3 : (heavyType === 'goliath' ? 1.5 : (heavyType === 'swarm' ? 0.15 : 0.95));
-      spawns.push(createEnemySpawn(heavyType, Math.max(1, Math.floor(count * 0.3)), {
-        clumps: heavyType === 'swarm' ? swarmClumpsFor(lvl, w) : undefined,
-        hpMult: hpScale * 2.0 * mobHpMult,
-        speedMult: 1.0,
-        bountyMult: bountyScale,
-        interval: heavyInterval
-      }));
-      spawns.push(createEnemySpawn('scout', Math.floor(count * 0.5), {
-        hpMult: hpScale * 0.52 * mobHpMult,
-        speedMult: 1.0,
-        bountyMult: bountyScale,
-        interval: 0.6
-      }));
-    } else {
-      const standardType = lvl > 40 ? (w > 4 ? 'emp_bomber' : 'goliath') : (lvl > 20 ? (w > 3 ? 'blinker' : 'grunt') : (lvl > 10 ? (w > 3 ? 'swarm' : 'grunt') : 'grunt'));
-      spawns.push(createEnemySpawn(standardType, count, {
-        clumps: standardType === 'swarm' ? swarmClumpsFor(lvl, w) : undefined,
-        hpMult: hpScale * mobHpMult,
-        speedMult: 1.0,
-        bountyMult: bountyScale,
-        interval: 0.65
-      }));
-      if (w > 2) {
-        spawns.push(createEnemySpawn('scout', Math.floor(count * 0.35), {
-          hpMult: hpScale * 0.5 * mobHpMult,
-          speedMult: 1.0,
-          bountyMult: bountyScale,
-          interval: 0.65
-        }));
-      }
-    }
-
-    if (isLastWave) {
-      if (isBossLevel) {
-        const bossBase = ENEMY_CONFIGS[bossType] || ENEMY_CONFIGS.grunt;
-        spawns.push({
-          type: bossType,
-          isBoss: true,
-          isMiniBoss: false,
-          count: 1,
-          hp: bossHpVal,
-          speed: Math.round(bossBase.baseSpeed * 0.75),
-          interval: 1.2,
-          bounty: Math.max(35, Math.round(bossBase.baseBounty * 5.0))
-        });
-      } else {
-        const miniBossType = (lvl % 3 === 0) ? 'tank' : ((lvl % 2 === 0) ? 'scout' : 'grunt');
-        const miniBossBase = ENEMY_CONFIGS[miniBossType] || ENEMY_CONFIGS.grunt;
-        spawns.push({
-          type: miniBossType,
-          isBoss: false,
-          isMiniBoss: true,
-          count: 1,
-          hp: Math.round(miniBossBase.baseHp * 2.8 * (1 + lvl * 0.08) * miniBossHpMult),
-          speed: Math.round(miniBossBase.baseSpeed * 0.85),
-          interval: 1.2,
-          bounty: Math.max(15, Math.round(miniBossBase.baseBounty * 2.5))
-        });
-      }
-    }
-
-    wavesArr.push({ wave: w, spawns });
-  }
-
-  const unlockedTowers = ['gun', 'laser', 'mortar', 'tesla', 'stasis', 'melter', 'railgun'];
-
-  return {
-    mapId: mapId,
-    startHp: 10,
-    startGold: sGold,
-    totalWaves: wavesCount,
-    unlockedTowers: unlockedTowers,
-    canUpgrade: true,
-    waves: wavesArr
-  };
-}
