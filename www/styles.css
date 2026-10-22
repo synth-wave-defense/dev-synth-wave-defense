@@ -62,79 +62,105 @@ body {
   top: max(16px, env(safe-area-inset-top));
   left: 50%;
   transform: translateX(-50%);
-  width: calc(100vw - max(32px, env(safe-area-inset-left) + env(safe-area-inset-right)));
+  width: calc(100vw - max(24px, env(safe-area-inset-left) + env(safe-area-inset-right)));
   max-width: 960px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: rgba(10, 14, 28, 0.45);
   backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   min-height: 52px;
-  padding: 0 9px 0 14px;
+  padding: 0 8px 0 12px;
   border-radius: 26px;
   border: 1px solid rgba(140, 200, 255, 0.18);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55);
   pointer-events: auto;
-  gap: 10px;
+  gap: 6px;
   z-index: 300;
+  box-sizing: border-box;
 }
 
 .hud-left-group {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   height: 34px;
-  justify-self: start;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .hud-capsule-extra {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   height: 100%;
+  flex-shrink: 0;
 }
 
 /* [CSS101.01] HUD interactive badges and stat indicators */
 .hud-split-badge {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  justify-content: flex-end;
+  gap: 3px;
   height: 34px;
+  padding: 0 6px;
   background: transparent;
   border: none;
   border-radius: 10px;
-  justify-self: auto;
-  box-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
+  box-shadow: none;
   overflow: hidden;
-  justify-self: center;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
 }
 
 .badge-half {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   padding: 0 2px;
   height: 100%;
   position: relative;
   border-radius: 9px;
+  flex-shrink: 0;
 }
 .badge-half.interactive { cursor: pointer; }
 .badge-half.interactive:hover { background: rgba(0, 229, 255, 0.12); }
 .badge-half.interactive:active { background: rgba(0, 229, 255, 0.2); }
 
-.badge-divider { display: none; }
+.badge-divider {
+  display: block;
+  width: 1px;
+  height: 14px;
+  background: rgba(140, 200, 255, 0.16);
+  flex-shrink: 0;
+}
 
 .stat-val-text {
   font-family: 'Montserrat', sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
   color: #ffffff !important;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  min-width: 20px;
+  text-align: left;
+}
+
+#goldVal {
+  min-width: 28px;
+}
+
+#hpVal {
+  min-width: 18px;
 }
 
 .hud-icon {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -143,12 +169,25 @@ body {
 
 .match-val-text {
   font-family: 'Montserrat', sans-serif;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 800;
-  letter-spacing: 1.5px;
+  letter-spacing: 0.8px;
   color: #8ef3ff;
   text-transform: uppercase;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+#levelText {
+  min-width: 14px;
+  text-align: right;
+  display: inline-block;
+}
+
+#waveText {
+  min-width: 34px;
+  text-align: left;
+  display: inline-block;
 }
 
 .hud-select-dropdown {
@@ -170,8 +209,11 @@ body {
 .hud-right-group {
   display: flex;
   align-items: center;
-  gap: 8px;
-  justify-self: end;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-left: auto;
+  flex: 0 0 auto;
+  flex-shrink: 0;
 }
 
 .hud-corner-utilities {
@@ -179,6 +221,8 @@ body {
   flex-direction: column;
   align-items: flex-end;
   gap: 8px;
+  flex: 0 0 36px;
+  width: 36px;
 }
 
 .daily-bonus-quick-btn {
@@ -278,6 +322,7 @@ body {
   text-transform: uppercase;
   white-space: nowrap;
   pointer-events: none;
+  display: none !important;
 }
 .hud-chapter-label.hidden { display: none; }
 
