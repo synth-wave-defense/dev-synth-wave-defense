@@ -2374,9 +2374,11 @@ body {
 .levels-bg {
   background: rgba(4, 6, 14, 0.65) !important;
   backdrop-filter: blur(8px) !important;
-  padding-top: max(80px, calc(env(safe-area-inset-top) + 72px)) !important;
+  /* Увеличиваем отступ сверху, чтобы переключатель не прилипал к верхней панели */
+  padding-top: max(110px, calc(env(safe-area-inset-top) + 90px)) !important;
   padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
-  justify-content: center !important;
+  /* Выравниваем по верхнему краю, чтобы интерфейс перестал прыгать */
+  justify-content: flex-start !important;
   overflow-y: auto;
   touch-action: pan-y;
   gap: 12px !important;
@@ -2574,20 +2576,32 @@ body {
   filter: drop-shadow(0 0 8px rgba(240, 95, 159, 0.9)) !important;
 }
 
-/* Chapter Navigator & Swipe Hint */
+/* Chapter Navigator & Swipe Hint */ 
 .chapter-swipe-hint {
   font-family: 'Montserrat', sans-serif;
   font-size: 10px;
   font-weight: 600;
-  color: #64748b;
+  color: #ffffff; /* Белый цвет текста */
   text-align: center;
   margin: 4px auto 6px auto;
   letter-spacing: 0.5px;
 }
-
 .chapter-swipe-hint .swipe-arrow {
   color: #00e5ff;
-  opacity: 0.6;
+  opacity: 0.9;
+}
+
+/* Свечение и розовый цвет стрелочек для Hardcore */
+.mode-overdrive-active .swipe-arrow, 
+.overdrive-active .swipe-arrow {
+  color: #f05f9f;
+  text-shadow: 0 0 6px rgba(240, 95, 159, 0.5);
+}
+
+/* Свечение и фиолетовый цвет стрелочек для Endless */
+#levelsScreen.mode-endless-active .swipe-arrow {
+  color: #d946ef;
+  text-shadow: 0 0 6px rgba(217, 70, 239, 0.5);
 }
 
 /* Mode Rules Banner */
@@ -2884,18 +2898,58 @@ body {
   text-shadow: 0 0 14px rgba(255, 47, 208, 0.8);
 }
 
+/* === HARDCORE SWIPE ARROWS & BUTTONS === */
 .mode-overdrive-active .part-nav-btn,
 .overdrive-active .part-nav-btn {
   background: rgba(8, 12, 24, 0.6);
-  border-color: rgba(140, 200, 255, 0.2);
-  color: #dff9ff;
+  border-color: rgba(240, 95, 159, 0.3);
+  color: #f05f9f;
 }
 
 .mode-overdrive-active .part-nav-btn:hover:not(:disabled),
 .overdrive-active .part-nav-btn:hover:not(:disabled) {
-  background: rgba(140, 200, 255, 0.2);
-  border-color: #00e5ff;
-  box-shadow: 0 0 14px rgba(0, 229, 255, 0.3);
+  background: rgba(240, 95, 159, 0.2);
+  border-color: #f05f9f;
+  box-shadow: 0 0 14px rgba(240, 95, 159, 0.4);
+}
+
+.mode-overdrive-active .part-nav-btn:active:not(:disabled),
+.overdrive-active .part-nav-btn:active:not(:disabled) {
+  background: rgba(240, 95, 159, 0.35) !important;
+  border-color: #f05f9f !important;
+  box-shadow: 0 0 20px rgba(240, 95, 159, 0.7) !important;
+}
+
+.mode-overdrive-active .swipe-arrow,
+.overdrive-active .swipe-arrow {
+  color: #f05f9f;
+}
+
+/* === ENDLESS SWIPE ARROWS, BUTTONS & GLOW === */
+#levelsScreen.mode-endless-active .part-nav-label {
+  text-shadow: 0 0 16px rgba(217, 70, 239, 0.7);
+}
+
+#levelsScreen.mode-endless-active .part-nav-btn {
+  background: rgba(8, 12, 24, 0.6);
+  border-color: rgba(217, 70, 239, 0.3);
+  color: #d946ef;
+}
+
+#levelsScreen.mode-endless-active .part-nav-btn:hover:not(:disabled) {
+  background: rgba(217, 70, 239, 0.2);
+  border-color: #d946ef;
+  box-shadow: 0 0 14px rgba(217, 70, 239, 0.4);
+}
+
+#levelsScreen.mode-endless-active .part-nav-btn:active:not(:disabled) {
+  background: rgba(217, 70, 239, 0.35) !important;
+  border-color: #d946ef !important;
+  box-shadow: 0 0 20px rgba(217, 70, 239, 0.7) !important;
+}
+
+#levelsScreen.mode-endless-active .swipe-arrow {
+  color: #d946ef;
 }
 
 /* Кнопки уровней в режиме HARDCORE: матовый темный фон без градиента + розовая рамка таба */

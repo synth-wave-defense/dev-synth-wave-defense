@@ -1383,17 +1383,29 @@ function renderUpgradeTree() {
 }
 
 let isNavigatingSection = false;
+let modeLevelSections = { normal: 1, overdrive: 1, endless: 1 };
 
 function navLevelSection(dir) {
   if (isNavigatingSection) return;
   const target = currentLevelSection + dir;
   if (target < 1 || target > TOTAL_SECTIONS) return;
-  const isTargetUnlocked = devMode || maxUnlockedLevel > (target - 1) * LEVELS_PER_SECTION;
+  
+  let isTargetUnlocked = false;
+  if (devMode) {
+      isTargetUnlocked = true;
+  } else if (currentLevelMode === 'overdrive') {
+      const reqLvl = (target - 1) * LEVELS_PER_SECTION;
+      isTargetUnlocked = reqLvl === 0 || !!overdriveClearedLevels[reqLvl];
+  } else {
+      isTargetUnlocked = maxUnlockedLevel > (target - 1) * LEVELS_PER_SECTION;
+  }
+  
   if (!isTargetUnlocked) return;
 
   const grid = document.getElementById('levelsGrid');
   if (!grid) {
     currentLevelSection = target;
+    modeLevelSections[currentLevelMode] = target;
     renderLevelsGrid();
     return;
   }
@@ -1408,6 +1420,7 @@ function navLevelSection(dir) {
 
   setTimeout(() => {
     currentLevelSection = target;
+    modeLevelSections[currentLevelMode] = target;
     renderLevelsGrid();
     grid.classList.remove(outClass);
     void grid.offsetWidth;
@@ -1438,9 +1451,33 @@ function selectLevelMode(mode) {
   }
 
   if (typeof sfx === 'function') sfx('confirm');
+  
+  if (currentLevelMode) {
+    modeLevelSections[currentLevelMode] = currentLevelSection;
+  }
+  
   currentLevelMode = mode;
   isOverdriveMode = (mode === 'overdrive');
   isEndlessMode = (mode === 'endless');
+
+  let targetSec = modeLevelSections[mode] || 1;
+  let maxAllowedSec = 1;
+  
+  if (devMode) {
+      maxAllowedSec = typeof TOTAL_SECTIONS !== 'undefined' ? TOTAL_SECTIONS : 5;
+  } else if (mode === 'overdrive') {
+      let maxHC = 1;
+      const hcKeys = Object.keys(overdriveClearedLevels).map(Number);
+      if (hcKeys.length > 0) {
+          maxHC = Math.max(...hcKeys) + 1;
+      }
+      maxAllowedSec = Math.ceil(maxHC / LEVELS_PER_SECTION);
+  } else {
+      maxAllowedSec = Math.ceil(maxUnlockedLevel / LEVELS_PER_SECTION);
+  }
+  
+  currentLevelSection = Math.min(targetSec, Math.max(1, maxAllowedSec));
+  modeLevelSections[mode] = currentLevelSection;
 
   updateModeSwitcherUI();
   if (mode === 'endless') {
@@ -1478,15 +1515,32 @@ function updateModeSwitcherUI() {
   const campaignView = document.getElementById('levelsCampaignView');
   const endlessView = document.getElementById('endlessDashboardView');
 
+const swipeHint = document.getElementById('chapterSwipeHint');
+
   if (currentLevelMode === 'endless') {
     if (campaignView) campaignView.classList.add('hidden');
-    if (endlessView) endlessView.classList.remove('hidden');
+    if (endlessView) {
+        endlessView.classList.remove('hidden');
+        if (swipeHint) {
+            // Переносим подсказку в Endless экран
+            const endlessNav = document.querySelector('.endless-part-nav');
+            if (endlessNav) endlessNav.after(swipeHint);
+        }
+    }
     renderEndlessDashboardUI();
   } else {
-    if (campaignView) campaignView.classList.remove('hidden');
+    if (campaignView) {
+        campaignView.classList.remove('hidden');
+        if (swipeHint) {
+            // Возвращаем подсказку в Normal/Hardcore экран
+            const normalNav = document.querySelector('.level-part-navigator:not(.endless-part-nav)');
+            if (normalNav) normalNav.after(swipeHint);
+        }
+    }
     if (endlessView) endlessView.classList.add('hidden');
   }
-
+  
+  
   const rulesBanner = document.getElementById('modeRulesBanner');
   if (rulesBanner) {
     if (currentLevelMode === 'overdrive') {
@@ -1546,7 +1600,6 @@ function renderEndlessDashboardUI() {
 
   if (mapEl) mapEl.textContent = `CHAPTER ${currentLevelSection}`;
 
-  // НОВЫЙ БЛОК: Визуально выключаем стрелки, если идти некуда
   const prevBtn = document.getElementById('endlessNavPrev');
   const nextBtn = document.getElementById('endlessNavNext');
   
@@ -1557,13 +1610,19 @@ function renderEndlessDashboardUI() {
     const nextSecUnlocked = (typeof devMode !== 'undefined' && devMode) || maxUnlockedLevel > currentLevelSection * LEVELS_PER_SECTION;
     nextBtn.disabled = currentLevelSection >= (typeof TOTAL_SECTIONS !== 'undefined' ? TOTAL_SECTIONS : 5) || !nextSecUnlocked;
   }
-  // КОНЕЦ НОВОГО БЛОКА
 
   if (ticketEl) {
     const status = (typeof getEndlessEntryStatus === 'function') ? getEndlessEntryStatus() : { text: 'FREE (1/1)' };
     let statusText = status.text ? status.text.toUpperCase() : 'FREE (1/1)';
     if (statusText.includes('REMAINING')) statusText = statusText.replace(' REMAINING', '');
     ticketEl.textContent = statusText;
+  }
+
+  // Обновляем видимость подсказки свайпа в Endless
+  const swipeHint = document.getElementById('chapterSwipeHint');
+  if (swipeHint && typeof currentLevelMode !== 'undefined' && currentLevelMode === 'endless') {
+    const canSwipe = (maxUnlockedLevel > 15 || devMode) && typeof TOTAL_SECTIONS !== 'undefined' && TOTAL_SECTIONS > 1;
+    swipeHint.classList.toggle('hidden', !canSwipe);
   }
 }
 
@@ -1642,7 +1701,16 @@ function renderLevelsGrid() {
   const partLabel = document.getElementById('partNavLabel');
   const prevBtn = document.getElementById('partNavPrev');
   const nextBtn = document.getElementById('partNavNext');
-  const nextSecUnlocked = devMode || maxUnlockedLevel > currentLevelSection * LEVELS_PER_SECTION;
+  
+  let nextSecUnlocked = false;
+  if (devMode) {
+      nextSecUnlocked = true;
+  } else if (currentLevelMode === 'overdrive') {
+      const reqLvl = currentLevelSection * LEVELS_PER_SECTION;
+      nextSecUnlocked = !!overdriveClearedLevels[reqLvl];
+  } else {
+      nextSecUnlocked = maxUnlockedLevel > currentLevelSection * LEVELS_PER_SECTION;
+  }
 
   if (partLabel) partLabel.textContent = `CHAPTER ${currentLevelSection}`;
 
@@ -1656,8 +1724,8 @@ function renderLevelsGrid() {
   }
 
   const swipeHint = document.getElementById('chapterSwipeHint');
-  const canSwipe = (maxUnlockedLevel >= 11 || devMode) && TOTAL_SECTIONS > 1 && currentLevelMode !== 'endless';
-  if (swipeHint) {
+  const canSwipe = (maxUnlockedLevel >= 11 || devMode) && typeof TOTAL_SECTIONS !== 'undefined' && TOTAL_SECTIONS > 1;
+  if (swipeHint && currentLevelMode !== 'endless') {
     swipeHint.classList.toggle('hidden', !canSwipe);
   }
 
@@ -1695,11 +1763,11 @@ function renderLevelsGrid() {
         `;
       }
     } else {
-      const isUnlockedInNormal = devMode || clearedLevels.includes(lvl);
       const isOdCleared = !!overdriveClearedLevels[lvl];
-      const isCurrentOd = isUnlockedInNormal && !isOdCleared && (lvl === 1 || !!overdriveClearedLevels[lvl - 1] || devMode);
+      const isUnlockedInHC = devMode || isOdCleared || (lvl === 1) || !!overdriveClearedLevels[lvl - 1];
+      const isCurrentOd = isUnlockedInHC && !isOdCleared;
 
-      if (isUnlockedInNormal) {
+      if (isUnlockedInHC) {
         btn.className = 'level-card-btn' + (isCurrentOd ? ' current' : (isOdCleared ? ' cleared' : ''));
         if (isOdCleared) {
           btn.innerHTML = `
@@ -3219,6 +3287,9 @@ function showLevelSelect() {
   if (customSpawner) customSpawner.classList.add('hidden');
 
   currentLevelSection = Math.min(TOTAL_SECTIONS, Math.max(1, Math.ceil(currentLevel / LEVELS_PER_SECTION)));
+  if (typeof modeLevelSections !== 'undefined' && currentLevelMode) {
+    modeLevelSections[currentLevelMode] = currentLevelSection;
+  }
   renderLevelsGrid();
   showLoadoutWidgetIn('loadoutAnchor-levels');
   gameState = 'LEVELS';
@@ -3306,6 +3377,9 @@ function showLevelSelectFromGame() {
   if (customSpawner) customSpawner.classList.add('hidden');
   
   currentLevelSection = Math.min(TOTAL_SECTIONS, Math.max(1, Math.ceil(currentLevel / LEVELS_PER_SECTION)));
+  if (typeof modeLevelSections !== 'undefined' && currentLevelMode) {
+    modeLevelSections[currentLevelMode] = currentLevelSection;
+  }
   renderLevelsGrid();
   showLoadoutWidgetIn('loadoutAnchor-levels');
   gameState = 'LEVELS';
