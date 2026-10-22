@@ -844,6 +844,43 @@ function formatResourceVal(val) {
   return (m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)) + 'M';
 }
 
+function formatResourceVal(val) {
+  const n = Math.floor(Number(val) || 0);
+  if (n < 1000) return String(n);
+  if (n < 10000) {
+    const k = Math.floor(n / 100) / 10;
+    return (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + 'K';
+  }
+  if (n < 1000000) {
+    return Math.floor(n / 1000) + 'K';
+  }
+  const m = Math.floor(n / 100000) / 10;
+  return (m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)) + 'M';
+}
+
+// Единый контроллер видимости элементов верхней панели
+function syncTopHudVisibility() {
+  const isActiveBattle = (typeof gameState !== 'undefined' && gameState === 'PLAYING');
+
+  const diamondBadge = document.getElementById('hudDiamondBadge');
+  const prismBadge = document.getElementById('hudPrismBadge');
+  const econHpBadge = document.getElementById('econHpSplitBadge');
+  const levelWaveBadge = document.getElementById('levelWaveSplitBadge');
+  const hudRightGroup = document.getElementById('hudRightGroup');
+
+  // В активном бою (PLAYING) скрываем Алмазы и Призмы; в меню, паузе и на экранах итогов — показываем
+  if (diamondBadge) diamondBadge.classList.toggle('hidden', isActiveBattle);
+  if (prismBadge) prismBadge.classList.toggle('hidden', isActiveBattle);
+
+  // В активном бою (PLAYING) показываем Золото, Жизни, Уровень и Волну; везде вне боя (включая паузу) — скрываем
+  if (econHpBadge) econHpBadge.classList.toggle('hidden', !isActiveBattle);
+  if (levelWaveBadge) levelWaveBadge.classList.toggle('hidden', !isActiveBattle);
+
+  // Правая группа с кнопкой Settings видна всегда
+  if (hudRightGroup) hudRightGroup.classList.remove('hidden');
+}
+window.syncTopHudVisibility = syncTopHudVisibility;
+
 function updateDiamondUI() {
   const formatted = formatResourceVal(diamonds);
   const el = document.getElementById('globalDiamondsVal');
@@ -866,6 +903,7 @@ function updateDiamondUI() {
       badge.removeAttribute('title');
     }
   }
+  syncTopHudVisibility();
 }
 
 function updatePrismUI() {
@@ -882,19 +920,15 @@ function updatePrismUI() {
   if (elBp) elBp.textContent = formatted;
   const badge = document.getElementById('hudPrismBadge');
   if (badge) {
-    if (typeof gameState !== 'undefined' && gameState === 'PLAYING') {
-      badge.style.display = 'none';
+    if (devMode) {
+      badge.classList.add('interactive');
+      badge.title = "Click: +10 / Hold: set amount (Dev Mode)";
     } else {
-      badge.style.display = '';
-      if (devMode) {
-        badge.classList.add('interactive');
-        badge.title = "Click: +10 / Hold: set amount (Dev Mode)";
-      } else {
-        badge.classList.remove('interactive');
-        badge.removeAttribute('title');
-      }
+      badge.classList.remove('interactive');
+      badge.removeAttribute('title');
     }
   }
+  syncTopHudVisibility();
 }
 
 let devHoldTimer = null;
@@ -2352,7 +2386,8 @@ function showStartScreen() {
   if (typeof warmUpNebulaAndHideLoader === 'function') {
     warmUpNebulaAndHideLoader();
   }
-
+  
+  syncTopHudVisibility();
   updateDailyBonusBtnVisibility();
 }
 
@@ -2514,7 +2549,7 @@ function showSettings(fromSource = 'start') {
       : '1.36.37';
     versionLabel.textContent = `Version: ${liveVersion}`;
   }
-
+  syncTopHudVisibility();
   updateDailyBonusBtnVisibility();
 }
 
@@ -2659,7 +2694,8 @@ function closeBattlePassScreen() {
     gameState = 'START';
   }
   updateBpProgressUI();
-
+  
+  syncTopHudVisibility();
   updateDailyBonusBtnVisibility();
 }
 
@@ -2974,7 +3010,8 @@ function closeSettings() {
     gameState = 'START';
     music('menu');
   }
-
+  syncTopHudVisibility();
+  updateHudSpeedWidget();
   updateDailyBonusBtnVisibility();
 }
 
@@ -3183,7 +3220,8 @@ function showLevelSelect() {
   showLoadoutWidgetIn('loadoutAnchor-levels');
   gameState = 'LEVELS';
   updateHudSpeedWidget();
-
+  
+  syncTopHudVisibility();
   updateDailyBonusBtnVisibility();
 }
 
@@ -3269,7 +3307,8 @@ function showLevelSelectFromGame() {
   showLoadoutWidgetIn('loadoutAnchor-levels');
   gameState = 'LEVELS';
   updateHudSpeedWidget();
-
+  
+  syncTopHudVisibility();
   updateDailyBonusBtnVisibility();
 }
 
@@ -3604,7 +3643,8 @@ function closeUpgradesScreen() {
     document.getElementById('startScreen').classList.remove('hidden');
     gameState = 'START';
   }
-
+  
+  syncTopHudVisibility();
   updateDailyBonusBtnVisibility();
 }
 
@@ -3674,6 +3714,7 @@ function closeShopScreen() {
     gameState = 'START';
   }
 
+  syncTopHudVisibility();
   updateDailyBonusBtnVisibility();
 }
 
@@ -4626,23 +4667,14 @@ function updateUI() {
   document.getElementById('goldVal').textContent = formatResourceVal(gold);
   document.getElementById('hpVal').textContent = formatResourceVal(baseHp);
   if (typeof isEndlessMode !== 'undefined' && isEndlessMode) {
-    // Вместо длинного слова 'ENDLESS' выводим номер текущей главы арены: LVL 1, LVL 2 и т.д.
     document.getElementById('levelText').textContent = `${currentLevelSection || 1}`;
-    // Текущая волна x со знаком бесконечности: x/∞
     document.getElementById('waveText').textContent = `${wave}/∞`;
   } else {
     document.getElementById('levelText').textContent = `${currentLevel}`;
     document.getElementById('waveText').textContent = `${Math.min(wave, maxW)}/${maxW}`;
   }
 
-  const prismBadge = document.getElementById('hudPrismBadge');
-  if (prismBadge) {
-    if (typeof gameState !== 'undefined' && gameState === 'PLAYING') {
-      prismBadge.style.display = 'none';
-    } else {
-      prismBadge.style.display = '';
-    }
-  }
+  syncTopHudVisibility();
 
   for (let key in TOWER_CONFIGS) {
     const btn = document.getElementById(`btn-${key}`);

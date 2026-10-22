@@ -5056,3 +5056,8 @@ label,
   opacity: 0.45;
   margin: 0 4px;
 }
+
+/* Скрываем первый разделитель перед золотом, так как алмазы и призмы в бою скрыты */
+#econHpSplitBadge > .badge-divider:first-child {
+  display: none !important;
+}

@@ -1359,6 +1359,7 @@ function startEndlessMatch() {
   updateUI();
   resizeCanvasAndCamera();
   gameState = 'PLAYING';
+  updateUI();
   lastTime = performance.now();
   safeTrack('endless_start', { runsUsed: endlessDailyRunsUsed });
 }
@@ -1406,9 +1407,9 @@ function reallyStartLevel(lvl) {
     gold = Math.round(gold * 1.15);
   }
   initBuildPanel();
+  gameState = 'PLAYING';
   updateUI();
   resizeCanvasAndCamera();
-  gameState = 'PLAYING';
   lastTime = performance.now();
   initTutorialForLevel(lvl);
   safeTrack('level_start', { level: lvl });
@@ -1942,6 +1943,7 @@ function triggerDefeat() {
   sfx('defeat');
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
   gameState = 'DEFEAT';
+  if (typeof syncTopHudVisibility === 'function') syncTopHudVisibility();
 
   const victoryScreen = document.getElementById('victoryScreen');
   if (victoryScreen) victoryScreen.classList.add('hidden');
@@ -2366,6 +2368,7 @@ function acceptEmergencyRevive() {
       });
     }
     gameState = 'PLAYING';
+	updateUI();
     lastTime = performance.now();
   };
 
