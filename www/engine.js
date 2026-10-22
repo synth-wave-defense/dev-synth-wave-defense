@@ -3557,7 +3557,8 @@ if (e.type === 'chronos_warp') {
         updateUI();
         if (baseHp <= 0) {
           baseHp = 0;
-          if (!reviveUsedThisMatch) {
+          // В Hardcore (isOverdriveMode) ревайва нет — сразу вызываем экран поражения
+          if (!reviveUsedThisMatch && !isOverdriveMode) {
             triggerEmergencyRevivePrompt();
             return;
           }
