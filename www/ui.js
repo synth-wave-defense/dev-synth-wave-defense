@@ -4187,11 +4187,17 @@ function renderDailyLoginModal() {
       doubleBtn.disabled = false;
       doubleBtn.style.display = 'flex';
       if (noAdsPurchased) {
-        if (doubleLabel) doubleLabel.textContent = 'CLAIM x2 (FREE VIP)';
-        if (adIcon) adIcon.style.display = 'none';
+        if (doubleLabel) doubleLabel.textContent = 'CLAIM x2 (FREE)';
+        if (adIcon) {
+          adIcon.style.display = 'inline-block';
+          adIcon.outerHTML = `<svg id="dailyDoubleAdIcon" width="18" height="15" viewBox="0 0 24 20" fill="none" stroke="currentColor" style="flex:none; margin-right:6px; vertical-align:middle;"><rect x="2" y="3" width="20" height="14" rx="3" fill="none" stroke-width="1.8" opacity="0.85"/><polygon points="9.5,7 15.5,10 9.5,13" fill="currentColor" stroke="none" opacity="0.75"/><line x1="3" y1="18" x2="21" y2="2" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+        }
       } else {
         if (doubleLabel) doubleLabel.textContent = 'CLAIM x2';
-        if (adIcon) adIcon.style.display = 'inline-block';
+        if (adIcon) {
+          adIcon.style.display = 'inline-block';
+          adIcon.outerHTML = `<svg id="dailyDoubleAdIcon" width="18" height="14" viewBox="0 0 24 24" style="flex:none; margin-right:6px;"><rect x="2" y="4" width="20" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="10,9 16,12 10,15" fill="currentColor"/></svg>`;
+        }
       }
     }
   }

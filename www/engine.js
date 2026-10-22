@@ -1676,7 +1676,7 @@ function claimX2Reward() {
     updateDiamondUI();
     if (claimBtn) {
       claimBtn.disabled = true;
-      claimBtn.innerHTML = '<span>CLAIMED</span>';
+      claimBtn.innerHTML = `<span style="display:inline-flex; align-items:center; gap:4px;">CLAIMED x2 (+${lastVictoryDiamondsReward} <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>)</span>`;
     }
     sfx('reward');
     saveGame();
@@ -1787,7 +1787,12 @@ function triggerVictory() {
     if (claimBtn) {
       claimBtn.disabled = false;
       claimBtn.classList.remove('hidden');
-      claimBtn.innerHTML = '<svg width="18" height="14" viewBox="0 0 24 24" style="flex:none; margin-right:6px;"><rect x="2" y="4" width="20" height="16" rx="3" fill="none" stroke="#ffffff" stroke-width="2"/><polygon points="10,9 16,12 10,15" fill="#ffffff"/></svg><span>CLAIM x2</span>';
+      
+      const activeIcon = noAdsPurchased 
+        ? `<svg width="18" height="15" viewBox="0 0 24 20" fill="none" stroke="#ffffff" style="flex:none; margin-right:6px; vertical-align:middle;"><rect x="2" y="3" width="20" height="14" rx="3" fill="none" stroke-width="1.8" opacity="0.85"/><polygon points="9.5,7 15.5,10 9.5,13" fill="#ffffff" stroke="none" opacity="0.75"/><line x1="3" y1="18" x2="21" y2="2" stroke-width="2.2" stroke-linecap="round"/></svg>`
+        : `<svg width="18" height="14" viewBox="0 0 24 24" style="flex:none; margin-right:6px;"><rect x="2" y="4" width="20" height="16" rx="3" fill="none" stroke="#ffffff" stroke-width="2"/><polygon points="10,9 16,12 10,15" fill="#ffffff"/></svg>`;
+        
+      claimBtn.innerHTML = `${activeIcon}<span>CLAIM x2</span>`;
       claimBtn.onclick = claimX2Reward;
     }
   } else {
@@ -1851,11 +1856,9 @@ function triggerVictory() {
       claimBtn.disabled = false;
       claimBtn.classList.remove('hidden');
 
-      const adSvg = !noAdsPurchased ? `
-        <svg width="16" height="13" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:6px;">
-          <rect x="0" y="0" width="16" height="13" rx="2.5" fill="none" stroke="#ffffff" stroke-width="1.6"/>
-          <polygon points="6,3.5 11,6.5 6,9.5" fill="#ffffff"/>
-        </svg>` : '';
+      const adSvg = noAdsPurchased 
+        ? `<svg width="16" height="13" viewBox="0 0 24 20" fill="none" stroke="#ffffff" style="flex:none; margin-right:6px; vertical-align:middle;"><rect x="2" y="3" width="20" height="14" rx="3" fill="none" stroke-width="1.8" opacity="0.85"/><polygon points="9.5,7 15.5,10 9.5,13" fill="#ffffff" stroke="none" opacity="0.75"/><line x1="3" y1="18" x2="21" y2="2" stroke-width="2.2" stroke-linecap="round"/></svg>`
+        : `<svg width="16" height="13" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:6px;"><rect x="0" y="0" width="16" height="13" rx="2.5" fill="none" stroke="#ffffff" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="#ffffff"/></svg>`;
 
       const prismSvg = `
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 4px;">
@@ -2005,8 +2008,7 @@ function setReviveBtnLabel(seconds) {
   const numEl = document.getElementById('reviveTimerNumber');
   if (numEl) numEl.textContent = `${seconds}s`;
   const label = document.getElementById('reviveBtnLabel');
-  if (label) label.textContent = 'REVIVE';
-  // strokeDashoffset больше не обновляем здесь скачками!
+  if (label) label.textContent = noAdsPurchased ? 'FREE REVIVE' : 'REVIVE';
 }
 
 let defeatFlashTimeout = null;
@@ -2051,7 +2053,18 @@ function claimEndlessDoubleRewards() {
     if (typeof updatePrismUI === 'function') updatePrismUI();
     if (doubleBtn) {
       doubleBtn.disabled = true;
-      doubleBtn.innerHTML = '<span>DOUBLED!</span>';
+      
+      // Иконки используют currentColor, чтобы стать серыми вместе с текстом кнопки
+      const diamondSvg = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="currentColor" fill-opacity="0.25"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
+      const prismSvg = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="currentColor" fill-opacity="0.25"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
+      
+      let rewardText = `(+${lastEndlessEarnedDiamonds} ${diamondSvg}`;
+      if (lastEndlessEarnedPrisms > 0) {
+        rewardText += ` +${lastEndlessEarnedPrisms} ${prismSvg}`;
+      }
+      rewardText += `)`;
+
+      doubleBtn.innerHTML = `<span style="display:inline-flex; align-items:center; gap:4px; font-size:11px; letter-spacing:0.5px;">CLAIMED x2 ${rewardText}</span>`;
     }
     sfx('reward');
     saveGame();
@@ -2147,8 +2160,12 @@ function updateDefeatWaveLine() {
       if (lastEndlessEarnedDiamonds > 0 || lastEndlessEarnedPrisms > 0) {
         doubleBtn.classList.remove('hidden');
         doubleBtn.disabled = false;
+        const endlessAdIcon = noAdsPurchased 
+          ? `<svg width="18" height="15" viewBox="0 0 24 20" fill="none" stroke="#ffffff" style="flex:none; margin-right:6px; vertical-align:middle;"><rect x="2" y="3" width="20" height="14" rx="3" fill="none" stroke-width="1.8" opacity="0.85"/><polygon points="9.5,7 15.5,10 9.5,13" fill="#ffffff" stroke="none" opacity="0.75"/><line x1="3" y1="18" x2="21" y2="2" stroke-width="2.2" stroke-linecap="round"/></svg>`
+          : `<svg width="18" height="14" viewBox="0 0 24 24" style="flex:none; margin-right:6px;"><rect x="2" y="4" width="20" height="16" rx="3" fill="none" stroke="#ffffff" stroke-width="2"/><polygon points="10,9 16,12 10,15" fill="#ffffff"/></svg>`;
+
         doubleBtn.innerHTML = `
-          <svg width="18" height="14" viewBox="0 0 24 24" style="flex:none; margin-right:6px;"><rect x="2" y="4" width="20" height="16" rx="3" fill="none" stroke="#ffffff" stroke-width="2"/><polygon points="10,9 16,12 10,15" fill="#ffffff"/></svg>
+          ${endlessAdIcon}
           <span style="color:#ffffff; font-weight:800; letter-spacing:1px;">CLAIM x2</span>
         `;
       } else {
@@ -2231,6 +2248,16 @@ function triggerEmergencyRevivePrompt() {
   // Видна ТОЛЬКО кнопка Revive
   if (reviveBtn) {
     reviveBtn.classList.remove('hidden');
+
+    const reviveIcon = noAdsPurchased 
+      ? `<svg width="18" height="15" viewBox="0 0 24 20" fill="none" stroke="#ffffff" style="flex:none; margin-right:6px; vertical-align:middle;"><rect x="2" y="3" width="20" height="14" rx="3" fill="none" stroke-width="1.8" opacity="0.85"/><polygon points="9.5,7 15.5,10 9.5,13" fill="#ffffff" stroke="none" opacity="0.75"/><line x1="3" y1="18" x2="21" y2="2" stroke-width="2.2" stroke-linecap="round"/></svg>`
+      : `<svg width="16" height="13" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:6px;"><rect x="0" y="0" width="16" height="13" rx="2.5" fill="none" stroke="#ffffff" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="#ffffff"/></svg>`;
+
+    reviveBtn.innerHTML = `
+      ${reviveIcon}
+      <span id="reviveBtnLabel">${noAdsPurchased ? 'FREE REVIVE' : 'REVIVE'}</span>
+    `;
+
     setReviveBtnLabel(reviveRemainingSeconds);
   }
   if (skipBtn) skipBtn.classList.add('hidden');

@@ -101,9 +101,9 @@ function getBpTierInfo(xp) {
 
 const UPGRADE_BRANCH_SPECS = {
   towers: [
-    { title: 'Gatling', icon: 'gun', branches: [{ key: 'gun_power', name: 'Power', stepVal: 8, unit: '%', prefix: '+' }] },
+    { title: 'GUN', icon: 'gun', branches: [{ key: 'gun_power', name: 'Power', stepVal: 8, unit: '%', prefix: '+' }] },
     { title: 'Laser', icon: 'laser', branches: [{ key: 'laser_power', name: 'Power', stepVal: 8, unit: '%', prefix: '+' }] },
-    { title: 'Mortar', icon: 'mortar', branches: [{ key: 'mortar_power', name: 'Power', stepVal: 8, unit: '%', prefix: '+' }] },
+    { title: 'Splash', icon: 'mortar', branches: [{ key: 'mortar_power', name: 'Power', stepVal: 8, unit: '%', prefix: '+' }] },
     { title: 'Tesla', icon: 'tesla', branches: [{ key: 'tesla_power', name: 'Power', stepVal: 5, unit: '%', prefix: '+' }] },
     { title: 'Stasis', icon: 'stasis', branches: [{ key: 'stasis_power', name: 'Power', stepVal: 5, unit: '%', prefix: '+' }] },
     { title: 'Melter', icon: 'melter', branches: [{ key: 'melter_power', name: 'Power', stepVal: 5, unit: '%', prefix: '+' }] },
@@ -127,9 +127,9 @@ const upgradeTreeData = {
 };
 
 const TOWER_NAMES = {
-  gun: 'Gatling',
+  gun: 'Gun',
   laser: 'Laser',
-  mortar: 'Mortar',
+  mortar: 'Splash',
   tesla: 'Tesla',
   stasis: 'Stasis',
   melter: 'Melter',
