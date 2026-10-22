@@ -878,6 +878,9 @@ function syncTopHudVisibility() {
 
   // Правая группа с кнопкой Settings видна всегда
   if (hudRightGroup) hudRightGroup.classList.remove('hidden');
+
+  // Синхронизируем виджет управления скоростью (он сам скроется, если мы не в бою)
+  if (typeof updateHudSpeedWidget === 'function') updateHudSpeedWidget();
 }
 window.syncTopHudVisibility = syncTopHudVisibility;
 
@@ -6459,10 +6462,26 @@ function drawJaggedLightning(x1, y1, x2, y3, color, alpha, progress = 1.0) {
 }
 
 // [UI205] Master gameplay canvas graphics rendering pipeline.
+let reviveStartTime = 0; // Добавляем глобальную переменную для трекинга начала отсчета
+
 function render(now) {
   const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+  // Плавное обновление кольца таймера возрождения
+  if (gameState === 'DEFEAT' && reviveTimerInterval) {
+    const progressEl = document.getElementById('reviveTimerProgress');
+    if (progressEl) {
+      if (reviveStartTime === 0) reviveStartTime = now;
+      const elapsed = (now - reviveStartTime) / 1000;
+      const fraction = Math.max(0, 1 - (elapsed / 3)); // От 1 до 0 за 3 секунды
+      const totalDash = 276.46;
+      progressEl.style.strokeDashoffset = (totalDash * (1 - fraction)).toFixed(2);
+    }
+  } else {
+    reviveStartTime = 0; // Сбрасываем, если мы вышли из окна ревайва
+  }
 
   if (perfProfiler.accum.frames > 30) {
     const f = perfProfiler.accum.frames;

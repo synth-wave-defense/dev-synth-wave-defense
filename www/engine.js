@@ -2006,12 +2006,7 @@ function setReviveBtnLabel(seconds) {
   if (numEl) numEl.textContent = `${seconds}s`;
   const label = document.getElementById('reviveBtnLabel');
   if (label) label.textContent = 'REVIVE';
-  const progressEl = document.getElementById('reviveTimerProgress');
-  if (progressEl) {
-    const totalDash = 276.46;
-    const fraction = Math.max(0, seconds / 3);
-    progressEl.style.strokeDashoffset = (totalDash * (1 - fraction)).toFixed(2);
-  }
+  // strokeDashoffset больше не обновляем здесь скачками!
 }
 
 let defeatFlashTimeout = null;
@@ -2165,7 +2160,7 @@ function updateDefeatWaveLine() {
     if (defeatScreen) {
       defeatScreen.classList.remove('endless-result-active');
     }
-    if (kicker) kicker.textContent = 'Level';
+    if (kicker) kicker.textContent = isOverdriveMode ? 'HARDCORE' : 'LEVEL';
     if (title) {
       title.textContent = 'Failed';
       title.setAttribute('data-text', 'Failed');
@@ -2178,8 +2173,42 @@ function updateDefeatWaveLine() {
   }
 }
 
+function updateRevivePromptHeadings() {
+  const defeatScreen = document.getElementById('defeatScreen');
+  const kicker = defeatScreen ? defeatScreen.querySelector('.result-kicker') : null;
+  const title = defeatScreen ? defeatScreen.querySelector('.result-title') : null;
+  const el = document.getElementById('defeatWaveLine');
+  const rewardsBox = document.getElementById('endlessRewardsBox');
+
+  // Скрываем коробку наград Endless во время таймера возрождения
+  if (rewardsBox) rewardsBox.classList.add('hidden');
+
+  if (isEndlessMode) {
+    if (defeatScreen) defeatScreen.classList.add('endless-result-active');
+    if (kicker) kicker.textContent = 'ENDLESS ARENA';
+    if (el) {
+      const clearedWaves = Math.max(0, wave - 1);
+      el.textContent = `WAVE ${wave} REACHED (${clearedWaves} CLEARED)`;
+    }
+  } else {
+    if (defeatScreen) defeatScreen.classList.remove('endless-result-active');
+    if (kicker) kicker.textContent = isOverdriveMode ? 'HARDCORE' : 'LEVEL';
+    if (el) {
+      const maxW = (LEVELS_DATA[currentLevel] && LEVELS_DATA[currentLevel].totalWaves) || 1;
+      el.textContent = `WAVE ${Math.min(wave, maxW)} OF ${maxW} REACHED`;
+    }
+  }
+
+  // На всех экранах ревайва ставим заголовок REVIVE?
+  if (title) {
+    title.textContent = 'REVIVE?';
+    title.setAttribute('data-text', 'REVIVE?');
+  }
+}
+
 function triggerEmergencyRevivePrompt() {
   gameState = 'DEFEAT';
+  if (typeof syncTopHudVisibility === 'function') syncTopHudVisibility();
   musicSetDucked(true);
   reviveRemainingSeconds = 3;
 
@@ -2210,11 +2239,18 @@ function triggerEmergencyRevivePrompt() {
   if (levelsBtn) levelsBtn.classList.add('hidden');
   if (shopBtn) shopBtn.classList.add('hidden');
 
-  updateDefeatWaveLine();
+  // Устанавливаем заголовок REVIVE? без преждевременного начисления наград Endless
+  updateRevivePromptHeadings();
+
   const loadoutWidget = document.getElementById('loadoutWidget');
   if (loadoutWidget) loadoutWidget.classList.add('hidden');
   document.getElementById('defeatScreen').classList.remove('hidden');
-  replayDefeatFlash();
+  if (!isEndlessMode) {
+    replayDefeatFlash();
+  } else {
+    const existingFlash = document.getElementById('defeatFlash');
+    if (existingFlash) existingFlash.remove();
+  }
 
   // Кнопка Skip появляется ровно через 1 секунду
   if (reviveSkipShowTimer) clearTimeout(reviveSkipShowTimer);
@@ -2240,12 +2276,19 @@ function finishRevivePromptWindow() {
   if (reviveSkipShowTimer) { clearTimeout(reviveSkipShowTimer); reviveSkipShowTimer = null; }
   musicSetDucked(false);
   music('lose');
+  sfx('defeat');
 
   const reviveTimerContainer = document.getElementById('reviveTimerContainer');
   if (reviveTimerContainer) reviveTimerContainer.classList.add('hidden');
 
   const tacticalTipsWidget = document.getElementById('tacticalTipsWidget');
-  if (tacticalTipsWidget) tacticalTipsWidget.classList.remove('hidden');
+  if (tacticalTipsWidget) {
+    if (isEndlessMode) {
+      tacticalTipsWidget.classList.add('hidden');
+    } else {
+      tacticalTipsWidget.classList.remove('hidden');
+    }
+  }
 
   const reviveBtn = document.getElementById('reviveBtn');
   const skipBtn = document.getElementById('reviveSkipBtn');
@@ -2261,6 +2304,8 @@ function finishRevivePromptWindow() {
   if (levelsBtn) levelsBtn.classList.remove('hidden');
   if (shopBtn) shopBtn.classList.remove('hidden');
 
+  // Теперь, когда игрок отказался от ревайва (или истекло время), ставим финальные заголовки FAILED / RUN COMPLETE
+  updateDefeatWaveLine();
   updateUpgradeButtonsLock();
   showLoadoutWidgetIn('loadoutAnchor-defeat');
   registerDefeatOutcome();

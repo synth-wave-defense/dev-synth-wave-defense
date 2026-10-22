@@ -1346,7 +1346,6 @@ body {
 /* Бирюзовый анимированный круг */
 .revive-timer-progress {
   stroke: #00e5ff;
-  transition: stroke-dashoffset 1s linear;
   filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.85));
 }
 
