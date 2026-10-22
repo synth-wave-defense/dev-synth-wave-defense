@@ -5423,34 +5423,63 @@ function warmUpNebulaAndHideLoader() {
   initialLoaderHidden = true;
 
   const loader = document.getElementById('initialLoadingScreen');
+  const barFill = document.getElementById('initialProgressBarFill');
 
-  // Даём браузеру гарантированно отрисовать кадр с надписью LOADING...
+  const setProgress = (pct) => {
+    if (barFill) barFill.style.width = pct + '%';
+  };
+
+  // Старт прогресса
   requestAnimationFrame(() => {
+    setProgress(25);
+
     setTimeout(() => {
       try {
         if (typeof canvas !== 'undefined' && canvas) {
           const dpr = getDpr();
           const w = canvas.width / dpr || window.innerWidth;
           const h = canvas.height / dpr || window.innerHeight;
-          // Заранее генерируем кэш туманности и звёзд под ширмой LOADING...
+
+          // Шаг 1: Рендерим туманность и звездную россыпь
           drawCosmicNebulaBackground(w, h);
+          setProgress(65);
+
+          // Шаг 2: Компилируем кэш неонового логотипа и горизонта меню
+          const horizonY = h * 0.44;
+          if (typeof renderTriangleLogoCache === 'function') {
+            const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low') ? 'low' : 'high';
+            const key = Math.round(w) + 'x' + Math.round(horizonY) + '@' + dpr + '_' + isLowPerf;
+            if (!triangleLogoCache || triangleLogoCacheKey !== key) {
+              triangleLogoCache = renderTriangleLogoCache(w, horizonY, dpr);
+              triangleLogoCacheKey = key;
+            }
+          }
+          setProgress(85);
+
+          // Шаг 3: Прогреваем шейдеры тестовой отрисовкой
+          if (typeof drawSynthWavePerspectiveScene === 'function') {
+            drawSynthWavePerspectiveScene(performance.now());
+          }
         }
       } catch (e) {
-        console.warn('Pre-warm nebula failed:', e);
+        console.warn('Pre-warm scene failed:', e);
       }
 
-      // Когда текстура космоса полностью готова в памяти — плавно убираем экран загрузки
-      if (loader) {
-        loader.style.opacity = '0';
-        loader.style.pointerEvents = 'none';
-        setTimeout(() => {
-          if (loader.parentNode) loader.parentNode.removeChild(loader);
-        }, 420);
-      }
-    }, 30);
+      // Завершение: доводим до 100% и мягко скрываем ширму
+      setProgress(100);
+
+      setTimeout(() => {
+        if (loader) {
+          loader.style.opacity = '0';
+          loader.style.pointerEvents = 'none';
+          setTimeout(() => {
+            if (loader.parentNode) loader.parentNode.removeChild(loader);
+          }, 350);
+        }
+      }, 180);
+    }, 40);
   });
 }
-
 
 // [UI211] Lightweight dynamic twinkling star overlay.
 
