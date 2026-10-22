@@ -830,13 +830,32 @@ function pushParticle(p) {
   particles.push(p);
 }
 
+function formatResourceVal(val) {
+  const n = Math.floor(Number(val) || 0);
+  if (n < 1000) return String(n);
+  if (n < 10000) {
+    const k = Math.floor(n / 100) / 10;
+    return (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + 'K';
+  }
+  if (n < 1000000) {
+    return Math.floor(n / 1000) + 'K';
+  }
+  const m = Math.floor(n / 100000) / 10;
+  return (m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)) + 'M';
+}
+
 function updateDiamondUI() {
+  const formatted = formatResourceVal(diamonds);
   const el = document.getElementById('globalDiamondsVal');
-  if (el) el.textContent = diamonds;
+  if (el) el.textContent = formatted;
   const elLevels = document.getElementById('levelsDiamondVal');
-  if (elLevels) elLevels.textContent = diamonds;
+  if (elLevels) elLevels.textContent = formatted;
   const elUpgrades = document.getElementById('upgradesDiamondVal');
-  if (elUpgrades) elUpgrades.textContent = diamonds;
+  if (elUpgrades) elUpgrades.textContent = formatted;
+  const elShop = document.getElementById('shopDiamondVal');
+  if (elShop) elShop.textContent = formatted;
+  const elBp = document.getElementById('bpDiamondVal');
+  if (elBp) elBp.textContent = formatted;
   const badge = document.getElementById('hudDiamondBadge');
   if (badge) {
     if (devMode) {
@@ -850,14 +869,17 @@ function updateDiamondUI() {
 }
 
 function updatePrismUI() {
+  const formatted = formatResourceVal(prisms);
   const el = document.getElementById('globalPrismsVal');
-  if (el) el.textContent = prisms;
+  if (el) el.textContent = formatted;
   const elLevels = document.getElementById('levelsPrismVal');
-  if (elLevels) elLevels.textContent = prisms;
+  if (elLevels) elLevels.textContent = formatted;
   const elUpgrades = document.getElementById('upgradesPrismVal');
-  if (elUpgrades) elUpgrades.textContent = prisms;
+  if (elUpgrades) elUpgrades.textContent = formatted;
   const elShop = document.getElementById('shopPrismVal');
-  if (elShop) elShop.textContent = prisms;
+  if (elShop) elShop.textContent = formatted;
+  const elBp = document.getElementById('bpPrismVal');
+  if (elBp) elBp.textContent = formatted;
   const badge = document.getElementById('hudPrismBadge');
   if (badge) {
     if (typeof gameState !== 'undefined' && gameState === 'PLAYING') {
@@ -2235,18 +2257,7 @@ function toggleLivePause() {
 
 function updateStartChapterLabel(show, text) {
   const el = document.getElementById('startChapterLabel');
-  if (!el) return;
-  if (show) {
-    if (text) {
-      el.textContent = text;
-    } else {
-      const ch = Math.min(TOTAL_SECTIONS, Math.max(1, Math.ceil(currentLevel / LEVELS_PER_SECTION)));
-      el.textContent = 'CHAPTER ' + ch;
-    }
-    el.classList.remove('hidden');
-  } else {
-    el.classList.add('hidden');
-  }
+  if (el) el.classList.add('hidden');
 }
 
 // [UI117] Navigation screen display and menu visibility controllers.
@@ -4612,8 +4623,8 @@ function updateUI() {
   const lvlConfig = LEVELS_DATA[currentLevel];
   const maxW = lvlConfig ? lvlConfig.totalWaves : 10;
 
-  document.getElementById('goldVal').textContent = gold;
-  document.getElementById('hpVal').textContent = baseHp;
+  document.getElementById('goldVal').textContent = formatResourceVal(gold);
+  document.getElementById('hpVal').textContent = formatResourceVal(baseHp);
   if (typeof isEndlessMode !== 'undefined' && isEndlessMode) {
     // Вместо длинного слова 'ENDLESS' выводим номер текущей главы арены: LVL 1, LVL 2 и т.д.
     document.getElementById('levelText').textContent = `${currentLevelSection || 1}`;
@@ -6555,8 +6566,36 @@ function render(now) {
   drawCosmicNebulaBackground(window.innerWidth, window.innerHeight);
   updateAndDrawStars(window.innerWidth, window.innerHeight, now);
 
+  // Атмосферная цветовая вуаль режима для фона боя
+  if (typeof isEndlessMode !== 'undefined' && isEndlessMode) {
+    ctx.save();
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    // Фиолетовый градиент для Endless Arena (в тон призмам #d946ef)
+    const endlessTint = ctx.createRadialGradient(w * 0.5, h * 0.35, 10, w * 0.5, h * 0.45, Math.max(w, h) * 0.75);
+    endlessTint.addColorStop(0, 'rgba(110, 15, 140, 0.28)');
+    endlessTint.addColorStop(0.5, 'rgba(55, 8, 75, 0.18)');
+    endlessTint.addColorStop(1, 'rgba(4, 5, 14, 0.05)');
+    ctx.fillStyle = endlessTint;
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  } else if (typeof isOverdriveMode !== 'undefined' && isOverdriveMode) {
+    ctx.save();
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    // Розовато-бордовый градиент для Hardcore (в тон жизням #f05f9f)
+    const hardcoreTint = ctx.createRadialGradient(w * 0.5, h * 0.35, 10, w * 0.5, h * 0.45, Math.max(w, h) * 0.75);
+    hardcoreTint.addColorStop(0, 'rgba(120, 10, 60, 0.26)');
+    hardcoreTint.addColorStop(0.5, 'rgba(60, 5, 30, 0.16)');
+    hardcoreTint.addColorStop(1, 'rgba(4, 5, 14, 0.05)');
+    ctx.fillStyle = hardcoreTint;
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  }
+
   let shakeX = 0;
   let shakeY = 0;
+  
   if (typeof cameraShakeTimer !== 'undefined' && cameraShakeTimer > 0) {
     shakeX = (Math.random() - 0.5) * cameraShakeIntensity;
     shakeY = (Math.random() - 0.5) * cameraShakeIntensity;

@@ -2874,6 +2874,11 @@ body {
   background: radial-gradient(circle at 50% 30%, rgba(60, 0, 35, 0.55), rgba(4, 5, 14, 0.95)) !important;
 }
 
+/* ENDLESS ARENA ACTIVE BACKGROUND */
+#levelsScreen.mode-endless-active {
+  background: radial-gradient(circle at 50% 30%, rgba(55, 10, 75, 0.55), rgba(4, 5, 14, 0.95)) !important;
+}
+
 .mode-overdrive-active .part-nav-label,
 .overdrive-active .part-nav-label {
   color: #ffffff;
