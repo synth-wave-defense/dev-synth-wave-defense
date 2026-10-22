@@ -1761,6 +1761,7 @@ function triggerVictory() {
   sfxStopBeams();
   music('win');
   sfx('victory');
+  vibrate('medium');
   const { stars, reward, rewardLabel } = calculateLevelStarsAndReward(currentLevel, baseHp, matchStartBaseHp);
   lastVictoryDiamondsReward = reward;
   hasClaimedX2ThisLevel = false;
@@ -1944,6 +1945,7 @@ function triggerDefeat() {
   sfxStopBeams();
   music('lose');
   sfx('defeat');
+  vibrate('error');
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
   gameState = 'DEFEAT';
   if (typeof syncTopHudVisibility === 'function') syncTopHudVisibility();
@@ -2304,6 +2306,7 @@ function finishRevivePromptWindow() {
   musicSetDucked(false);
   music('lose');
   sfx('defeat');
+  vibrate('error');
 
   const reviveTimerContainer = document.getElementById('reviveTimerContainer');
   if (reviveTimerContainer) reviveTimerContainer.classList.add('hidden');
@@ -2434,9 +2437,16 @@ function acceptEmergencyRevive() {
           newY += offY * e.laneOffset;
         }
 
-        e.x = newX;
-        e.y = newY;
-        e.wpIndex = newK;
+        // Вместо мгновенного телепорта задаем параметры полета
+        e.revivePushAnim = {
+          startX: e.x,
+          startY: e.y,
+          endX: newX,
+          endY: newY,
+          endWp: newK,
+          timer: 0,
+          duration: 0.75 // Время отбрасывания в секундах
+        };
       });
     }
     gameState = 'PLAYING';
@@ -2477,6 +2487,7 @@ function buildTowerAt(type, c, r) {
       : undefined;
 
     sfx('build');
+	vibrate('light');
     const newTower = {
       c, r,
       x: c * TILE_SIZE + TILE_SIZE / 2,
@@ -3399,6 +3410,33 @@ function update(dt) {
   for (let i = enemies.length - 1; i >= 0; i--) {
     const e = enemies[i];
 
+    // Анимация ударной волны от базы (Revive)
+    if (e.revivePushAnim) {
+      e.revivePushAnim.timer += dt;
+      const prog = Math.min(1.0, e.revivePushAnim.timer / e.revivePushAnim.duration);
+      
+      // Формула ease-out cubic для резкого старта и плавного торможения
+      const ease = 1 - Math.pow(1 - prog, 3);
+      e.x = e.revivePushAnim.startX + (e.revivePushAnim.endX - e.revivePushAnim.startX) * ease;
+      e.y = e.revivePushAnim.startY + (e.revivePushAnim.endY - e.revivePushAnim.startY) * ease;
+      
+      // Оставляем дымный след при отбрасывании
+      if (Math.random() < 0.4 && typeof createImpactSmoke === 'function') {
+        createImpactSmoke(e.x, e.y, 8);
+      }
+
+      // Завершение анимации
+      if (prog >= 1.0) {
+        e.x = e.revivePushAnim.endX;
+        e.y = e.revivePushAnim.endY;
+        e.wpIndex = e.revivePushAnim.endWp;
+        e.revivePushAnim = null;
+      }
+      
+      // Пропускаем обычную логику движения и стрельбы по ним в этот кадр (по желанию можно убрать continue, тогда башни будут стрелять по летящим)
+      continue; 
+    }
+
     if (e.type === 'blinker') {
       e.shieldTimer = (e.shieldTimer || 0) + dt;
       if (e.shieldTimer >= 3.0) e.shieldTimer -= 3.0;
@@ -3980,7 +4018,8 @@ if (e.type === 'chronos_warp') {
       }
 
       if (e.isBoss || e.isMiniBoss) {
-        createShockwave(e.x, e.y, e.isBoss ? 80 : 50, e.color);
+        vibrate('heavy');
+		createShockwave(e.x, e.y, e.isBoss ? 80 : 50, e.color);
       }
 
       if (e.isBoss || e.isMiniBoss) {
