@@ -3115,12 +3115,15 @@ function deconstructPrism() {
 // Заглушка покупок (симуляция Google Play Billing)
 function buyShopIAP(productId) {
   sfx('confirm');
+
+  // 1. Покупки за внутриигровые алмазы (срабатывают сразу, без попапа оплаты)
   if (productId === 'time_mod_t1') {
     if (timeModTier >= 1) {
       showHintToast('Already unlocked!');
       return;
     }
     if (diamonds < 40) {
+      sfx('denied');
       showHintToast('Not enough Diamonds! (40 required)');
       return;
     }
@@ -3131,16 +3134,21 @@ function buyShopIAP(productId) {
     sfx('reward');
     renderShopScreen();
     showHintToast('Time Control Tier 1 unlocked!');
-  } else if (productId === 'time_mod_t2') {
+    return;
+  }
+
+  if (productId === 'time_mod_t2') {
     if (timeModTier >= 2) {
       showHintToast('Already maxed!');
       return;
     }
     if (timeModTier < 1) {
+      sfx('denied');
       showHintToast('Unlock Tier 1 first!');
       return;
     }
     if (diamonds < 50) {
+      sfx('denied');
       showHintToast('Not enough Diamonds! (50 required)');
       return;
     }
@@ -3151,59 +3159,75 @@ function buyShopIAP(productId) {
     sfx('reward');
     renderShopScreen();
     showHintToast('Time Control Tier 2 unlocked!');
-  } else if (productId === 'no_ads') {
-    if (noAdsPurchased) {
-      showHintToast('Already purchased!');
-      return;
+    return;
+  }
+
+  // Проверка перед вызовом окна оплаты для No Ads
+  if (productId === 'no_ads' && noAdsPurchased) {
+    showHintToast('Already purchased!');
+    return;
+  }
+
+  // 2. Покупки за реальные деньги ($) — проходят через попап "Success?"
+  const executePurchase = () => {
+    if (productId === 'no_ads') {
+      noAdsPurchased = true;
+      saveGame();
+      sfx('reward');
+      renderShopScreen();
+      showHintToast('No Voluntary Ads unlocked!');
+    } else if (productId === 'diamonds_75' || productId === 'diamonds_50') {
+      diamonds = (Number(diamonds) || 0) + 75;
+      updateDiamondUI();
+      saveGame();
+      sfx('reward');
+      renderShopScreen();
+      showHintToast('+75 Diamonds purchased!');
+    } else if (productId === 'diamonds_180' || productId === 'diamonds_100') {
+      diamonds = (Number(diamonds) || 0) + 180;
+      updateDiamondUI();
+      saveGame();
+      sfx('reward');
+      renderShopScreen();
+      showHintToast('+180 Diamonds purchased!');
+    } else if (productId === 'diamonds_800' || productId === 'diamonds_500') {
+      diamonds = (Number(diamonds) || 0) + 800;
+      updateDiamondUI();
+      saveGame();
+      sfx('reward');
+      renderShopScreen();
+      showHintToast('+800 Diamonds purchased!');
+    } else if (productId === 'prisms_12' || productId === 'prisms_10') {
+      prisms = (Number(prisms) || 0) + 12;
+      if (typeof updatePrismUI === 'function') updatePrismUI();
+      saveGame();
+      sfx('reward');
+      renderShopScreen();
+      showHintToast('+12 Prisms purchased!');
+    } else if (productId === 'prisms_35' || productId === 'prisms_25') {
+      prisms = (Number(prisms) || 0) + 35;
+      if (typeof updatePrismUI === 'function') updatePrismUI();
+      saveGame();
+      sfx('reward');
+      renderShopScreen();
+      showHintToast('+35 Prisms purchased!');
+    } else if (productId === 'prisms_100') {
+      prisms = (Number(prisms) || 0) + 100;
+      if (typeof updatePrismUI === 'function') updatePrismUI();
+      saveGame();
+      sfx('reward');
+      renderShopScreen();
+      showHintToast('+100 Prisms purchased!');
     }
-    noAdsPurchased = true;
-    saveGame();
-    renderShopScreen();
-    showHintToast('No Voluntary Ads unlocked!');
-  } else if (productId === 'diamonds_75') {
-    diamonds += 75;
-    updateDiamondUI();
-    saveGame();
-    sfx('reward');
-    renderShopScreen();
-    showHintToast('+75 Diamonds purchased!');
-  } else if (productId === 'diamonds_180') {
-    diamonds += 180;
-    updateDiamondUI();
-    saveGame();
-    sfx('reward');
-    renderShopScreen();
-    showHintToast('+180 Diamonds purchased!');
-  } else if (productId === 'diamonds_800') {
-    diamonds += 800;
-    updateDiamondUI();
-    saveGame();
-    sfx('reward');
-    renderShopScreen();
-    showHintToast('+800 Diamonds purchased!');
-  } else if (productId === 'prisms_12') {
-    prisms += 12;
-    if (typeof updatePrismUI === 'function') updatePrismUI();
-    saveGame();
-    sfx('reward');
-    renderShopScreen();
-    showHintToast('+12 Prisms purchased!');
-  } else if (productId === 'prisms_35') {
-    prisms += 35;
-    if (typeof updatePrismUI === 'function') updatePrismUI();
-    saveGame();
-    sfx('reward');
-    renderShopScreen();
-    showHintToast('+35 Prisms purchased!');
-  } else if (productId === 'prisms_100') {
-    prisms += 100;
-    if (typeof updatePrismUI === 'function') updatePrismUI();
-    saveGame();
-    sfx('reward');
-    renderShopScreen();
-    showHintToast('+100 Prisms purchased!');
+  };
+
+  if (typeof showAdPlaceholder === 'function') {
+    showAdPlaceholder(executePurchase, null);
+  } else {
+    executePurchase();
   }
 }
+window.buyShopIAP = buyShopIAP;
 
 // [ENG112] Navigation & Screen Transition Helpers: Start screen, level selection, and chapter label controllers.
 // [ENG113] Simulation Step Update Pipeline: Enemy movement, tower targeting, projectile physics, and status effects.

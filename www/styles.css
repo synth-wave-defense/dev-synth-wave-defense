@@ -2849,11 +2849,18 @@ body {
   stroke: #ffffff;
 }
 
+.levels-top-resources {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .levels-top-diamonds {
   display: flex;
   align-items: center;
   gap: 8px;
 }
+
 .levels-top-diamonds svg {
   filter: drop-shadow(0 0 7px rgba(0, 229, 255, 0.85));
 }

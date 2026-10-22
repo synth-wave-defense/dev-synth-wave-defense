@@ -2996,15 +2996,25 @@ function buyBpPremiumIAP() {
     showHintToast('Premium Pass already activated!');
     return;
   }
-  bpPremiumPurchased = true;
-  if (!unlockedPalettes.includes('cyber_gold')) {
-    unlockedPalettes.push('cyber_gold');
+
+  const executePurchase = () => {
+    bpPremiumPurchased = true;
+    if (!unlockedPalettes.includes('cyber_gold')) {
+      unlockedPalettes.push('cyber_gold');
+    }
+    saveGame();
+    sfx('victory');
+    renderBattlePassScreen();
+    showHintToast('SYNTH PASS PREMIUM ACTIVATED!');
+  };
+
+  if (typeof showAdPlaceholder === 'function') {
+    showAdPlaceholder(executePurchase, null);
+  } else {
+    executePurchase();
   }
-  saveGame();
-  sfx('victory');
-  renderBattlePassScreen();
-  showHintToast('SYNTH PASS PREMIUM ACTIVATED!');
 }
+window.buyBpPremiumIAP = buyBpPremiumIAP;
 
 function buyBpTierWithDiamonds() {
   const { tier } = getBpTierInfo(bpXp);
@@ -3869,13 +3879,18 @@ if (giftTitle) {
     if (!isUnlocked) {
       deconstructBtn.disabled = true;
       deconstructBtn.className = 'shop-item-btn shop-btn-buy locked-buy';
-      deconstructBtn.innerHTML = '<span style="font-size:11px; margin-right:2px;">🔒</span><span style="font-size:10px; font-weight:800;">LVL 31</span>';
+      deconstructBtn.innerHTML = `
+        <svg width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="flex:none; margin-right:4px; opacity:0.7;">
+          <path d="M 7,10 V 6 C 7,3.5 9,2 12,2 C 15,2 17,3.5 17,6 V 10" />
+          <rect x="4" y="10" width="16" height="12" rx="3" fill="currentColor" fill-opacity="0.2" />
+        </svg>
+        <span style="font-size:10px; font-weight:800;">LVL 31</span>`;
     } else {
       const hasEnoughPrisms = prisms >= 1;
       deconstructBtn.disabled = !hasEnoughPrisms;
       deconstructBtn.className = `shop-item-btn shop-btn-buy shop-btn-prism shop-btn-exchange${hasEnoughPrisms ? '' : ' dimmed'}`;
       deconstructBtn.innerHTML = `
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${hasEnoughPrisms ? '#d946ef' : '#f04878'}" stroke-width="2.2" stroke-linejoin="round" style="flex:none;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${hasEnoughPrisms ? '#d946ef' : '#f04878'}" stroke-width="2.2" stroke-linejoin="round" style="flex:none; filter:drop-shadow(0 0 4px ${hasEnoughPrisms ? 'rgba(217,70,239,0.5)' : 'rgba(240,72,120,0.5)'});">
           <polygon points="12 2 21 12 12 22 3 12" fill="${hasEnoughPrisms ? 'rgba(217,70,239,.3)' : 'rgba(240,72,120,.25)'}"/>
           <polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/>
         </svg>
