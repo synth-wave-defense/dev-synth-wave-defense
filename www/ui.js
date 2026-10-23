@@ -5429,56 +5429,66 @@ function warmUpNebulaAndHideLoader() {
     if (barFill) barFill.style.width = pct + '%';
   };
 
-  // Старт прогресса
-  requestAnimationFrame(() => {
-    setProgress(25);
-
-    setTimeout(() => {
-      try {
-        if (typeof canvas !== 'undefined' && canvas) {
-          const dpr = getDpr();
-          const w = canvas.width / dpr || window.innerWidth;
-          const h = canvas.height / dpr || window.innerHeight;
-
-          // Шаг 1: Рендерим туманность и звездную россыпь
-          drawCosmicNebulaBackground(w, h);
-          setProgress(65);
-
-          // Шаг 2: Компилируем кэш неонового логотипа и горизонта меню
-          const horizonY = h * 0.44;
-          if (typeof renderTriangleLogoCache === 'function') {
-            const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low') ? 'low' : 'high';
-            const key = Math.round(w) + 'x' + Math.round(horizonY) + '@' + dpr + '_' + isLowPerf;
-            if (!triangleLogoCache || triangleLogoCacheKey !== key) {
-              triangleLogoCache = renderTriangleLogoCache(w, horizonY, dpr);
-              triangleLogoCacheKey = key;
-            }
-          }
-          setProgress(85);
-
-          // Шаг 3: Прогреваем шейдеры тестовой отрисовкой
-          if (typeof drawSynthWavePerspectiveScene === 'function') {
-            drawSynthWavePerspectiveScene(performance.now());
-          }
-        }
-      } catch (e) {
-        console.warn('Pre-warm scene failed:', e);
-      }
-
-      // Завершение: доводим до 100% и мягко скрываем ширму
-      setProgress(100);
-
-      setTimeout(() => {
-        if (loader) {
-          loader.style.opacity = '0';
-          loader.style.pointerEvents = 'none';
-          setTimeout(() => {
-            if (loader.parentNode) loader.parentNode.removeChild(loader);
-          }, 350);
-        }
-      }, 180);
-    }, 40);
+  // Вспомогательная функция: ставит процент и ждёт, пока браузер реально отрисует кадр + анимацию
+  const stepWait = (pct, delayMs = 140) => new Promise(resolve => {
+    requestAnimationFrame(() => {
+      setProgress(pct);
+      requestAnimationFrame(() => {
+        setTimeout(resolve, delayMs);
+      });
+    });
   });
+
+  (async () => {
+    try {
+      const dpr = getDpr();
+      const w = (typeof canvas !== 'undefined' && canvas) ? (canvas.width / dpr || window.innerWidth) : window.innerWidth;
+      const h = (typeof canvas !== 'undefined' && canvas) ? (canvas.height / dpr || window.innerHeight) : window.innerHeight;
+
+      // Шаг 1: Сразу показываем 20%, даём полоске плавно тронуться с места
+      await stepWait(20, 120);
+
+      // Шаг 2: Генерируем тяжелый кэш туманности и звёзд
+      if (typeof canvas !== 'undefined' && canvas) {
+        drawCosmicNebulaBackground(w, h);
+      }
+      // После генерации двигаем полоску до 55% и даём браузеру её отрисовать
+      await stepWait(55, 150);
+
+      // Шаг 3: Генерируем кэш неонового треугольника
+      const horizonY = h * 0.44;
+      if (typeof renderTriangleLogoCache === 'function') {
+        const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low') ? 'low' : 'high';
+        const key = Math.round(w) + 'x' + Math.round(horizonY) + '@' + dpr + '_' + isLowPerf;
+        if (!triangleLogoCache || triangleLogoCacheKey !== key) {
+          triangleLogoCache = renderTriangleLogoCache(w, horizonY, dpr);
+          triangleLogoCacheKey = key;
+        }
+      }
+      // Двигаем полоску до 85%
+      await stepWait(85, 140);
+
+      // Шаг 4: Прогреваем шейдеры полным кадром сцены меню
+      if (typeof drawSynthWavePerspectiveScene === 'function') {
+        drawSynthWavePerspectiveScene(performance.now());
+      }
+      // Доводим полоску до 100%
+      await stepWait(100, 200);
+
+    } catch (e) {
+      console.warn('Pre-warm scene failed:', e);
+      setProgress(100);
+    }
+
+    // Плавно растворяем загрузочный экран
+    if (loader) {
+      loader.style.opacity = '0';
+      loader.style.pointerEvents = 'none';
+      setTimeout(() => {
+        if (loader.parentNode) loader.parentNode.removeChild(loader);
+      }, 360);
+    }
+  })();
 }
 
 // [UI211] Lightweight dynamic twinkling star overlay.
@@ -6317,15 +6327,76 @@ function drawEnemyModel(e, showHpBar = true) {
     ctx.restore();
   }
 
-  if (e.isEnraged) {
+if (e.isEnraged) {
     ctx.save();
     const pulse = (Math.sin(performance.now() * 0.012) + 1) / 2;
-    const eRad = e.radius || 12;
+    const rad = (e.radius || 12) * (1.22 + pulse * 0.16);
     ctx.strokeStyle = pulse > 0.5 ? '#f04878' : '#ffffff';
-    ctx.lineWidth = 3.0 + pulse * 1.5;
-    if (typeof setGlow === 'function') setGlow('#f04878', 12 + pulse * 8);
+    ctx.lineWidth = 2.4 + pulse * 1.6;
+    if (typeof setGlow === 'function') setGlow('#f04878', 10 + pulse * 8);
+
+    const shape = e.shape || 'circle';
     ctx.beginPath();
-    ctx.arc(0, 0, eRad * (1.25 + pulse * 0.15), 0, Math.PI * 2);
+
+    if (shape === 'circle') {
+      ctx.arc(0, 0, rad, 0, Math.PI * 2);
+    } else if (shape === 'triangle') {
+      ctx.rotate(e.angle || 0);
+      const R = rad * 1.2;
+      ctx.moveTo(R, 0);
+      ctx.lineTo(-R * 0.5, R * 0.866);
+      ctx.lineTo(-R * 0.5, -R * 0.866);
+      ctx.closePath();
+      ctx.rotate(-(e.angle || 0));
+    } else if (shape === 'trapezoid' || shape === 'triangle_inverted') {
+      ctx.rotate(e.angle || 0);
+      ctx.moveTo(rad * 1.2, -rad * 0.4);
+      ctx.lineTo(rad * 1.2, rad * 0.4);
+      ctx.lineTo(-rad * 0.8, rad * 0.9);
+      ctx.lineTo(-rad * 0.8, -rad * 0.9);
+      ctx.closePath();
+      ctx.rotate(-(e.angle || 0));
+    } else if (shape === 'kite') {
+      ctx.rotate(e.angle || 0);
+      ctx.moveTo(rad * 1.4, 0);
+      ctx.lineTo(0, -rad * 0.9);
+      ctx.lineTo(-rad * 1.1, 0);
+      ctx.lineTo(0, rad * 0.9);
+      ctx.closePath();
+      ctx.rotate(-(e.angle || 0));
+    } else if (shape === 'square') {
+      const s = rad * 1.5;
+      if (typeof ctx.roundRect === 'function') {
+        ctx.roundRect(-s / 2, -s / 2, s, s, 3);
+      } else {
+        ctx.rect(-s / 2, -s / 2, s, s);
+      }
+    } else if (shape === 'diamond') {
+      ctx.moveTo(0, -rad * 1.3);
+      ctx.lineTo(rad * 1.1, 0);
+      ctx.lineTo(0, rad * 1.3);
+      ctx.lineTo(-rad * 1.1, 0);
+      ctx.closePath();
+    } else if (shape === 'hexagon') {
+      for (let hx = 0; hx < 6; hx++) {
+        const a = (hx * Math.PI) / 3;
+        const hxX = Math.cos(a) * rad * 1.15;
+        const hxY = Math.sin(a) * rad * 1.15;
+        if (hx === 0) ctx.moveTo(hxX, hxY); else ctx.lineTo(hxX, hxY);
+      }
+      ctx.closePath();
+    } else if (shape === 'octagon') {
+      for (let oc = 0; oc < 8; oc++) {
+        const a = (oc * Math.PI) / 4;
+        const ocX = Math.cos(a) * rad * 1.2;
+        const ocY = Math.sin(a) * rad * 1.2;
+        if (oc === 0) ctx.moveTo(ocX, ocY); else ctx.lineTo(ocX, ocY);
+      }
+      ctx.closePath();
+    } else {
+      ctx.arc(0, 0, rad, 0, Math.PI * 2);
+    }
+
     ctx.stroke();
     ctx.restore();
   }
