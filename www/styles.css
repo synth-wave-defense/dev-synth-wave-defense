@@ -2452,6 +2452,35 @@ body {
   text-transform: uppercase;
 }
 
+
+/* Контейнер динамического арта режима: крупный, чистый и без границ */
+.mode-art-display {
+  width: 94%;
+  max-width: 360px;
+  height: auto;
+  aspect-ratio: 240 / 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 4px auto 10px auto;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  -webkit-mask-image: none;
+  mask-image: none;
+  pointer-events: none;
+  user-select: none;
+  overflow: visible;
+}
+
+.mode-art-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
 #levelsScreen.mode-overdrive-active .mode-3way-header,
 #levelsScreen.overdrive-active .mode-3way-header {
   text-shadow: 0 0 14px rgba(255, 47, 208, 0.8);
@@ -2979,6 +3008,31 @@ body {
 #levelsScreen.mode-overdrive-active .level-card-btn .level-num {
   color: #ffffff !important;
   text-shadow: 0 0 8px rgba(240, 95, 159, 0.35);
+}
+
+/* Кнопка TO MAIN MENU в режиме Hardcore: белая обводка, нейтральное нажатие */
+#levelsScreen.mode-overdrive-active .levels-main-menu-btn,
+.mode-overdrive-active .levels-main-menu-btn,
+#levelsScreen.mode-overdrive-active .menu-btn-glass-capsule {
+  border: 1.4px solid rgba(255, 255, 255, 0.75) !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  background: rgba(10, 14, 24, 0.65) !important;
+}
+
+#levelsScreen.mode-overdrive-active .levels-main-menu-btn:hover,
+#levelsScreen.mode-overdrive-active .levels-main-menu-btn:focus {
+  border-color: #ffffff !important;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+}
+
+#levelsScreen.mode-overdrive-active .levels-main-menu-btn:active {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.9) !important;
+  color: #e2e8f0 !important;
+  box-shadow: none !important;
+  transform: scale(0.97) !important;
 }
 
 .level-card-overdrive-badge {

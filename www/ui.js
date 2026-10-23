@@ -1540,7 +1540,136 @@ const swipeHint = document.getElementById('chapterSwipeHint');
     if (endlessView) endlessView.classList.add('hidden');
   }
   
-  
+// Динамическая смена арта (Hardcore / Endless / Normal) с ультра-мягким бесшовным градиентом
+  const artDisplay = document.getElementById('modeArtDisplay');
+  if (artDisplay) {
+    if (currentLevelMode === 'overdrive') {
+      // 1. HARDCORE MODE: Faceted Gem Heart
+      artDisplay.innerHTML = `
+        <svg viewBox="0 0 240 100" class="mode-art-svg" fill="none" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <filter id="hcArtBlur" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="10" />
+            </filter>
+            <mask id="hcArtMask">
+              <rect x="25" y="10" width="190" height="80" rx="16" fill="#ffffff" filter="url(#hcArtBlur)" />
+            </mask>
+            <linearGradient id="hcArtGridFade" x1="0" y1="62" x2="0" y2="100" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#f05f9f" stop-opacity="0.2" />
+              <stop offset="100%" stop-color="#f05f9f" stop-opacity="0.85" />
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="240" height="100" fill="#000000" mask="url(#hcArtMask)" />
+          <g stroke="url(#hcArtGridFade)">
+            <line x1="120" y1="62" x2="16" y2="100" stroke-width="1" />
+            <line x1="120" y1="62" x2="62" y2="100" stroke-width="1" />
+            <line x1="120" y1="62" x2="94" y2="100" stroke-width="1" />
+            <line x1="120" y1="62" x2="120" y2="100" stroke-width="1.3" stroke-opacity="0.9" />
+            <line x1="120" y1="62" x2="146" y2="100" stroke-width="1" />
+            <line x1="120" y1="62" x2="178" y2="100" stroke-width="1" />
+            <line x1="120" y1="62" x2="224" y2="100" stroke-width="1" />
+            <line x1="84" y1="70" x2="156" y2="70" stroke-width="1" stroke-opacity="0.35" />
+            <line x1="58" y1="79" x2="182" y2="79" stroke-width="1" stroke-opacity="0.55" />
+            <line x1="28" y1="90" x2="212" y2="90" stroke-width="1" stroke-opacity="0.75" />
+          </g>
+          <line x1="20" y1="62" x2="220" y2="62" stroke="#f05f9f" stroke-width="1.2" stroke-opacity="0.55" />
+          <g stroke="#f05f9f" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="120,24 102,13 84,18 78,32 88,44 120,55 152,44 162,32 156,18 138,13" stroke-width="1.8" stroke-opacity="0.95" />
+            <line x1="120" y1="24" x2="120" y2="55" stroke-width="1.1" stroke-opacity="0.85" />
+            <line x1="102" y1="13" x2="109" y2="32" stroke-width="0.85" stroke-opacity="0.65" />
+            <line x1="138" y1="13" x2="131" y2="32" stroke-width="0.85" stroke-opacity="0.65" />
+            <line x1="84" y1="18" x2="109" y2="32" stroke-width="0.85" stroke-opacity="0.65" />
+            <line x1="156" y1="18" x2="131" y2="32" stroke-width="0.85" stroke-opacity="0.65" />
+            <line x1="78" y1="32" x2="109" y2="32" stroke-width="0.85" stroke-opacity="0.65" />
+            <line x1="162" y1="32" x2="131" y2="32" stroke-width="0.85" stroke-opacity="0.65" />
+            <line x1="109" y1="32" x2="120" y2="55" stroke-width="1.0" stroke-opacity="0.75" />
+            <line x1="131" y1="32" x2="120" y2="55" stroke-width="1.0" stroke-opacity="0.75" />
+            <line x1="88" y1="44" x2="109" y2="32" stroke-width="0.8" stroke-opacity="0.55" />
+            <line x1="152" y1="44" x2="131" y2="32" stroke-width="0.8" stroke-opacity="0.55" />
+            <circle cx="120" cy="55" r="1.5" fill="#ffffff" stroke="#f05f9f" stroke-width="1" />
+          </g>
+        </svg>
+      `;
+    } else if (currentLevelMode === 'endless') {
+      // 2. ENDLESS MODE: Cyber Mobius Infinity Loop
+      artDisplay.innerHTML = `
+        <svg viewBox="0 0 240 100" class="mode-art-svg" fill="none" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <filter id="endlessArtBlur" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="10" />
+            </filter>
+            <mask id="endlessArtMask">
+              <rect x="25" y="10" width="190" height="80" rx="16" fill="#ffffff" filter="url(#endlessArtBlur)" />
+            </mask>
+            <linearGradient id="endlessArtGridFade" x1="0" y1="62" x2="0" y2="100" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#d946ef" stop-opacity="0.2" />
+              <stop offset="100%" stop-color="#d946ef" stop-opacity="0.85" />
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="240" height="100" fill="#000000" mask="url(#endlessArtMask)" />
+          <g stroke="url(#endlessArtGridFade)">
+            <line x1="120" y1="62" x2="16" y2="100" stroke-width="1" />
+            <line x1="120" y1="62" x2="62" y2="100" stroke-width="1" />
+            <line x1="120" y1="62" x2="94" y2="100" stroke-width="1" />
+            <line x1="120" y1="62" x2="120" y2="100" stroke-width="1.3" stroke-opacity="0.9" />
+            <line x1="120" y1="62" x2="146" y2="100" stroke-width="1" />
+            <line x1="120" y1="62" x2="178" y2="100" stroke-width="1" />
+            <line x1="120" y1="62" x2="224" y2="100" stroke-width="1" />
+            <line x1="84" y1="70" x2="156" y2="70" stroke-width="1" stroke-opacity="0.35" />
+            <line x1="58" y1="79" x2="182" y2="79" stroke-width="1" stroke-opacity="0.55" />
+            <line x1="28" y1="90" x2="212" y2="90" stroke-width="1" stroke-opacity="0.75" />
+          </g>
+          <line x1="20" y1="62" x2="220" y2="62" stroke="#d946ef" stroke-width="1.2" stroke-opacity="0.55" />
+          <g stroke-linecap="round" stroke-linejoin="round">
+            <path d="M86 36 C66 36 59 45 59 53 C59 61 66 70 86 70 C110 70 130 36 154 36 C174 36 181 45 181 53 C181 61 174 70 154 70 C130 70 110 36 86 36 Z" stroke="#d946ef" stroke-width="1.9" stroke-opacity="0.9" />
+            <path d="M86 41 C72 41 67 47 67 53 C67 58 72 65 86 65 C104 65 121 41 154 41 C168 41 173 47 173 53 C173 58 168 65 154 65 C121 65 104 41 86 41 Z" stroke="#c084fc" stroke-width="0.9" stroke-opacity="0.65" />
+            <line x1="59" y1="50" x2="59" y2="56" stroke="#ffffff" stroke-width="1.6" stroke-opacity="0.8" />
+            <line x1="181" y1="50" x2="181" y2="56" stroke="#ffffff" stroke-width="1.6" stroke-opacity="0.8" />
+            <circle cx="120" cy="53" r="2.2" fill="#ffffff" stroke="#d946ef" stroke-width="1.2" />
+          </g>
+        </svg>
+      `;
+    } else {
+      // 3. NORMAL MODE: Sliced Inverted Triangle
+      artDisplay.innerHTML = `
+        <svg viewBox="0 0 240 100" class="mode-art-svg" fill="none" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <filter id="normArtBlur" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="10" />
+            </filter>
+            <mask id="normArtMask">
+              <rect x="25" y="10" width="190" height="80" rx="16" fill="#ffffff" filter="url(#normArtBlur)" />
+            </mask>
+            <linearGradient id="normArtGridFade" x1="0" y1="62" x2="0" y2="100" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.2" />
+              <stop offset="100%" stop-color="#00e5ff" stop-opacity="0.85" />
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="240" height="100" fill="#000000" mask="url(#normArtMask)" />
+          <g stroke="url(#normArtGridFade)">
+            <line x1="120" y1="62" x2="16" y2="100" stroke-width="1" />
+            <line x1="120" y1="62" x2="62" y2="100" stroke-width="1" />
+            <line x1="120" y1="62" x2="94" y2="100" stroke-width="1" />
+            <line x1="120" y1="62" x2="120" y2="100" stroke-width="1.3" stroke-opacity="0.9" />
+            <line x1="120" y1="62" x2="146" y2="100" stroke-width="1" />
+            <line x1="120" y1="62" x2="178" y2="100" stroke-width="1" />
+            <line x1="120" y1="62" x2="224" y2="100" stroke-width="1" />
+            <line x1="84" y1="70" x2="156" y2="70" stroke-width="1" stroke-opacity="0.35" />
+            <line x1="58" y1="79" x2="182" y2="79" stroke-width="1" stroke-opacity="0.55" />
+            <line x1="28" y1="90" x2="212" y2="90" stroke-width="1" stroke-opacity="0.75" />
+          </g>
+          <line x1="20" y1="62" x2="220" y2="62" stroke="#00e5ff" stroke-width="1.2" stroke-opacity="0.45" />
+          <g stroke="#00e5ff">
+            <polygon points="120,56 80,10 160,10" stroke-width="1.6" stroke-linejoin="round" stroke-opacity="0.85" />
+            <line x1="91" y1="23" x2="149" y2="23" stroke-width="1.1" stroke-opacity="0.5" />
+            <line x1="98" y1="33" x2="142" y2="33" stroke-width="1.2" stroke-opacity="0.65" />
+            <line x1="106" y1="43" x2="134" y2="43" stroke-width="1.3" stroke-opacity="0.8" />
+          </g>
+        </svg>
+      `;
+    }
+  }
+
   const rulesBanner = document.getElementById('modeRulesBanner');
   if (rulesBanner) {
     if (currentLevelMode === 'overdrive') {
