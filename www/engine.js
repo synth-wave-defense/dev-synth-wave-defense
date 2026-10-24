@@ -1633,6 +1633,7 @@ function handleHardwareBack() {
       }
     }
   }
+  }
 window.handleHardwareBack = handleHardwareBack;
 
 // [ENG106] Match Result & Victory/Defeat Handlers: Star calculations, rewards, revive prompt, and victory/defeat sequences.
