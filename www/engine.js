@@ -1538,7 +1538,7 @@ function forcePauseForBackground() {
 let lastBackPressTime = 0;
 
 function handleHardwareBack() {
-  // 1. Окна подтверждения и вспомогательные модалки
+  // 1. Модальные всплывающие окна подтверждения (высший приоритет)
   const giveUpModal = document.getElementById('giveUpConfirmModal');
   if (giveUpModal && !giveUpModal.classList.contains('hidden')) {
     if (typeof cancelGiveUp === 'function') cancelGiveUp();
@@ -1557,7 +1557,7 @@ function handleHardwareBack() {
     return;
   }
 
-  // 2. Полноэкранные меню и оверлеи — возврат на предыдущий экран
+  // 2. Полноэкранные экраны меню — закрытие и возврат назад
   const bpScreen = document.getElementById('battlePassScreen');
   if (bpScreen && !bpScreen.classList.contains('hidden')) {
     if (typeof closeBattlePassScreen === 'function') closeBattlePassScreen();
@@ -1582,12 +1582,16 @@ function handleHardwareBack() {
     return;
   }
 
+  // Экран выбора уровней -> возвращаемся в главное меню
   const levelsEl = document.getElementById('levelsScreen');
   if (levelsEl && !levelsEl.classList.contains('hidden')) {
-    if (typeof showStartScreen === 'function') showStartScreen();
+    if (typeof showStartScreen === 'function') {
+      showStartScreen();
+    }
     return;
   }
 
+  // Экраны итогов боя -> возврат в меню уровней
   const victoryEl = document.getElementById('victoryScreen');
   if (victoryEl && !victoryEl.classList.contains('hidden')) {
     if (typeof showLevelSelectFromGame === 'function') showLevelSelectFromGame();
@@ -1600,13 +1604,13 @@ function handleHardwareBack() {
     return;
   }
 
-  // 3. Если бой уже на паузе — снимаем с паузы и возвращаем в бой
+  // 3. Если бой на паузе — снимаем с паузы и возвращаемся в бой
   if (gameState === 'PAUSED') {
     if (typeof closeSettings === 'function') closeSettings();
     return;
   }
 
-  // 4. Если игрок находится в активной битве — открываем настройки/паузу
+  // 4. Если идет активный бой — ставим на паузу и открываем настройки
   if (gameState === 'PLAYING') {
     if (typeof handleHudSettingsClick === 'function') {
       handleHudSettingsClick();
@@ -1614,11 +1618,12 @@ function handleHardwareBack() {
     return;
   }
 
-  // 5. Главный экран (START) или когда назад возвращаться некуда
+  // 5. Главный экран (START) или некуда возвращаться: двойное нажатие для выхода
   const now = Date.now();
   if (now - lastBackPressTime < 2000) {
-    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App && typeof window.Capacitor.Plugins.App.exitApp === 'function') {
-      window.Capacitor.Plugins.App.exitApp();
+    const AppPlugin = window.Capacitor?.Plugins?.App || window.App;
+    if (AppPlugin && typeof AppPlugin.exitApp === 'function') {
+      AppPlugin.exitApp();
     }
   } else {
     lastBackPressTime = now;
@@ -1627,6 +1632,7 @@ function handleHardwareBack() {
     }
   }
 }
+window.handleHardwareBack = handleHardwareBack;
 
 // [ENG106] Match Result & Victory/Defeat Handlers: Star calculations, rewards, revive prompt, and victory/defeat sequences.
 function calculateLevelStarsAndReward(lvl, currentHp, startingHp) {
