@@ -7488,5 +7488,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.Capacitor.Plugins.StatusBar) {
       window.Capacitor.Plugins.StatusBar.hide().catch(err => console.warn('StatusBar error:', err));
     }
+
+    if (window.Capacitor.Plugins.App) {
+      window.Capacitor.Plugins.App.addListener('backButton', () => {
+        if (typeof handleHardwareBack === 'function') {
+          handleHardwareBack();
+        }
+      });
+    }
   }
 });

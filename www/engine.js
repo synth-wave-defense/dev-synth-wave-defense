@@ -1535,7 +1535,10 @@ function forcePauseForBackground() {
   saveGame();
 }
 
+let lastBackPressTime = 0;
+
 function handleHardwareBack() {
+  // 1. Окна подтверждения и вспомогательные модалки
   const giveUpModal = document.getElementById('giveUpConfirmModal');
   if (giveUpModal && !giveUpModal.classList.contains('hidden')) {
     if (typeof cancelGiveUp === 'function') cancelGiveUp();
@@ -1548,6 +1551,13 @@ function handleHardwareBack() {
     return;
   }
 
+  const gameCompModal = document.getElementById('gameCompletionModal');
+  if (gameCompModal && !gameCompModal.classList.contains('hidden')) {
+    if (typeof closeGameCompletionModal === 'function') closeGameCompletionModal();
+    return;
+  }
+
+  // 2. Полноэкранные меню и оверлеи — возврат на предыдущий экран
   const bpScreen = document.getElementById('battlePassScreen');
   if (bpScreen && !bpScreen.classList.contains('hidden')) {
     if (typeof closeBattlePassScreen === 'function') closeBattlePassScreen();
@@ -1574,15 +1584,29 @@ function handleHardwareBack() {
 
   const levelsEl = document.getElementById('levelsScreen');
   if (levelsEl && !levelsEl.classList.contains('hidden')) {
-    showStartScreen();
+    if (typeof showStartScreen === 'function') showStartScreen();
     return;
   }
 
+  const victoryEl = document.getElementById('victoryScreen');
+  if (victoryEl && !victoryEl.classList.contains('hidden')) {
+    if (typeof showLevelSelectFromGame === 'function') showLevelSelectFromGame();
+    return;
+  }
+
+  const defeatEl = document.getElementById('defeatScreen');
+  if (defeatEl && !defeatEl.classList.contains('hidden')) {
+    if (typeof showLevelSelectFromGame === 'function') showLevelSelectFromGame();
+    return;
+  }
+
+  // 3. Если бой уже на паузе — снимаем с паузы и возвращаем в бой
   if (gameState === 'PAUSED') {
     if (typeof closeSettings === 'function') closeSettings();
     return;
   }
 
+  // 4. Если игрок находится в активной битве — открываем настройки/паузу
   if (gameState === 'PLAYING') {
     if (typeof handleHudSettingsClick === 'function') {
       handleHudSettingsClick();
@@ -1590,8 +1614,17 @@ function handleHardwareBack() {
     return;
   }
 
-  if (gameState === 'START' && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App && typeof window.Capacitor.Plugins.App.exitApp === 'function') {
-    window.Capacitor.Plugins.App.exitApp();
+  // 5. Главный экран (START) или когда назад возвращаться некуда
+  const now = Date.now();
+  if (now - lastBackPressTime < 2000) {
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App && typeof window.Capacitor.Plugins.App.exitApp === 'function') {
+      window.Capacitor.Plugins.App.exitApp();
+    }
+  } else {
+    lastBackPressTime = now;
+    if (typeof showHintToast === 'function') {
+      showHintToast('Tap Back one more time to close game');
+    }
   }
 }
 
