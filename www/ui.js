@@ -7496,17 +7496,16 @@ window.toggleTacticalTips = toggleTacticalTips;
 
 // [UI206] Listener to intercept Back button on Android.
 document.addEventListener('DOMContentLoaded', () => {
-  if (window.Capacitor) {
-    if (window.Capacitor.Plugins && window.Capacitor.Plugins.StatusBar) {
+  if (window.Capacitor && window.Capacitor.Plugins) {
+    if (window.Capacitor.Plugins.StatusBar) {
       window.Capacitor.Plugins.StatusBar.hide().catch(err => console.warn('StatusBar error:', err));
     }
-
-    const App = window.Capacitor.Plugins ? window.Capacitor.Plugins.App : null;
+    
+    // Блокируем нативное закрытие и передаем управление функции handleHardwareBack
+    const App = window.Capacitor.Plugins.App;
     if (App && typeof App.addListener === 'function') {
-      App.addListener('backButton', (data) => {
-        if (typeof handleHardwareBack === 'function') {
-          handleHardwareBack();
-        }
+      App.addListener('backButton', () => {
+        if (typeof handleHardwareBack === 'function') handleHardwareBack();
       });
     }
   }

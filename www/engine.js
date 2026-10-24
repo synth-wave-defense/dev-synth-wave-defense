@@ -1619,19 +1619,20 @@ function handleHardwareBack() {
   }
 
   // 5. Главный экран (START) или некуда возвращаться: двойное нажатие для выхода
-  const now = Date.now();
-  if (now - lastBackPressTime < 2000) {
-    const AppPlugin = window.Capacitor?.Plugins?.App || window.App;
-    if (AppPlugin && typeof AppPlugin.exitApp === 'function') {
-      AppPlugin.exitApp();
-    }
-  } else {
-    lastBackPressTime = now;
-    if (typeof showHintToast === 'function') {
-      showHintToast('Tap Back one more time to close game');
+  if (gameState === 'START') {
+    const now = Date.now();
+    if (now - lastBackPressTime < 2000) {
+      const AppPlugin = window.Capacitor?.Plugins?.App || window.App;
+      if (AppPlugin && typeof AppPlugin.exitApp === 'function') {
+        AppPlugin.exitApp();
+      }
+    } else {
+      lastBackPressTime = now;
+      if (typeof showHintToast === 'function') {
+        showHintToast('Tap Back one more time to close game');
+      }
     }
   }
-}
 window.handleHardwareBack = handleHardwareBack;
 
 // [ENG106] Match Result & Victory/Defeat Handlers: Star calculations, rewards, revive prompt, and victory/defeat sequences.
