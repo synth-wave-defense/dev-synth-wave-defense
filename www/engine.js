@@ -1536,8 +1536,14 @@ function forcePauseForBackground() {
 }
 
 let lastBackPressTime = 0;
+let lastHardwareBackRun = 0;
 
 function handleHardwareBack() {
+  const now = Date.now();
+  // Защита от фантомных тройных срабатываний (Capacitor + popstate + backbutton)
+  if (now - lastHardwareBackRun < 300) return;
+  lastHardwareBackRun = now;
+
   // 1. Модальные всплывающие окна подтверждения (высший приоритет)
   const giveUpModal = document.getElementById('giveUpConfirmModal');
   if (giveUpModal && !giveUpModal.classList.contains('hidden')) {
@@ -1619,23 +1625,19 @@ function handleHardwareBack() {
   }
 
   // 5. Главный экран (START) или некуда возвращаться: двойное нажатие для выхода
-  if (gameState === 'START') {
-    const now = Date.now();
-    if (now - lastBackPressTime < 2000) {
-      const AppPlugin = window.Capacitor?.Plugins?.App || window.App;
-      if (AppPlugin && typeof AppPlugin.exitApp === 'function') {
-        AppPlugin.exitApp();
-      }
-    } else {
-      lastBackPressTime = now;
-      if (typeof showHintToast === 'function') {
-        showHintToast('Tap Back one more time to close game');
-      }
+  if (now - lastBackPressTime < 2000) {
+    const AppPlugin = window.Capacitor?.Plugins?.App || window.App;
+    if (AppPlugin && typeof AppPlugin.exitApp === 'function') {
+      AppPlugin.exitApp();
+    }
+  } else {
+    lastBackPressTime = now;
+    if (typeof showHintToast === 'function') {
+      showHintToast('Tap Back one more time to close game');
     }
   }
-  }
+}
 window.handleHardwareBack = handleHardwareBack;
-
 // [ENG106] Match Result & Victory/Defeat Handlers: Star calculations, rewards, revive prompt, and victory/defeat sequences.
 function calculateLevelStarsAndReward(lvl, currentHp, startingHp) {
   let earnedStars = 1;
