@@ -4,10 +4,11 @@
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
+  width: 100vw !important;
+  height: 100lvh !important;
+  min-height: 100% !important;
+  background: #03050d !important;
+  box-shadow: 0 0 0 200px #03050d !important;
   overflow: hidden !important;
   overscroll-behavior: none !important;
 }
@@ -25,6 +26,7 @@
 html, body {
   width: 100%;
   height: 100%;
+  min-height: 100lvh;
   margin: 0;
   padding: 0;
   overflow: hidden;
@@ -32,7 +34,7 @@ html, body {
   position: fixed;
   top: 0;
   left: 0;
-  background: #06070d;
+  background: #03050d; /* Было #06070d — из-за этого на Скрине 2 снизу была видна темно-серая полоса! */
   color: #f1f5f9;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
@@ -45,7 +47,7 @@ html, body {
   height: 100%;
   z-index: 1;
   display: block;
-  background: #06070d;
+  background: #03050d; /* Тоже выравниваем в #03050d */
 }
 
 .ui-layer {

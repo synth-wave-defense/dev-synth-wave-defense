@@ -5763,7 +5763,9 @@ function warmUpNebulaAndHideLoader() {
       goBtn.className = 'shop-item-btn shop-btn-free';
       goBtn.style.position = 'absolute';
       goBtn.style.left = '50%';
-      goBtn.style.top = 'calc(50% + 56px)';
+      const centerBox = document.getElementById('initialLoaderCenterBox');
+      const baseTop = (centerBox && centerBox.style.top) ? centerBox.style.top : '50lvh';
+      goBtn.style.top = `calc(${baseTop} + 56px)`;
       goBtn.style.transform = 'translateX(-50%)';
       goBtn.style.pointerEvents = 'auto';
       goBtn.style.padding = '10px 42px';

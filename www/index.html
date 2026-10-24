@@ -17,6 +17,7 @@
   }
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#03050d">
   <title>Synth Wave Defense</title>
   <link rel="icon" href="./favicon.ico">
   <link rel="stylesheet" href="fonts.css">
@@ -30,22 +31,26 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100lvh;
+  min-height: 100vh;
   z-index: 999999;
   background: #03050d;
+  box-shadow: 0 0 0 200px #03050d;
   transition: opacity 0.35s ease-out;
   pointer-events: all;
   user-select: none;
   -webkit-user-select: none;
 ">
-  <!-- Фиксированный блок строго по центру через жесткие margin auto без transform -->
-  <div style="
-    position: absolute;
-    inset: 0;
-    margin: auto;
+  <!-- Блок жестко привязан к физическому центру матрицы экрана (50lvh) и не реагирует на ресайз шторок -->
+  <div id="initialLoaderCenterBox" style="
+    position: fixed;
+    top: 50lvh;
+    left: 50vw;
     width: min(240px, 75vw);
     height: 70px;
+    margin-top: -35px;
+    margin-left: calc(min(240px, 75vw) / -2);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -87,6 +92,16 @@
       "></div>
     </div>
   </div>
+  <script>
+    // Мгновенно (до 1-го кадра отрисовки) фиксируем координату Y в физических пикселях экрана телефона
+    (function() {
+      var box = document.getElementById('initialLoaderCenterBox');
+      var screenH = (window.screen && window.screen.height) ? window.screen.height : window.innerHeight;
+      if (box && screenH > 0) {
+        box.style.top = Math.round(screenH / 2) + 'px';
+      }
+    })();
+  </script>
 </div>
 
 <!-- [HTM102] Audio Onboarding Screen: Headphones recommendation and audio gate modal overlay. -->
