@@ -21,6 +21,7 @@
   touch-action: none;
   -webkit-tap-highlight-color: transparent;
 }
+
 html, body {
   width: 100%;
   height: 100%;
@@ -54,7 +55,7 @@ html, body {
   width: 100%;
   height: 100vh;
   height: 100dvh;
-  z-index: 10;
+  z-index: 10; /* ВОЗВРАЩАЕМ ИСХОДНЫЙ 10 (было 505) */
   pointer-events: none;
   display: flex;
   flex-direction: column;
@@ -234,12 +235,7 @@ html, body {
 
 .daily-bonus-quick-btn {
   position: fixed;
-/* Ровно под нижней кромкой верхней панели с аккуратным отступом */
   top: max(78px, calc(env(safe-area-inset-top) + 64px));
-  
-  /* Идеальное выравнивание по центру шестеренки:
-     на узких экранах отступ равен правому паддингу бара (9px + safe-area),
-     на экранах шире 960px кнопка жестко фиксируется ровно под шестеренкой */
   right: max(max(25px, calc(env(safe-area-inset-right) + 9px)), calc(50vw - 480px + 9px));
   width: 36px;
   height: 36px;
@@ -318,20 +314,8 @@ html, body {
 }
 
 .hud-chapter-label {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  font-family: 'Montserrat', sans-serif;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 2.5px;
-  color: #8ef3ff;
-  text-transform: uppercase;
-  white-space: nowrap;
-  pointer-events: none;
   display: none !important;
 }
-.hud-chapter-label.hidden { display: none; }
 
 /* [CSS101.02] HUD gear settings button and interactive animations */
 .hud-gear-btn {
@@ -386,8 +370,6 @@ html, body {
 }
 
 /* [CSS102] Wave notification alerts and banners */
-
-/* [CSS102.01] Boss and mini-boss incoming notification banner */
 .incoming-alert-banner {
   position: fixed;
   top: max(82px, calc(env(safe-area-inset-top) + 68px));
@@ -449,7 +431,6 @@ html, body {
   100% { opacity: 1; transform: translateX(-50%) scale(1.04); filter: drop-shadow(0 0 12px #f05f9f); }
 }
 
-/* [CSS102.02] New tower unlocked notification banner */
 .new-tower-banner {
   position: fixed;
   top: max(82px, calc(env(safe-area-inset-top) + 68px));
@@ -526,6 +507,7 @@ html, body {
 /* [CSS103] Bottom controls panel and build toolbar */
 .controls-wrapper {
   position: relative;
+  /* z-index ПОЛНОСТЬЮ УДАЛЕН */
   height: 96px;
   border-radius: 18px;
   overflow: hidden;
@@ -539,6 +521,7 @@ html, body {
   width: 100%;
   margin: 0 auto;
 }
+
 .controls-panel {
   display: flex;
   gap: 5px;
@@ -2037,7 +2020,6 @@ html, body {
   --neon-glow: rgba(0, 229, 255, 0.75);
 }
 
-
 #battlePassScreen {
   z-index: 210 !important;
   pointer-events: auto !important;
@@ -2345,105 +2327,22 @@ html, body {
     inset 0 0 16px rgba(0, 229, 255, 0.4) !important;
 }
 
-/* Иконка видео/плей внутри кнопки — чистый белый цвет */
 #reviveBtn svg,
 .revive-btn svg {
   stroke: #ffffff !important;
   fill: #ffffff !important;
 }
 
-.revive-skip-btn {
-  -webkit-tap-highlight-color: transparent;
-  background: rgba(8, 10, 18, 0.94);
-  border-color: #171d33;
-  color: #565f75;
-  box-shadow: none;
-}
-.menu-btn.no-press-feedback {
-  background: rgba(8, 12, 24, 0.4) !important;
-  border-color: rgba(140, 200, 255, 0.08) !important;
-  color: #55637d !important;
-  box-shadow: none !important;
-  cursor: not-allowed !important;
-  transform: none !important;
-}
-.menu-btn.no-press-feedback:hover,
-.menu-btn.no-press-feedback:active,
-.menu-btn.no-press-feedback:focus {
-  background: rgba(8, 12, 24, 0.4) !important;
-  border-color: rgba(140, 200, 255, 0.08) !important;
-  color: #55637d !important;
-  box-shadow: none !important;
-  transform: none !important;
-}
-
 /* [CSS106.02] Level selection screen grid and chapter navigation */
 .levels-bg {
   background: rgba(4, 6, 14, 0.65) !important;
   backdrop-filter: blur(8px) !important;
-  /* Увеличиваем отступ сверху, чтобы переключатель не прилипал к верхней панели */
   padding-top: max(110px, calc(env(safe-area-inset-top) + 90px)) !important;
   padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
-  /* Выравниваем по верхнему краю, чтобы интерфейс перестал прыгать */
   justify-content: flex-start !important;
   overflow-y: auto;
   touch-action: pan-y;
   gap: 12px !important;
-}
-
-/* Revamped Top Bar, 3-Way Switcher & Mode Rules */
-.levels-top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 340px;
-  margin: 0 auto 4px auto;
-}
-
-.levels-top-res-capsule {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  background: #060c18;
-  border: 1.3px solid rgba(0, 229, 255, 0.6);
-  border-radius: 17px;
-  padding: 6px 16px;
-  transition: border-color 0.2s, background 0.2s;
-}
-
-#levelsScreen.mode-overdrive-active .levels-top-res-capsule {
-  background: #180415;
-  border-color: rgba(255, 47, 208, 0.6);
-}
-
-#levelsScreen.mode-endless-active .levels-top-res-capsule {
-  background: #180422;
-  border-color: rgba(217, 70, 239, 0.6);
-}
-
-.levels-top-gear {
-  background: rgba(8, 12, 24, 0.6);
-  border: 1.3px solid rgba(0, 229, 255, 0.4);
-  border-radius: 50%;
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #00e5ff;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-#levelsScreen.mode-overdrive-active .levels-top-gear {
-  border-color: rgba(255, 47, 208, 0.5);
-  color: #ff2fd0;
-}
-
-#levelsScreen.mode-endless-active .levels-top-gear {
-  border-color: rgba(217, 70, 239, 0.5);
-  color: #d946ef;
 }
 
 .mode-3way-header {
@@ -2459,35 +2358,6 @@ html, body {
   text-transform: uppercase;
 }
 
-
-/* Контейнер динамического арта режима: крупный, чистый и без границ */
-.mode-art-display {
-  width: 94%;
-  max-width: 360px;
-  height: auto;
-  aspect-ratio: 240 / 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 4px auto 10px auto;
-  padding: 0;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  -webkit-mask-image: none;
-  mask-image: none;
-  pointer-events: none;
-  user-select: none;
-  overflow: visible;
-}
-
-.mode-art-svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-  overflow: visible;
-}
-
 #levelsScreen.mode-overdrive-active .mode-3way-header,
 #levelsScreen.overdrive-active .mode-3way-header {
   text-shadow: 0 0 14px rgba(255, 47, 208, 0.8);
@@ -2498,25 +2368,25 @@ html, body {
 }
 
 .mode-3way-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  max-width: 380px;
-  margin: 0 auto 16px auto;
-  box-sizing: border-box;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  width: 100% !important;
+  max-width: 380px !important;
+  margin: 0 auto 16px auto !important;
+  box-sizing: border-box !important;
+  flex: none;
 }
 
 .mode-3way-switcher {
-  display: flex;
-  width: 100%;
-  max-width: 380px;
-  background: #080d1a;
-  border: 1.2px solid #1e293b;
-  border-radius: 10px;
-  padding: 3px;
-  gap: 3px;
-  box-sizing: border-box;
+  display: flex !important;
+  width: 100% !important;
+  background: #080d1a !important;
+  border: 1.2px solid #1e293b !important;
+  border-radius: 10px !important;
+  padding: 3px !important;
+  gap: 3px !important;
+  box-sizing: border-box !important;
 }
 
 .mode-3way-tab {
@@ -2543,8 +2413,6 @@ html, body {
   flex: none;
 }
 
-/* Mode-colored icons for available (unlocked) tabs */
-/* Mode-colored icons for available (unlocked) tabs */
 .mode-3way-tab.tab-normal:not(.locked):not(:disabled) .tab-icon {
   color: #00e5ff !important;
   fill: #00e5ff !important;
@@ -2552,10 +2420,10 @@ html, body {
 
 .mode-3way-tab.tab-endless:not(.locked):not(:disabled) .tab-icon {
   color: #d946ef !important;
-  fill: #d946ef !important;
+  fill: none !important;
+  stroke: #d946ef !important;
 }
 
-/* 1. ENABLED (не выбран): розовая иконка в цвет HP, серый текст и неактивная рамка */
 .mode-3way-tab.tab-hardcore:not(.locked):not(:disabled) .tab-icon,
 .mode-3way-tab.tab-hardcore:not(.locked):not(:disabled) svg {
   color: #f05f9f !important;
@@ -2564,7 +2432,6 @@ html, body {
   filter: drop-shadow(0 0 4px rgba(240, 95, 159, 0.5));
 }
 
-/* 2. DISABLED / LOCKED: полностью серая иконка и серый текст */
 .mode-3way-tab.locked,
 .mode-3way-tab:disabled {
   opacity: 0.65;
@@ -2583,7 +2450,13 @@ html, body {
   opacity: 0.55 !important;
 }
 
-/* 3. SELECTED (активен): цветная иконка, белый текст и цветная подсветка */
+.mode-3way-tab.tab-endless.locked .tab-icon,
+.mode-3way-tab.tab-endless:disabled .tab-icon {
+  color: #64748b !important;
+  fill: none !important;
+  stroke: #64748b !important;
+}
+
 .mode-3way-tab.tab-normal.active {
   background: linear-gradient(180deg, rgba(0, 229, 255, 0.3) 0%, rgba(0, 102, 136, 0.15) 100%);
   border-color: #00e5ff !important;
@@ -2612,12 +2485,11 @@ html, body {
   filter: drop-shadow(0 0 8px rgba(240, 95, 159, 0.9)) !important;
 }
 
-/* Chapter Navigator & Swipe Hint */ 
 .chapter-swipe-hint {
   font-family: 'Montserrat', sans-serif;
   font-size: 10px;
   font-weight: 600;
-  color: #ffffff; /* Белый цвет текста */
+  color: #ffffff;
   text-align: center;
   margin: 4px auto 6px auto;
   letter-spacing: 0.5px;
@@ -2627,20 +2499,17 @@ html, body {
   opacity: 0.9;
 }
 
-/* Свечение и розовый цвет стрелочек для Hardcore */
-.mode-overdrive-active .swipe-arrow, 
+.mode-overdrive-active .swipe-arrow,
 .overdrive-active .swipe-arrow {
   color: #f05f9f;
   text-shadow: 0 0 6px rgba(240, 95, 159, 0.5);
 }
 
-/* Свечение и фиолетовый цвет стрелочек для Endless */
 #levelsScreen.mode-endless-active .swipe-arrow {
   color: #d946ef;
   text-shadow: 0 0 6px rgba(217, 70, 239, 0.5);
 }
 
-/* Mode Rules Banner */
 .mode-rules-banner {
   font-family: 'Montserrat', sans-serif;
   font-size: 9.5px;
@@ -2648,7 +2517,7 @@ html, body {
   text-align: center;
   margin-top: 6px;
   margin-bottom: 0;
-  min-height: 16px;
+  min-height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2656,19 +2525,12 @@ html, body {
   letter-spacing: 0.4px;
 }
 
-.mode-rules-banner.normal-rules {
-  color: #94a3b8;
-}
-
-.mode-rules-banner.hardcore-rules {
-  color: #94a3b8;
-}
-
+.mode-rules-banner.normal-rules,
+.mode-rules-banner.hardcore-rules,
 .mode-rules-banner.endless-rules {
   color: #94a3b8;
 }
 
-/* Endless Arena Dashboard & Highway Card (Option 1) */
 .endless-dashboard-view {
   display: flex;
   flex-direction: column;
@@ -2818,23 +2680,25 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, rgba(88, 28, 135, 0.75) 0%, rgba(59, 7, 100, 0.88) 100%);
-  border: 1.5px solid rgba(217, 70, 239, 0.85);
-  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(88, 28, 135, 0.75) 0%, rgba(59, 7, 100, 0.88) 100%) !important;
+  border: 1.5px solid rgba(217, 70, 239, 0.85) !important;
+  border-radius: 20px !important;
   padding: 12px 20px;
-  width: 82%;
-  max-width: 290px;
+  width: 82% !important;
+  max-width: 290px !important;
   cursor: pointer;
-  box-shadow: 0 0 18px rgba(217, 70, 239, 0.4);
-  color: #ffffff;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.35), inset 0 0 10px rgba(217, 70, 239, 0.2) !important;
+  color: #ffffff !important;
+  transition: transform 0.12s ease, box-shadow 0.15s ease;
   box-sizing: border-box;
-  margin: 0 auto 8px auto; /* 0 сверху, auto слева и справа (центрирование), 8px снизу */
+  margin: 12px auto 8px auto !important;
   gap: 16px;
 }
 
 .endless-battle-btn:active {
-  transform: scale(0.96);
+  transform: scale(0.97);
+  background: linear-gradient(180deg, rgba(107, 33, 168, 0.85) 0%, rgba(76, 29, 149, 0.95) 100%) !important;
+  box-shadow: 0 0 22px rgba(217, 70, 239, 0.55) !important;
 }
 
 .battle-btn-text {
@@ -2891,7 +2755,8 @@ html, body {
   gap: 14px;
 }
 
-.levels-top-diamonds {
+.levels-top-diamonds,
+.levels-top-prisms {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2908,11 +2773,6 @@ html, body {
   text-shadow: 0 0 10px rgba(0, 229, 255, 0.7);
 }
 
-.levels-top-prisms {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 .levels-top-prisms svg {
   filter: drop-shadow(0 0 7px rgba(217, 70, 239, 0.85));
 }
@@ -2924,13 +2784,11 @@ html, body {
   text-shadow: 0 0 10px rgba(217, 70, 239, 0.7);
 }
 
-/* HARDCORE / OVERDRIVE ACTIVE VISUAL THEME */
 #levelsScreen.mode-overdrive-active,
 #levelsScreen.overdrive-active {
   background: radial-gradient(circle at 50% 30%, rgba(60, 0, 35, 0.55), rgba(4, 5, 14, 0.95)) !important;
 }
 
-/* ENDLESS ARENA ACTIVE BACKGROUND */
 #levelsScreen.mode-endless-active {
   background: radial-gradient(circle at 50% 30%, rgba(55, 10, 75, 0.55), rgba(4, 5, 14, 0.95)) !important;
 }
@@ -2941,7 +2799,6 @@ html, body {
   text-shadow: 0 0 14px rgba(255, 47, 208, 0.8);
 }
 
-/* === HARDCORE SWIPE ARROWS & BUTTONS === */
 .mode-overdrive-active .part-nav-btn,
 .overdrive-active .part-nav-btn {
   background: rgba(8, 12, 24, 0.6);
@@ -2968,7 +2825,6 @@ html, body {
   color: #f05f9f;
 }
 
-/* === ENDLESS SWIPE ARROWS, BUTTONS & GLOW === */
 #levelsScreen.mode-endless-active .part-nav-label {
   text-shadow: 0 0 16px rgba(217, 70, 239, 0.7);
 }
@@ -2995,7 +2851,6 @@ html, body {
   color: #d946ef;
 }
 
-/* Кнопки уровней в режиме HARDCORE: матовый темный фон без градиента + розовая рамка таба */
 #levelsScreen.mode-overdrive-active .level-card-btn,
 .mode-overdrive-active .level-card-btn {
   background: rgba(12, 8, 20, 0.85) !important;
@@ -3004,20 +2859,17 @@ html, body {
   box-shadow: none !important;
 }
 
-/* При нажатии / активном текущем уровне */
 #levelsScreen.mode-overdrive-active .level-card-btn:active,
 #levelsScreen.mode-overdrive-active .level-card-btn.current {
   border-color: #f05f9f !important;
   box-shadow: 0 0 14px rgba(240, 95, 159, 0.45) !important;
 }
 
-/* Номер уровня и звездочки внутри кнопки Hardcore */
 #levelsScreen.mode-overdrive-active .level-card-btn .level-num {
   color: #ffffff !important;
   text-shadow: 0 0 8px rgba(240, 95, 159, 0.35);
 }
 
-/* Кнопка TO MAIN MENU в режиме Hardcore: белая обводка, нейтральное нажатие */
 #levelsScreen.mode-overdrive-active .levels-main-menu-btn,
 .mode-overdrive-active .levels-main-menu-btn,
 #levelsScreen.mode-overdrive-active .menu-btn-glass-capsule {
@@ -3110,19 +2962,6 @@ html, body {
   text-shadow: 0 0 16px rgba(0, 229, 255, 0.6);
 }
 
-
-.swipe-arrow {
-  font-size: 9px;
-  color: #00e5ff;
-  opacity: 0.85;
-}
-
-@keyframes swipeHintPulse {
-  0%, 100% { opacity: 0.55; transform: scale(0.98); }
-  50%      { opacity: 0.95; transform: scale(1.02); }
-}
-
-/* 1. Убираем ограничение с родительских контейнеров */
 .levels-content-zone,
 .levels-campaign-view {
   width: 100%;
@@ -3131,20 +2970,18 @@ html, body {
   align-items: center;
 }
 
-/* 2. Жестко растягиваем сетку */
 .levels-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 10px; /* Ваш старый отступ */
-  width: 100%; /* Заставляем сетку занять 100% доступной ширины */
-  min-width: 320px; /* Гарантируем минимальную ширину */
-  max-width: 340px; /* Ограничитель, чтобы на планшетах они не стали гигантскими */
+  gap: 10px;
+  width: 100%;
+  min-width: 320px;
+  max-width: 340px;
   margin: 0 auto;
   flex: none;
   will-change: transform, opacity;
 }
 
-/* Level grid chapter swipe transition animations */
 @keyframes gridSwipeOutLeft {
   0% { transform: translateX(0); opacity: 1; }
   100% { transform: translateX(-60px); opacity: 0; }
@@ -3181,7 +3018,6 @@ html, body {
   animation: gridSwipeInLeft 0.22s cubic-bezier(0, 0, 0.2, 1) forwards;
 }
 
-/* 3. Жестко растягиваем саму кнопку */
 .level-card-btn {
   width: 100%;
   aspect-ratio: 1 / 1; 
@@ -3189,7 +3025,7 @@ html, body {
   background: rgba(8, 12, 24, 0.72);
   border: 1px solid rgba(0, 229, 255, 0.45);
   border-radius: 12px; 
-  box-shadow: none; /* Гарантирует, что кнопки в покое не светятся */
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3265,7 +3101,6 @@ html, body {
   min-height: 44px;
   flex: none;
 }
-
 
 /* [CSS106.03] Global tech tree upgrade cards and branch lists */
 .screen-bg-only > * { display: none !important; }
@@ -3615,231 +3450,10 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   box-shadow: none;
 }
 
-
-/* [CSS106.05] Shop modal cards and reward buttons */
-#shopScreen {
-  z-index: 200 !important;
-  pointer-events: auto !important;
-}
-
-.shop-card {
-  border-radius: 18px;
-  background: rgba(8, 12, 24, 0.6);
-  border: 1px solid rgba(140, 200, 255, 0.16);
-  padding: 12px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  transition: all 0.2s ease;
-}
-
-.shop-card-highlight {
-  border-radius: 18px;
-  background: linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(8, 12, 24, 0.75));
-  border: 1.5px solid rgba(0, 229, 255, 0.45);
-  box-shadow: 0 0 18px rgba(0, 229, 255, 0.15);
-  padding: 13px 15px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.shop-card-best {
-  border-color: rgba(0, 229, 255, 0.4);
-  background: linear-gradient(135deg, rgba(16, 26, 52, 0.75), rgba(8, 12, 24, 0.7));
-}
-
-.shop-card-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-  flex: 1;
-}
-
-.shop-card-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #0b1020;
-  border: 1px solid rgba(140, 200, 255, 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-}
-.shop-card-icon.diamond-glow {
-  border-color: #00e5ff;
-  box-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
-}
-.shop-card-icon.gold-glow {
-  border-color: #f59e0b;
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
-}
-.shop-card-icon.prism-glow {
-  border-color: #d946ef;
-  box-shadow: 0 0 12px rgba(217, 70, 239, 0.35);
-}
-
-.upgrades-row-group-label.prism-group-label {
-  color: #d946ef;
-}
-
-.shop-card-prism {
-  background: linear-gradient(135deg, rgba(24, 10, 36, 0.75), rgba(12, 5, 20, 0.8));
-  border: 1px solid rgba(217, 70, 239, 0.28);
-}
-.shop-card-prism:hover {
-  border-color: rgba(217, 70, 239, 0.5);
-}
-
-.shop-card-max {
-  border-color: rgba(217, 70, 239, 0.6);
-  background: linear-gradient(135deg, rgba(38, 12, 54, 0.8), rgba(12, 5, 20, 0.85));
-  box-shadow: 0 0 16px rgba(217, 70, 239, 0.25);
-}
-
-.shop-card-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.shop-card-title {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.shop-card-sub {
-  font-size: 11px;
-  font-weight: 600;
-  color: #8ea3c4;
-}
-.shop-card-sub.prism-sub {
-  color: #f0abfc;
-  font-weight: 700;
-}
-
-.shop-badge {
-  font-size: 9px;
-  font-weight: 900;
-  letter-spacing: 0.5px;
-  color: #06070d;
-  background: #00e5ff;
-  padding: 1px 6px;
-  border-radius: 6px;
-  text-transform: uppercase;
-}
-.shop-badge.shop-badge-purple {
-  background: #d946ef;
-  color: #04060e;
-  box-shadow: 0 0 8px rgba(217, 70, 239, 0.5);
-}
-
-.shop-item-btn {
-  flex: none;
-  min-width: 82px;
-  padding: 9px 14px;
-  border-radius: 20px;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  transition: all 0.15s ease;
-  border: none;
-  outline: none;
-}
-.shop-item-btn:active:not(.shop-btn-claimed),
-.shop-item-btn.btn-pushed:not(.shop-btn-claimed) {
-  transform: scale(0.90) translateY(1px) !important;
-  box-shadow: 0 0 18px rgba(0, 229, 255, 0.6) !important;
-}
-
-.shop-btn-free {
-  background: linear-gradient(rgba(0, 229, 255, 0.35), rgba(0, 229, 255, 0.12)), #090e1f;
-  border: 1.5px solid #00e5ff;
-  color: #ffffff;
-  box-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
-}
-
-.shop-btn-ad {
-  background: rgba(245, 158, 11, 0.18);
-  border: 1.5px solid #f59e0b;
-  color: #f59e0b;
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.25);
-}
-
-.shop-btn-buy {
-  background: rgba(8, 12, 24, 0.85);
-  border: 1.5px solid rgba(140, 200, 255, 0.3);
-  color: #dff9ff;
-}
-.shop-btn-buy:hover {
-  border-color: #00e5ff;
-  color: #00e5ff;
-  box-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
-}
-
-.shop-btn-prism {
-  background: rgba(27, 10, 42, 0.85);
-  border: 1.5px solid rgba(217, 70, 239, 0.4);
-  color: #ffffff;
-}
-.shop-btn-prism:hover {
-  border-color: #d946ef;
-  color: #f0abfc;
-  box-shadow: 0 0 12px rgba(217, 70, 239, 0.4);
-}
-
-.shop-btn-prism-accent {
-  background: linear-gradient(135deg, #d946ef, #a855f7);
-  color: #04060d;
-  border: none;
-  box-shadow: 0 0 14px rgba(217, 70, 239, 0.5);
-}
-.shop-btn-prism-accent:hover {
-  box-shadow: 0 0 20px rgba(217, 70, 239, 0.75);
-  color: #02060d;
-}
-
-.shop-btn-exchange.dimmed,
-.shop-btn-buy.dimmed {
-  opacity: 0.5 !important;
-  cursor: not-allowed !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
-  box-shadow: none !important;
-}
-
-.exchange-cost-val.cost-red {
-  color: #f04878 !important;
-  text-shadow: 0 0 6px rgba(240, 72, 120, 0.6);
-}
-
-.shop-btn-claimed {
-  background: rgba(8, 12, 24, 0.4);
-  border: 1px solid rgba(140, 200, 255, 0.1);
-  color: #55637d;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
 /* [CSS107] In-game tower inspection and management panel */
 #inspectPanel {
+  position: relative;
+  z-index: 506 !important;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -4122,13 +3736,11 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   position: absolute;
   width: 44px;
   height: 44px;
-  /* Центр точки касания пальца (0, 0 в SVG) точно на координатах цели */
   margin-left: 0px;
   margin-top: 0px;
   pointer-events: none;
   z-index: 502;
-  transition: opacity 0.15s ease;
-  will-change: transform, opacity;
+  will-change: transform, opacity, left, top;
 }
 
 .tutorial-drop-ring {
@@ -4180,15 +3792,6 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   100% { transform: scale(2.8); opacity: 0; }
 }
 
-.tutorial-pointer {
-  position: absolute;
-  width: 28px;
-  height: 28px;
-  margin-left: -14px;
-  margin-top: -14px;
-  filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.9));
-}
-
 .tutorial-bubble {
   position: absolute;
   transform: translateX(-50%);
@@ -4209,24 +3812,69 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 .tutorial-skip-btn {
   position: fixed;
   right: max(max(14px, env(safe-area-inset-right)), calc(50vw - 480px + 14px));
-  bottom: max(96px, calc(96px + env(safe-area-inset-bottom)));
-  z-index: 501;
+  top: max(82px, calc(env(safe-area-inset-top) + 72px));
+  bottom: auto;
+  z-index: 515 !important; /* Гарантированно бьет все слои */
   pointer-events: auto;
-  background: rgba(10, 13, 26, 0.82);
-  border: 1px solid #334155;
-  color: #94a3b8;
+  
+  /* Делаем кнопку яркой и контрастной */
+  background: rgba(14, 20, 36, 0.95);
+  border: 1.5px solid rgba(0, 229, 255, 0.6);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.25);
+  color: #ffffff;
+  
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  padding: 6px 12px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 6px 14px;
   border-radius: 20px;
+  transition: all 0.2s ease;
 }
+
 .tutorial-skip-btn:active,
 .tutorial-skip-btn.btn-pushed {
   background: rgba(0, 229, 255, 0.25) !important;
   border-color: #00e5ff !important;
-  color: #00e5ff !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.6) !important;
   transform: scale(0.92) translateY(1px) !important;
+}
+
+/* Яркий дубликат крестика, который рисуется ПОВЕРХ тени туториала */
+.tutorial-close-btn-highlight {
+  position: absolute;
+  border-radius: 18px;
+  background: rgba(14, 20, 36, 0.98);
+  border: 2px solid #00e5ff;
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 501;
+  animation: tutorialFieldPulse 1.8s ease-in-out infinite;
+}
+
+.tutorial-close-btn-highlight svg {
+  width: 18px;
+  height: 18px;
+  stroke: #00e5ff;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px #00e5ff);
+}
+
+/* Синеватая неоновая рамка под цвет игрового поля с тёмным фоном внутри (блокирует клик по башне) */
+.tutorial-tower-block {
+  position: absolute;
+  border-radius: 12px;
+  background: rgba(4, 6, 14, 0.78);
+  border: 2px solid #00e5ff;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.45), inset 0 0 14px rgba(4, 6, 14, 0.85);
+  pointer-events: auto;
+  cursor: not-allowed;
+  z-index: 503;
 }
 
 /* [CSS109] Developer control bar and spawner panel */
@@ -4255,22 +3903,6 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 }
 .dev-bar:hover,
 .dev-bar:active {
-  opacity: 0.9;
-}
-.dev-mode-toggle {
-  opacity: 0.5;
-  transition: opacity 0.2s ease;
-}
-.dev-mode-toggle:hover {
-  opacity: 0.9;
-}
-.dev-speed-floating,
-.dev-clearsave-floating {
-  opacity: 0.5;
-  transition: opacity 0.2s ease;
-}
-.dev-speed-floating:hover,
-.dev-clearsave-floating:hover {
   opacity: 0.9;
 }
 .dev-bar:active {
@@ -4368,7 +4000,6 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   line-height: 1.35;
 }
 
-
 /* [CSS110] Collapsible accordion loadout and settings widgets */
 #settingsScreen .settings-box {
   background: transparent;
@@ -4392,7 +4023,6 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   display: none !important;
 }
 
-/* Pill Action Buttons for Pause / Settings Screen */
 .result-btn-pill {
   width: 264px;
   max-width: 90%;
@@ -4451,19 +4081,15 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   border-color: rgba(240, 95, 159, 0.35);
 }
 
-/* ==ENDLESS ARENA: TRIUMPHANT RUN COMPLETE MODAL==*/
-
-/* 1. Полностью гасим красные полосы и красную сетку на фоне */
+/* Endless Arena Results */
 #defeatScreen.endless-result-active {
-  /* Перебиваем бордовые сканлайны чистым темным нейтрально-космическим градиентом */
   background: radial-gradient(circle at 50% 30%, rgba(12, 16, 32, 0.96) 0%, rgba(4, 6, 14, 0.99) 100%) !important;
-  background-image: none !important; /* Убирает красные линейные полосы фонового градиента */
+  background-image: none !important;
 }
 #defeatScreen.endless-result-active .defeat-flash {
   display: none !important;
 }
 
-/* Фиолетовые лучи (как на победном экране, но фиолетовые) */
 #defeatScreen.endless-result-active .result-stack::before {
   content: '';
   position: absolute;
@@ -4483,14 +4109,12 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   100% { transform: translateX(-50%) scale(1.08); opacity: 1; }
 }
 
-/* 2. Текст ENDLESS ARENA - фиолетовый */
 #defeatScreen.endless-result-active .result-kicker {
   color: #c084fc !important;
   text-shadow: 0 0 10px rgba(192, 132, 252, 0.6) !important;
   letter-spacing: 2.2px;
 }
 
-/* 3 & 4. Заголовок RUN COMPLETE с циановой подсветкой */
 #defeatScreen.endless-result-active .result-title {
   color: #ffffff !important;
   text-shadow: 
@@ -4500,14 +4124,12 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   letter-spacing: 2px;
 }
 
-/* 2. REWARDS и цифры — Циан */
 #defeatScreen.endless-result-active #endlessRewardsBox,
 #defeatScreen.endless-result-active #endlessLootLine,
 #defeatScreen.endless-result-active #endlessLootLine span {
   color: #ffffff !important;
 }
 
-/* 3. Кнопка CLAIM X2: градиент победы как на всех экранах victory-claim-btn */
 #defeatScreen.endless-result-active #endlessDoubleBtn {
   background: linear-gradient(135deg, rgba(0, 229, 255, 0.4) 0%, rgba(168, 85, 247, 0.4) 50%, rgba(240, 95, 159, 0.4) 100%) !important;
   border: 1.8px solid #00e5ff !important;
@@ -4520,7 +4142,6 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   box-shadow: 0 0 30px rgba(0, 229, 255, 0.65) !important;
 }
 
-/* Затемнение кнопки CLAIM X2 при отключении */
 #defeatScreen.endless-result-active #endlessDoubleBtn:disabled,
 #defeatScreen.endless-result-active #endlessDoubleBtn.no-press-feedback {
   background: rgba(8, 12, 24, 0.4) !important;
@@ -4530,7 +4151,6 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   cursor: not-allowed !important;
 }
 
-/* 8. Кнопка RETRY без подсветки, иконка и текст белые */
 #defeatScreen.endless-result-active #defeatRetryBtn {
   background: rgba(18, 22, 36, 0.85) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -4541,7 +4161,6 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   stroke: #ffffff !important;
 }
 
-/* 4. Принудительно глушим Tactical Tips в Endless */
 #defeatScreen.endless-result-active #tacticalTipsWidget {
   display: none !important;
 }
@@ -4783,7 +4402,7 @@ label,
   outline: none !important;
 }
 
-
+/* Modal and Daily Login Styles */
 .daily-modal-card {
   background: linear-gradient(180deg, rgba(13, 21, 40, 0.97) 0%, rgba(7, 10, 20, 0.98) 100%);
   border: 1.4px solid rgba(0, 229, 255, 0.55);
@@ -4860,7 +4479,6 @@ label,
   border-color: #00e5ff;
 }
 
-/* Streak Track Widget */
 .daily-streak-track {
   display: flex;
   flex-direction: column;
@@ -4878,7 +4496,6 @@ label,
   text-transform: uppercase;
 }
 
-/* Daily Cards Grid */
 .daily-grid-container {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -4978,7 +4595,6 @@ label,
   margin-bottom: 2px;
 }
 
-/* Day 5 Dual Reward Card */
 .daily-card.day5-card {
   border-color: rgba(168, 85, 247, 0.45);
 }
@@ -5018,7 +4634,6 @@ label,
   color: #ffffff;
 }
 
-/* Day 7 Grand Bonus Card */
 .daily-card.day7-card {
   grid-column: 1 / -1;
   min-height: 94px;
@@ -5115,7 +4730,6 @@ label,
   color: #ffffff;
 }
 
-/* Modal Action Buttons */
 .daily-modal-actions {
   display: flex;
   gap: 10px;
@@ -5173,7 +4787,6 @@ label,
   transform: none !important;
 }
 
-/* Выравнивание и свечение иконок ресурсов в строке наград Endless */
 .endless-loot-line {
   display: inline-flex;
   align-items: center;
@@ -5201,7 +4814,6 @@ label,
   margin: 0 4px;
 }
 
-/* Скрываем первый разделитель перед золотом, так как алмазы и призмы в бою скрыты */
 #econHpSplitBadge > .badge-divider:first-child {
   display: none !important;
 }

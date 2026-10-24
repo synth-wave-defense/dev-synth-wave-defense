@@ -496,6 +496,8 @@ function hideTutorialUI() {
   if (layer) layer.classList.add('hidden');
   const skipBtn = document.getElementById('tutorialSkipBtn');
   if (skipBtn) skipBtn.classList.add('hidden');
+  const closeHighlight = document.getElementById('tutorialCloseBtnHighlight');
+  if (closeHighlight) closeHighlight.classList.add('hidden');
 }
 
 function completeTutorial(lvl) {
@@ -673,12 +675,24 @@ function applyTutorialHighlight(rect, text, mode) {
   bubble.classList.remove('hidden');
 
   if (mode === 'tap') {
+    const cy = rect.y + rect.h / 2;
     const tapPulse = document.getElementById('tutorialTapPulse');
-    tapPulse.style.left = cx + 'px';
-    tapPulse.style.top = (rect.y + rect.h / 2) + 'px';
-    tapPulse.classList.remove('hidden');
-    document.getElementById('tutorialPointer').classList.add('hidden');
-    document.getElementById('tutorialDropRing').classList.add('hidden');
+    if (tapPulse) {
+      tapPulse.style.left = cx + 'px';
+      tapPulse.style.top = cy + 'px';
+      tapPulse.classList.remove('hidden');
+    }
+    const dropRing = document.getElementById('tutorialDropRing');
+    if (dropRing) dropRing.classList.add('hidden');
+
+    // Показываем палец в центре целевой кнопки/башни
+    const pointer = document.getElementById('tutorialPointer');
+    if (pointer) {
+      pointer.style.left = cx + 'px';
+      pointer.style.top = cy + 'px';
+      pointer.style.opacity = '1';
+      pointer.classList.remove('hidden');
+    }
   }
 }
 
@@ -701,6 +715,7 @@ function positionTutorialCloseStep() {
   const fieldWidth = Math.max(0, (bottomRight.x - topLeft.x) - pad * 2);
   const fieldHeight = Math.max(0, (bottomRight.y - topLeft.y) - pad * 2);
 
+  // 1. Подсветка игрового поля
   const fieldEl = document.getElementById('tutorialFieldHighlight');
   if (fieldEl) {
     fieldEl.style.left = (topLeft.x + pad) + 'px';
@@ -719,54 +734,135 @@ function positionTutorialCloseStep() {
     spotlight.classList.remove('hidden');
   }
 
-  const cx = topLeft.x + (bottomRight.x - topLeft.x) / 2;
-  const cy = topLeft.y + (bottomRight.y - topLeft.y) / 2;
-  const vw = window.innerWidth;
+  // 2. Синеватая рамка с затемнением поверх самой башни (запрет нажатия)
+  const towerBlock = document.getElementById('tutorialTowerBlock');
+  if (towerBlock && selectedTower) {
+    const tScreen = worldToScreen(selectedTower.c * TILE_SIZE, selectedTower.r * TILE_SIZE);
+    const tileSizeScreen = TILE_SIZE * camZoom;
+    towerBlock.style.left = tScreen.x + 'px';
+    towerBlock.style.top = tScreen.y + 'px';
+    towerBlock.style.width = tileSizeScreen + 'px';
+    towerBlock.style.height = tileSizeScreen + 'px';
+    towerBlock.classList.remove('hidden');
+    towerBlock.onclick = (e) => {
+      e.stopPropagation();
+      if (typeof showHintToast === 'function') {
+        showHintToast('Tap the empty field or ✕ to close');
+      }
+    };
+  }
 
+// 3. Яркий визуальный клон крестика поверх затемнения
+  const closeBtn = document.getElementById('inspectCloseBtn');
+  const closeHighlight = document.getElementById('tutorialCloseBtnHighlight');
+  if (closeBtn && closeHighlight) {
+    const r = closeBtn.getBoundingClientRect();
+    // Ставим клон строго в координаты оригинальной кнопки
+    closeHighlight.style.left = r.left + 'px';
+    closeHighlight.style.top = r.top + 'px';
+    closeHighlight.style.width = r.width + 'px';
+    closeHighlight.style.height = r.height + 'px';
+    // Копируем SVG иконку внутрь, чтобы она засветилась циановым
+    closeHighlight.innerHTML = closeBtn.innerHTML;
+    closeHighlight.classList.remove('hidden');
+  }
+
+// 4. Позиция надписи и пальца: опускаем ниже дороги (в зеленую область под башней)
+  let targetX, targetY;
+  if (selectedTower) {
+    // Сдвигаем на 1.1 клетки вправо и на 1.85 клетки вниз от центра башни
+    const targetCellScreen = worldToScreen((selectedTower.c + 1.1) * TILE_SIZE, (selectedTower.r + 1.85) * TILE_SIZE);
+    targetX = targetCellScreen.x;
+    targetY = targetCellScreen.y;
+  } else {
+    targetX = topLeft.x + fieldWidth * 0.60;
+    targetY = topLeft.y + fieldHeight * 0.76;
+  }
+
+  // Ограничиваем координаты границами внутреннего поля
+  const maxSafeX = (bottomRight.x - pad) - 80;
+  const maxSafeY = (bottomRight.y - pad) - 35;
+  targetX = Math.min(targetX, maxSafeX);
+  targetY = Math.min(targetY, maxSafeY);
+
+  // Облачко подсказки размещаем над пальцем
   const bubble = document.getElementById('tutorialBubble');
   const bubbleText = document.getElementById('tutorialBubbleText');
-  if (bubbleText) bubbleText.textContent = 'Tap the field to close';
+  if (bubbleText) bubbleText.textContent = 'Tap here or ✕ to close';
   if (bubble) {
-    bubble.style.left = Math.min(Math.max(cx, 116), vw - 116) + 'px';
-    bubble.style.top = Math.max(16, cy - 30) + 'px';
+    bubble.style.left = targetX + 'px';
+    bubble.style.top = (targetY - 52) + 'px';
     bubble.classList.remove('hidden');
   }
 
+  // Пульсирующие круги под пальцем
   const tapPulse = document.getElementById('tutorialTapPulse');
   if (tapPulse) {
-    tapPulse.style.left = cx + 'px';
-    tapPulse.style.top = cy + 'px';
+    tapPulse.style.left = targetX + 'px';
+    tapPulse.style.top = targetY + 'px';
     tapPulse.classList.remove('hidden');
   }
 
+  // Палец, который указывает в эту зону
   const pointer = document.getElementById('tutorialPointer');
-  if (pointer) pointer.classList.add('hidden');
+  if (pointer) {
+    pointer.style.left = targetX + 'px';
+    pointer.style.top = targetY + 'px';
+    pointer.style.opacity = '1';
+    pointer.classList.remove('hidden');
+  }
+
   const dropRing = document.getElementById('tutorialDropRing');
   if (dropRing) dropRing.classList.add('hidden');
 }
 
+function animateTutorialTapGesture(now) {
+  const pointer = document.getElementById('tutorialPointer');
+  if (!pointer || pointer.classList.contains('hidden')) return;
+  // Ритмичное нажатие пальцем по диагонали (вниз-вправо и возврат)
+  const cycle = (now % 1000) / 1000;
+  const tap = Math.sin(cycle * Math.PI * 2);
+  const offset = tap > 0 ? tap * 6 : 0;
+  pointer.style.transform = `translate(${offset * 0.7}px, ${offset * 0.7}px) scale(${1 - offset * 0.015})`;
+}
+
 function updateTutorialOverlay(now) {
   const layer = document.getElementById('tutorialLayer');
+  const skipBtn = document.getElementById('tutorialSkipBtn');
   if (!layer) return;
+  
+  // Если туториал выключен, включена пауза или нет активных шагов — прячем всё
   if (!tutorialActive || gameState !== 'PLAYING' || tutorialStep < 0) {
     layer.classList.add('hidden');
+    if (skipBtn && tutorialActive) skipBtn.classList.add('hidden'); // Прячем кнопку при паузе
     return;
   }
+  
+  // Если мы в игре и туториал активен — показываем слой и кнопку
   layer.classList.remove('hidden');
+  if (skipBtn && tutorialActive) skipBtn.classList.remove('hidden');
 
   const fieldEl = document.getElementById('tutorialFieldHighlight');
-  if (fieldEl && !(tutorialLevel === 2 && tutorialStep === 2)) fieldEl.classList.add('hidden');
+  const closeHighlight = document.getElementById('tutorialCloseBtnHighlight');
+  if (!(tutorialLevel === 2 && tutorialStep === 2)) {
+    if (fieldEl) fieldEl.classList.add('hidden');
+    if (closeHighlight) closeHighlight.classList.add('hidden');
+  }
 
   if (tutorialLevel === 1 && tutorialStep === 0) {
     positionTutorialDrag(now);
   } else if (tutorialLevel === 1 && tutorialStep === 1) {
     positionTutorialTapOnElement(document.getElementById('waveBtn'), 'Tap GO to start the wave');
+    animateTutorialTapGesture(now);
   } else if (tutorialLevel === 2 && tutorialStep === 0 && tutorialTargetTower) {
     positionTutorialTapAtWorld(tutorialTargetTower.x, tutorialTargetTower.y, 'Tap your tower');
+    animateTutorialTapGesture(now);
   } else if (tutorialLevel === 2 && tutorialStep === 1) {
     positionTutorialTapOnElement(document.getElementById('inspectUpgradeBtn'), 'Upgrade it here');
+    animateTutorialTapGesture(now);
   } else if (tutorialLevel === 2 && tutorialStep === 2) {
     positionTutorialCloseStep();
+    animateTutorialTapGesture(now);
   }
 }
 
@@ -784,42 +880,64 @@ function positionTutorialDrag(now) {
   const tileScreenSize = TILE_SIZE * camZoom;
 
   const dropRing = document.getElementById('tutorialDropRing');
-  dropRing.style.left = (destScreen.x - tileScreenSize * 0.36) + 'px';
-  dropRing.style.top = (destScreen.y - tileScreenSize * 0.36) + 'px';
-  dropRing.style.width = (tileScreenSize * 0.72) + 'px';
-  dropRing.style.height = (tileScreenSize * 0.72) + 'px';
-  dropRing.classList.remove('hidden');
+  if (dropRing) {
+    dropRing.style.left = (destScreen.x - tileScreenSize * 0.36) + 'px';
+    dropRing.style.top = (destScreen.y - tileScreenSize * 0.36) + 'px';
+    dropRing.style.width = (tileScreenSize * 0.72) + 'px';
+    dropRing.style.height = (tileScreenSize * 0.72) + 'px';
+    dropRing.classList.remove('hidden');
+  }
 
   const srcCx = srcRect.left + srcRect.width / 2;
   const srcCy = srcRect.top + srcRect.height / 2;
 
-  const period = 2200;
+  const period = 2000; // Цикл 2 секунды
   const t = (now % period) / period;
-  let px, py, opacity;
-  if (t < 0.12) {
-    px = srcCx; py = srcCy; opacity = 1;
-  } else if (t < 0.55) {
-    const localT = (t - 0.12) / 0.43;
-    const eased = localT < 0.5 ? 2 * localT * localT : 1 - Math.pow(-2 * localT + 2, 2) / 2;
+  let px, py, opacity, scale;
+
+  if (t < 0.20) {
+    // 1. Появление на иконке башни и нажатие (тап)
+    px = srcCx;
+    py = srcCy;
+    const appearProg = Math.min(1, t / 0.12);
+    opacity = appearProg;
+    // Легкий прижим при "захвате"
+    scale = 1.0 - Math.sin(appearProg * Math.PI * 0.5) * 0.08;
+  } else if (t < 0.70) {
+    // 2. Плавный перенос к клетке на поле с плавной кривой скорости
+    const moveT = (t - 0.20) / 0.50;
+    const eased = moveT < 0.5 
+      ? 2 * moveT * moveT 
+      : 1 - Math.pow(-2 * moveT + 2, 2) / 2;
     px = srcCx + (destScreen.x - srcCx) * eased;
     py = srcCy + (destScreen.y - srcCy) * eased;
-    opacity = 1;
-  } else if (t < 0.75) {
-    px = destScreen.x; py = destScreen.y; opacity = 1;
+    opacity = 1.0;
+    scale = 0.92;
   } else if (t < 0.85) {
-    px = destScreen.x; py = destScreen.y;
-    opacity = 1 - (t - 0.75) / 0.10;
+    // 3. Отпускание башни на клетке
+    px = destScreen.x;
+    py = destScreen.y;
+    opacity = 1.0;
+    scale = 1.0;
   } else {
-    px = srcCx; py = srcCy; opacity = 0;
+    // 4. Мягкое плавное растворение перед повтором
+    px = destScreen.x;
+    py = destScreen.y;
+    opacity = Math.max(0, 1.0 - (t - 0.85) / 0.15);
+    scale = 1.0;
   }
 
   const pointer = document.getElementById('tutorialPointer');
-  pointer.style.left = px + 'px';
-  pointer.style.top = py + 'px';
-  pointer.style.opacity = opacity;
-  pointer.classList.remove('hidden');
+  if (pointer) {
+    pointer.style.left = px + 'px';
+    pointer.style.top = py + 'px';
+    pointer.style.opacity = opacity.toFixed(3);
+    pointer.style.transform = `scale(${scale.toFixed(3)})`;
+    pointer.classList.remove('hidden');
+  }
 
-  document.getElementById('tutorialTapPulse').classList.add('hidden');
+  const tapPulse = document.getElementById('tutorialTapPulse');
+  if (tapPulse) tapPulse.classList.add('hidden');
 }
 
 function setGlow(color, blur) {
@@ -838,20 +956,6 @@ function pushParticle(p) {
     particles[0].life *= 0.5;
   }
   particles.push(p);
-}
-
-function formatResourceVal(val) {
-  const n = Math.floor(Number(val) || 0);
-  if (n < 1000) return String(n);
-  if (n < 10000) {
-    const k = Math.floor(n / 100) / 10;
-    return (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + 'K';
-  }
-  if (n < 1000000) {
-    return Math.floor(n / 1000) + 'K';
-  }
-  const m = Math.floor(n / 100000) / 10;
-  return (m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)) + 'M';
 }
 
 function formatResourceVal(val) {
@@ -4707,6 +4811,15 @@ canvas.addEventListener('click', (e) => {
   const c = Math.floor(worldPos.x / TILE_SIZE);
   const r = Math.floor(worldPos.y / TILE_SIZE);
   const clickedTower = towers.find(t => t.c === c && t.r === r);
+
+  // На шаге закрытия меню апгрейдов блокируем повторный клик по той же башне
+  if (tutorialActive && tutorialLevel === 2 && tutorialStep === 2 && selectedTower) {
+    if (clickedTower && clickedTower === selectedTower) {
+      if (typeof showHintToast === 'function') showHintToast('Tap the empty field or ✕ to close');
+      return;
+    }
+  }
+
   if (clickedTower) {
     selectTower(clickedTower);
   } else {
