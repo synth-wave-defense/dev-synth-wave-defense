@@ -1,4 +1,17 @@
 /* [CSS100] Base layout and canvas viewport setup */
+
+#initialLoadingScreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
