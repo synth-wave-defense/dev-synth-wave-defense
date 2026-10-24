@@ -465,6 +465,16 @@ function initTutorialForLevel(lvl) {
   tutorialDestCell = null;
   hideTutorialUI();
 
+function animateTutorialTapGesture(now) {
+  const pointer = document.getElementById('tutorialPointer');
+  if (!pointer || pointer.classList.contains('hidden')) return;
+  // Ритмичный тап точно по диагональной оси указательного пальца
+  const cycle = (now % 1000) / 1000;
+  const tap = Math.sin(cycle * Math.PI * 2);
+  const offset = tap > 0 ? tap * 5 : 0;
+  pointer.style.transform = `translate(${offset * 0.7}px, ${offset * 0.7}px) scale(${1 - offset * 0.015})`;
+}
+
   if (lvl === 1 && !tutorialSeen.l1 && !hasClearedLevelBefore(1)) {
     tutorialActive = true;
     tutorialLevel = 1;
