@@ -4164,7 +4164,19 @@ if (giftTitle) {
     } else if (timeModTier < 1) {
       t2Btn.disabled = false;
       t2Btn.className = 'shop-item-btn shop-btn-buy locked-buy';
-      t2Btn.innerHTML = '<span style="font-size:11px; filter:grayscale(1) brightness(.7);">🔒</span><span style="font-size:10px;">TIER 1 REQUIRED</span>';
+      const lockIconSvg = `
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none; opacity:0.8;">
+    <rect x="4" y="10" width="16" height="12" rx="3"></rect>
+    <path d="M7 10V6a5 5 0 0 1 10 0v4"></path>
+  </svg>
+`;
+
+t2Btn.innerHTML = `
+  ${lockIconSvg}
+  <span style="font-size:8.5px; font-weight:800; line-height:1.15; letter-spacing:0.4px; display:inline-block; text-align:center;">
+    TIER 1<br>REQUIRED
+  </span>
+`;
     } else {
       t2Btn.disabled = false;
       t2Btn.className = 'shop-item-btn shop-btn-buy';
@@ -7484,21 +7496,18 @@ window.toggleTacticalTips = toggleTacticalTips;
 
 // [UI206] Listener to intercept Back button on Android.
 document.addEventListener('DOMContentLoaded', () => {
-  const cap = window.Capacitor;
-  if (!cap) return;
+  if (window.Capacitor) {
+    if (window.Capacitor.Plugins && window.Capacitor.Plugins.StatusBar) {
+      window.Capacitor.Plugins.StatusBar.hide().catch(err => console.warn('StatusBar error:', err));
+    }
 
-  if (cap.Plugins && cap.Plugins.StatusBar) {
-    cap.Plugins.StatusBar.hide().catch(err => console.warn('StatusBar error:', err));
-  }
-
-  // Перехватываем кнопку Back через официальный плагин App Capacitor
-  const AppPlugin = (cap.Plugins && cap.Plugins.App) || window.App;
-  if (AppPlugin && typeof AppPlugin.addListener === 'function') {
-    AppPlugin.addListener('backButton', ({ canGoBack }) => {
-      // Вызываем нашу единую цепочку обработки назад
-      if (typeof handleHardwareBack === 'function') {
-        handleHardwareBack();
-      }
-    });
+    const App = window.Capacitor.Plugins ? window.Capacitor.Plugins.App : null;
+    if (App && typeof App.addListener === 'function') {
+      App.addListener('backButton', (data) => {
+        if (typeof handleHardwareBack === 'function') {
+          handleHardwareBack();
+        }
+      });
+    }
   }
 });

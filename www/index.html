@@ -548,7 +548,7 @@
 <!-- [HTM107] Navigation & Menu Overlays: Main menu, tech tree, shop, settings/pause, level selection, and match result screens. -->
 <div class="overlay-screen transparent-bg" id="startScreen">
   <div class="start-screen-container">
-    <<div class="start-screen-top-zone">
+    <div class="start-screen-top-zone">
       <div class="start-sub-title">Synth Wave</div>
       <div class="start-main-title">Defense</div>
     </div>
@@ -668,16 +668,17 @@
     <div class="upgrades-row-list" id="shopBodyList">
       <div class="upgrades-row-group-label">Daily Gifts</div>
       <div class="shop-card-highlight">
+      <div class="shop-card">
         <div class="shop-card-left">
           <div class="shop-card-icon diamond-glow">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2">
-              <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.3)"/>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round">
+              <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.28)"/>
               <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
             </svg>
           </div>
           <div class="shop-card-info">
             <span class="shop-card-title" id="dailyGiftTitleText">+10 Diamonds</span>
-            <span class="shop-card-sub" id="dailyGiftSubText">Claimed today: 0/3 packs</span>
+            <span class="shop-card-sub" id="dailyGiftSubText">Next pack: 10 (1/3)</span>
           </div>
         </div>
         <button id="dailyGiftClaimBtn" class="shop-item-btn shop-btn-free" onclick="claimDailyGiftsPack()">
@@ -1010,12 +1011,9 @@
 
 <div class="overlay-screen levels-bg hidden" id="levelsScreen">
 
-  <!-- 3-Way Mode Switcher -->
-<div class="mode-3way-container">
-  <div class="mode-3way-header">MODE</div>
-
-<!-- Dynamic Mode Art Banner -->
-<div class="mode-art-display" id="modeArtDisplay"></div>
+<!-- 3-Way Mode Switcher -->
+  <div class="mode-3way-container">
+    <div class="mode-3way-header">MODE</div>
 
     <div class="mode-3way-switcher" id="mode3WaySwitcher">
       <button class="mode-3way-tab tab-normal active" id="tabNormal" onclick="selectLevelMode('normal')">
@@ -1023,11 +1021,11 @@
         <span>NORMAL</span>
       </button>
       <button class="mode-3way-tab tab-endless" id="tabEndless" onclick="selectLevelMode('endless')">
-  <svg class="tab-icon" width="16" height="10" viewBox="0 0 16 10" fill="none">
-    <path d="M4 2 C1.8 2 1 3.3 1 5 C1 6.7 1.8 8 4 8 C6.8 8 9.2 2 12 2 C14.2 2 15 3.3 15 5 C15 6.7 14.2 8 12 8 C9.2 8 6.8 2 4 2 Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  </svg>
-  <span>ENDLESS</span>
-</button>
+        <svg class="tab-icon" width="16" height="10" viewBox="0 0 16 10" fill="none">
+          <path d="M4 2 C1.8 2 1 3.3 1 5 C1 6.7 1.8 8 4 8 C6.8 8 9.2 2 12 2 C14.2 2 15 3.3 15 5 C15 6.7 14.2 8 12 8 C9.2 8 6.8 2 4 2 Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+        <span>ENDLESS</span>
+      </button>
       <button class="mode-3way-tab tab-hardcore" id="tabOverdrive" onclick="selectLevelMode('overdrive')">
         <svg class="tab-icon" width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M8 14.5 L2.8 9.2 C1.2 7.6 1.2 5 3 3.2 C4.5 1.7 6.8 2 7.8 3.6 C8.8 2 11.1 1.7 12.6 3.2 C14.4 5 14.4 7.6 12.8 9.2 Z"/></svg>
         <span>HARDCORE</span>
@@ -1039,6 +1037,9 @@
       <!-- Injected via JS based on active mode -->
     </div>
   </div>
+
+  <!-- Dynamic Mode Art Banner (СТРОГО ПОД ПРАВИЛАМИ И НАД ЗОНОЙ КОНТЕНТА) -->
+  <div class="mode-art-display" id="modeArtDisplay"></div>
 
   <!-- Content View Zone -->
   <div class="levels-content-zone" id="levelsContentZone">
@@ -1499,14 +1500,11 @@ window.addEventListener('pagehide', saveGame);
 
 document.addEventListener('backbutton', (e) => {
   if (e && e.preventDefault) e.preventDefault();
-  handleHardwareBack();
+  if (typeof handleHardwareBack === 'function') handleHardwareBack();
 }, false);
-if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App && typeof window.Capacitor.Plugins.App.addListener === 'function') {
-  window.Capacitor.Plugins.App.addListener('backButton', handleHardwareBack);
-}
 history.pushState({ sectorDefenseTD: true }, '');
 window.addEventListener('popstate', () => {
-  handleHardwareBack();
+  if (typeof handleHardwareBack === 'function') handleHardwareBack();
   history.pushState({ sectorDefenseTD: true }, '');
 });
 
