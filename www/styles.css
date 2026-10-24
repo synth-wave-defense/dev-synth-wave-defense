@@ -2333,6 +2333,32 @@ html, body {
   fill: #ffffff !important;
 }
 
+.revive-skip-btn {
+  -webkit-tap-highlight-color: transparent;
+  background: rgba(8, 10, 18, 0.94);
+  border-color: #171d33;
+  color: #565f75;
+  box-shadow: none;
+}
+
+.menu-btn.no-press-feedback {
+  background: rgba(8, 12, 24, 0.4) !important;
+  border-color: rgba(140, 200, 255, 0.08) !important;
+  color: #55637d !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+.menu-btn.no-press-feedback:hover,
+.menu-btn.no-press-feedback:active,
+.menu-btn.no-press-feedback:focus {
+  background: rgba(8, 12, 24, 0.4) !important;
+  border-color: rgba(140, 200, 255, 0.08) !important;
+  color: #55637d !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
 /* [CSS106.02] Level selection screen grid and chapter navigation */
 .levels-bg {
   background: rgba(4, 6, 14, 0.65) !important;
@@ -2497,6 +2523,17 @@ html, body {
 .chapter-swipe-hint .swipe-arrow {
   color: #00e5ff;
   opacity: 0.9;
+}
+
+.swipe-arrow {
+  font-size: 9px;
+  color: #00e5ff;
+  opacity: 0.85;
+}
+
+@keyframes swipeHintPulse {
+  0%, 100% { opacity: 0.55; transform: scale(0.98); }
+  50%      { opacity: 0.95; transform: scale(1.02); }
 }
 
 .mode-overdrive-active .swipe-arrow,
@@ -3740,6 +3777,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   margin-top: 0px;
   pointer-events: none;
   z-index: 502;
+  filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.9));
   will-change: transform, opacity, left, top;
 }
 
@@ -3908,6 +3946,19 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 .dev-bar:active {
   cursor: grabbing;
 }
+
+.dev-mode-toggle,
+.dev-speed-floating,
+.dev-clearsave-floating {
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+.dev-mode-toggle:hover,
+.dev-speed-floating:hover,
+.dev-clearsave-floating:hover {
+  opacity: 0.9;
+}
+
 .dev-bar.hidden {
   display: none !important;
 }
