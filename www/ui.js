@@ -5693,7 +5693,6 @@ function warmUpNebulaAndHideLoader() {
     if (barFill) barFill.style.width = pct + '%';
   };
 
-  // Вспомогательная функция: ставит процент и ждёт, пока браузер реально отрисует кадр + анимацию
   const stepWait = (pct, delayMs = 140) => new Promise(resolve => {
     requestAnimationFrame(() => {
       setProgress(pct);
@@ -5709,17 +5708,13 @@ function warmUpNebulaAndHideLoader() {
       const w = (typeof canvas !== 'undefined' && canvas) ? (canvas.width / dpr || window.innerWidth) : window.innerWidth;
       const h = (typeof canvas !== 'undefined' && canvas) ? (canvas.height / dpr || window.innerHeight) : window.innerHeight;
 
-      // Шаг 1: Сразу показываем 20%, даём полоске плавно тронуться с места
       await stepWait(20, 120);
 
-      // Шаг 2: Генерируем тяжелый кэш туманности и звёзд
       if (typeof canvas !== 'undefined' && canvas) {
         drawCosmicNebulaBackground(w, h);
       }
-      // После генерации двигаем полоску до 55% и даём браузеру её отрисовать
       await stepWait(55, 150);
 
-      // Шаг 3: Генерируем кэш неонового треугольника
       const horizonY = h * 0.44;
       if (typeof renderTriangleLogoCache === 'function') {
         const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low') ? 'low' : 'high';
@@ -5729,14 +5724,11 @@ function warmUpNebulaAndHideLoader() {
           triangleLogoCacheKey = key;
         }
       }
-      // Двигаем полоску до 85%
       await stepWait(85, 140);
 
-      // Шаг 4: Прогреваем шейдеры полным кадром сцены меню
       if (typeof drawSynthWavePerspectiveScene === 'function') {
         drawSynthWavePerspectiveScene(performance.now());
       }
-      // Доводим полоску до 100%
       await stepWait(100, 200);
 
     } catch (e) {
@@ -5744,13 +5736,48 @@ function warmUpNebulaAndHideLoader() {
       setProgress(100);
     }
 
-    // Плавно растворяем загрузочный экран
     if (loader) {
-      loader.style.opacity = '0';
-      loader.style.pointerEvents = 'none';
-      setTimeout(() => {
-        if (loader.parentNode) loader.parentNode.removeChild(loader);
-      }, 360);
+      // 1. Фиксируем 100% заливку прогресс-бара навсегда
+      if (barFill) {
+        barFill.style.transition = 'none';
+        barFill.style.width = '100%';
+      }
+
+      // 2. Меняем текст LOADING... на READY
+      const textContainer = loader.querySelector('div > div > div') || loader.querySelector('div[style*="font-family"]');
+      if (textContainer) {
+        textContainer.textContent = 'READY';
+      }
+
+      // 3. Создаем кнопку GO с абсолютным позиционированием под баром (текст и бар не сдвинутся ни на пиксель)
+      // Создаем кнопку GO строго на своем месте без смещений
+      const goBtn = document.createElement('button');
+      goBtn.className = 'shop-item-btn shop-btn-free';
+      goBtn.style.position = 'absolute';
+      goBtn.style.left = '50%';
+      goBtn.style.top = 'calc(50% + 56px)';
+      goBtn.style.transform = 'translateX(-50%)';
+      goBtn.style.pointerEvents = 'auto';
+      goBtn.style.padding = '10px 42px';
+      goBtn.style.fontSize = '14px';
+      goBtn.style.opacity = '0';
+      // Мягкое появление ровно на месте за 0.25с, затем пульсация
+      goBtn.style.animation = 'goBtnAppear 1s ease-out forwards, goBtnPulse 2s infinite ease-in-out 1s';
+      goBtn.innerHTML = '<span>GO</span>';
+
+      goBtn.onclick = () => {
+        if (typeof SFX !== 'undefined' && typeof SFX.unlock === 'function') SFX.unlock();
+        if (typeof musicUnlock === 'function') musicUnlock();
+        if (typeof sfx === 'function') sfx('confirm');
+
+        loader.style.opacity = '0';
+        loader.style.pointerEvents = 'none';
+        setTimeout(() => {
+          if (loader.parentNode) loader.parentNode.removeChild(loader);
+        }, 400);
+      };
+
+      loader.appendChild(goBtn);
     }
   })();
 }

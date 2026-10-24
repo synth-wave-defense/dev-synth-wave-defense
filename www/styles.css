@@ -5155,3 +5155,25 @@ label,
 #shopScreen .shop-card {
   margin-bottom: 2px;
 }
+
+@keyframes goBtnAppear {
+  0% { 
+    opacity: 0;
+    transform: translateX(-50%) scale(0.98);
+  }
+  100% { 
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+@keyframes goBtnPulse {
+  0%, 100% { 
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.35); 
+    transform: translateX(-50%) scale(1);
+  }
+  50% { 
+    box-shadow: 0 0 22px rgba(0, 229, 255, 0.85); 
+    transform: translateX(-50%) scale(1.02);
+  }
+}
