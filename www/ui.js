@@ -5688,6 +5688,7 @@ function warmUpNebulaAndHideLoader() {
 
   const loader = document.getElementById('initialLoadingScreen');
   const barFill = document.getElementById('initialProgressBarFill');
+  const loadingTextEl = document.getElementById('initialLoadingText');
 
   const setProgress = (pct) => {
     if (barFill) barFill.style.width = pct + '%';
@@ -5737,20 +5738,27 @@ function warmUpNebulaAndHideLoader() {
     }
 
     if (loader) {
-      // 1. Фиксируем 100% заливку прогресс-бара навсегда
+      // 1. Бар дошел до 100% и ЖЕСТКО остается заполненным
       if (barFill) {
         barFill.style.transition = 'none';
-        barFill.style.width = '100%';
+        barFill.style.setProperty('width', '100%', 'important');
       }
 
-      // 2. Меняем текст LOADING... на READY
-      const textContainer = loader.querySelector('div > div > div') || loader.querySelector('div[style*="font-family"]');
-      if (textContainer) {
-        textContainer.textContent = 'READY';
+      // 2. Ровно в том же стиле заменяем текст LOADING... на READY
+      if (loadingTextEl) {
+        loadingTextEl.textContent = 'READY';
       }
 
-      // 3. Создаем кнопку GO с абсолютным позиционированием под баром (текст и бар не сдвинутся ни на пиксель)
-      // Создаем кнопку GO строго на своем месте без смещений
+      // 3. Заголовок "SYNTH WAVE DEFENSE" точно по координатам главного меню
+      const titleBox = document.createElement('div');
+      titleBox.className = 'loader-title-zone';
+      titleBox.innerHTML = `
+        <div class="start-sub-title">Synth Wave</div>
+        <div class="start-main-title">Defense</div>
+      `;
+      loader.appendChild(titleBox);
+
+      // 4. Кнопка GO с неторопливым мягким появлением на месте
       const goBtn = document.createElement('button');
       goBtn.className = 'shop-item-btn shop-btn-free';
       goBtn.style.position = 'absolute';
@@ -5761,7 +5769,6 @@ function warmUpNebulaAndHideLoader() {
       goBtn.style.padding = '10px 42px';
       goBtn.style.fontSize = '14px';
       goBtn.style.opacity = '0';
-      // Мягкое появление ровно на месте за 0.25с, затем пульсация
       goBtn.style.animation = 'goBtnAppear 1s ease-out forwards, goBtnPulse 2s infinite ease-in-out 1s';
       goBtn.innerHTML = '<span>GO</span>';
 
