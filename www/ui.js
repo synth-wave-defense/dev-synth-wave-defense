@@ -5709,13 +5709,15 @@ function warmUpNebulaAndHideLoader() {
       const w = (typeof canvas !== 'undefined' && canvas) ? (canvas.width / dpr || window.innerWidth) : window.innerWidth;
       const h = (typeof canvas !== 'undefined' && canvas) ? (canvas.height / dpr || window.innerHeight) : window.innerHeight;
 
-      await stepWait(20, 120);
+      await stepWait(20, 100);
 
+      // 1. Генерируем текстуру космической туманности и звезд
       if (typeof canvas !== 'undefined' && canvas) {
         drawCosmicNebulaBackground(w, h);
       }
-      await stepWait(55, 150);
+      await stepWait(50, 120);
 
+      // 2. Генерируем кэш неонового треугольника главного меню
       const horizonY = h * 0.44;
       if (typeof renderTriangleLogoCache === 'function') {
         const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low') ? 'low' : 'high';
@@ -5725,12 +5727,25 @@ function warmUpNebulaAndHideLoader() {
           triangleLogoCacheKey = key;
         }
       }
-      await stepWait(85, 140);
+      await stepWait(75, 100);
 
+      // 3. Декодируем музыку меню и звуки ПОД ширмой LOADING..., чтобы после нажатия GO не было лагов и клиппинга!
+      if (typeof MusicManager !== 'undefined' && typeof MusicManager.warmUpMenuAudio === 'function') {
+        await MusicManager.warmUpMenuAudio();
+      }
+      if (typeof SFX !== 'undefined' && typeof SFX.autoload === 'function') {
+        await SFX.autoload();
+      }
+      await stepWait(92, 100);
+
+      // 4. Отрисовываем сцену меню и прогреваем layout кнопок под лоадером
       if (typeof drawSynthWavePerspectiveScene === 'function') {
         drawSynthWavePerspectiveScene(performance.now());
       }
-      await stepWait(100, 200);
+      const startSc = document.getElementById('startScreen');
+      if (startSc) void startSc.offsetHeight;
+
+      await stepWait(100, 160);
 
     } catch (e) {
       console.warn('Pre-warm scene failed:', e);
@@ -5761,6 +5776,7 @@ function warmUpNebulaAndHideLoader() {
       // 4. Кнопка GO с неторопливым мягким появлением на месте
       const goBtn = document.createElement('button');
       goBtn.className = 'shop-item-btn shop-btn-free';
+      goBtn.setAttribute('data-sfx', 'tap'); // Обычный звук кнопки вместо свитчера!
       goBtn.style.position = 'absolute';
       goBtn.style.left = '50%';
       const centerBox = document.getElementById('initialLoaderCenterBox');
@@ -5775,9 +5791,9 @@ function warmUpNebulaAndHideLoader() {
       goBtn.innerHTML = '<span>GO</span>';
 
       goBtn.onclick = () => {
+        // Звук 'tap' уже проигрывается автоматически хуком installUiHooks при нажатии на кнопку
         if (typeof SFX !== 'undefined' && typeof SFX.unlock === 'function') SFX.unlock();
         if (typeof musicUnlock === 'function') musicUnlock();
-        if (typeof sfx === 'function') sfx('confirm');
 
         loader.style.opacity = '0';
         loader.style.pointerEvents = 'none';

@@ -1,4 +1,4 @@
-// Synth Wave Defense -- music.js  v2.6 (1.36.20)
+// Synth Wave Defense -- music.js  v2.7 (1.36.38)
 // [MUS100] Background Music Engine Module: Manages buffer-based music tracks, category transitions, Web Audio graph routing, and dynamic OTA asset resolution.
 
 window._activeMusicNode = null;
@@ -7,7 +7,7 @@ window._activeMusicNodeCount = 0;
 const MusicManager = (function () {
   'use strict';
 
-// [MUS101] Track Playlist Registry (mapped by game screen state)
+  // [MUS101] Track Playlist Registry (mapped by game screen state)
   const TRACKS = {
     menu: [
       'music/menu_01.ogg',
@@ -49,11 +49,13 @@ const MusicManager = (function () {
   const DUCK_FILTER_FREQ = 800;     // Hz low-pass cutoff when paused/ducked
   const NORMAL_FILTER_FREQ = 20000; // Hz low-pass cutoff during normal playback
 
-  let activeTrack = null;  // { path, category, cfg, sourceNode, gainNode, startTime }
-  let category = null;     // category currently requested
-  let pending = null;      // category queued until the first user gesture
+  let activeTrack = null;     // { path, category, cfg, sourceNode, gainNode, startTime }
+  let category = null;        // category currently requested
+  let loadingCategory = null; // category currently resolving/decoding to prevent double-start race
+  let currentRequestId = 0;   // token to cancel stale async track starts
+  let pending = null;         // category queued until the first user gesture
   let unlocked = false;
-  let playlist = [];       // remaining shuffled tracks for a looping category
+  let playlist = [];          // remaining shuffled tracks for a looping category
 
   // [MUS103] Buffer Caching & Preloading Pipeline
   const bufferCache = Object.create(null);
@@ -97,14 +99,16 @@ const MusicManager = (function () {
     return loadingPromises[path];
   }
 
-  function preloadTracks() {
-    Object.keys(TRACKS).forEach(cat => {
-      (TRACKS[cat] || []).forEach(path => {
-        if (!bufferCache[path] && !loadingPromises[path]) {
-          loadTrackBuffer(path).catch(() => {});
-        }
-      });
-    });
+  // Декодируем во время экрана LOADING... только треки меню, чтобы при нажатии GO не было фризов CPU
+  async function warmUpMenuAudio() {
+    ensureAudioCtx();
+    setupAudioGraph();
+    const menuTracks = TRACKS.menu || [];
+    for (let i = 0; i < menuTracks.length; i++) {
+      try {
+        await loadTrackBuffer(menuTracks[i]);
+      } catch (e) {}
+    }
   }
 
   // [MUS104] Web Audio Graph Singleton Setup
@@ -116,9 +120,6 @@ const MusicManager = (function () {
       const sfxCtx = SFX._ctx();
       if (sfxCtx) {
         audioCtx = sfxCtx;
-        if (audioCtx.state === 'suspended') {
-          try { audioCtx.resume(); } catch (e) {}
-        }
       }
     }
     if (!audioCtx) {
@@ -128,9 +129,6 @@ const MusicManager = (function () {
       } catch (e) {
         audioCtx = null;
       }
-    }
-    if (audioCtx && audioCtx.state === 'suspended') {
-      try { audioCtx.resume(); } catch (e) {}
     }
     return audioCtx;
   }
@@ -182,6 +180,7 @@ const MusicManager = (function () {
 
   function stopAndDisconnectNode(node) {
     if (!node) return;
+    try { node.onended = null; } catch (e) {}
     try { node.stop(); } catch (e) {}
     try { node.disconnect(); } catch (e) {}
     decrementNodeCount(node);
@@ -198,6 +197,7 @@ const MusicManager = (function () {
 
     const src = track.sourceNode;
     const gNode = track.gainNode;
+    try { src.onended = null; } catch (e) {}
 
     try {
       const currentVal = gNode.gain.value;
@@ -256,12 +256,17 @@ const MusicManager = (function () {
     }
   }
 
-  function startTrack(path, cat, cfg) {
+  function startTrack(path, cat, cfg, reqId) {
     const ctx = setupAudioGraph();
     if (!ctx) return;
 
+    loadingCategory = cat;
+
     loadTrackBuffer(path).then(audioBuffer => {
-      if (category !== cat || !enabled) return;
+      // Если за время загрузки пришёл другой валидный запрос или категория сменилась — отменяем устаревший запуск
+      if (reqId !== currentRequestId || category !== cat || !enabled) return;
+
+      loadingCategory = null;
 
       if (window._activeMusicNode) {
         stopAndDisconnectNode(window._activeMusicNode);
@@ -288,8 +293,8 @@ const MusicManager = (function () {
         source.loop = false;
         source.onended = function () {
           decrementNodeCount(source);
-          if (activeTrack && activeTrack.sourceNode === source) {
-            advance(cat, cfg);
+          if (activeTrack && activeTrack.sourceNode === source && category === cat) {
+            advance(cat, cfg, reqId);
           }
         };
       }
@@ -314,22 +319,33 @@ const MusicManager = (function () {
         gainNode: trackGain,
         startTime: now
       };
+
+      // Спокойно предзагружаем следующий трек в списке через 1.5 секунды, когда меню уже плавно работает
+      if (playlist.length > 0) {
+        const nextInQueue = playlist[0];
+        setTimeout(() => {
+          loadTrackBuffer(nextInQueue).catch(() => {});
+        }, 1500);
+      }
     }).catch(err => {
+      loadingCategory = null;
       console.warn('[music] Failed to play track buffer:', path, err);
-      if (category === cat && cfg && cfg.loop && playlist.length) {
-        advance(cat, cfg);
+      if (reqId === currentRequestId && category === cat && cfg && cfg.loop && playlist.length) {
+        advance(cat, cfg, reqId);
       }
     });
   }
 
-  function advance(cat, cfg) {
+  function advance(cat, cfg, reqId) {
     if (!playlist.length) playlist = shuffle(TRACKS[cat] || []);
     const next = playlist.shift();
-    if (!next) { activeTrack = null; return; }
-    startTrack(next, cat, cfg);
+    if (!next) { activeTrack = null; loadingCategory = null; return; }
+    startTrack(next, cat, cfg, reqId);
   }
 
   function stopCurrent(fadeOut) {
+    loadingCategory = null;
+    currentRequestId++;
     if (activeTrack) {
       fadeOutAndStop(activeTrack, fadeOut != null ? fadeOut : 0.6);
       activeTrack = null;
@@ -353,8 +369,11 @@ const MusicManager = (function () {
       setDucked(false, 0.08);
     }
 
-    if (category === cat && activeTrack) {
-      fadeActiveTrackTo(levelFor(cfg), cfg.fadeIn || 0.4);
+    // ЗАЩИТА ОТ ДВОЙНОГО СТАРТА: если эта категория УЖЕ играет или УЖЕ грузится — не перезапускаем её!
+    if (category === cat && (activeTrack || loadingCategory === cat)) {
+      if (activeTrack) {
+        fadeActiveTrackTo(levelFor(cfg), cfg.fadeIn || 0.4);
+      }
       return;
     }
 
@@ -371,8 +390,10 @@ const MusicManager = (function () {
     activeTrack = null;
     if (prev) fadeOutAndStop(prev, cfg.fadeOut != null ? cfg.fadeOut : 0.5);
 
+    currentRequestId++;
+    const reqId = currentRequestId;
     playlist = shuffle(list);
-    advance(cat, cfg);
+    advance(cat, cfg, reqId);
   }
 
   // [MUS107] Public Interface & Lifecycle Control
@@ -383,6 +404,7 @@ const MusicManager = (function () {
     lose: function () { playCategory('lose'); },
 
     play: playCategory,
+    warmUpMenuAudio: warmUpMenuAudio,
     current: function () { return category; },
     currentTrack: function () {
       if (!activeTrack || !activeTrack.path) return 'None';
@@ -413,7 +435,8 @@ const MusicManager = (function () {
         stopCurrent(0.35);
       } else if (category) {
         const want = category;
-        category = null;      // force playCategory to restart
+        category = null;
+        loadingCategory = null;
         playCategory(want);
       }
     },
@@ -427,18 +450,20 @@ const MusicManager = (function () {
       }
     },
 
-    // Unlock playback after initial user gesture
+    // Unlock playback after initial user gesture (БЕЗ массового декодирования 14 треков!)
     unlock: function () {
-      ensureAudioCtx();
+      const ctx = ensureAudioCtx();
       setupAudioGraph();
+      if (ctx && ctx.state === 'suspended') {
+        try { ctx.resume(); } catch (e) {}
+      }
       if (!unlocked) {
         unlocked = true;
-        preloadTracks();
       }
       const want = pending || category;
       if (want && enabled) {
         pending = null;
-        if (!activeTrack) {
+        if (!activeTrack && loadingCategory !== want) {
           category = null;
           playCategory(want);
         }

@@ -5,6 +5,22 @@
 <head>
   <meta charset="UTF-8">
   <script>
+    // Мгновенно скрываем и красим системные шторки Android в #03050d на нулевой миллисекунде старта
+    (function hideSystemBarsImmediately() {
+      function applyImmersiveBars() {
+        try {
+          if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.StatusBar) {
+            var sb = window.Capacitor.Plugins.StatusBar;
+            if (typeof sb.setOverlaysWebView === 'function') sb.setOverlaysWebView({ overlay: true }).catch(function(){});
+            if (typeof sb.setBackgroundColor === 'function') sb.setBackgroundColor({ color: '#03050d' }).catch(function(){});
+            if (typeof sb.hide === 'function') sb.hide().catch(function(){});
+          }
+        } catch (e) {}
+      }
+      applyImmersiveBars();
+      document.addEventListener('DOMContentLoaded', applyImmersiveBars);
+    })();
+
     // [HTM101] Environment Check: dynamically loads dev_gate.js if running in dev environment or localhost.
     const isDevHost = window.location.hostname.includes('dev-synth-wave-defense') || 
                     window.location.hostname === 'localhost' || 
@@ -1536,40 +1552,11 @@ loadGame().then(() => {
   } catch (e) {}
   applyMusicVolume(settings.musicVolume != null ? settings.musicVolume : (settings.musicEnabled === false ? 0 : 70), false);
 
-  function finishLoading() {
-    const isMusicActive = settings.musicVolume > 0 && settings.musicEnabled !== false && typeof MusicManager !== 'undefined' && MusicManager.isEnabled();
-    const screen = document.getElementById('loadingScreen');
-
-    if (!isMusicActive) {
-      if (screen) {
-        screen.classList.add('fading');
-        setTimeout(() => screen.classList.add('hidden'), 420);
-      }
-      return;
-    }
-
-    const gateContent = document.getElementById('audioGateContent');
-    if (gateContent) gateContent.classList.remove('hidden');
-
-    const onGateTap = () => {
-      try { if (typeof SFX !== 'undefined' && SFX) SFX.unlock(); } catch (e) {}
-      musicUnlock();
-      music('menu');
-      if (screen) {
-        screen.classList.add('fading');
-        setTimeout(() => screen.classList.add('hidden'), 420);
-      }
-    };
-
-    if (screen) {
-      screen.style.cursor = 'pointer';
-      screen.addEventListener('pointerdown', onGateTap, { once: true, capture: true });
-    } else {
-      onGateTap();
-    }
+  // Сразу скрываем старый #loadingScreen, так как роль стартового экрана и кнопки GO выполняет #initialLoadingScreen
+  const oldLoadingScreen = document.getElementById('loadingScreen');
+  if (oldLoadingScreen) {
+    oldLoadingScreen.classList.add('hidden');
   }
-
-  document.addEventListener('pointerdown', musicUnlock, { once: true, capture: true });
   
   if (settings.perfModeOverride === 'low' || settings.perfModeOverride === 'high') {
     perfMode = settings.perfModeOverride;
@@ -1587,9 +1574,8 @@ loadGame().then(() => {
 
   requestAnimationFrame(gameLoop);
 
-  finishLoading();
-
 });
+
 </script>
 
 <!-- [HTM109] Tutorial Overlay & Service Worker: First-run interactive spotlight layer and PWA offline Service Worker registration. -->
