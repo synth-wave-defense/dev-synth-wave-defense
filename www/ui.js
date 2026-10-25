@@ -5804,6 +5804,10 @@ function warmUpNebulaAndHideLoader() {
       };
 
       loader.appendChild(goBtn);
+	  
+	  if (window.NativeOtaBridge && typeof window.NativeOtaBridge.markBootSuccessful === 'function') {
+		window.NativeOtaBridge.markBootSuccessful();
+		}
     }
   })();
 }
