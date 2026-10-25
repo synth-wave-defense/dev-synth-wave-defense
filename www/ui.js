@@ -5811,6 +5811,7 @@ function warmUpNebulaAndHideLoader() {
     }
   })();
 }
+}
 
 // [UI211] Lightweight dynamic twinkling star overlay.
 
