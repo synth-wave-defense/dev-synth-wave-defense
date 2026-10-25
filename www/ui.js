@@ -2673,12 +2673,13 @@ function showStartScreen() {
     startMainTitle.style.textShadow = '0 0 24px rgba(0, 229, 255, 0.9), 0 0 12px rgba(2, 3, 8, 0.95), 0 3px 10px rgba(2, 3, 8, 0.95)';
   }
 
-  const l1 = MAP_CATALOG['L1'];
+const l1 = MAP_CATALOG['L1'];
   if (l1) buildLevelGeometry(l1.path, l1.cols, l1.rows, l1.blocked);
   resizeCanvasAndCamera();
   gameState = 'START';
   updateHudSpeedWidget();
   updateUpgradeButtonsLock();
+  updateBpProgressUI();
   updateMenuBadges();
 
   if (!hasAutoShownDailyLoginModalThisSession) {
