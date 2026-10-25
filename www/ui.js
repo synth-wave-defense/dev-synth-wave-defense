@@ -1854,11 +1854,21 @@ function renderEndlessDashboardUI() {
     nextBtn.disabled = currentLevelSection >= (typeof TOTAL_SECTIONS !== 'undefined' ? TOTAL_SECTIONS : 5) || !nextSecUnlocked;
   }
 
-  if (ticketEl) {
-    const status = (typeof getEndlessEntryStatus === 'function') ? getEndlessEntryStatus() : { text: 'FREE (1/1)' };
-    let statusText = status.text ? status.text.toUpperCase() : 'FREE (1/1)';
-    if (statusText.includes('REMAINING')) statusText = statusText.replace(' REMAINING', '');
-    ticketEl.textContent = statusText;
+if (ticketEl) {
+    const status = (typeof getEndlessEntryStatus === 'function') ? getEndlessEntryStatus() : { type: 'free', text: 'FREE (1/1)' };
+    const labelText = (status.text || status.label || '').toUpperCase();
+
+    if (status.type === 'ad') {
+      // Фирменная SVG-иконка рекламы
+      const adIconSvg = `<svg width="14" height="11" viewBox="0 0 24 24" style="flex:none; margin-right:4px; vertical-align:middle;"><rect x="2" y="4" width="20" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="10,9 16,12 10,15" fill="currentColor"/></svg>`;
+      ticketEl.innerHTML = `<span style="display:inline-flex; align-items:center; justify-content:center; white-space:nowrap;">${adIconSvg}${labelText}</span>`;
+    } else if (status.type === 'diamonds') {
+      const diamondIconSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="flex:none; margin-left:5px; vertical-align:middle; filter:drop-shadow(0 0 4px rgba(0,229,255,0.6));"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.28)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
+      const cost = status.cost || 15;
+      ticketEl.innerHTML = `<span style="display:inline-flex; align-items:center; justify-content:center; width:100%;">${cost}${diamondIconSvg}</span>`;
+    } else {
+      ticketEl.textContent = labelText;
+    }
   }
 
   // Обновляем видимость подсказки свайпа в Endless
@@ -2824,10 +2834,17 @@ function showSettings(fromSource = 'start') {
   const loadoutAnchor = document.getElementById('loadoutAnchor-pause');
   const collapsibleWidget = document.getElementById('settingsCollapsible');
 
-  if (fromSource === 'combat') {
+if (fromSource === 'combat') {
     if (kickerEl) kickerEl.textContent = 'Game';
     if (titleEl) titleEl.textContent = 'Paused';
     if (combatActions) combatActions.classList.remove('hidden');
+
+    // Скрываем RETRY в паузе, если идет забег Endless
+    const pauseRetryBtn = combatActions ? combatActions.querySelector('.result-btn-retry') : null;
+    if (pauseRetryBtn) {
+      pauseRetryBtn.classList.toggle('hidden', !!(typeof isEndlessMode !== 'undefined' && isEndlessMode));
+    }
+
     if (backBtn) backBtn.classList.add('hidden');
     if (loadoutAnchor) loadoutAnchor.classList.remove('hidden');
     if (collapsibleWidget) collapsibleWidget.classList.remove('plain-mode');
@@ -3069,14 +3086,25 @@ function renderBattlePassScreen() {
     const isFreeClaimed = !!bpClaimedFree[t];
     freeCell.className = `bp-cell bp-cell-free${isFreeClaimed ? ' claimed' : ''}`;
 
+    // Умный парсер: удаляет скобки вокруг ресурсов и оборачивает их в неразрывные цветные блоки
+    const formatRewardText = (str) => {
+      if (!str) return '';
+      let s = str.replace(/\(\s*(\+?\s*\d+\s*[\u{1F52E}🔮\u{1F48E}💎])\s*\)/gu, '$1'); // убираем скобки
+      s = s.replace(/(\+?\s*\d+)\s*[\u{1F52E}🔮]/gu, `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:2px; color:#f0abfc;">$1 ${prismIcon}</span>`);
+      s = s.replace(/(\+?\s*\d+)\s*[\u{1F48E}💎]/gu, `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:2px; color:#8ef3ff;">$1 ${diamondIcon}</span>`);
+      s = s.replace(/[\u{1F52E}🔮]/gu, prismIcon).replace(/[\u{1F48E}💎]/gu, diamondIcon);
+      return s;
+    };
+
     let freeTitle = '';
     const fr = item.freeReward;
-    if (fr.type === 'diamonds') freeTitle = `+${fr.amount} ${diamondIcon}`;
-    else if (fr.type === 'prisms') freeTitle = `+${fr.amount} ${prismIcon}`;
-    else if (fr.type === 'ad_capsule') freeTitle = `Ad-Capsule (+2 ${prismIcon})`;
-    else if (fr.title) freeTitle = fr.title.replace(/[\u{1F52E}🔮]/gu, prismIcon).replace(/[\u{1F48E}💎]/gu, diamondIcon);
+    if (fr.type === 'diamonds') freeTitle = `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:3px; color:#8ef3ff;">+${fr.amount} ${diamondIcon}</span>`;
+    else if (fr.type === 'prisms') freeTitle = `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:3px; color:#f0abfc;">+${fr.amount} ${prismIcon}</span>`;
+    else if (fr.type === 'ad_capsule') freeTitle = `Ad-Capsule <span style="white-space:nowrap; display:inline-flex; align-items:center; gap:2px; color:#f0abfc;">+2 ${prismIcon}</span>`;
+    else if (fr.title) freeTitle = formatRewardText(fr.title);
 
     let freeBtnHtml = '';
+    // ... (код кнопок CLAIM остается без изменений) ...
     if (isFreeClaimed) {
       freeBtnHtml = `<button class="bp-cell-btn claimed-btn">CLAIMED ✓</button>`;
     } else if (isUnlockedTier) {
@@ -3103,10 +3131,10 @@ function renderBattlePassScreen() {
 
     let premTitle = '';
     const pr = item.premReward;
-    if (pr.type === 'diamonds') premTitle = `+${pr.amount} ${diamondIcon}`;
-    else if (pr.type === 'prisms') premTitle = `+${pr.amount} ${prismIcon}`;
+    if (pr.type === 'diamonds') premTitle = `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:3px; color:#8ef3ff;">+${pr.amount} ${diamondIcon}</span>`;
+    else if (pr.type === 'prisms') premTitle = `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:3px; color:#f0abfc;">+${pr.amount} ${prismIcon}</span>`;
     else if (pr.type === 'palette' || pr.type === 'perk' || pr.type === 'ultimate') {
-      premTitle = pr.title ? pr.title.replace(/[\u{1F52E}🔮]/gu, prismIcon).replace(/[\u{1F48E}💎]/gu, diamondIcon) : '';
+      premTitle = formatRewardText(pr.title);
     }
 
     let premBtnHtml = '';
@@ -5810,7 +5838,6 @@ function warmUpNebulaAndHideLoader() {
 		}
     }
   })();
-}
 }
 
 // [UI211] Lightweight dynamic twinkling star overlay.

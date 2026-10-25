@@ -250,15 +250,33 @@ function isEndlessUnlocked() {
 
 function getEndlessEntryStatus() {
   resetEndlessDailyRunsIfNeeded();
+
+  // Если куплен No Ads — 1 базовый + 2 рекламных захода становятся бесплатными
+  if (noAdsPurchased) {
+    if (endlessDailyRunsUsed < 3) {
+      const remainingFreeRuns = 3 - endlessDailyRunsUsed;
+      return { 
+        type: 'free', 
+        text: `FREE (${remainingFreeRuns}/3)`, 
+        label: `FREE (${remainingFreeRuns}/3)`, 
+        cost: 0 
+      };
+    } else {
+      return { type: 'diamonds', text: '15 DIAMONDS', label: '15 DIAMONDS', cost: 15 };
+    }
+  }
+
+  // Обычный игрок (без No Ads)
   if (endlessDailyRunsUsed === 0) {
-    return { type: 'free', text: 'FREE ENTRY (1/1)', label: 'FREE ENTRY (1/1)', cost: 0 };
+    return { type: 'free', text: 'FREE (1/1)', label: 'FREE (1/1)', cost: 0 };
   } else if (endlessDailyRunsUsed < 3) {
     const remainingAdRuns = 3 - endlessDailyRunsUsed;
     return { type: 'ad', text: `WATCH AD (${remainingAdRuns}/2)`, label: `WATCH AD (${remainingAdRuns}/2)`, cost: 0 };
   } else {
-	return { type: 'diamonds', text: '15 DIAMONDS', label: '15 DIAMONDS', cost: 15 };
+    return { type: 'diamonds', text: '15 DIAMONDS', label: '15 DIAMONDS', cost: 15 };
   }
 }
+
 window.getEndlessEntryStatus = getEndlessEntryStatus;
 
 function generateEndlessWaveData(w) {
@@ -2017,7 +2035,8 @@ function triggerDefeat() {
 
   if (reviveBtn) reviveBtn.classList.add('hidden');
   if (skipBtn) skipBtn.classList.add('hidden');
-  if (retryBtn) retryBtn.classList.remove('hidden');
+  // В Endless прячем RETRY, чтобы игрок выходил в меню уровней
+  if (retryBtn) retryBtn.classList.toggle('hidden', !!isEndlessMode);
   if (upgBtn) upgBtn.classList.remove('hidden');
   if (levelsBtn) levelsBtn.classList.remove('hidden');
   if (shopBtn) shopBtn.classList.remove('hidden');
@@ -2372,7 +2391,8 @@ function finishRevivePromptWindow() {
 
   if (reviveBtn) reviveBtn.classList.add('hidden');
   if (skipBtn) skipBtn.classList.add('hidden');
-  if (retryBtn) retryBtn.classList.remove('hidden');
+  // В Endless прячем RETRY, чтобы игрок выходил в меню уровней
+  if (retryBtn) retryBtn.classList.toggle('hidden', !!isEndlessMode);
   if (upgBtn) upgBtn.classList.remove('hidden');
   if (levelsBtn) levelsBtn.classList.remove('hidden');
   if (shopBtn) shopBtn.classList.remove('hidden');
