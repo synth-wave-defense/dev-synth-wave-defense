@@ -5,22 +5,6 @@
 <head>
   <meta charset="UTF-8">
   <script>
-    // Мгновенно скрываем и красим системные шторки Android в #03050d на нулевой миллисекунде старта
-    (function hideSystemBarsImmediately() {
-      function applyImmersiveBars() {
-        try {
-          if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.StatusBar) {
-            var sb = window.Capacitor.Plugins.StatusBar;
-            if (typeof sb.setOverlaysWebView === 'function') sb.setOverlaysWebView({ overlay: true }).catch(function(){});
-            if (typeof sb.setBackgroundColor === 'function') sb.setBackgroundColor({ color: '#03050d' }).catch(function(){});
-            if (typeof sb.hide === 'function') sb.hide().catch(function(){});
-          }
-        } catch (e) {}
-      }
-      applyImmersiveBars();
-      document.addEventListener('DOMContentLoaded', applyImmersiveBars);
-    })();
-
     // [HTM101] Environment Check: dynamically loads dev_gate.js if running in dev environment or localhost.
     const isDevHost = window.location.hostname.includes('dev-synth-wave-defense') || 
                     window.location.hostname === 'localhost' || 
