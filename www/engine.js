@@ -251,6 +251,14 @@ function isEndlessUnlocked() {
 function getEndlessEntryStatus() {
   resetEndlessDailyRunsIfNeeded();
 
+  // Расчет прогрессивной стоимости за алмазы (4-й вход = 25, 5-й = 50, 6-й+ = 100)
+  let diamondCost = 25;
+  if (endlessDailyRunsUsed === 4) {
+    diamondCost = 50;
+  } else if (endlessDailyRunsUsed >= 5) {
+    diamondCost = 100;
+  }
+
   // Если куплен No Ads — 1 базовый + 2 рекламных захода становятся бесплатными
   if (noAdsPurchased) {
     if (endlessDailyRunsUsed < 3) {
@@ -262,7 +270,12 @@ function getEndlessEntryStatus() {
         cost: 0 
       };
     } else {
-      return { type: 'diamonds', text: '15 DIAMONDS', label: '15 DIAMONDS', cost: 15 };
+      return { 
+        type: 'diamonds', 
+        text: `${diamondCost} DIAMONDS`, 
+        label: `${diamondCost} DIAMONDS`, 
+        cost: diamondCost 
+      };
     }
   }
 
@@ -273,7 +286,12 @@ function getEndlessEntryStatus() {
     const remainingAdRuns = 3 - endlessDailyRunsUsed;
     return { type: 'ad', text: `WATCH AD (${remainingAdRuns}/2)`, label: `WATCH AD (${remainingAdRuns}/2)`, cost: 0 };
   } else {
-    return { type: 'diamonds', text: '15 DIAMONDS', label: '15 DIAMONDS', cost: 15 };
+    return { 
+      type: 'diamonds', 
+      text: `${diamondCost} DIAMONDS`, 
+      label: `${diamondCost} DIAMONDS`, 
+      cost: diamondCost 
+    };
   }
 }
 
