@@ -1237,9 +1237,11 @@ function handleDevHpClick() {
 
 const BASE_BRANCH_ICONS = {
   base_hp: `<svg width="25" height="25" viewBox="-32 -32 64 64"><circle cx="0" cy="0" r="17" fill="none" stroke="#f05f9f" stroke-width="1.6"/><circle cx="0" cy="0" r="11" fill="none" stroke="#f05f9f" stroke-width="1" opacity=".35"/><path d="M 0 8 L -7.5 0.5 A 4.8 4.8 0 0 1 0 -6 A 4.8 4.8 0 0 1 7.5 0.5 Z" fill="#f05f9f"/></svg>`,
-  base_gold: `<svg width="25" height="25" viewBox="-32 -32 64 64"><circle cx="0" cy="0" r="17" fill="none" stroke="#f59e0b" stroke-width="1.6"/><circle cx="0" cy="0" r="11" fill="none" stroke="#f59e0b" stroke-width="1" opacity=".35"/><circle cx="0" cy="0" r="8" fill="#f59e0b"/><text x="0" y="4" font-size="11" font-weight="900" fill="#0a0e1c" text-anchor="middle" font-family="Montserrat, sans-serif">$</text></svg>`
+  base_gold: `<svg width="25" height="25" viewBox="-32 -32 64 64"><circle cx="0" cy="0" r="17" fill="none" stroke="#ff9100" stroke-width="1.6"/><circle cx="0" cy="0" r="11" fill="none" stroke="#ff9100" stroke-width="1" opacity=".35"/><g transform="translate(-12, -12)"><circle cx="12" cy="12" r="11" fill="#ff9100"/><text x="12" y="17.5" font-size="16" font-weight="900" fill="#000000" text-anchor="middle" font-family="Montserrat, sans-serif">$</text></g></svg>`
 };
-const BASE_BRANCH_COLORS = { base_hp: '#f05f9f', base_gold: '#f59e0b' };
+const BASE_BRANCH_COLORS = { base_hp: '#f05f9f', base_gold: '#ff9100' };
+
+const CUSTOM_LOCK_SVG = `<svg width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><path d="M 7,10 V 6 C 7,3.5 9,2 12,2 C 15,2 17,3.5 17,6 V 10"/><rect x="4" y="10" width="16" height="12" rx="3" fill="currentColor" fill-opacity="0.2"/></svg>`;
 
 function enablePointerScroll(el) {
   if (!el || el.dataset.pointerScrollBound) return;
@@ -1282,6 +1284,113 @@ function enablePointerScroll(el) {
   el.addEventListener('pointerup', endDrag);
   el.addEventListener('pointercancel', endDrag);
   el.addEventListener('pointerleave', endDrag);
+}
+
+function getUpgradeStatSummary(key, currentLvl) {
+  const curEff = typeof getUpgradeEffectiveLevel === 'function' ? getUpgradeEffectiveLevel(key) : currentLvl;
+  const isMaxed = currentLvl >= 15 && typeof isScalingBranch === 'function' && !isScalingBranch(key);
+
+  // Считаем эффективный уровень для следующего шага
+  const nextEff = (function() {
+    const nextLvl = currentLvl + 1;
+    if (nextLvl <= 10) return nextLvl;
+    if (nextLvl <= 15) return nextLvl === 15 ? 16.5 : nextLvl;
+    if (key === 'base_hp') return 16.5 + (nextLvl - 15);
+    const k = nextLvl - 15;
+    return 16.5 + 20 * (1 - Math.pow(0.95, k));
+  })();
+  const deltaEff = Math.max(0, nextEff - curEff);
+
+  // 1. Базовые ветки (HP и Bounty / Gold)
+  if (key === 'base_hp') {
+    const curHp = 10 + Math.round(curEff);
+    if (isMaxed) return `<span class="upg-stat-cur">${curHp} HP</span> <span class="upg-stat-next">MAX</span>`;
+    return `<span class="upg-stat-cur">${curHp} HP</span> <span class="upg-stat-next">+1 HP</span>`;
+  }
+
+  if (key === 'base_gold') {
+    const curGold = Math.round(curEff * 5);
+    const stepGold = +(deltaEff * 5).toFixed(1);
+    if (isMaxed) return `<span class="upg-stat-cur">+${curGold}%</span> <span class="upg-stat-next">MAX</span>`;
+    return `<span class="upg-stat-cur">+${curGold}%</span> <span class="upg-stat-next">+${stepGold}%</span>`;
+  }
+
+  // 2. Ветки башен
+  const towerType = key.replace('_power', '');
+  const conf = (typeof TOWER_CONFIGS !== 'undefined') ? TOWER_CONFIGS[towerType] : null;
+  if (!conf) return '';
+
+  // Расчет Range с учетом правила 1% после 10/10
+  const curRangeBonus = (typeof getUpgradeRangeBonus === 'function')
+    ? getUpgradeRangeBonus(towerType, curEff)
+    : (curEff <= 10 ? curEff * (conf.powerRange || 0) : 10 * (conf.powerRange || 0) + (curEff - 10) * 0.01);
+
+  const nextRangeBonus = (typeof getUpgradeRangeBonus === 'function')
+    ? getUpgradeRangeBonus(towerType, nextEff)
+    : (nextEff <= 10 ? nextEff * (conf.powerRange || 0) : 10 * (conf.powerRange || 0) + (nextEff - 10) * 0.01);
+
+  const curRng = Math.round(conf.range * (1 + curRangeBonus));
+  const rngStep = +((nextRangeBonus - curRangeBonus) * 100).toFixed(1);
+
+  const dStep = +(deltaEff * (conf.powerDmg || 0) * 100).toFixed(1);
+  const rStep = +(deltaEff * (conf.powerRate || 0) * 100).toFixed(1);
+
+  // Специфика для Stasis (замедление + длительность + дальность)
+  if (towerType === 'stasis') {
+    const baseSlow = conf.slowFactor || 0.30;
+    const baseDur = conf.slowDuration || 1.4;
+    const curSlow = Math.min(90, Math.round(baseSlow * (1 + curEff * (conf.powerSlow || 0)) * 100));
+    const curDur = (baseDur * (1 + curEff * (conf.powerDuration || 0))).toFixed(2);
+
+    const sStep = +(deltaEff * (conf.powerSlow || 0) * 100).toFixed(1);
+    const durStep = +(deltaEff * (conf.powerDuration || 0) * 100).toFixed(1);
+
+    const nextTag = isMaxed ? `<span class="upg-stat-next">MAX</span>` : `<span class="upg-stat-next">+${sStep}/${durStep}/${rngStep}%</span>`;
+    return `<span class="upg-stat-cur">SLOW ${curSlow}% · DUR ${curDur}s · RNG ${curRng}</span> ${nextTag}`;
+  }
+
+  // Боевые башни (DMG / DPS / SPD / RNG)
+  const baseDmg = conf.damage || conf.dps || conf.baseDps || 0;
+  const curDmg = +(baseDmg * (1 + curEff * (conf.powerDmg || 0))).toFixed(1);
+
+  if (conf.fireRate) {
+    const curRate = +(conf.fireRate / (1 + curEff * (conf.powerRate || 0))).toFixed(2);
+    const nextTag = isMaxed ? `<span class="upg-stat-next">MAX</span>` : `<span class="upg-stat-next">+${dStep}/${rStep}/${rngStep}%</span>`;
+    return `<span class="upg-stat-cur">DMG ${curDmg} · SPD ${curRate}s · RNG ${curRng}</span> ${nextTag}`;
+  }
+
+  const nextTag = isMaxed ? `<span class="upg-stat-next">MAX</span>` : `<span class="upg-stat-next">+${dStep}/${rngStep}%</span>`;
+  return `<span class="upg-stat-cur">DPS ${curDmg} · RNG ${curRng}</span> ${nextTag}`;
+}
+
+function getUpgradeDetailedToast(key) {
+  const curEff = typeof getUpgradeEffectiveLevel === 'function' ? getUpgradeEffectiveLevel(key) : (upgradeTreeData[key] || 0);
+  if (key === 'base_hp') {
+    const hp = 10 + Math.round(curEff);
+    return `Base Health: ${hp} HP (+${Math.round(curEff)} bonus)`;
+  }
+  if (key === 'base_gold') {
+    return `Bounty Bonus: +${Math.round(curEff * 5)}% Gold`;
+  }
+  const towerType = key.replace('_power', '');
+  const conf = (typeof TOWER_CONFIGS !== 'undefined') ? TOWER_CONFIGS[towerType] : null;
+  if (!conf) return '';
+  const name = (typeof TOWER_NAMES !== 'undefined' && TOWER_NAMES[towerType]) ? TOWER_NAMES[towerType] : towerType;
+
+  if (towerType === 'stasis') {
+    const slow = Math.min(90, Math.round((conf.slowFactor || 0.30) * (1 + curEff * (conf.powerSlow || 0)) * 100));
+    const dur = ((conf.slowDuration || 1.4) * (1 + curEff * (conf.powerDuration || 0))).toFixed(2);
+    return `${name} Lv.1 Stats: ${slow}% Slow for ${dur}s`;
+  }
+
+  const baseDmg = conf.damage || conf.dps || conf.baseDps || 0;
+  const dmg = (baseDmg * (1 + curEff * (conf.powerDmg || 0))).toFixed(1);
+  const rng = Math.round(conf.range * (1 + curEff * (conf.powerRange || 0)));
+  if (conf.fireRate) {
+    const rate = (conf.fireRate / (1 + curEff * (conf.powerRate || 0))).toFixed(2);
+    return `${name} Lv.1 Stats: ${dmg} DMG · ${rate}s Rate · ${rng} RNG`;
+  }
+  return `${name} Lv.1 Stats: ${dmg} DPS · ${rng} RNG`;
 }
 
 // [UI112] Meta-upgrade skill tree DOM interface renderer.
@@ -1330,6 +1439,7 @@ function renderUpgradeTree() {
 
     let isSectorGated = false;
     let lvlNeeded = 11;
+    let isAscGatedByBranches = false;
 
     if (!row.isLockedCard && !devMode) {
       if (nextStep <= 10) {
@@ -1343,6 +1453,9 @@ function renderUpgradeTree() {
         if (!isPhase2UnlockedGlobally) {
           isSectorGated = true;
           lvlNeeded = 31;
+        } else if (!areAllBranchesMaxPhase1()) {
+          // Кампания пройдена до 31+, ветка прокачана до 10/10, но другие ветки не добиты
+          isAscGatedByBranches = true;
         }
       }
     }
@@ -1363,14 +1476,15 @@ function renderUpgradeTree() {
     head.className = 'upgrade-row-head';
     const nameEl = document.createElement('span');
     nameEl.className = 'upgrade-row-name' + (row.isLockedCard ? ' locked-name' : '');
-    nameEl.textContent = row.isLockedCard ? row.lockedLabel : row.label;
+    // Название башни чистое, без приписок в заголовке
+    nameEl.textContent = row.label;
 
     const lvlEl = document.createElement('span');
     lvlEl.className = 'upgrade-row-level';
 
     if (row.isLockedCard) {
-      lvlEl.style.color = '#5d6a85';
-      lvlEl.textContent = 'LOCKED';
+      // Пункт 1: убираем надпись LOCKED справа вверху
+      lvlEl.textContent = ''; 
     } else if (currentLvl < 10) {
       lvlEl.style.color = row.color;
       lvlEl.textContent = `${currentLvl}/10`;
@@ -1420,6 +1534,18 @@ function renderUpgradeTree() {
       segs.appendChild(seg);
     }
     info.appendChild(segs);
+
+    // Строка с конкретными цифрами бонусов под полосками прогресса
+    const statsLine = document.createElement('div');
+    statsLine.className = 'upgrade-row-stats';
+    if (row.isLockedCard) {
+      // Пункт 2: убираем текст "Complete Normal Level" — оставляем строку пустой
+      statsLine.innerHTML = '';
+    } else {
+      statsLine.innerHTML = getUpgradeStatSummary(row.key, currentLvl);
+    }
+    info.appendChild(statsLine);
+
     card.appendChild(info);
 
     if (devMode && !row.isLockedCard && currentLvl > 0) {
@@ -1434,21 +1560,34 @@ function renderUpgradeTree() {
     buyBtn.className = 'upgrade-row-buy';
 
     if (row.isLockedCard) {
+      const reqLvl = getTowerUnlockLevel(row.key.replace('_power', ''));
       buyBtn.classList.add('locked-buy');
-      buyBtn.innerHTML = `<span style="font-size:12px; filter:grayscale(1) brightness(.7);">🔒</span>`;
+      buyBtn.innerHTML = `${CUSTOM_LOCK_SVG}<span class="upgrade-row-buy-cost" style="color:#8ea3c4; font-size:11px; margin-left:3px; font-weight:900;">L${reqLvl}</span>`;
+      buyBtn.onclick = () => {
+        if (typeof sfx === 'function') sfx('denied');
+        if (typeof showHintToast === 'function') showHintToast(`Unlocks on Level ${reqLvl}`);
+      };
     } else if (currentLvl >= 15 && !isScalingBranch(row.key)) {
       buyBtn.classList.add('locked-buy', 'max-buy');
       buyBtn.innerHTML = `<span class="upgrade-row-buy-cost" style="color:#d946ef; font-size:10px;">ASCENDED MAX</span>`;
       buyBtn.onclick = () => {
-        sfx('denied');
-        showHintToast('Branch is ASCENDED MAX (Lvl 15)');
+        if (typeof sfx === 'function') sfx('denied');
+        if (typeof showHintToast === 'function') showHintToast('Branch is ASCENDED MAX (Lvl 15)');
       };
     } else if (isSectorGated) {
       buyBtn.classList.add('locked-buy');
-      buyBtn.innerHTML = `<span style="font-size:11px; filter:grayscale(1) brightness(.7);">🔒</span><span class="upgrade-row-buy-cost" style="color:#8ea3c4; font-size:10px;">L${lvlNeeded}</span>`;
+      buyBtn.innerHTML = `${CUSTOM_LOCK_SVG}<span class="upgrade-row-buy-cost" style="color:#8ea3c4; font-size:11px; margin-left:3px; font-weight:900;">L${lvlNeeded}</span>`;
       buyBtn.onclick = () => {
-        sfx('denied');
-        showHintToast(`Unlocks on Level ${lvlNeeded}`);
+        if (typeof sfx === 'function') sfx('denied');
+        if (typeof showHintToast === 'function') showHintToast(`Unlocks on Level ${lvlNeeded}`);
+      };
+    } else if (isAscGatedByBranches) {
+      // Кастомный замочек + надпись ASC в фирменном фиолетовом цвете вознесения
+      buyBtn.classList.add('locked-buy');
+      buyBtn.innerHTML = `${CUSTOM_LOCK_SVG}<span class="upgrade-row-buy-cost" style="color:#d946ef; font-size:11px; margin-left:3px; font-weight:900;">ASC</span>`;
+      buyBtn.onclick = () => {
+        if (typeof sfx === 'function') sfx('denied');
+        if (typeof showHintToast === 'function') showHintToast('Upgrade all branches to 10/10 first to unlock ASC');
       };
     } else {
       const costs = getUpgradeCostForLevel(nextStep);

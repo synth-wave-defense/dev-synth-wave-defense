@@ -315,17 +315,44 @@ function isScalingBranch(key) {
   return false;
 }
 
+function areAllBranchesMaxPhase1() {
+  const branches = [
+    'gun_power', 'laser_power', 'mortar_power', 'tesla_power',
+    'stasis_power', 'melter_power', 'railgun_power',
+    'base_hp', 'base_gold'
+  ];
+  return branches.every(key => (upgradeTreeData[key] || 0) >= 10);
+}
+
 function getUpgradeEffectiveLevel(key) {
   const lvl = upgradeTreeData[key] || 0;
-  if (lvl <= 14) {
+  if (lvl <= 10) return lvl;
+  if (lvl <= 15) {
+    if (lvl === 15) return 15 * 1.10; // 16.5 (бонус 10% на ASC MAX)
     return lvl;
-  } else if (lvl === 15) {
-    return 15 * 1.10;
-  } else if (key === 'base_hp') {
-    return 17 + (lvl - 15);
-  } else {
-    return (15 * 1.10) * (1 + (lvl - 15) * 0.01);
   }
+  // Для Base HP: гарантированно +1 HP за каждый SYNTH уровень
+  if (key === 'base_hp') {
+    return 16.5 + (lvl - 15);
+  }
+  // SYNTH (уровни 16+): старт от 16.5, каждый следующий шаг меньше предыдущего на 5%
+  // 1-й шаг дает +1.0, 2-й: +0.95, 3-й: +0.95^2... Сумма = 20 * (1 - 0.95^(lvl - 15))
+  const k = lvl - 15;
+  const synthBonus = 20 * (1 - Math.pow(0.95, k));
+  return 16.5 + synthBonus;
+}
+
+// Вспомогательная функция для расчета бонуса дальности (Range)
+// До 10 уровня: по базовому проценту башни. С 11 уровня (ASC и SYNTH): строго по +1%
+function getUpgradeRangeBonus(towerType, effLvl) {
+  const conf = TOWER_CONFIGS[towerType];
+  if (!conf || !conf.powerRange) return 0;
+  if (effLvl <= 10) {
+    return effLvl * conf.powerRange;
+  }
+  const base10 = 10 * conf.powerRange;
+  const post10 = (effLvl - 10) * 0.01; // ровно 1% за каждый уровень выше 10
+  return base10 + post10;
 }
 
 // [DAT103.01] Tower Target Lock-on Specs: Lock-on delay constants and targeted tower classification.

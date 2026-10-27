@@ -871,11 +871,24 @@ let resumeThawTimer = 0;          // Таймер текущей разморо�
 
 function getBattleUpgradeEffectiveLevel(key) {
   if (battleUpgradeSnapshot && typeof battleUpgradeSnapshot[key] === 'number') {
-    const rawLvl = battleUpgradeSnapshot[key];
-    if (rawLvl <= 15) return rawLvl;
-    return 15 + (rawLvl - 15) * 0.5;
+    const lvl = battleUpgradeSnapshot[key];
+    if (lvl <= 10) return lvl;
+    if (lvl <= 15) return lvl === 15 ? 16.5 : lvl;
+    if (key === 'base_hp') return 16.5 + (lvl - 15);
+    const k = lvl - 15;
+    return 16.5 + 20 * (1 - Math.pow(0.95, k));
   }
   return getUpgradeEffectiveLevel(key);
+}
+
+function getBattleUpgradeRangeBonus(towerType, effLvl) {
+  if (typeof getUpgradeRangeBonus === 'function') {
+    return getUpgradeRangeBonus(towerType, effLvl);
+  }
+  const conf = TOWER_CONFIGS[towerType];
+  if (!conf) return 0;
+  if (effLvl <= 10) return effLvl * (conf.powerRange || 0);
+  return 10 * (conf.powerRange || 0) + (effLvl - 10) * 0.01;
 }
 
 function saveActiveBattleSnapshot() {
@@ -1038,7 +1051,7 @@ function resumeSavedBattle() {
       const powerLvl = getBattleUpgradeEffectiveLevel(`${savedT.type}_power`);
       const dmgBonus = 1 + powerLvl * (conf.powerDmg || 0);
       const rateBonus = 1 + powerLvl * (conf.powerRate || 0);
-      const rangeBonus = 1 + powerLvl * (conf.powerRange || 0);
+      const rangeBonus = 1 + getBattleUpgradeRangeBonus(savedT.type, powerLvl);
 
       let calcDamage = (conf.damage || conf.dps || conf.baseDps || 0) * dmgBonus;
       let calcRange = conf.range * rangeBonus;
@@ -1432,7 +1445,7 @@ function handleNodeClick(key, stepIndex) {
   const maxStep = getMaxUpgradeStep();
   const isPhase2UnlockedGlobally = getLoadoutReferenceLevel() >= 31 || maxUnlockedLevel >= 31 || (typeof clearedLevels !== 'undefined' && clearedLevels.includes(30));
 
-  if (targetStep <= 10) {
+if (targetStep <= 10) {
     if (targetStep > maxStep) {
       let lvlNeeded = 11;
       if (targetStep > 8) lvlNeeded = 31;
@@ -1445,6 +1458,12 @@ function handleNodeClick(key, stepIndex) {
     if (!isPhase2UnlockedGlobally) {
       sfx('denied');
       showHintToast('Unlocks on Level 31');
+      return;
+    }
+    // Проверка для входа в ASC: все ветки должны быть 10/10
+    if (!areAllBranchesMaxPhase1()) {
+      sfx('denied');
+      showHintToast('Upgrade all branches to 10/10 first to unlock ASC');
       return;
     }
   }
@@ -1461,9 +1480,7 @@ function handleNodeClick(key, stepIndex) {
     renderUpgradeTree();
     saveGameSoon();
     safeTrack('upgrade_purchased', { key, step: targetStep });
-	if (typeof activeBattleSave !== 'undefined' && activeBattleSave !== null) {
-    showHintToast('Upgrades will apply to your next new battle');
-  }
+    // Пункт 6: Toast о покупке убран — изменение сразу видно в строке характеристик под полосками
   } else {
     sfx('denied');
     if (diamonds < costD && prisms < costP) {
@@ -2828,7 +2845,7 @@ function buildTowerAt(type, c, r) {
     const powerLvl = getBattleUpgradeEffectiveLevel(`${type}_power`);
     const dmgBonus = 1 + powerLvl * (conf.powerDmg || 0);
     const rateBonus = 1 + powerLvl * (conf.powerRate || 0);
-    const rangeBonus = 1 + powerLvl * (conf.powerRange || 0);
+    const rangeBonus = 1 + getBattleUpgradeRangeBonus(type, powerLvl);
     const calcDamage = (conf.damage || conf.dps || conf.baseDps || 0) * dmgBonus;
     const calcFireRate = conf.fireRate ? (conf.fireRate / rateBonus) : 0;
 
