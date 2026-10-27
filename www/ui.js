@@ -3351,6 +3351,7 @@ function closeSettings() {
     musicSetDucked(false);
     gameState = 'PLAYING';
     lastTime = performance.now();
+	resumeRampTimer = RESUME_RAMP_DURATION; // <-- Запуск плавного разгона игры
   } else if (settingsPreviousSource === 'victory') {
     const scr = document.getElementById('victoryScreen');
     if (scr) scr.classList.remove('hidden');

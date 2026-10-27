@@ -855,8 +855,15 @@ let saveGameTimer = null;
 
 let waveStartGold = 100;
 
-const RESUME_THAW_DURATION = 1.0;   // Длительность плавной разморозки мобов в секундах (0.1 - 0.5)
-const RESUME_START_SPEED_MULT = 0.5; // Множитель скорости мобов в 1-й кадр после Resume (0.0 = полная заморозка)
+// Настройки разгона времени после паузы/загрузки
+const RESUME_RAMP_DURATION = 1.5;     // Длительность разгона всей игры в секундах (1.0 - 2.0)
+const RESUME_RAMP_START_MULT = 0.5;   // Начальный множитель скорости игры (0.5 = 50% от текущей скорости)
+
+let resumeRampTimer = 0;              // Таймер разгона игрового времени
+
+// Локальная разморозка мобов (оставляем для микро-задержки мобов, если нужно)
+const RESUME_THAW_DURATION = 0.3;     
+const RESUME_START_SPEED_MULT = 0.2;
 
 let activeBattleSave = null;
 let battleUpgradeSnapshot = null; // Замороженный слепок Tech Tree для текущего боя
@@ -1019,6 +1026,7 @@ function resumeSavedBattle() {
 
   // Включаем плавную разморозку мобов, если на поле есть враги
   resumeThawTimer = enemies.length > 0 ? RESUME_THAW_DURATION : 0;
+  resumeRampTimer = RESUME_RAMP_DURATION; // <-- Запуск плавного разгона игры
 
   // Восстанавливаем все башни с использованием замороженного слепка Tech Tree
   if (Array.isArray(snap.towers)) {
@@ -3333,7 +3341,17 @@ function gameLoop(now) {
   sfxReap();
   const rawDt = Math.min((now - lastTime) / 1000, 0.1);
   lastTime = now;
-  const dt = isLivePaused ? 0 : rawDt * gameTimeScale;
+
+  // Расчет коэффициента плавного разгона игры после паузы
+  let rampMult = 1.0;
+  if (resumeRampTimer > 0 && gameState === 'PLAYING' && !isLivePaused) {
+    resumeRampTimer = Math.max(0, resumeRampTimer - rawDt);
+    const progress = 1.0 - (resumeRampTimer / RESUME_RAMP_DURATION);
+    // Плавное ускорение от RESUME_RAMP_START_MULT (0.5) до 1.0
+    rampMult = RESUME_RAMP_START_MULT + (1.0 - RESUME_RAMP_START_MULT) * progress;
+  }
+
+  const dt = isLivePaused ? 0 : rawDt * gameTimeScale * rampMult;
 
   samplePerfAndMaybeDowngrade(rawDt);
 
