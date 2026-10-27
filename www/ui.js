@@ -5773,7 +5773,7 @@ function warmUpNebulaAndHideLoader() {
       }
       await stepWait(75, 100);
 
-      // 3. Декодируем музыку меню и звуки ПОД ширмой LOADING..., чтобы после нажатия GO не было лагов и клиппинга!
+      // 3. Декодируем музыку меню и звуки под ширмой загрузки
       if (typeof MusicManager !== 'undefined' && typeof MusicManager.warmUpMenuAudio === 'function') {
         await MusicManager.warmUpMenuAudio();
       }
@@ -5797,18 +5797,18 @@ function warmUpNebulaAndHideLoader() {
     }
 
     if (loader) {
-      // 1. Бар дошел до 100% и ЖЕСТКО остается заполненным
+      // 1. Фиксируем полосу на 100%
       if (barFill) {
         barFill.style.transition = 'none';
         barFill.style.setProperty('width', '100%', 'important');
       }
 
-      // 2. Ровно в том же стиле заменяем текст LOADING... на READY
+      // 2. Заменяем текст LOADING... на READY
       if (loadingTextEl) {
         loadingTextEl.textContent = 'READY';
       }
 
-      // 3. Заголовок "SYNTH WAVE DEFENSE" точно по координатам главного меню
+      // 3. Заголовок точно по координатам главного меню
       const titleBox = document.createElement('div');
       titleBox.className = 'loader-title-zone';
       titleBox.innerHTML = `
@@ -5817,10 +5817,10 @@ function warmUpNebulaAndHideLoader() {
       `;
       loader.appendChild(titleBox);
 
-      // 4. Кнопка GO с неторопливым мягким появлением на месте
+      // 4. Кнопка GO
       const goBtn = document.createElement('button');
       goBtn.className = 'shop-item-btn shop-btn-free';
-      goBtn.setAttribute('data-sfx', 'tap'); // Обычный звук кнопки вместо свитчера!
+      goBtn.setAttribute('data-sfx', 'tap');
       goBtn.style.position = 'absolute';
       goBtn.style.left = '50%';
       const centerBox = document.getElementById('initialLoaderCenterBox');
@@ -5835,7 +5835,6 @@ function warmUpNebulaAndHideLoader() {
       goBtn.innerHTML = '<span>GO</span>';
 
       goBtn.onclick = () => {
-        // Звук 'tap' уже проигрывается автоматически хуком installUiHooks при нажатии на кнопку
         if (typeof SFX !== 'undefined' && typeof SFX.unlock === 'function') SFX.unlock();
         if (typeof musicUnlock === 'function') musicUnlock();
 
@@ -5847,7 +5846,6 @@ function warmUpNebulaAndHideLoader() {
       };
 
       loader.appendChild(goBtn);
-		}
     }
   })();
 }

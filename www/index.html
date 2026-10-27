@@ -1536,33 +1536,30 @@ const devCheckboxEl = document.getElementById('devModeCheckbox');
 const initialDevState = devCheckboxEl ? devCheckboxEl.checked : false;
 
 loadGame().then(() => {
-  
-  loadGame().then(() => {
   // Отключаем Watchdog ДО начала тяжелой генерации текстур
   if (window.NativeOtaBridge && typeof window.NativeOtaBridge.markBootSuccessful === 'function') {
     window.NativeOtaBridge.markBootSuccessful();
   }
-  
+
   applySfxVolume(settings.sfxVolume != null ? settings.sfxVolume : (settings.sfxEnabled === false ? 0 : 100), false);
-  try { 
+  try {
     if (typeof SFX !== 'undefined' && SFX) {
       SFX.installUiHooks();
       SFX.autoload();
-    } 
+    }
   } catch (e) {}
   applyMusicVolume(settings.musicVolume != null ? settings.musicVolume : (settings.musicEnabled === false ? 0 : 70), false);
 
-  // Сразу скрываем старый #loadingScreen, так как роль стартового экрана и кнопки GO выполняет #initialLoadingScreen
   const oldLoadingScreen = document.getElementById('loadingScreen');
   if (oldLoadingScreen) {
     oldLoadingScreen.classList.add('hidden');
   }
-  
+
   if (settings.perfModeOverride === 'low' || settings.perfModeOverride === 'high') {
     perfMode = settings.perfModeOverride;
     perfDecided = true;
   }
-  
+
   initBuildPanel();
   toggleDevMode(initialDevState);
   updateDiamondUI();
@@ -1573,8 +1570,8 @@ loadGame().then(() => {
   safeTrack('app_launch', {});
 
   requestAnimationFrame(gameLoop);
-
 });
+</script>
 
 </script>
 
