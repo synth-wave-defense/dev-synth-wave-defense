@@ -1537,6 +1537,12 @@ const initialDevState = devCheckboxEl ? devCheckboxEl.checked : false;
 
 loadGame().then(() => {
   
+  loadGame().then(() => {
+  // Отключаем Watchdog ДО начала тяжелой генерации текстур
+  if (window.NativeOtaBridge && typeof window.NativeOtaBridge.markBootSuccessful === 'function') {
+    window.NativeOtaBridge.markBootSuccessful();
+  }
+  
   applySfxVolume(settings.sfxVolume != null ? settings.sfxVolume : (settings.sfxEnabled === false ? 0 : 100), false);
   try { 
     if (typeof SFX !== 'undefined' && SFX) {

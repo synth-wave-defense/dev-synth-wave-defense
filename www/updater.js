@@ -257,7 +257,7 @@
         if (!res.startsWith('OK_')) {
           OtaDiagnostics.lastError = res;
         } else {
-          // Принудительно перезагружаем WebView для чистого старта с новой версии
+          // Принудительно перезагружаем WebView для старта с новой версии
           setTimeout(() => { window.location.reload(); }, 150);
         }
       } else {
