@@ -2689,6 +2689,16 @@ const l1 = MAP_CATALOG['L1'];
   gameState = 'START';
   updateHudSpeedWidget();
   updateUpgradeButtonsLock();
+  const resumeBtn = document.getElementById('mainResumeBtn');
+  const playBtnText = document.getElementById('mainPlayBtnText');
+  const hasSavedBattle = (typeof activeBattleSave !== 'undefined' && activeBattleSave !== null);
+
+  if (resumeBtn) {
+    resumeBtn.classList.toggle('hidden', !hasSavedBattle);
+  }
+  if (playBtnText) {
+    playBtnText.textContent = hasSavedBattle ? 'START NEW' : 'PLAY';
+  }
   updateBpProgressUI();
   updateMenuBadges();
 
@@ -2788,6 +2798,10 @@ function handleHudSettingsClick() {
   }
 
   if (gameState === 'PLAYING') {
+    if (typeof saveActiveBattleSnapshot === 'function') {
+      saveActiveBattleSnapshot();
+      saveGameSoon();
+    }
     gameState = 'PAUSED';
     sfxStopBeams();
     showSettings('combat');
@@ -5041,7 +5055,7 @@ function updateWaveCircle(dt) {
   const maxW = (lvlConfig && lvlConfig.totalWaves) || 10;
   let bonus = 0;
   if (isCountdown && ((typeof isEndlessMode !== 'undefined' && isEndlessMode) || wave < maxW)) {
-    const moneyMultiplier = 1 + getUpgradeEffectiveLevel('base_gold') * 0.05;
+    const moneyMultiplier = 1 + getBattleUpgradeEffectiveLevel('base_gold')* 0.05;
     const fractionSaved = totalDelay > 0 ? Math.min(1, Math.max(0, autoWaveTimeRemaining / totalDelay)) : 0;
     bonus = Math.round(fractionSaved * baseBonus * moneyMultiplier);
   }

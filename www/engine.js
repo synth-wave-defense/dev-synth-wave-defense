@@ -853,6 +853,258 @@ let obstacleCells = [];
 const SAVE_KEY = 'sectorDefenseTD_save_v1';
 let saveGameTimer = null;
 
+let waveStartGold = 100;
+
+const RESUME_THAW_DURATION = 1.0;   // Длительность плавной разморозки мобов в секундах (0.1 - 0.5)
+const RESUME_START_SPEED_MULT = 0.5; // Множитель скорости мобов в 1-й кадр после Resume (0.0 = полная заморозка)
+
+let activeBattleSave = null;
+let battleUpgradeSnapshot = null; // Замороженный слепок Tech Tree для текущего боя
+let resumeThawTimer = 0;          // Таймер текущей разморозки
+
+function getBattleUpgradeEffectiveLevel(key) {
+  if (battleUpgradeSnapshot && typeof battleUpgradeSnapshot[key] === 'number') {
+    const rawLvl = battleUpgradeSnapshot[key];
+    if (rawLvl <= 15) return rawLvl;
+    return 15 + (rawLvl - 15) * 0.5;
+  }
+  return getUpgradeEffectiveLevel(key);
+}
+
+function saveActiveBattleSnapshot() {
+  if (gameState !== 'PLAYING' && gameState !== 'PAUSED') return;
+  if (baseHp <= 0) return;
+
+  if (!battleUpgradeSnapshot) {
+    battleUpgradeSnapshot = Object.assign({}, upgradeTreeData);
+  }
+
+  activeBattleSave = {
+    isEndlessMode: !!isEndlessMode,
+    isOverdriveMode: !!isOverdriveMode,
+    currentLevel: currentLevel,
+    currentLevelSection: currentLevelSection || 1,
+    wave: wave,
+    waveInProgress: !!waveInProgress,
+    waveTimerActive: !!waveTimerActive,
+    autoWaveTimeRemaining: autoWaveTimeRemaining || 0,
+    waveTotalSpawnTime: waveTotalSpawnTime || 1.0,
+    waveSpawnElapsedTime: waveSpawnElapsedTime || 0,
+    spawnTimer: spawnTimer || 0,
+    regularSpawnCounter: regularSpawnCounter || 0,
+    bossAlertScheduled: !!bossAlertScheduled,
+    bossAlertShown: !!bossAlertShown,
+    activeBossAlertType: activeBossAlertType || null,
+    gold: gold,
+    baseHp: baseHp,
+    matchStartBaseHp: matchStartBaseHp,
+    reviveUsedThisMatch: !!reviveUsedThisMatch,
+    sessionMobKillsCount: sessionMobKillsCount || 0,
+    activeBattleLoadout: activeBattleLoadout ? activeBattleLoadout.slice() : selectedLoadout.slice(),
+    upgradeSnapshot: Object.assign({}, battleUpgradeSnapshot),
+    towers: towers.map(t => ({
+      type: t.type,
+      c: t.c,
+      r: t.r,
+      level: t.level,
+      totalInvested: t.totalInvested,
+      angle: t.angle || 0,
+      disabledTimer: t.disabledTimer || 0
+    })),
+    enemies: enemies.map(e => ({
+      // Если моба сохранили в момент прыжка Титана или отброса Revive — ставим его сразу в конечную точку маневра
+      x: e.revivePushAnim ? e.revivePushAnim.endX : (e.dashAnim ? e.dashAnim.endX : e.x),
+      y: e.revivePushAnim ? e.revivePushAnim.endY : (e.dashAnim ? e.dashAnim.endY : e.y),
+      wpIndex: e.revivePushAnim ? e.revivePushAnim.endWp : (e.dashAnim ? e.dashAnim.endWp : e.wpIndex),
+      laneOffset: e.laneOffset || 0,
+      angle: e.angle || 0,
+      type: e.type,
+      isBoss: !!e.isBoss,
+      isMiniBoss: !!e.isMiniBoss,
+      isElite: !!e.isElite,
+      isEnraged: !!e.isEnraged,
+      shape: e.shape,
+      color: e.color,
+      glow: e.glow,
+      hp: e.hp,
+      maxHp: e.maxHp,
+      speed: e.speed,
+      baseSpeed: e.baseSpeed,
+      bounty: e.bounty,
+      radius: e.radius,
+      shieldTimer: e.shieldTimer || 0,
+      isShielded: !!e.isShielded,
+      warpTimer: e.warpTimer || 0,
+      dashTimer: e.dashTimer || 0,
+      summonTimer: e.summonTimer || 0,
+      empTimer: e.empTimer || 0,
+      slowTimer: e.slowTimer || 0
+    })),
+    spawnQueue: spawnQueue.map(sq => Object.assign({}, sq))
+  };
+}
+
+function clearActiveBattleSave() {
+  battleUpgradeSnapshot = null;
+  if (activeBattleSave !== null) {
+    activeBattleSave = null;
+    saveGameSoon();
+  }
+}
+
+function resumeSavedBattle() {
+  if (!activeBattleSave) return;
+  const snap = activeBattleSave;
+
+  isEndlessMode = !!snap.isEndlessMode;
+  isOverdriveMode = !!snap.isOverdriveMode;
+  currentLevel = snap.currentLevel || 1;
+  currentLevelSection = snap.currentLevelSection || 1;
+  battleUpgradeSnapshot = snap.upgradeSnapshot ? Object.assign({}, snap.upgradeSnapshot) : Object.assign({}, upgradeTreeData);
+
+  if (typeof battleStartedOnce !== 'undefined') battleStartedOnce = (snap.wave > 1 || !!snap.waveInProgress);
+  if (typeof battlePathAlpha !== 'undefined') battlePathAlpha = (snap.wave > 1 || !!snap.waveInProgress) ? 0.0 : 1.0;
+
+  activeBattleLoadout = (Array.isArray(snap.activeBattleLoadout) && snap.activeBattleLoadout.length > 0)
+    ? snap.activeBattleLoadout.slice()
+    : selectedLoadout.slice();
+
+  if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
+  musicSetDucked(false);
+  music('battle');
+
+  ['levelsScreen', 'victoryScreen', 'defeatScreen', 'startScreen', 'settingsScreen', 'upgradesScreen'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  });
+
+  document.getElementById('econHpSplitBadge').classList.remove('hidden');
+  document.getElementById('levelWaveSplitBadge').classList.remove('hidden');
+  document.getElementById('hudRightGroup').classList.remove('hidden');
+  updateStartChapterLabel(false);
+  document.getElementById('controlsWrapper').classList.remove('hidden');
+
+  const waveBtn = document.getElementById('waveBtn');
+  if (waveBtn) waveBtn.classList.remove('hidden');
+
+  resetLevelState();
+
+  if (isEndlessMode) {
+    const arenaMapKey = 'L' + (Math.min(5, Math.max(1, currentLevelSection)) * 10);
+    const mapCfg = MAP_CATALOG[arenaMapKey] || MAP_CATALOG.L20 || MAP_CATALOG.L1;
+    if (mapCfg) buildLevelGeometry(mapCfg.path, mapCfg.cols, mapCfg.rows, mapCfg.blocked);
+  }
+
+  // Восстанавливаем точное состояние волн, таймеров и ресурсов
+  gold = snap.gold;
+  baseHp = snap.baseHp;
+  matchStartBaseHp = snap.matchStartBaseHp || snap.baseHp;
+  wave = snap.wave || 1;
+  waveInProgress = !!snap.waveInProgress;
+  waveTimerActive = !!snap.waveTimerActive;
+  autoWaveTimeRemaining = snap.autoWaveTimeRemaining || 0;
+  waveTotalSpawnTime = snap.waveTotalSpawnTime || 1.0;
+  waveSpawnElapsedTime = snap.waveSpawnElapsedTime || 0;
+  spawnTimer = snap.spawnTimer || 0;
+  regularSpawnCounter = snap.regularSpawnCounter || 0;
+  bossAlertScheduled = !!snap.bossAlertScheduled;
+  bossAlertShown = !!snap.bossAlertShown;
+  activeBossAlertType = snap.activeBossAlertType || null;
+  reviveUsedThisMatch = !!snap.reviveUsedThisMatch;
+  sessionMobKillsCount = snap.sessionMobKillsCount || 0;
+
+  // Восстанавливаем очередь спауна и живых мобов на карте
+  spawnQueue = Array.isArray(snap.spawnQueue) ? snap.spawnQueue.map(sq => Object.assign({}, sq)) : [];
+  enemies = Array.isArray(snap.enemies) ? snap.enemies.map(e => Object.assign({}, e)) : [];
+
+  // Включаем плавную разморозку мобов, если на поле есть враги
+  resumeThawTimer = enemies.length > 0 ? RESUME_THAW_DURATION : 0;
+
+  // Восстанавливаем все башни с использованием замороженного слепка Tech Tree
+  if (Array.isArray(snap.towers)) {
+    snap.towers.forEach(savedT => {
+      const conf = TOWER_CONFIGS[savedT.type];
+      if (!conf || !grid[savedT.r] || grid[savedT.r][savedT.c] !== 0) return;
+
+      grid[savedT.r][savedT.c] = 2;
+      const powerLvl = getBattleUpgradeEffectiveLevel(`${savedT.type}_power`);
+      const dmgBonus = 1 + powerLvl * (conf.powerDmg || 0);
+      const rateBonus = 1 + powerLvl * (conf.powerRate || 0);
+      const rangeBonus = 1 + powerLvl * (conf.powerRange || 0);
+
+      let calcDamage = (conf.damage || conf.dps || conf.baseDps || 0) * dmgBonus;
+      let calcRange = conf.range * rangeBonus;
+      let calcFireRate = conf.fireRate ? (conf.fireRate / rateBonus) : 0;
+
+      const baseLockOnDelay = (savedT.type === 'laser' || savedT.type === 'melter')
+        ? (typeof LOCK_ON_DELAY_HEAVY === 'number' ? LOCK_ON_DELAY_HEAVY : 0.5)
+        : (typeof LOCK_ON_DELAY_LIGHT === 'number' ? LOCK_ON_DELAY_LIGHT : 0.1);
+      const calcLockOnDelay = (savedT.type === 'mortar') ? baseLockOnDelay : (baseLockOnDelay / rateBonus);
+      const calcMortarTravelTime = (savedT.type === 'mortar')
+        ? ((typeof MORTAR_BASE_TRAVEL_TIME === 'number' ? MORTAR_BASE_TRAVEL_TIME : 1.0) / rateBonus)
+        : undefined;
+      let calcMelterRampTime = (savedT.type === 'melter') ? ((conf.rampTime || 4.0) / rateBonus) : undefined;
+      let calcMelterCooldownTime = (savedT.type === 'melter') ? ((conf.cooldownTime || 4.0) / rateBonus) : 0;
+      let calcSlowFactor = conf.slowFactor || 0.30;
+
+      const targetLvl = Math.min(3, Math.max(1, savedT.level || 1));
+      const dmgMult = conf.damageMultiplier || 1.4;
+      const rngMult = conf.rangeMultiplier || 1.1;
+      const rateMult = conf.rateMultiplier || 1.0;
+
+      for (let l = 1; l < targetLvl; l++) {
+        calcDamage *= dmgMult;
+        calcRange *= rngMult;
+        if (calcFireRate && rateMult !== 1.0) calcFireRate *= rateMult;
+      }
+
+      if (savedT.type === 'stasis' && targetLvl > 1) {
+        calcSlowFactor = (targetLvl === 2) ? 0.40 : 0.50;
+      }
+      if (savedT.type === 'melter' && targetLvl > 1) {
+        calcMelterRampTime = (targetLvl === 2 ? 4.4 : 4.8) / rateBonus;
+        calcMelterCooldownTime = (targetLvl === 2 ? 3.6 : 3.2) / rateBonus;
+      }
+
+      towers.push({
+        c: savedT.c,
+        r: savedT.r,
+        x: savedT.c * TILE_SIZE + TILE_SIZE / 2,
+        y: savedT.r * TILE_SIZE + TILE_SIZE / 2,
+        type: savedT.type,
+        level: targetLvl,
+        totalInvested: savedT.totalInvested || conf.cost,
+        damage: calcDamage,
+        range: calcRange,
+        fireRate: calcFireRate,
+        color: conf.color,
+        glow: conf.glow,
+        lastFire: 0,
+        target: null,
+        angle: savedT.angle || 0,
+        lockOnDelay: calcLockOnDelay,
+        lockOnTimer: 0,
+        mortarTravelTime: calcMortarTravelTime,
+        melterRampTime: calcMelterRampTime,
+        melterCooldownTime: calcMelterCooldownTime,
+        slowFactor: calcSlowFactor,
+        slowDuration: conf.slowDuration || 1.4,
+        disabledTimer: savedT.disabledTimer || 0,
+        melterFireTimer: 0,
+        melterCoolingTimer: 0
+      });
+    });
+  }
+
+  initBuildPanel();
+  gameState = 'PLAYING';
+  updateWaveCircle(0);
+  updateUI();
+  resizeCanvasAndCamera();
+  lastTime = performance.now();
+}
+window.resumeSavedBattle = resumeSavedBattle;
+
 function serializeSaveData() {
   return {
     version: 1,
@@ -881,7 +1133,8 @@ function serializeSaveData() {
     endlessBestWavesBySection: Object.assign({}, endlessBestWavesBySection),
     endlessDailyRunsUsed,
     endlessDailyRunsDate,
-    endlessMilestonesClaimed: Object.assign({}, endlessMilestonesClaimed)
+    endlessMilestonesClaimed: Object.assign({}, endlessMilestonesClaimed),
+	activeBattleSave
   };
 }
 
@@ -1004,6 +1257,12 @@ async function loadGame() {
       }
     });
   }
+  if (data.activeBattleSave && typeof data.activeBattleSave === 'object') {
+    activeBattleSave = data.activeBattleSave;
+  } else {
+    activeBattleSave = null;
+  }
+  
   return true;
 }
 
@@ -1194,6 +1453,9 @@ function handleNodeClick(key, stepIndex) {
     renderUpgradeTree();
     saveGameSoon();
     safeTrack('upgrade_purchased', { key, step: targetStep });
+	if (typeof activeBattleSave !== 'undefined' && activeBattleSave !== null) {
+    showHintToast('Upgrades will apply to your next new battle');
+  }
   } else {
     sfx('denied');
     if (diamonds < costD && prisms < costP) {
@@ -1387,6 +1649,7 @@ function startEndlessMatch() {
     baseGold = Math.round(baseGold * 1.15);
   }
   gold = baseGold;
+  waveStartGold = gold;
   baseHp = 10 + Math.round(getUpgradeEffectiveLevel('base_hp'));
   matchStartBaseHp = baseHp;
   wave = 1;
@@ -1398,6 +1661,9 @@ function startEndlessMatch() {
   updateUI();
   lastTime = performance.now();
   safeTrack('endless_start', { runsUsed: endlessDailyRunsUsed });
+  battleUpgradeSnapshot = Object.assign({}, upgradeTreeData);
+  saveActiveBattleSnapshot();
+  saveGameSoon();
 }
 
 function reallyStartLevel(lvl) {
@@ -1442,6 +1708,10 @@ function reallyStartLevel(lvl) {
   if (bpClaimedPrem[15] || bpClaimedPrem['15']) {
     gold = Math.round(gold * 1.15);
   }
+  waveStartGold = gold;
+  battleUpgradeSnapshot = Object.assign({}, upgradeTreeData);
+  saveActiveBattleSnapshot();
+  saveGameSoon();
   initBuildPanel();
   gameState = 'PLAYING';
   updateUI();
@@ -1556,6 +1826,9 @@ function togglePause() {
 }
 
 function forcePauseForBackground() {
+  if (gameState === 'PLAYING' || gameState === 'PAUSED') {
+    saveActiveBattleSnapshot();
+  }
   if (devInputOpen || Date.now() < suppressBackgroundPauseUntil) {
     saveGame();
     return;
@@ -1989,6 +2262,7 @@ function triggerVictory() {
   } else {
     showVictory();
   }
+	clearActiveBattleSave();
 }
 
 function playVictoryUnlockFx() {
@@ -2070,6 +2344,7 @@ function triggerDefeat() {
   }
   showLoadoutWidgetIn('loadoutAnchor-defeat');
   registerDefeatOutcome();
+  clearActiveBattleSave();
 }
 
 function registerDefeatOutcome() {
@@ -2549,7 +2824,7 @@ function buildTowerAt(type, c, r) {
     gold -= conf.cost;
     grid[r][c] = 2;
 
-    const powerLvl = getUpgradeEffectiveLevel(`${type}_power`);
+    const powerLvl = getBattleUpgradeEffectiveLevel(`${type}_power`);
     const dmgBonus = 1 + powerLvl * (conf.powerDmg || 0);
     const rateBonus = 1 + powerLvl * (conf.powerRate || 0);
     const rangeBonus = 1 + powerLvl * (conf.powerRange || 0);
@@ -2599,6 +2874,8 @@ function buildTowerAt(type, c, r) {
     towers.push(newTower);
     createShockwave(newTower.x, newTower.y, 40, conf.color);
     updateUI();
+	saveActiveBattleSnapshot();
+    saveGameSoon();
 
     if (tutorialActive && tutorialLevel === 1 && tutorialStep === 0) {
       tutorialStep = 1;
@@ -2674,7 +2951,7 @@ function upgradeSelectedTower() {
     if (selectedTower.type === 'melter') {
       selectedTower.melterFireTimer = 0;
       selectedTower.melterCoolingTimer = 0;
-      const powerLvl = getUpgradeEffectiveLevel('melter_power');
+      const powerLvl = getBattleUpgradeEffectiveLevel('melter_power');
       const rateBonus = 1 + powerLvl * (conf.powerRate || 0);
       if (selectedTower.level === 2) {
         selectedTower.melterRampTime = 4.4 / rateBonus;
@@ -2688,6 +2965,8 @@ function upgradeSelectedTower() {
     createShockwave(selectedTower.x, selectedTower.y, 60, selectedTower.color);
     createDamageShards(selectedTower.x, selectedTower.y, selectedTower.color, 40, false);
     updateUI();
+	saveActiveBattleSnapshot();
+    saveGameSoon();
 
     if (tutorialActive && tutorialLevel === 2 && tutorialStep === 1) {
       tutorialStep = 2;
@@ -2719,6 +2998,8 @@ function sellSelectedTower() {
   createShockwave(sx, sy, 40, '#f05f9f');
   createDamageShards(sx, sy, '#f05f9f', 30, false);
   updateUI();
+  saveActiveBattleSnapshot();
+  saveGameSoon();
 }
 
 // [ENG108] Wave Spawning & Enemy Queue Management: Auto/manual wave triggers, miniboss/boss delays, and spawn timers.
@@ -2759,7 +3040,7 @@ function triggerManualWave() {
       }
 
       wave++;
-      const moneyMultiplier = 1 + getUpgradeEffectiveLevel('base_gold') * 0.05;
+      const moneyMultiplier = 1 + getBattleUpgradeEffectiveLevel('base_gold') * 0.05;
       const fractionSaved = totalDelay > 0 ? Math.min(1, Math.max(0, secondsSaved / totalDelay)) : 0;
       const earlyCallBonus = Math.round(fractionSaved * baseBonus * moneyMultiplier);
 
@@ -2781,7 +3062,6 @@ function getBossPreDelay(lvl) {
 }
 
 function startWave() {
-  sfx('waveStart');
   if (isEndlessMode) {
     waveInProgress = true;
     waveTimerActive = false;
@@ -2864,7 +3144,9 @@ function startWave() {
     updateWaveCircle(0);
     updateUI();
     if (devMode) refreshDevDropdowns();
-    return;
+    saveActiveBattleSnapshot();
+    saveGameSoon();
+	return;
   }
 
   const lvlConfig = LEVELS_DATA[currentLevel];
@@ -2957,6 +3239,8 @@ function startWave() {
   updateWaveCircle(0);
   updateUI();
   if (devMode) refreshDevDropdowns();
+  saveActiveBattleSnapshot();
+  saveGameSoon();
 }
 
 // [ENG109] Developer Tools & Spawner Integration: Custom spawner injections, dev controls, and cheat handlers.
@@ -3128,6 +3412,7 @@ function handleClearSaveClick() {
   activePalette = 'default';
   applyPaletteColors('default');
 
+  activeBattleSave = null;
   showStartScreen();
   renderLevelsGrid();
   updateDiamondUI();
@@ -3356,6 +3641,12 @@ function update(dt) {
     cameraShakeTimer -= dt;
     if (cameraShakeTimer < 0) cameraShakeTimer = 0;
   }
+  let thawMult = 1.0;
+  if (resumeThawTimer > 0) {
+    resumeThawTimer = Math.max(0, resumeThawTimer - dt);
+    const thawProg = RESUME_THAW_DURATION > 0 ? (1.0 - resumeThawTimer / RESUME_THAW_DURATION) : 1.0;
+    thawMult = RESUME_START_SPEED_MULT + (1.0 - RESUME_START_SPEED_MULT) * thawProg;
+  }
   const lvlConfig = LEVELS_DATA[currentLevel];
   const maxW = lvlConfig ? lvlConfig.totalWaves : 10;
   const btn = el('waveBtn');
@@ -3484,6 +3775,8 @@ function update(dt) {
           if (btn) btn.disabled = false;
           if (btnText) btnText.textContent = 'Go';
         }
+		saveActiveBattleSnapshot();
+        saveGameSoon();
       }
     }
   }
@@ -3710,7 +4003,7 @@ if (e.type === 'chronos_warp') {
     const dx = targetX - e.x;
     const dy = targetY - e.y;
     const dist = Math.hypot(dx, dy);
-    const effectiveSpeed = e.speed * (isOverdriveMode ? 1.2 : 1.0);
+    const effectiveSpeed = e.speed * (isOverdriveMode ? 1.2 : 1.0) * thawMult;
     const step = effectiveSpeed * dt;
     e.angle = Math.atan2(dy, dx);
 
@@ -3720,6 +4013,8 @@ if (e.type === 'chronos_warp') {
       if (e.wpIndex >= WAYPOINTS.length) {
         const damageToBasePath = getBaseDamageFor(e);
         baseHp = Math.max(0, baseHp - damageToBasePath);
+		saveActiveBattleSnapshot();
+        saveGameSoon();
         sfx('baseHit');
         vibrate('warning');
         createShockwave(e.x, e.y, e.isBoss ? 80 : (e.isMiniBoss ? 50 : 35), '#f05f9f');
@@ -3906,7 +4201,7 @@ if (e.type === 'chronos_warp') {
           const dxS = e.x - t.x;
           const dyS = e.y - t.y;
           if (dxS * dxS + dyS * dyS <= rangeSq && !e.isShielded) {
-            const stasisPowerLvl = getUpgradeEffectiveLevel('stasis_power');
+            const stasisPowerLvl = getBattleUpgradeEffectiveLevel('stasis_power');
             const baseSlow = (t.slowFactor !== undefined) ? t.slowFactor : (TOWER_CONFIGS.stasis.slowFactor || 0.30);
             const baseDur = (t.slowDuration !== undefined) ? t.slowDuration : (TOWER_CONFIGS.stasis.slowDuration || 1.4);
             const boostedSlow = Math.min(0.9, baseSlow * (1 + stasisPowerLvl * (TOWER_CONFIGS.stasis.powerSlow || 0)));
@@ -4082,7 +4377,7 @@ if (e.type === 'chronos_warp') {
       if (sessionMobKillsCount % 5 === 0) {
         addBpXp(1);
       }
-      const moneyMultiplier = 1 + getUpgradeEffectiveLevel('base_gold') * 0.05;
+      const moneyMultiplier = 1 + getBattleUpgradeEffectiveLevel('base_gold') * 0.05;
       gold += Math.round(e.bounty * moneyMultiplier);
       sfxDeath(e);
 
