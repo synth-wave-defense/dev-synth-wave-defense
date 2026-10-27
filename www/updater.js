@@ -256,6 +256,9 @@
         logOta('ApplyNow: ' + res);
         if (!res.startsWith('OK_')) {
           OtaDiagnostics.lastError = res;
+        } else {
+          // Принудительно перезагружаем WebView для чистого старта с новой версии
+          setTimeout(() => { window.location.reload(); }, 150);
         }
       } else {
         OtaDiagnostics.lastError = 'No NativeOtaBridge in APK';
