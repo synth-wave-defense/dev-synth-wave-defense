@@ -485,11 +485,15 @@ window.addEventListener('load', resizeCanvasAndCamera);
 
 // [UI109] Lock default touch behaviors on active canvas and UI overlays.
 document.addEventListener('touchmove', (e) => {
-  if (gameState === 'PLAYING') {
-    const isScrollableOverlay = e.target.closest && e.target.closest('.result-stack, .upgrades-row-list, .settings-box');
-    if (!isScrollableOverlay && e.cancelable) {
-      e.preventDefault();
-    }
+  // Разрешаем вертикальный скролл пальцем во всех открытых виджетах, списках и панелях
+  const isScrollableOverlay = e.target.closest && e.target.closest(
+    '.result-stack, .upgrades-row-list, .settings-box, .settings-collapsible-body, .settings-collapsible-widget, .loadout-widget, .loadout-widget-expanded, .loadout-grid, .levels-bg, .bp-tier-list, .shop-list-body'
+  );
+  if (isScrollableOverlay) {
+    return; // Не глушим тач — даем браузеру свободно прокручивать элемент
+  }
+  if (gameState === 'PLAYING' && e.cancelable) {
+    e.preventDefault();
   }
 }, { passive: false });
 
@@ -6108,24 +6112,8 @@ function drawCosmicNebulaBackground(w, h, customDim = null) {
   ctx.drawImage(nebulaCache, 0, 0, w, h);
   ctx.restore();
 
-  // Плавное динамическое затемнение в бою (сохраняем оригинальную логику)
-  const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
-  const dt = Math.min((now - lastDimUpdateTime) / 1000, 0.1);
-  lastDimUpdateTime = now;
-
-  const targetDim = customDim !== null ? customDim : (isMenuSceneActive() ? 0 : 0.48);
-  if (combatDimAlpha < targetDim) {
-    combatDimAlpha = Math.min(targetDim, combatDimAlpha + dt * 1.5);
-  } else if (combatDimAlpha > targetDim) {
-    combatDimAlpha = Math.max(targetDim, combatDimAlpha - dt * 2.0);
-  }
-
-  if (combatDimAlpha > 0.001) {
-    ctx.save();
-    ctx.fillStyle = `rgba(2, 3, 10, ${combatDimAlpha})`;
-    ctx.fillRect(0, 0, w, h);
-    ctx.restore();
-  }
+  // Динамическое затемнение в бою отключено
+  combatDimAlpha = 0;
 }
 
 let initialLoaderHidden = false;
@@ -6309,10 +6297,9 @@ function updateAndDrawStars(w, h, now) {
     const lifeProgress = star.life / star.maxLife;
     const fade = Math.min(1, Math.sin(lifeProgress * Math.PI) * 3);
 
-    // Выразительное мерцание (в битве приглушаем яркость на 45%)
-    const combatStarMult = isMenuSceneActive() ? 1.0 : 0.55;
+    // Звезды сияют на полную яркость и в меню, и в бою
     const twinkle = 0.55 + 0.45 * Math.sin(time * star.twinkleSpeed + star.twinklePhase);
-    const alpha = star.baseAlpha * twinkle * fade * combatStarMult;
+    const alpha = star.baseAlpha * twinkle * fade;
     if (alpha <= 0.02) continue;
 
     // Выравниваем координаты строго по физическим пикселям экрана (устраняет расфокус)
