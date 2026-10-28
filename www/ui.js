@@ -2877,7 +2877,7 @@ const l1 = MAP_CATALOG['L1'];
     resumeBtn.classList.toggle('hidden', !hasSavedBattle);
   }
   if (playBtnText) {
-    playBtnText.textContent = hasSavedBattle ? 'START NEW' : 'PLAY';
+    playBtnText.textContent = hasSavedBattle ? 'PLAY NEW' : 'PLAY';
   }
   updateBpProgressUI();
   updateMenuBadges();
