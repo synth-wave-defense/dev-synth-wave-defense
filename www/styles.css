@@ -83,8 +83,8 @@ html, body {
   min-height: 52px;
   padding: 0 8px 0 12px;
   border-radius: 26px;
-  border: 1px solid rgba(140, 200, 255, 0.18);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(0, 229, 255, 0.22); /* Единый цвет рамки с инспектором */
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55), 0 0 12px rgba(0, 229, 255, 0.08);
   pointer-events: auto;
   gap: 6px;
   z-index: 300;
@@ -515,8 +515,8 @@ html, body {
   overflow: hidden;
   background: rgba(10, 13, 26, 0.94);
   backdrop-filter: blur(14px);
-  border: 1px solid #1f2945;
-  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(0, 229, 255, 0.22); /* Рамка в тон инспектора */
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.75), 0 0 14px rgba(0, 229, 255, 0.08);
   pointer-events: auto;
   padding: 6px 8px;
   max-width: 960px;
@@ -576,18 +576,71 @@ html, body {
   flex: 1;
   min-width: 0;
   background: #0f1322;
-  border: 1.5px solid #202b4a;
+  border: 1px solid rgba(0, 229, 255, 0.22);
   border-radius: 12px;
   cursor: grab;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 3px 2px;
-  gap: 2px;
+  justify-content: center; /* Центрируем контент без расталкивания по краям */
+  padding: 8px 2px 7px 2px; /* Равномерный отступ от верхнего и нижнего бордера */
+  gap: 6px; /* Одинаковый интервал между всеми тремя элементами */
   transition: all 0.2s;
   position: relative;
+  box-sizing: border-box;
 }
+
+/* 1. Название башни наверху */
+.tower-btn .tower-btn-name,
+.tower-btn .tower-btn-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 8.5px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  text-transform: uppercase;
+  line-height: 1;
+  margin: 0;
+}
+
+/* 2. Иконка башни по центру */
+.tower-btn .tower-btn-icon-wrap,
+.tower-btn .tower-btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto; /* Убираем растягивание, чтобы иконка не занимала лишнюю высоту */
+  line-height: 0;
+  margin: 0;
+}
+
+.tower-btn .tower-btn-icon-wrap svg,
+.tower-btn .tower-btn-icon svg {
+  display: block;
+}
+
+/* 3. Стоимость внизу */
+.tower-btn .tower-btn-cost-row,
+.tower-btn .cost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  line-height: 1;
+  margin: 0;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.tower-btn .tower-btn-cost {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
 .tower-btn:active:not(.disabled):not(:disabled),
 .tower-btn.btn-pushed:not(.disabled):not(:disabled) {
   cursor: grabbing;
@@ -3301,7 +3354,8 @@ html, body {
 .upgrade-row-card {
   border-radius: 18px;
   background: rgba(8, 12, 24, 0.6);
-  border: 1px solid rgba(140, 200, 255, 0.16);
+  border: 1px solid rgba(0, 229, 255, 0.22); /* Единый неоновый цвет рамки */
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.06);
   padding: 10px 13px;
   display: flex;
   align-items: center;
@@ -3578,16 +3632,30 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 }
 
 .selected-info {
-  flex: 0.9;
-  min-width: 0;
-  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  background: transparent;
-  padding: 6px 4px 5px 4px;
-  border: none;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  flex: none;
+}
+
+.selected-info .selected-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.selected-info .selected-texts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
 
 .selected-icon-box {
@@ -3657,7 +3725,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 
 /* [CSS107.01] Tower upgrade and sell confirm action buttons */
 .btn-upgrade {
-  flex: 1.3;
+  flex: 1 1 auto; /* Кнопка забирает всё освободившееся пространство */
   min-width: 0;
   height: 100%;
   border-radius: 18px;
@@ -3671,7 +3739,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   gap: 3px;
   cursor: pointer;
   transition: all 0.2s ease;
-  padding: 4px 6px;
+  padding: 0 10px;
 }
 .btn-upgrade:hover:not(:disabled) {
   background: linear-gradient(rgba(0, 229, 255, 0.45), rgba(0, 229, 255, 0.12)), rgba(10, 16, 32, 0.96);
@@ -5374,18 +5442,18 @@ label,
   color: #8ea3c4;
 }
 
-/* Блок характеристик башни: вертикальный список из 3 строк */
+/* Блок характеристик башни: чистый вертикальный список БЕЗ рамки */
 .selected-stats-box {
   display: flex !important;
-  flex-direction: column !important; /* Гарантирует вертикальное расположение 3 строк */
+  flex-direction: column !important;
   align-items: flex-start !important;
   justify-content: center !important;
   gap: 2px !important;
-  padding: 4px 8px !important; /* Уменьшаем отступы с 14px до 8px для экономии ширины */
-  background: rgba(10, 16, 32, 0.65) !important;
-  border: 1px solid rgba(0, 229, 255, 0.22) !important;
-  border-radius: 10px !important;
-  height: calc(100% - 6px) !important;
+  padding: 2px 4px !important; /* Убраны раздутые отступы для освобождения места под кнопку */
+  background: transparent !important; /* Прозрачный фон */
+  border: none !important; /* Рамка полностью удалена */
+  box-shadow: none !important;
+  height: 100% !important;
   flex: 0 0 auto !important;
   box-sizing: border-box !important;
 }
@@ -5407,7 +5475,7 @@ label,
   font-size: 8px !important;
   font-weight: 800 !important;
   letter-spacing: 0.4px !important;
-  color: #00e5ff !important;
+  color: #8ea3c4 !important;
   text-transform: uppercase !important;
   line-height: 1.1 !important;
   white-space: nowrap !important;

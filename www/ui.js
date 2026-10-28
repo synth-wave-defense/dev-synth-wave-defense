@@ -5154,25 +5154,23 @@ function initBuildPanel() {
   const pool = getBuildPanelPool(currentLevel);
   const towerTypes = canonicalOrder.filter(t => pool.includes(t));
 
-  towerTypes.forEach(type => {
+towerTypes.forEach(type => {
     const conf = TOWER_CONFIGS[type];
     const btn = document.createElement('div');
     btn.className = 'tower-btn';
     btn.id = `btn-${type}`;
     btn.setAttribute('data-type', type);
     btn.innerHTML = `
-      <div class="tower-btn-top-row">
-        <div class="tower-btn-icon">
-          ${TOWER_ICONS[type] || ''}
-        </div>
-        <span class="cost">
-          <span class="cost-icon">
-            <svg width="12" height="12" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#ff9100" /><text x="12" y="17.5" font-size="16" font-weight="900" fill="#000000" text-anchor="middle" font-family="Montserrat, sans-serif">$</text></svg>
-          </span>
-          ${conf.cost}
-        </span>
-      </div>
       <span class="tower-btn-title">${TOWER_NAMES[type] || type}</span>
+      <div class="tower-btn-icon">
+        ${TOWER_ICONS[type] || ''}
+      </div>
+      <span class="cost">
+        <span class="cost-icon">
+          <svg width="12" height="12" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#ff9100" /><text x="12" y="17.5" font-size="16" font-weight="900" fill="#000000" text-anchor="middle" font-family="Montserrat, sans-serif">$</text></svg>
+        </span>
+        ${conf.cost}
+      </span>
     `;
 
     btn.addEventListener('mousedown', (e) => {
@@ -5338,7 +5336,7 @@ for (let lvl = 1; lvl <= 3; lvl++) {
     }
   }
 
-// Обновление статов башни в инспекторе (вертикальная колонка: лейбл сверху, значение снизу)
+// Обновление статов башни в инспекторе
   const statsBox = document.getElementById('inspectStatsBox');
   if (statsBox) {
     const curRng = Math.round(t.range);
