@@ -4235,9 +4235,10 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 
 .resume-play-icon {
   flex: none;
-  width: 11px;
-  height: 13px;
-  filter: drop-shadow(0 0 4px rgba(0, 229, 255, 0.8));
+  width: 18px;
+  height: 18px;
+  color: #00e5ff;
+  filter: drop-shadow(0 0 5px rgba(0, 229, 255, 0.85));
 }
 
 .retry-reload-icon {

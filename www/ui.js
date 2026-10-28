@@ -340,6 +340,7 @@ function hideIncomingAlert() {
 }
 
 // [UI108] Viewport canvas resize and camera coordinate transform system.
+// [UI108] Viewport canvas resize and camera coordinate transform system.
 function resizeCanvasAndCamera() {
   const vpWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
   const vpHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
@@ -361,24 +362,43 @@ function resizeCanvasAndCamera() {
     ? bottomEl.getBoundingClientRect().height
     : 110;
 
-  const usableHeight = Math.max(220, vpHeight - topH - bottomH);
+  // 1. Рассчитываем реальный нижний край Top HUD с учетом safe-area и эстетического отступа (10px)
+  const hudRect = (topHudEl && !topHudEl.classList.contains('hidden'))
+    ? topHudEl.getBoundingClientRect()
+    : null;
+  const topSafeLimit = hudRect ? (hudRect.bottom + 10) : (topH + 10);
 
-  const PADDING_CELLS = 1;
-  const paddedWidth = FIELD_WIDTH + (TILE_SIZE * PADDING_CELLS * 2);
-  const paddedHeight = FIELD_HEIGHT + (TILE_SIZE * PADDING_CELLS * 2);
+  // 2. Снизу резервируем место под нижнюю панель и выступающую кнопку GO (~115px)
+  const BOTTOM_RESERVE = Math.max(bottomH, 115);
+  const usableHeight = Math.max(160, vpHeight - topSafeLimit - BOTTOM_RESERVE);
+
+  const paddedWidth = FIELD_WIDTH;
+  const paddedHeight = FIELD_HEIGHT;
 
   const oldBaseZoom = baseZoom || 1.0;
   const zoomRatio = (camZoom && oldBaseZoom) ? (camZoom / oldBaseZoom) : 1.0;
 
+  // Рассчитываем zoom так, чтобы карта полностью помещалась между низом Top HUD и зоной кнопки GO
   baseZoom = Math.min(vpWidth / paddedWidth, usableHeight / paddedHeight);
-  minZoom = baseZoom * 0.90;
-  maxZoom = Math.max(1.8, baseZoom * 2.2);
+  minZoom = baseZoom * 0.95;
+  maxZoom = Math.max(2.2, baseZoom * 2.5);
 
   camZoom = Math.min(maxZoom, Math.max(minZoom, baseZoom * zoomRatio));
 
-  const targetCenterY = topH + (usableHeight / 2);
+  const viewFieldH = FIELD_HEIGHT * camZoom;
+
+  // 3. Выравниваем по горизонтали по центру экрана
   camX = (vpWidth / 2) - (FIELD_WIDTH * camZoom / 2);
-  camY = targetCenterY - (FIELD_HEIGHT * camZoom / 2);
+
+  // 4. Позиционируем по вертикали:
+  // Если карта меньше доступной высоты — размещаем её аккуратно чуть выше середины доступной зоны,
+  // НО строго гарантируем, что верхний край camY никогда не будет выше низа худа (topSafeLimit)
+  if (viewFieldH <= usableHeight) {
+    const desiredCenterY = topSafeLimit + (usableHeight * 0.38);
+    camY = Math.max(topSafeLimit, desiredCenterY - (viewFieldH / 2));
+  } else {
+    camY = topSafeLimit;
+  }
 
   clampCamera();
   if (typeof invalidateGridCache === 'function') {
@@ -394,6 +414,7 @@ function clampCamera() {
 
   const topHudEl = document.getElementById('topHud');
   const bottomEl = document.getElementById('controlsWrapper');
+
   const topH = (topHudEl && !topHudEl.classList.contains('hidden'))
     ? topHudEl.getBoundingClientRect().height
     : 76;
@@ -401,7 +422,13 @@ function clampCamera() {
     ? bottomEl.getBoundingClientRect().height
     : 110;
 
-  const usableHeight = Math.max(100, screenH - topH - bottomH);
+  const hudRect = (topHudEl && !topHudEl.classList.contains('hidden'))
+    ? topHudEl.getBoundingClientRect()
+    : null;
+  const topSafeLimit = hudRect ? (hudRect.bottom + 10) : (topH + 10);
+
+  const BOTTOM_RESERVE = Math.max(bottomH, 115);
+  const usableHeight = Math.max(100, screenH - topSafeLimit - BOTTOM_RESERVE);
 
   if (viewFieldW <= screenW) {
     camX = (screenW - viewFieldW) / 2;
@@ -410,10 +437,11 @@ function clampCamera() {
   }
 
   if (viewFieldH <= usableHeight) {
-    camY = topH + (usableHeight - viewFieldH) / 2;
+    const desiredCenterY = topSafeLimit + (usableHeight * 0.38);
+    camY = Math.max(topSafeLimit, desiredCenterY - (viewFieldH / 2));
   } else {
-    const minY = (screenH - bottomH) - viewFieldH;
-    const maxY = topH;
+    const minY = (screenH - BOTTOM_RESERVE) - viewFieldH;
+    const maxY = topSafeLimit;
     camY = Math.max(minY, Math.min(maxY, camY));
   }
 }
@@ -2842,16 +2870,12 @@ const l1 = MAP_CATALOG['L1'];
   updateMenuBadges();
 
   if (!hasAutoShownDailyLoginModalThisSession) {
-    const hasCleared1Level = (maxUnlockedLevel >= 2) ||
-                              (clearedLevels && clearedLevels.length >= 1) ||
-                              (typeof hasClearedLevelBefore === 'function' && hasClearedLevelBefore(1)) ||
-                              (typeof tutorialSeen !== 'undefined' && tutorialSeen.l1);
     const isNotClaimedToday = !checkDailyLoginState();
     const milestoneScr = document.getElementById('milestoneScreen');
     const isMilestoneHidden = milestoneScr ? milestoneScr.classList.contains('hidden') : true;
     const isNotDismissedThisSession = (typeof dailyLoginDismissedThisSession !== 'undefined') ? !dailyLoginDismissedThisSession : true;
 
-    if (hasCleared1Level && isNotClaimedToday && isMilestoneHidden && isNotDismissedThisSession) {
+    if (isNotClaimedToday && isMilestoneHidden && isNotDismissedThisSession) {
       hasAutoShownDailyLoginModalThisSession = true;
       setTimeout(() => openDailyLoginModal(), 300);
     }

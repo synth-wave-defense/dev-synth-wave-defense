@@ -3413,6 +3413,8 @@ function handleClearSaveClick() {
   timeModTier = 0;
   lastLoginClaimDate = '';
   loginStreakDay = 1;
+  hasAutoShownDailyLoginModalThisSession = false;
+  dailyLoginDismissedThisSession = false;
 
   endlessBestWave = 0;
   endlessDailyRunsUsed = 0;
