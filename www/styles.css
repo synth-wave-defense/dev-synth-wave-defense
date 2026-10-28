@@ -1163,17 +1163,21 @@ html, body {
   border-left-color: #00e5ff;
 }
 
-/* [CSS105] Post-match result screens (victory and defeat) */
+/* [CSS105] Post-match result screens (victory and defeat, pause, settings) */
 .result-screen {
   background: transparent !important;
   backdrop-filter: none !important;
-  padding-top: 0 !important;
-  justify-content: center !important;
-  gap: 10px !important;
+  padding: 0 !important;
+  justify-content: flex-start !important;
+  gap: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y !important;
 }
 .result-screen::before {
   content: '';
-  position: absolute;
+  position: fixed;
   inset: 0;
   background:
     radial-gradient(75% 55% at 50% 45%, transparent 40%, rgba(2, 3, 8, 0.8) 100%),
@@ -1190,16 +1194,25 @@ html, body {
   gap: 10px;
   width: 100%;
   max-width: 100%;
-  padding: 0 16px max(24px, env(safe-area-inset-bottom)) 16px;
-  max-height: 100vh;
-  max-height: 100dvh;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  touch-action: pan-y !important;
-  -webkit-overflow-scrolling: touch;
+  /* margin: auto 0 центрирует контент по вертикали, если он меньше экрана */
+  margin: auto 0;
+  /* padding гарантирует, что контент не спрячется под Top HUD при скролле */
+  padding: max(85px, calc(env(safe-area-inset-top) + 70px)) 16px max(40px, calc(env(safe-area-inset-bottom) + 20px)) 16px;
+  overflow: visible !important;
   box-sizing: border-box !important;
 }
+/* Запрещаем flexbox сплющивать аккордеоны и кнопки при раскрытии */
+.result-stack > * {
+  flex-shrink: 0 !important;
+}
 
+/* Перебиваем глобальный * { touch-action: none }, чтобы свайп пальцем работал по любому дочернему элементу */
+.result-screen,
+.result-screen *,
+.levels-bg,
+.levels-bg * {
+  touch-action: pan-y !important;
+}
 .result-heading {
   display: flex;
   flex-direction: column;
@@ -1849,8 +1862,7 @@ html, body {
 }
 
 #defeatScreen {
-  justify-content: flex-start !important;
-  padding-top: max(160px, calc(env(safe-area-inset-top) + 120px)) !important;
+  /* Убраны жесткие отступы, теперь экран использует общую центровку .result-stack */
   gap: 16px;
 }
 
@@ -2496,11 +2508,17 @@ html, body {
   background: rgba(4, 6, 14, 0.65) !important;
   backdrop-filter: blur(8px) !important;
   padding-top: max(110px, calc(env(safe-area-inset-top) + 90px)) !important;
-  padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
+  padding-bottom: max(70px, calc(env(safe-area-inset-bottom) + 52px)) !important;
   justify-content: flex-start !important;
-  overflow-y: auto;
-  touch-action: pan-y;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y !important;
   gap: 12px !important;
+}
+
+.levels-bg > * {
+  flex-shrink: 0 !important;
 }
 
 .mode-3way-header {
@@ -4417,36 +4435,29 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   -webkit-backdrop-filter: blur(14px);
   border: 1.3px solid #0e3a52;
   border-radius: 18px;
-  overflow: hidden;
+  overflow: visible;
+  flex-shrink: 0 !important;
   box-sizing: border-box !important;
-  touch-action: pan-y !important; /* Разрешаем вертикальный жест прокрутки */
   transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 .loadout-widget-expanded {
   padding: 4px 14px 14px;
   border-top: 1px solid rgba(140, 200, 255, 0.1);
-  max-height: 240px; /* Ограничиваем высоту, чтобы не выталкивало за пределы экрана */
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  touch-action: pan-y !important;
-  -webkit-overflow-scrolling: touch;
+  max-height: none !important;
+  overflow: visible !important;
 }
 .loadout-widget-expanded.hidden { display: none; }
 
 .settings-collapsible-body {
   padding: 4px 14px 14px;
   border-top: 1px solid rgba(140, 200, 255, 0.1);
-  max-height: 280px;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  touch-action: pan-y !important;
-  -webkit-overflow-scrolling: touch;
+  max-height: none !important;
+  overflow: visible !important;
 }
 .settings-collapsible-body.hidden {
   display: none !important;
 }
-
 .loadout-widget.hidden { display: none; }
 
 .loadout-widget-header,
@@ -5526,7 +5537,7 @@ label,
 /* [CSS116] Milestone & Achievement Unlock Modal Card + Live Tower Firing Demo */
 #milestoneScreen {
   z-index: 10005 !important;
-  padding: 16px !important;
+  padding: 0 !important;
 }
 
 #milestoneScreen .result-stack {
