@@ -368,6 +368,8 @@
         </div>
       </div>
 
+      <div class="selected-stats-box" id="inspectStatsBox"></div>
+
       <button class="btn-upgrade" id="inspectUpgradeBtn" onclick="upgradeSelectedTower()">
         <span class="upg-btn-title">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
@@ -1294,16 +1296,43 @@
 </div>
 
 <div class="overlay-screen result-screen hidden" id="gameCompletionModal" style="z-index: 10006;">
-  <div class="result-stack" style="background: rgba(10, 14, 28, 0.96); border: 1px solid rgba(0, 229, 255, 0.35); border-radius: 16px; padding: 24px; max-width: 340px; text-align: center;">
-    <div class="result-heading seq-in" style="margin-bottom: 12px;">
-      <div class="result-title" style="font-size: 22px; color: #00e5ff;">Congratulations, you finished the game!</div>
+  <div class="game-completion-card">
+    <div class="completion-header">
+      <div class="result-kicker completion-kicker">NORMAL CAMPAIGN</div>
+      <div class="result-title completion-title">ALL LEVELS CLEARED!</div>
     </div>
-    <div style="font-size: 14px; color: #f1f5f9; line-height: 1.6; margin-bottom: 18px;">
-      More levels and features are upcoming.<br>
-      To get it faster please give us good rating and provide feedback.<br><br>
-      Thank you!
+
+    <!-- Декоративная неоновая эмблема финала -->
+    <div class="completion-trophy-wrap">
+      <div class="completion-orbit"></div>
+      <div class="completion-trophy-icon">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+          <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+          <path d="M4 22h16"></path>
+          <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+          <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+          <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" fill="rgba(0, 229, 255, 0.25)"></path>
+        </svg>
+      </div>
     </div>
-    <button class="result-btn result-btn-primary" onclick="closeGameCompletionModal()" style="width: 100%;"><span>OK</span></button>
+
+    <!-- Чип-буллиты с новым понятным посылом -->
+    <div class="ms-bullet-list">
+      <div class="ms-bullet-chip completion-chip-cyan">
+        🎉 You've conquered all current levels in <b>Normal Mode</b>!
+      </div>
+      <div class="ms-bullet-chip completion-chip-purple">
+        ♾️ Continue the fight in <b>Endless Arena</b> & <b>Hardcore Mode</b>!
+      </div>
+      <div class="ms-bullet-chip completion-chip-pink">
+        🚀 More <b>Normal Campaign</b> levels and features are coming soon!
+      </div>
+    </div>
+
+    <button class="result-btn completion-ok-btn" onclick="closeGameCompletionModal()">
+      <span>AWESOME</span>
+    </button>
   </div>
 </div>
 

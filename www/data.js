@@ -272,13 +272,41 @@ const TOWER_ICONS = {
 };
 
 const TOWER_UNLOCK_BLURBS = {
-  gun: 'Reliable single-target fire. Cheap, accurate, good against steady lines of enemies.',
-  laser: 'Locks onto one target and burns it down. Excellent against slow, heavily armoured units.',
-  mortar: 'Lobs shells that explode on impact. Strong against tight groups \u2014 but slow, and useless against spread-out swarms.',
-  tesla: 'Chains lightning between nearby enemies. The answer to swarms: one shot can clear a whole clump at once.',
-  stasis: 'Deals no damage \u2014 it slows everything in range instead, buying your other towers precious extra seconds.',
-  melter: 'Heats up the longer it holds one target, ramping to devastating damage. Loses all heat the moment it switches.',
-  railgun: 'Fires a piercing beam down a straight line, hitting every enemy it crosses. Slow, but devastating in long corridors.'
+  gun: [
+    '⚡ Fast single-target fire rate',
+    '💰 Low cost — ideal early defense',
+    '🎯 Reliable vs steady enemy lines'
+  ],
+  laser: [
+    '🔥 Continuous unmissable beam',
+    '🛡️ Melts slow armored targets',
+    '⚡ Instant hit — zero travel time'
+  ],
+  mortar: [
+    '💥 Huge AoE splash explosion',
+    '🔭 Long artillery attack range',
+    '👾 Crushes tight enemy groups'
+  ],
+  tesla: [
+    '⚡ Chains up to 3–5 targets',
+    '🐝 Ultimate swarm wiper',
+    '🎯 Bypasses front-line blockers'
+  ],
+  stasis: [
+    '❄️ Slows all enemies in radius',
+    '⏱️ Multiplies time in kill-zones',
+    '🔄 360° full-circle coverage'
+  ],
+  melter: [
+    '📈 Damage ramps up to x40',
+    '👑 Ultimate Boss & Goliath killer',
+    '🔥 Devastating single-target lock'
+  ],
+  railgun: [
+    '☄️ Pierces ALL enemies in a line',
+    '🔭 Extreme sniper range (220)',
+    '💥 Massive burst damage per shot'
+  ]
 };
 
 const UPGRADE_STEP_COSTS = [6, 7, 8, 9, 10, 11, 12, 13, 15, 19];

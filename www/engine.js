@@ -1744,18 +1744,6 @@ function reallyStartLevel(lvl) {
   lastTime = performance.now();
   initTutorialForLevel(lvl);
   safeTrack('level_start', { level: lvl });
-
-  if (lvl < getLoadoutStartLevel() && !hasClearedLevelBefore(lvl)) {
-    const seenKey = `towerUnlock_l${lvl}`;
-    if (!tutorialSeen[seenKey]) {
-      const newTowers = getNewlyUnlockedTowers(lvl);
-      if (newTowers.length > 0) {
-        showNewTowerBanner(newTowers[0]);
-        tutorialSeen[seenKey] = true;
-        saveGameSoon();
-      }
-    }
-  }
 }
 
 function resetLevelState() {
@@ -2275,7 +2263,7 @@ function triggerVictory() {
   saveGame();
   safeTrack('level_complete', { level: currentLevel, stars, reward, isOverdrive: isOverdriveMode });
 
-  if (!isOverdriveMode && isFirstClear && currentLevel % LEVELS_PER_SECTION === 0) {
+  if (!isOverdriveMode && isFirstClear && typeof hasMilestoneForLevel === 'function' && hasMilestoneForLevel(currentLevel)) {
     showMilestoneSequence(currentLevel, showVictory);
   } else {
     showVictory();

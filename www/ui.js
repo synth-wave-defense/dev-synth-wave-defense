@@ -3937,50 +3937,216 @@ let milestoneOnComplete = null;
 let pendingUpgradeUnlockFx = false;
 let pendingLoadoutRevealFx = false;
 
-function buildMilestoneSteps(clearedLevel) {
-  const steps = [];
-  const sector = Math.ceil(clearedLevel / LEVELS_PER_SECTION);
-  const newTowers = getNewlyUnlockedTowers(clearedLevel + 1);
-  const upgradesUnlockLevel = getLoadoutStartLevel();
-  const upgradesJustUnlocked = (clearedLevel + 1) === upgradesUnlockLevel;
-  const loadoutJustUnlocked = upgradesJustUnlocked;
+function hasMilestoneForLevel(clearedLevel) {
+  return buildMilestoneSteps(clearedLevel).length > 0;
+}
+window.hasMilestoneForLevel = hasMilestoneForLevel;
 
-  if (clearedLevel < TOTAL_LEVELS) {
-    if (clearedLevel === LEVELS_PER_SECTION) {
-      steps.push({
-        kicker: `Sector ${sector}`,
-        title: 'Complete',
-        body: `You've cleared all ${LEVELS_PER_SECTION} levels of the first sector.<br><br>` +
-              `<b>Global Upgrades</b> are now unlocked \u2014 spend diamonds there to permanently ` +
-              `strengthen every tower and your base, for every battle from here on.`
-      });
-    } else {
-      steps.push({
-        kicker: `Sector ${sector}`,
-        title: 'Complete',
-        body: `Sector ${sector} cleared. The next sector brings tougher enemies \u2014 and a new tower.`
-      });
-    }
+// Генератор живой мини-сцены: башня слева стреляет по врагу справа
+function buildTowerFiringDemoHtml(type) {
+  const conf = TOWER_CONFIGS[type] || TOWER_CONFIGS.gun;
+  const col = conf.color || '#00e5ff';
+  const towerSvg = buildTowerIconSvg(type, 2, 54, 0);
+
+  let fxSvg = '';
+  let targetHtml = `<div class="ms-demo-mob" style="--mob-col:#f05f9f;"></div>`;
+
+  if (type === 'gun') {
+    fxSvg = `
+      <svg class="ms-demo-fx-svg" viewBox="0 0 240 90">
+        <circle class="ms-fx-bullet b1" cx="62" cy="45" r="3.5" fill="#ffffff" stroke="${col}" stroke-width="2"/>
+        <circle class="ms-fx-bullet b2" cx="62" cy="45" r="3.5" fill="#ffffff" stroke="${col}" stroke-width="2"/>
+        <circle class="ms-fx-impact" cx="186" cy="45" r="10" fill="none" stroke="${col}" stroke-width="2"/>
+      </svg>`;
+  } else if (type === 'laser') {
+    fxSvg = `
+      <svg class="ms-demo-fx-svg" viewBox="0 0 240 90" preserveAspectRatio="none">
+        <!-- Линия от самого острия дула (x1=60) до центра круга мишени (x2=204) -->
+        <line class="ms-fx-laser-glow" x1="60" y1="45" x2="204" y2="45" stroke="${col}"/>
+        <line class="ms-fx-laser-core" x1="60" y1="45" x2="204" y2="45" stroke="#ffffff"/>
+      </svg>`;
+  } else if (type === 'mortar') {
+    fxSvg = `
+      <svg class="ms-demo-fx-svg" viewBox="0 0 240 90">
+        <path d="M 58 42 Q 122 -2 186 45" fill="none" stroke="${col}" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.45"/>
+        <circle class="ms-fx-mortar-shell" cx="0" cy="0" r="5" fill="${col}"/>
+        <circle class="ms-fx-splash-ring" cx="186" cy="45" r="24" fill="none" stroke="${col}" stroke-width="2.5"/>
+      </svg>`;
+    targetHtml = `
+      <div class="ms-demo-mob-group">
+        <div class="ms-demo-mob sm" style="--mob-col:#f05f9f;"></div>
+        <div class="ms-demo-mob sm" style="--mob-col:#ff9100;"></div>
+        <div class="ms-demo-mob sm" style="--mob-col:#f05f9f;"></div>
+      </div>`;
+  } else if (type === 'tesla') {
+    fxSvg = `
+      <svg class="ms-demo-fx-svg" viewBox="0 0 240 90">
+        <polyline class="ms-fx-zap" points="58,45 92,32 122,55 154,28 182,45 204,26" fill="none" stroke="${col}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline class="ms-fx-zap core" points="58,45 92,32 122,55 154,28 182,45 204,26" fill="none" stroke="#ffffff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`;
+    targetHtml = `
+      <div class="ms-demo-mob-group">
+        <div class="ms-demo-mob diamond" style="--mob-col:#00ffcc;"></div>
+        <div class="ms-demo-mob diamond" style="--mob-col:#00ffcc;"></div>
+      </div>`;
+  } else if (type === 'stasis') {
+    fxSvg = `
+      <svg class="ms-demo-fx-svg" viewBox="0 0 240 90">
+        <circle class="ms-fx-stasis-wave w1" cx="46" cy="45" r="16" fill="none" stroke="${col}" stroke-width="2.2"/>
+        <circle class="ms-fx-stasis-wave w2" cx="46" cy="45" r="16" fill="none" stroke="${col}" stroke-width="1.6"/>
+      </svg>`;
+    targetHtml = `<div class="ms-demo-mob slow" style="--mob-col:#38bdf8;"><span class="ms-ice-badge">❄</span></div>`;
+  } else if (type === 'melter') {
+    fxSvg = `
+      <svg class="ms-demo-fx-svg" viewBox="0 0 240 90">
+        <line class="ms-fx-melter-beam" x1="60" y1="45" x2="186" y2="45" stroke="${col}" stroke-linecap="round"/>
+        <line class="ms-fx-laser-core" x1="60" y1="45" x2="186" y2="45" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+        <circle class="ms-fx-burn" cx="186" cy="45" r="12" fill="${col}"/>
+      </svg>`;
+    targetHtml = `<div class="ms-demo-mob boss" style="--mob-col:#a06fdc;"></div>`;
+  } else if (type === 'railgun') {
+    fxSvg = `
+      <svg class="ms-demo-fx-svg" viewBox="0 0 240 90">
+        <line class="ms-fx-rail-glow" x1="56" y1="45" x2="232" y2="45" stroke="${col}" stroke-width="10" stroke-linecap="round"/>
+        <line class="ms-fx-rail-core" x1="56" y1="45" x2="232" y2="45" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round"/>
+      </svg>`;
+    targetHtml = `
+      <div class="ms-demo-mob-line">
+        <div class="ms-demo-mob sm" style="--mob-col:#f05f9f;"></div>
+        <div class="ms-demo-mob sm" style="--mob-col:#a06fdc;"></div>
+      </div>`;
   }
 
-  newTowers.forEach(type => {
+  return `
+    <div class="ms-firing-stage" style="--stage-col:${col};">
+      <div class="ms-stage-grid"></div>
+      <div class="ms-stage-tower">${towerSvg}</div>
+      ${fxSvg}
+      <div class="ms-stage-target">${targetHtml}</div>
+    </div>`;
+}
+
+// Генератор анимированных бейджей для режимов и фич
+function buildFeatureVisualHtml(feature, color) {
+  let iconSvg = '';
+  if (feature === 'tech_tree') {
+    iconSvg = `<svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21 v-5 l-4 -3.5 v-4 m4 7.5 l4 -3.5 v-4 m-4 7.5 v-8"/><circle cx="12" cy="21" r="1.8" fill="${color}"/><circle cx="8" cy="8.5" r="1.8" fill="${color}"/><circle cx="16" cy="8.5" r="1.8" fill="${color}"/><circle cx="12" cy="5" r="1.8" fill="${color}"/></svg>`;
+  } else if (feature === 'endless') {
+    iconSvg = `<svg width="54" height="36" viewBox="0 0 16 10" fill="none"><path d="M4 2 C1.8 2 1 3.3 1 5 C1 6.7 1.8 8 4 8 C6.8 8 9.2 2 12 2 C14.2 2 15 3.3 15 5 C15 6.7 14.2 8 12 8 C9.2 8 6.8 2 4 2 Z" stroke="${color}" stroke-width="1.6" stroke-linecap="round"/></svg>`;
+  } else if (feature === 'hardcore') {
+    iconSvg = `<svg width="44" height="44" viewBox="0 0 16 16" fill="${color}"><path d="M8 14.5 L2.8 9.2 C1.2 7.6 1.2 5 3 3.2 C4.5 1.7 6.8 2 7.8 3.6 C8.8 2 11.1 1.7 12.6 3.2 C14.4 5 14.4 7.6 12.8 9.2 Z"/></svg>`;
+  } else if (feature === 'ascended') {
+    iconSvg = `<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.3)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
+  } else {
+    iconSvg = `<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="${color}33"/></svg>`;
+  }
+
+  return `
+    <div class="ms-feature-showcase" style="--feat-col:${color};">
+      <div class="ms-feature-orbit"></div>
+      <div class="ms-feature-core">${iconSvg}</div>
+    </div>`;
+}
+
+function buildMilestoneSteps(clearedLevel) {
+  const steps = [];
+  const nextLvl = clearedLevel + 1;
+  const newTowers = getNewlyUnlockedTowers(nextLvl);
+  const upgradesUnlockLevel = getLoadoutStartLevel(); // 11
+  const loadoutJustUnlocked = (nextLvl === upgradesUnlockLevel);
+
+  // 1. Закрытие Главы и открытие глобальных систем (10, 20, 30, 40)
+  if (clearedLevel === 10) {
     steps.push({
-      kicker: 'New Tower',
+      kicker: 'CHAPTER 1 CLEARED',
+      title: 'TECH TREE',
+      color: '#00e5ff',
+      visual: { kind: 'feature', feature: 'tech_tree' },
+      bullets: [
+        '💎 Spend Diamonds on permanent upgrades',
+        '⚡ Boost Tower Damage, Speed & Range',
+        '🛡️ Increase starting Base HP & Gold Bounty'
+      ]
+    });
+  } else if (clearedLevel === 20) {
+    steps.push({
+      kicker: 'NEW MODE UNLOCKED',
+      title: 'HARDCORE',
+      color: '#f05f9f',
+      visual: { kind: 'feature', feature: 'hardcore' },
+      bullets: [
+        '💔 1 Base HP — zero margin for error',
+        '🔥 1.2x faster & Enraged enemies',
+        '🔮 Earn rare Prisms & massive Diamond loot'
+      ]
+    });
+  } else if (clearedLevel === 30) {
+    steps.push({
+      kicker: 'CHAPTER 3 CLEARED',
+      title: 'ASCENSION',
+      color: '#d946ef',
+      visual: { kind: 'feature', feature: 'ascended' },
+      bullets: [
+        '🔮 Ascended Tech Tree (Lv.11–15) unlocked',
+        '⚡ Unlock infinite SYNTH power scaling',
+        '🔄 Prism Deconstruction unlocked in Shop'
+      ]
+    });
+  } else if (clearedLevel === 40) {
+    steps.push({
+      kicker: 'CHAPTER 4 CLEARED',
+      title: 'FINAL CHAPTER',
+      color: '#00e5ff',
+      visual: { kind: 'feature', feature: 'sector' },
+      bullets: [
+        '⚠️ Chapter 5: Apex Sector unlocked',
+        '⚡ EMP Bombers & Overlord Bosses ahead',
+        '🏆 Push through to the final Level 50'
+      ]
+    });
+  }
+
+  // 2. Открытие Endless Arena после 15-го уровня
+  if (clearedLevel === 15) {
+    steps.push({
+      kicker: 'NEW MODE UNLOCKED',
+      title: 'ENDLESS ARENA',
+      color: '#d946ef',
+      visual: { kind: 'feature', feature: 'endless' },
+      bullets: [
+        '♾️ Survive infinite escalating waves',
+        '💎 Earn +2 Diamonds for every wave cleared',
+        '🔮 +1 Prism every 10 waves & record bonuses'
+      ]
+    });
+  }
+
+  // 3. Открытие любой новой башни (уровни 4, 7, 11, 21, 31, 41) с живой демонстрацией стрельбы
+  newTowers.forEach(type => {
+    const conf = TOWER_CONFIGS[type] || {};
+    steps.push({
+      kicker: 'NEW TOWER UNLOCKED',
       title: TOWER_NAMES[type] || type,
-      art: { type },
-      body: TOWER_UNLOCK_BLURBS[type] || 'A new tower is now available in battle.'
+      color: conf.color || '#00e5ff',
+      visual: { kind: 'tower_demo', type },
+      bullets: Array.isArray(TOWER_UNLOCK_BLURBS[type]) ? TOWER_UNLOCK_BLURBS[type] : []
     });
   });
 
+  // 4. Открытие выбора Loadout (после 10 уровня, когда башен стало больше 3)
   if (loadoutJustUnlocked) {
     steps.push({
-      kicker: 'Choose Your',
-      title: 'Loadout',
-      body: `You now have more than ${LOADOUT_SIZE} towers \u2014 but only <b>${LOADOUT_SIZE}</b> can be ` +
-            `taken into a battle.<br><br>Pick your three below. You can change them before every level.`,
+      kicker: 'TACTICAL DECK',
+      title: '3-TOWER LOADOUT',
+      color: '#f59e0b',
+      bullets: [
+        `🎯 Bring up to ${LOADOUT_SIZE} towers into each battle`,
+        '🔄 Swap your active deck before any level'
+      ],
       embed: 'loadout'
     });
   }
+
   return steps;
 }
 
@@ -4001,22 +4167,49 @@ function renderMilestoneStep() {
   const step = milestoneSteps[milestoneIndex];
   if (!step) return;
   const scr = document.getElementById('milestoneScreen');
-  document.getElementById('milestoneKicker').textContent = step.kicker;
-  document.getElementById('milestoneTitle').textContent = step.title;
-  document.getElementById('milestoneBody').innerHTML = step.body || '';
+  const accentColor = step.color || '#00e5ff';
 
+  const stack = scr.querySelector('.result-stack');
+  if (stack) {
+    stack.style.setProperty('--ms-accent', accentColor);
+  }
+
+  const kickerEl = document.getElementById('milestoneKicker');
+  const titleEl = document.getElementById('milestoneTitle');
+  if (kickerEl) {
+    kickerEl.textContent = step.kicker || 'UNLOCKED';
+    kickerEl.style.color = accentColor;
+  }
+  if (titleEl) {
+    titleEl.textContent = step.title || '';
+    titleEl.style.textShadow = `0 0 16px ${accentColor}99`;
+  }
+
+  // Отрисовка визуальной сцены (стрельба башни или голограмма режима)
   const art = document.getElementById('milestoneArt');
-  if (step.art) {
-    const conf = TOWER_CONFIGS[step.art.type];
-    const col = (conf && conf.color) || '#00e5ff';
-    art.innerHTML = `
-      <div class="milestone-art-ring" style="border-color:${col}; box-shadow:0 0 30px ${col}66;">
-        ${buildTowerIconSvg(step.art.type, 1, 58)}
-      </div>`;
-    art.classList.remove('hidden');
-  } else {
-    art.innerHTML = '';
-    art.classList.add('hidden');
+  if (art) {
+    if (step.visual && step.visual.kind === 'tower_demo') {
+      art.innerHTML = buildTowerFiringDemoHtml(step.visual.type);
+      art.classList.remove('hidden');
+    } else if (step.visual && step.visual.kind === 'feature') {
+      art.innerHTML = buildFeatureVisualHtml(step.visual.feature, accentColor);
+      art.classList.remove('hidden');
+    } else {
+      art.innerHTML = '';
+      art.classList.add('hidden');
+    }
+  }
+
+  // Отрисовка кратких буллитов-плюсов
+  const bodyEl = document.getElementById('milestoneBody');
+  if (bodyEl) {
+    if (Array.isArray(step.bullets) && step.bullets.length > 0) {
+      bodyEl.innerHTML = `<div class="ms-bullet-list">` +
+        step.bullets.map((b, i) => `<div class="ms-bullet-chip" style="animation-delay:${(0.12 + i * 0.08).toFixed(2)}s">${b}</div>`).join('') +
+        `</div>`;
+    } else {
+      bodyEl.innerHTML = step.body || '';
+    }
   }
 
   const embed = document.getElementById('milestoneEmbed');
@@ -4027,12 +4220,24 @@ function renderMilestoneStep() {
     embed.classList.add('hidden');
   }
 
-  scr.querySelectorAll('.seq-in, .milestone-art').forEach(el => {
+  const okBtn = document.getElementById('milestoneOkBtn');
+  if (okBtn) {
+    const isLast = (milestoneIndex >= milestoneSteps.length - 1);
+    const stepIndicator = milestoneSteps.length > 1 ? ` (${milestoneIndex + 1}/${milestoneSteps.length})` : '';
+    okBtn.innerHTML = `<span>${isLast ? 'AWESOME' : 'NEXT'}${stepIndicator}</span>`;
+    // Сбрасываем инлайновые переопределения — кнопка управляется через CSS и переменную --ms-accent
+    okBtn.style.borderColor = '';
+    okBtn.style.boxShadow = '';
+  }
+
+scr.querySelectorAll('.seq-in, .milestone-art').forEach(el => {
     el.style.animation = 'none';
     void el.offsetWidth;
     el.style.animation = '';
   });
 }
+
+let teslaDemoAnimId = null;
 
 function renderMilestoneLoadoutGrid() {
   const grid = document.getElementById('milestoneLoadoutGrid');
@@ -5085,7 +5290,7 @@ function updateInspectUI() {
     lvlTextEl.textContent = `LVL ${t.level || 1}`;
   }
 
-  for (let lvl = 1; lvl <= 3; lvl++) {
+for (let lvl = 1; lvl <= 3; lvl++) {
     const seg = document.getElementById(`lvlBar${lvl}`);
     if (seg) {
       if (lvl <= t.level) {
@@ -5097,6 +5302,35 @@ function updateInspectUI() {
         seg.style.background = 'rgba(140, 200, 255, 0.2)';
         seg.style.boxShadow = 'none';
       }
+    }
+  }
+
+// Обновление статов башни в инспекторе (вертикальная колонка: лейбл сверху, значение снизу)
+  const statsBox = document.getElementById('inspectStatsBox');
+  if (statsBox) {
+    const curRng = Math.round(t.range);
+    if (t.type === 'stasis') {
+      const slowPct = Math.round((t.slowFactor !== undefined ? t.slowFactor : 0.3) * 100);
+      const dur = ((t.slowDuration !== undefined ? t.slowDuration : 1.4)).toFixed(1);
+      statsBox.innerHTML = `
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">SLOW:</span> <span class="inspect-stat-val">${slowPct}%</span></div>
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">DUR:</span> <span class="inspect-stat-val">${dur}s</span></div>
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">RNG:</span> <span class="inspect-stat-val">${curRng}</span></div>
+      `;
+    } else if (t.fireRate) {
+      const curDmg = +(t.damage || 0).toFixed(1);
+      const curSpd = +(t.fireRate || 0).toFixed(2);
+      statsBox.innerHTML = `
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">DMG:</span> <span class="inspect-stat-val">${curDmg}</span></div>
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">SPD:</span> <span class="inspect-stat-val">${curSpd}s</span></div>
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">RNG:</span> <span class="inspect-stat-val">${curRng}</span></div>
+      `;
+    } else {
+      const curDmg = +(t.damage || 0).toFixed(1);
+      statsBox.innerHTML = `
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">DPS:</span> <span class="inspect-stat-val">${curDmg}</span></div>
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">RNG:</span> <span class="inspect-stat-val">${curRng}</span></div>
+      `;
     }
   }
 
