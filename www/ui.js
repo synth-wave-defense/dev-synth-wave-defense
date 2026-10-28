@@ -436,11 +436,20 @@ function clampCamera() {
     camX = Math.max(screenW - viewFieldW, Math.min(0, camX));
   }
 
+  // Запас подъёма вверх: 2 клетки сетки с учётом текущего зума камеры
+  const EXTRA_PAN_UP = (TILE_SIZE * 2) * camZoom;
+
   if (viewFieldH <= usableHeight) {
-    const desiredCenterY = topSafeLimit + (usableHeight * 0.38);
-    camY = Math.max(topSafeLimit, desiredCenterY - (viewFieldH / 2));
+    // Дефолтная точка привязки по центру/верху
+    const defaultY = Math.max(topSafeLimit, (topSafeLimit + (usableHeight * 0.38)) - (viewFieldH / 2));
+    // Разрешаем игроку свайпом поднять карту на 2 клетки выше дефолтного положения,
+    // но не опускать ниже исходной безопасной позиции
+    const minY = defaultY - EXTRA_PAN_UP;
+    const maxY = defaultY;
+    camY = Math.max(minY, Math.min(maxY, camY));
   } else {
-    const minY = (screenH - BOTTOM_RESERVE) - viewFieldH;
+    // Для высоких/длинных карт сдвигаем нижний лимит ещё на 2 клетки вверх
+    const minY = (screenH - BOTTOM_RESERVE) - viewFieldH - EXTRA_PAN_UP;
     const maxY = topSafeLimit;
     camY = Math.max(minY, Math.min(maxY, camY));
   }
