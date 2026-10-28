@@ -1361,12 +1361,15 @@
     </div>
     <div class="result-stars-row" id="victoryStarsRow"></div>
     <div class="result-reward-chip seq-in seq-d3" id="victoryRewardBox">
-      <span class="reward-amount" id="victoryRewardVal">+2</span>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="flex:none;">
-        <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/>
-        <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
-      </svg>
       <span class="reward-label" id="victoryRewardBadgeType">FARM REWARD</span>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span class="reward-amount" id="victoryRewardVal">+2</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="flex:none;">
+          <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/>
+          <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
+        </svg>
+      </div>
+    </div>
     </div>
     <button class="result-btn victory-claim-btn seq-in seq-d4" id="claimX2Btn" onclick="claimX2Reward()">
       <svg width="18" height="14" viewBox="0 0 24 24" style="flex:none; margin-right:6px;"><rect x="2" y="4" width="20" height="16" rx="3" fill="none" stroke="#ffffff" stroke-width="2"/><polygon points="10,9 16,12 10,15" fill="#ffffff"/></svg>

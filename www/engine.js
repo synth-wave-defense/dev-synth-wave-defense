@@ -2061,7 +2061,7 @@ function claimOverdriveBonusPrism() {
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 3px;">
           <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.35)"/>
           <polyline points="3 12 12 15 21 12"/>
-          <line x1="12" y1="2" x2="12" y2="22"/>
+          <line x1="12" y1="22" x2="12" y2="22"/>
         </svg>`;
       claimBtn.innerHTML = `<span style="display:inline-flex; align-items:center;">CLAIMED +1 ${prismSvg}</span>`;
     }
@@ -2079,13 +2079,17 @@ function claimOverdriveBonusPrism() {
 function restoreNormalVictoryRewardBox() {
   const rewardBox = document.getElementById('victoryRewardBox');
   if (rewardBox) {
+    rewardBox.style.setProperty('--chip-border', '#00e5ff');
+    rewardBox.style.setProperty('--chip-label', '#8ef3ff');
     rewardBox.innerHTML = `
-      <span class="reward-amount" id="victoryRewardVal">+2</span>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round">
-        <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/>
-        <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
-      </svg>
       <span class="reward-label" id="victoryRewardBadgeType">DIAMONDS</span>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span class="reward-amount" id="victoryRewardVal">+2</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round">
+          <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/>
+          <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
+        </svg>
+      </div>
     `;
   }
 }
@@ -2184,28 +2188,30 @@ function triggerVictory() {
 
     const rewardBox = document.getElementById('victoryRewardBox');
     if (rewardBox) {
+      rewardBox.style.setProperty('--chip-border', '#f05f9f');
+      rewardBox.style.setProperty('--chip-label', '#ffd1f4');
+
+      const diamondSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="flex:none; filter: drop-shadow(0 0 5px rgba(0,229,255,0.7));"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
+      const prismSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="flex:none; filter: drop-shadow(0 0 5px rgba(217,70,239,0.7));"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="22" x2="12" y2="22"/></svg>`;
+
       if (gainedPrisms > 0) {
         rewardBox.innerHTML = `
-          <span class="reward-amount" id="victoryRewardVal">+${gainedDiamonds}</span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round">
-            <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/>
-            <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
-          </svg>
-          <span class="reward-amount" style="margin-left:6px; color:#d946ef;">+${gainedPrisms}</span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round">
-            <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/>
-            <polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/>
-          </svg>
-          <span class="reward-label" style="color:#ff2a6d; margin-left:6px;">${odRewardLabel}</span>
+          <span class="reward-label" id="victoryRewardBadgeType">${odRewardLabel}</span>
+          <div class="reward-row-content">
+            <span class="reward-amount" id="victoryRewardVal">+${gainedDiamonds}</span>
+            ${diamondSvg}
+            <span class="reward-sep">|</span>
+            <span class="reward-amount">+${gainedPrisms}</span>
+            ${prismSvg}
+          </div>
         `;
       } else {
         rewardBox.innerHTML = `
-          <span class="reward-amount" id="victoryRewardVal">+${gainedDiamonds}</span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round">
-            <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/>
-            <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
-          </svg>
-          <span class="reward-label" style="color:#ff2a6d; margin-left:6px;">${odRewardLabel}</span>
+          <span class="reward-label" id="victoryRewardBadgeType">${odRewardLabel}</span>
+          <div class="reward-row-content">
+            <span class="reward-amount" id="victoryRewardVal">+${gainedDiamonds}</span>
+            ${diamondSvg}
+          </div>
         `;
       }
     }
@@ -2509,13 +2515,23 @@ function updateDefeatWaveLine() {
 
     if (rewardsBox) rewardsBox.classList.remove('hidden');
 
-    // 6. Текст REWARDS фиолетовым цветом
+    // 6. Упаковываем награды Endless в кибер-плашку (стиль Normal Mode)
     if (lootLine) {
-      // Иконки со своими оригинальными цветами:
-      const diamondSvg = `<svg class="loot-res-svg diamond" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: -2px; margin-left: 2px;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.3)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
-      const prismSvg = `<svg class="loot-res-svg prism" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: -2px; margin-left: 2px;"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.3)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="22" x2="12" y2="22"/></svg>`;
+      const diamondSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="filter: drop-shadow(0 0 5px rgba(0,229,255,0.7));"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
+      const prismSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="filter: drop-shadow(0 0 5px rgba(217,70,239,0.7));"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="22" x2="12" y2="22"/></svg>`;
 
-      lootLine.innerHTML = `<span style="color:#ffffff; font-weight:800; margin-right:6px; letter-spacing:0.5px;">REWARDS:</span><span style="color:#ffffff; font-weight:700;">+${lastEndlessEarnedDiamonds}</span> ${diamondSvg} <span class="loot-line-sep" style="color:rgba(255,255,255,0.3); margin: 0 6px;">|</span><span style="color:#ffffff; font-weight:700;">+${totalPrismsGranted}</span> ${prismSvg}`;
+      lootLine.innerHTML = `
+        <div class="result-reward-chip" style="--chip-border: #d946ef; --chip-label: #f5d0fe; margin: 10px auto 8px auto;">
+          <span class="reward-label">REWARDS</span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="reward-amount">+${lastEndlessEarnedDiamonds}</span>
+            ${diamondSvg}
+            <span style="color: rgba(255, 255, 255, 0.2); font-weight: 300; margin: 0 2px;">|</span>
+            <span class="reward-amount" style="color:#f5d0fe;">+${totalPrismsGranted}</span>
+            ${prismSvg}
+          </div>
+        </div>
+      `;
     }
 
     // 7. Кнопка с белой иконкой видеорекламы и текстом CLAIM x2

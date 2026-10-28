@@ -1538,29 +1538,90 @@ html, body {
   40%  { opacity: 1; transform: scale(1.5); }
   100% { opacity: 0; transform: scale(2); }
 }
+/* Вариант 1.1: Скруглённый планшет со статусной плашкой-бейджем */
 .result-reward-chip {
+  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 9px 20px;
-  border-radius: 26px;
-  background: rgba(8, 12, 24, 0.55);
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(0, 229, 255, 0.45);
-  margin-bottom: 4px;
+  justify-content: center;
+  gap: 2px;
+  padding: 14px 22px 10px 22px;
+  width: fit-content;
+  min-width: 170px;
+  max-width: 280px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #0c1730 0%, #050813 100%);
+  border: 1.4px solid var(--chip-border, #00e5ff);
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.35), inset 0 0 10px rgba(0, 229, 255, 0.08);
+  margin: 14px auto 4px auto;
+  pointer-events: none;
+  user-select: none;
+  overflow: visible !important;
 }
+
+/* Статусный бейдж жестко привязан к верхнему краю рамки */
+.result-reward-chip .reward-label {
+  position: absolute !important;
+  top: -9px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  background: #050813 !important;
+  border: 1.2px solid var(--chip-border, #00e5ff) !important;
+  border-radius: 8px !important;
+  padding: 1px 10px !important;
+  font-family: 'Montserrat', sans-serif !important;
+  font-size: 8.5px !important;
+  font-weight: 900 !important;
+  letter-spacing: 1.5px !important;
+  color: var(--chip-label, #8ef3ff) !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  z-index: 2;
+}
+
+/* Линия-разделитель под статусом */
+.result-reward-chip::after {
+  content: '';
+  width: 80%;
+  height: 1px;
+  background: rgba(140, 200, 255, 0.15);
+  margin-bottom: 2px;
+}
+
+/* Принудительный горизонтальный ряд для наград (чтобы не ломались в столбик) */
+.result-reward-chip > div,
+.result-reward-chip .reward-row-content {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  white-space: nowrap !important;
+}
+
+/* Разделитель между ресурсами в строке */
+.result-reward-chip .reward-sep {
+  color: rgba(255, 255, 255, 0.3);
+  font-weight: 300;
+  margin: 0 2px;
+  user-select: none;
+}
+
+/* Цифра и ресурсы */
 .result-reward-chip .reward-amount {
   font-family: 'Montserrat', sans-serif;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 900;
-  color: #ffffff;
+  color: #ffffff !important;
+  display: inline-block !important;
+  line-height: 1 !important;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.6);
 }
-.result-reward-chip .reward-label {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-  color: #8ef3ff;
+
+.result-reward-chip svg {
+  vertical-align: middle;
+  filter: drop-shadow(0 0 6px rgba(0, 229, 255, 0.8));
 }
 .result-skip-btn {
   background: none;
@@ -5313,65 +5374,59 @@ label,
   color: #8ea3c4;
 }
 
-/* Блок характеристик башни в инспекторе (вертикальные колонки) */
+/* Блок характеристик башни: вертикальный список из 3 строк */
 .selected-stats-box {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 4px;
-  padding: 6px 14px;
-  background: rgba(10, 16, 32, 0.65);
-  border: 1px solid rgba(0, 229, 255, 0.22);
-  border-radius: 12px;
-  min-height: 48px;
-  flex: none;
+  display: flex !important;
+  flex-direction: column !important; /* Гарантирует вертикальное расположение 3 строк */
+  align-items: flex-start !important;
+  justify-content: center !important;
+  gap: 2px !important;
+  padding: 4px 8px !important; /* Уменьшаем отступы с 14px до 8px для экономии ширины */
+  background: rgba(10, 16, 32, 0.65) !important;
+  border: 1px solid rgba(0, 229, 255, 0.22) !important;
+  border-radius: 10px !important;
+  height: calc(100% - 6px) !important;
+  flex: 0 0 auto !important;
+  box-sizing: border-box !important;
 }
 
+/* Каждая отдельная строка: имя слева, цифра справа */
 .inspect-stat-item {
-  display: flex;
-  flex-direction: row;
-  align-items: baseline;
-  justify-content: flex-start;
-  gap: 6px;
-  min-width: auto;
+  display: flex !important;
+  flex-direction: row !important; /* Лейбл и значение в одну строку */
+  align-items: baseline !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  gap: 5px !important;
+  min-width: 58px !important; /* Компактная ширина всей колонки */
+  flex: none !important;
 }
 
 .inspect-stat-lbl {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 8.5px;
-  font-weight: 800;
-  letter-spacing: 0.8px;
-  color: #00e5ff;
-  text-transform: uppercase;
-  line-height: 1;
+  font-family: 'Montserrat', sans-serif !important;
+  font-size: 8px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.4px !important;
+  color: #00e5ff !important;
+  text-transform: uppercase !important;
+  line-height: 1.1 !important;
+  white-space: nowrap !important;
 }
 
 .inspect-stat-val {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 13px;
-  font-weight: 900;
-  color: #ffffff;
-  letter-spacing: 0.3px;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  font-family: 'Montserrat', sans-serif !important;
+  font-size: 10.5px !important;
+  font-weight: 900 !important;
+  color: #ffffff !important;
+  letter-spacing: 0.2px !important;
+  line-height: 1.1 !important;
+  font-variant-numeric: tabular-nums !important;
+  white-space: nowrap !important;
 }
 
-@media (max-width: 480px) {
-  .selected-stats-box {
-    gap: 8px;
-    padding: 4px 8px;
-  }
-  .inspect-stat-item {
-    min-width: 32px;
-  }
-  .inspect-stat-lbl {
-    font-size: 7.5px;
-  }
-  .inspect-stat-val {
-    font-size: 11px;
-  }
+/* Также слегка уменьшаем пустую ширину кнопки закрытия (✕) для высвобождения места */
+.btn-close-inspect {
+  width: 42px !important; /* Освобождает дополнительные 10px под кнопки Upgrade и Sell */
 }
 
 /* [CSS116] Milestone & Achievement Unlock Modal Card + Live Tower Firing Demo */

@@ -5346,23 +5346,23 @@ for (let lvl = 1; lvl <= 3; lvl++) {
       const slowPct = Math.round((t.slowFactor !== undefined ? t.slowFactor : 0.3) * 100);
       const dur = ((t.slowDuration !== undefined ? t.slowDuration : 1.4)).toFixed(1);
       statsBox.innerHTML = `
-        <div class="inspect-stat-item"><span class="inspect-stat-lbl">SLOW:</span> <span class="inspect-stat-val">${slowPct}%</span></div>
-        <div class="inspect-stat-item"><span class="inspect-stat-lbl">DUR:</span> <span class="inspect-stat-val">${dur}s</span></div>
-        <div class="inspect-stat-item"><span class="inspect-stat-lbl">RNG:</span> <span class="inspect-stat-val">${curRng}</span></div>
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">SLOW:</span><span class="inspect-stat-val">${slowPct}%</span></div>
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">DUR:</span><span class="inspect-stat-val">${dur}s</span></div>
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">RNG:</span><span class="inspect-stat-val">${curRng}</span></div>
       `;
     } else if (t.fireRate) {
       const curDmg = +(t.damage || 0).toFixed(1);
       const curSpd = +(t.fireRate || 0).toFixed(2);
       statsBox.innerHTML = `
-        <div class="inspect-stat-item"><span class="inspect-stat-lbl">DMG:</span> <span class="inspect-stat-val">${curDmg}</span></div>
-        <div class="inspect-stat-item"><span class="inspect-stat-lbl">SPD:</span> <span class="inspect-stat-val">${curSpd}s</span></div>
-        <div class="inspect-stat-item"><span class="inspect-stat-lbl">RNG:</span> <span class="inspect-stat-val">${curRng}</span></div>
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">DMG:</span><span class="inspect-stat-val">${curDmg}</span></div>
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">SPD:</span><span class="inspect-stat-val">${curSpd}s</span></div>
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">RNG:</span><span class="inspect-stat-val">${curRng}</span></div>
       `;
     } else {
       const curDmg = +(t.damage || 0).toFixed(1);
       statsBox.innerHTML = `
-        <div class="inspect-stat-item"><span class="inspect-stat-lbl">DPS:</span> <span class="inspect-stat-val">${curDmg}</span></div>
-        <div class="inspect-stat-item"><span class="inspect-stat-lbl">RNG:</span> <span class="inspect-stat-val">${curRng}</span></div>
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">DPS:</span><span class="inspect-stat-val">${curDmg}</span></div>
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">RNG:</span><span class="inspect-stat-val">${curRng}</span></div>
       `;
     }
   }
