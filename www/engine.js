@@ -2874,7 +2874,10 @@ function buildTowerAt(type, c, r) {
       slowDuration: conf.slowDuration || 1.4,
       disabledTimer: 0,
       melterFireTimer: 0,
-      melterCoolingTimer: 0
+      melterCoolingTimer: 0,
+      accumDamage: 0,
+      accumTimer: 0,
+      accumTarget: null
     };
 
     towers.push(newTower);
@@ -4123,15 +4126,45 @@ if (e.type === 'chronos_warp') {
       }
     }
 
-    if (t.type === 'laser' && target && isLockedOn) {
-      sfx('laserHit');
-      if (!target.isShielded) {
-        target.hp -= t.damage * dt;
+    if (t.type === 'laser') {
+      const isFiring = target && isLockedOn && !target.isShielded && t.disabledTimer <= 0;
+
+      // Если цель сменилась или луч прервался, сбрасываем накопленный урон досрочно
+      if ((!isFiring || t.accumTarget !== target) && t.accumDamage >= 1) {
+        const flushX = t.accumTarget ? t.accumTarget.x : t.x;
+        const flushY = t.accumTarget ? t.accumTarget.y : t.y;
+        if (typeof createFloatingDamage === 'function') {
+          createFloatingDamage(flushX, flushY, t.accumDamage, t.color || '#f05f9f');
+        }
+        t.accumDamage = 0;
+        t.accumTimer = 0;
+      }
+
+      if (isFiring) {
+        sfx('laserHit');
+        const dDmg = t.damage * dt;
+        target.hp -= dDmg;
         checkEnemyEnrage(target);
+
+        t.accumTarget = target;
+        t.accumDamage = (t.accumDamage || 0) + dDmg;
+        t.accumTimer = (t.accumTimer || 0) + dt;
+
+        // Всплывающий урон каждую 1.0 секунду непрерывной стрельбы
+        if (t.accumTimer >= 1.0) {
+          if (typeof createFloatingDamage === 'function' && t.accumDamage >= 1) {
+            createFloatingDamage(target.x, target.y, t.accumDamage, t.color || '#f05f9f');
+          }
+          t.accumDamage = 0;
+          t.accumTimer -= 1.0;
+        }
+
         if (Math.random() < 0.25) {
-          createDamageShards(target.x, target.y, target.color, t.damage * dt * 4, false);
+          createDamageShards(target.x, target.y, target.color, dDmg * 4, false);
           createImpactSmoke(target.x, target.y, 8);
         }
+      } else {
+        t.accumTarget = null;
       }
     }
 
@@ -4235,6 +4268,19 @@ if (e.type === 'chronos_warp') {
     if (t.type === 'melter') {
       const rampTime = t.melterRampTime || TOWER_CONFIGS.melter.rampTime || 4.0;
       const rampCap = TOWER_CONFIGS.melter.rampCap || 40;
+      const isFiring = target && isLockedOn && !target.isShielded && t.melterCoolingTimer <= 0 && t.disabledTimer <= 0;
+
+      // Если луч оборвался или цель изменилась, досрочно показываем накопленный урон
+      if ((!isFiring || t.accumTarget !== target) && t.accumDamage >= 1) {
+        const flushX = t.accumTarget ? t.accumTarget.x : t.x;
+        const flushY = t.accumTarget ? t.accumTarget.y : t.y;
+        if (typeof createFloatingDamage === 'function') {
+          createFloatingDamage(flushX, flushY, t.accumDamage, t.color || '#e85268');
+        }
+        t.accumDamage = 0;
+        t.accumTimer = 0;
+      }
+
       if (t.melterCoolingTimer > 0) {
         t.melterCoolingTimer -= dt;
         t.steamTimer = (t.steamTimer || 0) - dt;
@@ -4249,23 +4295,48 @@ if (e.type === 'chronos_warp') {
       } else if (target && isLockedOn) {
         t.melterFireTimer = (t.melterFireTimer || 0) + dt;
         sfx('melterHit');
+
         if (!target.isShielded) {
           const rampProgress = Math.min(t.melterFireTimer, rampTime) / rampTime;
           const rampMultiplier = Math.pow(rampCap, rampProgress);
-          target.hp -= t.damage * rampMultiplier * dt;
+          const dDmg = t.damage * rampMultiplier * dt;
+          target.hp -= dDmg;
+
+          t.accumTarget = target;
+          t.accumDamage = (t.accumDamage || 0) + dDmg;
+          t.accumTimer = (t.accumTimer || 0) + dt;
+
+          // Всплывающий урон каждую 1.0 секунду
+          if (t.accumTimer >= 1.0) {
+            if (typeof createFloatingDamage === 'function' && t.accumDamage >= 1) {
+              createFloatingDamage(target.x, target.y, t.accumDamage, t.color || '#e85268');
+            }
+            t.accumDamage = 0;
+            t.accumTimer -= 1.0;
+          }
+
           if (Math.random() < 0.3) {
-            createDamageShards(target.x, target.y, target.color, t.damage * rampMultiplier * dt * 3, false);
+            createDamageShards(target.x, target.y, target.color, dDmg * 3, false);
             createImpactSmoke(target.x, target.y, 9 + rampProgress * 5);
           }
         }
+
         checkEnemyEnrage(target);
+
         if (t.melterFireTimer >= rampTime) {
+          // При перегреве сбрасываем остаток урона
+          if (t.accumDamage >= 1 && typeof createFloatingDamage === 'function') {
+            createFloatingDamage(target.x, target.y, t.accumDamage, t.color || '#e85268');
+            t.accumDamage = 0;
+            t.accumTimer = 0;
+          }
           t.melterCoolingTimer = t.melterCooldownTime || rampTime;
           t.melterFireTimer = 0;
           createDamageShards(t.x, t.y, '#fb923c', 25, false);
           for (let s = 0; s < 7; s++) createSteamPuff(t.x, t.y - 9);
         }
       } else {
+        t.accumTarget = null;
         if (t.melterFireTimer > 0) {
           t.melterFireTimer = Math.max(0, t.melterFireTimer - dt);
         }
