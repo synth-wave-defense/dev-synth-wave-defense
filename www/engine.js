@@ -2024,6 +2024,12 @@ function showAdPlaceholder(onRewarded, onNotRewarded) {
   }
 }
 
+function getStandardAdIconSvg(isNoAds) {
+  return isNoAds
+    ? `<svg width="18" height="15" viewBox="0 0 16 13" fill="none" stroke="#ffffff" style="flex:none; margin-right:6px; vertical-align:middle;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke-width="1.6" opacity="0.85"/><polygon points="6,3.5 11,6.5 6,9.5" fill="#ffffff" stroke="none" opacity="0.75"/><line x1="1.5" y1="12" x2="14.5" y2="1" stroke-width="1.8" stroke-linecap="round"/></svg>`
+    : `<svg width="18" height="15" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:6px;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke="#ffffff" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="#ffffff"/></svg>`;
+}
+
 function claimX2Reward() {
   if (hasClaimedX2ThisLevel) return;
   const claimBtn = document.getElementById('claimX2Btn');
@@ -2034,7 +2040,7 @@ function claimX2Reward() {
     updateDiamondUI();
     if (claimBtn) {
       claimBtn.disabled = true;
-      claimBtn.innerHTML = `<span style="display:inline-flex; align-items:center; gap:4px;">CLAIMED x2 (+${lastVictoryDiamondsReward} <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>)</span>`;
+      claimBtn.innerHTML = `<span style="display:inline-flex; align-items:center; gap:4px;">CLAIMED x2 (+${lastVictoryDiamondsReward} <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="currentColor" fill-opacity="0.25"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>)</span>`;
     }
     sfx('reward');
     saveGame();
@@ -2058,10 +2064,10 @@ function claimOverdriveBonusPrism() {
     if (claimBtn) {
       claimBtn.disabled = true;
       const prismSvg = `
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 3px;">
-          <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.35)"/>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 3px;">
+          <polygon points="12 2 21 12 12 22 3 12" fill="currentColor" fill-opacity="0.25"/>
           <polyline points="3 12 12 15 21 12"/>
-          <line x1="12" y1="22" x2="12" y2="22"/>
+          <line x1="12" y1="2" x2="12" y2="22"/>
         </svg>`;
       claimBtn.innerHTML = `<span style="display:inline-flex; align-items:center;">CLAIMED +1 ${prismSvg}</span>`;
     }
@@ -2118,6 +2124,7 @@ function playVictoryFanfare() {
 
 function triggerVictory() {
   gameState = 'VICTORY';
+  if (typeof syncTopHudVisibility === 'function') syncTopHudVisibility();
   const defeatScreen = document.getElementById('defeatScreen');
   if (defeatScreen) defeatScreen.classList.add('hidden');
   sfxStopBeams();
@@ -2127,7 +2134,6 @@ function triggerVictory() {
   const { stars, reward, rewardLabel } = calculateLevelStarsAndReward(currentLevel, baseHp, matchStartBaseHp);
   lastVictoryDiamondsReward = reward;
   hasClaimedX2ThisLevel = false;
-
 
   if (!isOverdriveMode) {
     restoreNormalVictoryRewardBox();
@@ -2150,11 +2156,7 @@ function triggerVictory() {
     if (claimBtn) {
       claimBtn.disabled = false;
       claimBtn.classList.remove('hidden');
-      
-      const activeIcon = noAdsPurchased 
-        ? `<svg width="18" height="15" viewBox="0 0 24 20" fill="none" stroke="#ffffff" style="flex:none; margin-right:6px; vertical-align:middle;"><rect x="2" y="3" width="20" height="14" rx="3" fill="none" stroke-width="1.8" opacity="0.85"/><polygon points="9.5,7 15.5,10 9.5,13" fill="#ffffff" stroke="none" opacity="0.75"/><line x1="3" y1="18" x2="21" y2="2" stroke-width="2.2" stroke-linecap="round"/></svg>`
-        : `<svg width="18" height="14" viewBox="0 0 24 24" style="flex:none; margin-right:6px;"><rect x="2" y="4" width="20" height="16" rx="3" fill="none" stroke="#ffffff" stroke-width="2"/><polygon points="10,9 16,12 10,15" fill="#ffffff"/></svg>`;
-        
+      const activeIcon = getStandardAdIconSvg(noAdsPurchased);
       claimBtn.innerHTML = `${activeIcon}<span>CLAIM x2</span>`;
       claimBtn.onclick = claimX2Reward;
     }
@@ -2192,7 +2194,7 @@ function triggerVictory() {
       rewardBox.style.setProperty('--chip-label', '#ffd1f4');
 
       const diamondSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="flex:none; filter: drop-shadow(0 0 5px rgba(0,229,255,0.7));"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
-      const prismSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="flex:none; filter: drop-shadow(0 0 5px rgba(217,70,239,0.7));"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="22" x2="12" y2="22"/></svg>`;
+      const prismSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="flex:none; filter: drop-shadow(0 0 5px rgba(217,70,239,0.7));"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
 
       if (gainedPrisms > 0) {
         rewardBox.innerHTML = `
@@ -2221,10 +2223,7 @@ function triggerVictory() {
       claimBtn.disabled = false;
       claimBtn.classList.remove('hidden');
 
-      const adSvg = noAdsPurchased 
-        ? `<svg width="16" height="13" viewBox="0 0 24 20" fill="none" stroke="#ffffff" style="flex:none; margin-right:6px; vertical-align:middle;"><rect x="2" y="3" width="20" height="14" rx="3" fill="none" stroke-width="1.8" opacity="0.85"/><polygon points="9.5,7 15.5,10 9.5,13" fill="#ffffff" stroke="none" opacity="0.75"/><line x1="3" y1="18" x2="21" y2="2" stroke-width="2.2" stroke-linecap="round"/></svg>`
-        : `<svg width="16" height="13" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:6px;"><rect x="0" y="0" width="16" height="13" rx="2.5" fill="none" stroke="#ffffff" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="#ffffff"/></svg>`;
-
+      const adSvg = getStandardAdIconSvg(noAdsPurchased);
       const prismSvg = `
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 4px;">
           <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.35)"/>
@@ -2274,7 +2273,7 @@ function triggerVictory() {
   } else {
     showVictory();
   }
-	clearActiveBattleSave();
+  clearActiveBattleSave();
 }
 
 function playVictoryUnlockFx() {
@@ -2312,6 +2311,7 @@ function triggerDefeat() {
   sfx('defeat');
   vibrate('error');
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
+  if (reviveSkipShowTimer) { clearTimeout(reviveSkipShowTimer); reviveSkipShowTimer = null; }
   gameState = 'DEFEAT';
   if (typeof syncTopHudVisibility === 'function') syncTopHudVisibility();
 
@@ -2323,11 +2323,7 @@ function triggerDefeat() {
 
   const tacticalTipsWidget = document.getElementById('tacticalTipsWidget');
   if (tacticalTipsWidget) {
-    if (isEndlessMode) {
-      tacticalTipsWidget.classList.add('hidden');
-    } else {
-      tacticalTipsWidget.classList.remove('hidden');
-    }
+    tacticalTipsWidget.classList.toggle('hidden', !!isEndlessMode);
   }
 
   const reviveBtn = document.getElementById('reviveBtn');
@@ -2339,7 +2335,6 @@ function triggerDefeat() {
 
   if (reviveBtn) reviveBtn.classList.add('hidden');
   if (skipBtn) skipBtn.classList.add('hidden');
-  // В Endless прячем RETRY, чтобы игрок выходил в меню уровней
   if (retryBtn) retryBtn.classList.toggle('hidden', !!isEndlessMode);
   if (upgBtn) upgBtn.classList.remove('hidden');
   if (levelsBtn) levelsBtn.classList.remove('hidden');
@@ -2383,6 +2378,7 @@ function setReviveBtnLabel(seconds) {
 let defeatFlashTimeout = null;
 
 function replayDefeatFlash() {
+  if (typeof isEndlessMode !== 'undefined' && isEndlessMode) return;
   const defeatScreen = document.getElementById('defeatScreen');
   if (!defeatScreen) return;
 
@@ -2422,8 +2418,6 @@ function claimEndlessDoubleRewards() {
     if (typeof updatePrismUI === 'function') updatePrismUI();
     if (doubleBtn) {
       doubleBtn.disabled = true;
-      
-      // Иконки используют currentColor, чтобы стать серыми вместе с текстом кнопки
       const diamondSvg = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="currentColor" fill-opacity="0.25"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
       const prismSvg = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="currentColor" fill-opacity="0.25"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
       
@@ -2452,21 +2446,13 @@ function updateDefeatWaveLine() {
   const kicker = defeatScreen ? defeatScreen.querySelector('.result-kicker') : null;
   const title = defeatScreen ? defeatScreen.querySelector('.result-title') : null;
   const rewardsBox = document.getElementById('endlessRewardsBox');
-  const recBadge = document.getElementById('endlessNewRecordBadge');
   const lootLine = document.getElementById('endlessLootLine');
   const doubleBtn = document.getElementById('endlessDoubleBtn');
   const tacticalTipsWidget = document.getElementById('tacticalTipsWidget');
 
   if (isEndlessMode) {
-    // 1. Убираем класс дефолтного поражения и вешаем стиль триумфального Endless
-    if (defeatScreen) {
-      defeatScreen.classList.add('endless-result-active');
-    }
-
-    // 9. Полностью скрываем блок Tactical Tip на экране Endless
-    if (tacticalTipsWidget) {
-      tacticalTipsWidget.classList.add('hidden');
-    }
+    if (defeatScreen) defeatScreen.classList.add('endless-result-active');
+    if (tacticalTipsWidget) tacticalTipsWidget.classList.add('hidden');
 
     const clearedWaves = Math.max(0, wave - 1);
     const sec = currentLevelSection || 1;
@@ -2478,19 +2464,13 @@ function updateDefeatWaveLine() {
       saveGameSoon();
     }
 
-    // 2. Кикер ENDLESS ARENA
     if (kicker) kicker.textContent = 'ENDLESS ARENA';
-
-    // 3. Заголовок теперь всегда RUN COMPLETE
     if (title) {
       title.textContent = 'RUN COMPLETE';
       title.setAttribute('data-text', 'RUN COMPLETE');
     }
-
-    // 5. Оставляем волны
     if (el) el.textContent = `WAVE ${wave} REACHED (${clearedWaves} CLEARED)`;
 
-    // Начисление наград
     lastEndlessEarnedDiamonds = clearedWaves * 2;
     const basePrisms = Math.floor(clearedWaves / 10);
     let milestonePrisms = 0;
@@ -2515,10 +2495,9 @@ function updateDefeatWaveLine() {
 
     if (rewardsBox) rewardsBox.classList.remove('hidden');
 
-    // 6. Упаковываем награды Endless в кибер-плашку (стиль Normal Mode)
     if (lootLine) {
       const diamondSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="filter: drop-shadow(0 0 5px rgba(0,229,255,0.7));"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
-      const prismSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="filter: drop-shadow(0 0 5px rgba(217,70,239,0.7));"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="22" x2="12" y2="22"/></svg>`;
+      const prismSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="filter: drop-shadow(0 0 5px rgba(217,70,239,0.7));"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
 
       lootLine.innerHTML = `
         <div class="result-reward-chip" style="--chip-border: #d946ef; --chip-label: #f5d0fe; margin: 10px auto 8px auto;">
@@ -2534,15 +2513,11 @@ function updateDefeatWaveLine() {
       `;
     }
 
-    // 7. Кнопка с белой иконкой видеорекламы и текстом CLAIM x2
     if (doubleBtn) {
       if (lastEndlessEarnedDiamonds > 0 || lastEndlessEarnedPrisms > 0) {
         doubleBtn.classList.remove('hidden');
         doubleBtn.disabled = false;
-        const endlessAdIcon = noAdsPurchased 
-          ? `<svg width="18" height="15" viewBox="0 0 24 20" fill="none" stroke="#ffffff" style="flex:none; margin-right:6px; vertical-align:middle;"><rect x="2" y="3" width="20" height="14" rx="3" fill="none" stroke-width="1.8" opacity="0.85"/><polygon points="9.5,7 15.5,10 9.5,13" fill="#ffffff" stroke="none" opacity="0.75"/><line x1="3" y1="18" x2="21" y2="2" stroke-width="2.2" stroke-linecap="round"/></svg>`
-          : `<svg width="18" height="14" viewBox="0 0 24 24" style="flex:none; margin-right:6px;"><rect x="2" y="4" width="20" height="16" rx="3" fill="none" stroke="#ffffff" stroke-width="2"/><polygon points="10,9 16,12 10,15" fill="#ffffff"/></svg>`;
-
+        const endlessAdIcon = getStandardAdIconSvg(noAdsPurchased);
         doubleBtn.innerHTML = `
           ${endlessAdIcon}
           <span style="color:#ffffff; font-weight:800; letter-spacing:1px;">CLAIM x2</span>
@@ -2552,10 +2527,7 @@ function updateDefeatWaveLine() {
       }
     }
   } else {
-    // В обычной кампании снимаем режим Endless
-    if (defeatScreen) {
-      defeatScreen.classList.remove('endless-result-active');
-    }
+    if (defeatScreen) defeatScreen.classList.remove('endless-result-active');
     if (kicker) kicker.textContent = isOverdriveMode ? 'HARDCORE' : 'LEVEL';
     if (title) {
       title.textContent = 'Failed';
@@ -2576,7 +2548,6 @@ function updateRevivePromptHeadings() {
   const el = document.getElementById('defeatWaveLine');
   const rewardsBox = document.getElementById('endlessRewardsBox');
 
-  // Скрываем коробку наград Endless во время таймера возрождения
   if (rewardsBox) rewardsBox.classList.add('hidden');
 
   if (isEndlessMode) {
@@ -2595,7 +2566,6 @@ function updateRevivePromptHeadings() {
     }
   }
 
-  // На всех экранах ревайва ставим заголовок REVIVE?
   if (title) {
     title.textContent = 'REVIVE?';
     title.setAttribute('data-text', 'REVIVE?');
@@ -2624,19 +2594,13 @@ function triggerEmergencyRevivePrompt() {
   const levelsBtn = document.getElementById('defeatLevelsBtn');
   const shopBtn = document.getElementById('defeatShopBtn');
 
-  // Видна ТОЛЬКО кнопка Revive
   if (reviveBtn) {
     reviveBtn.classList.remove('hidden');
-
-    const reviveIcon = noAdsPurchased 
-      ? `<svg width="18" height="15" viewBox="0 0 24 20" fill="none" stroke="#ffffff" style="flex:none; margin-right:6px; vertical-align:middle;"><rect x="2" y="3" width="20" height="14" rx="3" fill="none" stroke-width="1.8" opacity="0.85"/><polygon points="9.5,7 15.5,10 9.5,13" fill="#ffffff" stroke="none" opacity="0.75"/><line x1="3" y1="18" x2="21" y2="2" stroke-width="2.2" stroke-linecap="round"/></svg>`
-      : `<svg width="16" height="13" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:6px;"><rect x="0" y="0" width="16" height="13" rx="2.5" fill="none" stroke="#ffffff" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="#ffffff"/></svg>`;
-
+    const reviveIcon = getStandardAdIconSvg(noAdsPurchased);
     reviveBtn.innerHTML = `
       ${reviveIcon}
       <span id="reviveBtnLabel">${noAdsPurchased ? 'FREE REVIVE' : 'REVIVE'}</span>
     `;
-
     setReviveBtnLabel(reviveRemainingSeconds);
   }
   if (skipBtn) skipBtn.classList.add('hidden');
@@ -2645,7 +2609,6 @@ function triggerEmergencyRevivePrompt() {
   if (levelsBtn) levelsBtn.classList.add('hidden');
   if (shopBtn) shopBtn.classList.add('hidden');
 
-  // Устанавливаем заголовок REVIVE? без преждевременного начисления наград Endless
   updateRevivePromptHeadings();
 
   const loadoutWidget = document.getElementById('loadoutWidget');
@@ -2658,7 +2621,6 @@ function triggerEmergencyRevivePrompt() {
     if (existingFlash) existingFlash.remove();
   }
 
-  // Кнопка Skip появляется ровно через 1 секунду
   if (reviveSkipShowTimer) clearTimeout(reviveSkipShowTimer);
   reviveSkipShowTimer = setTimeout(() => {
     reviveSkipShowTimer = null;
@@ -2690,11 +2652,7 @@ function finishRevivePromptWindow() {
 
   const tacticalTipsWidget = document.getElementById('tacticalTipsWidget');
   if (tacticalTipsWidget) {
-    if (isEndlessMode) {
-      tacticalTipsWidget.classList.add('hidden');
-    } else {
-      tacticalTipsWidget.classList.remove('hidden');
-    }
+    tacticalTipsWidget.classList.toggle('hidden', !!isEndlessMode);
   }
 
   const reviveBtn = document.getElementById('reviveBtn');
@@ -2706,17 +2664,16 @@ function finishRevivePromptWindow() {
 
   if (reviveBtn) reviveBtn.classList.add('hidden');
   if (skipBtn) skipBtn.classList.add('hidden');
-  // В Endless прячем RETRY, чтобы игрок выходил в меню уровней
   if (retryBtn) retryBtn.classList.toggle('hidden', !!isEndlessMode);
   if (upgBtn) upgBtn.classList.remove('hidden');
   if (levelsBtn) levelsBtn.classList.remove('hidden');
   if (shopBtn) shopBtn.classList.remove('hidden');
 
-  // Теперь, когда игрок отказался от ревайва (или истекло время), ставим финальные заголовки FAILED / RUN COMPLETE
   updateDefeatWaveLine();
   updateUpgradeButtonsLock();
   showLoadoutWidgetIn('loadoutAnchor-defeat');
   registerDefeatOutcome();
+  clearActiveBattleSave();
 }
 
 function skipEmergencyRevive() {
@@ -2815,7 +2772,6 @@ function acceptEmergencyRevive() {
           newY += offY * e.laneOffset;
         }
 
-        // Вместо мгновенного телепорта задаем параметры полета
         e.revivePushAnim = {
           startX: e.x,
           startY: e.y,
@@ -2823,12 +2779,12 @@ function acceptEmergencyRevive() {
           endY: newY,
           endWp: newK,
           timer: 0,
-          duration: 0.75 // Время отбрасывания в секундах
+          duration: 0.75
         };
       });
     }
     gameState = 'PLAYING';
-	updateUI();
+    updateUI();
     lastTime = performance.now();
   };
 

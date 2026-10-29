@@ -2039,8 +2039,8 @@ if (ticketEl) {
     const labelText = (status.text || status.label || '').toUpperCase();
 
     if (status.type === 'ad') {
-      // Фирменная SVG-иконка рекламы
-      const adIconSvg = `<svg width="14" height="11" viewBox="0 0 24 24" style="flex:none; margin-right:4px; vertical-align:middle;"><rect x="2" y="4" width="20" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="10,9 16,12 10,15" fill="currentColor"/></svg>`;
+      // Фирменная крупная SVG-иконка рекламы из Revive
+      const adIconSvg = `<svg width="15" height="12" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:5px; vertical-align:middle;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="currentColor"/></svg>`;
       ticketEl.innerHTML = `<span style="display:inline-flex; align-items:center; justify-content:center; white-space:nowrap;">${adIconSvg}${labelText}</span>`;
     } else if (status.type === 'diamonds') {
       const diamondIconSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="flex:none; margin-left:5px; vertical-align:middle; filter:drop-shadow(0 0 4px rgba(0,229,255,0.6));"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.28)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
@@ -2208,7 +2208,6 @@ function renderLevelsGrid() {
             <div class="level-card-overdrive-badge filled" title="Hardcore Cleared">
               <span class="od-reward-tag" style="color:#ffd1f4;">+3</span>
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.4)"/></svg>
-              <span style="color:#2dd4bf; font-weight:bold; font-size:11px;">✓</span>
             </div>
           `;
         } else {
@@ -3242,7 +3241,7 @@ function renderBattlePassScreen() {
   if (premBtn) {
     if (bpPremiumPurchased) {
       premBtn.className = 'bp-action-btn bp-btn-premium owned';
-      premBtn.innerHTML = '<span>PREMIUM UNLOCKED ✓</span>';
+      premBtn.innerHTML = '<span>PREMIUM UNLOCKED</span>';
     } else {
       premBtn.className = 'bp-action-btn bp-btn-premium';
       premBtn.innerHTML = '<span>ACTIVATE PREMIUM ($2.99)</span>';
@@ -3296,7 +3295,7 @@ function renderBattlePassScreen() {
     let freeBtnHtml = '';
     // ... (код кнопок CLAIM остается без изменений) ...
     if (isFreeClaimed) {
-      freeBtnHtml = `<button class="bp-cell-btn claimed-btn">CLAIMED ✓</button>`;
+      freeBtnHtml = `<button class="bp-cell-btn claimed-btn">CLAIMED</button>`;
     } else if (isUnlockedTier) {
       if (fr.type === 'ad_capsule' && !noAdsPurchased) {
         freeBtnHtml = `<button class="bp-cell-btn ad-btn" onclick="claimBpFreeReward(${t})">CLAIM (AD)</button>`;
@@ -3304,7 +3303,7 @@ function renderBattlePassScreen() {
         freeBtnHtml = `<button class="bp-cell-btn claim-btn" onclick="claimBpFreeReward(${t})">CLAIM</button>`;
       }
     } else {
-      freeBtnHtml = `<button class="bp-cell-btn locked-btn">LOCKED</button>`;
+      freeBtnHtml = `<button class="bp-cell-btn locked-btn" onclick="claimBpFreeReward(${t})">LOCKED</button>`;
     }
 
     freeCell.innerHTML = `<span class="bp-cell-title">${freeTitle}</span>${freeBtnHtml}`;
@@ -3327,15 +3326,14 @@ function renderBattlePassScreen() {
       premTitle = formatRewardText(pr.title);
     }
 
-    let premBtnHtml = '';
     if (isPremClaimed) {
-      premBtnHtml = `<button class="bp-cell-btn claimed-btn">CLAIMED ✓</button>`;
+      premBtnHtml = `<button class="bp-cell-btn claimed-btn">CLAIMED</button>`;
     } else if (bpPremiumPurchased && isUnlockedTier) {
       premBtnHtml = `<button class="bp-cell-btn claim-btn" onclick="claimBpPremReward(${t})">CLAIM</button>`;
     } else if (!bpPremiumPurchased) {
-      premBtnHtml = `<button class="bp-cell-btn locked-btn">PREMIUM</button>`;
+      premBtnHtml = `<button class="bp-cell-btn locked-btn" onclick="claimBpPremReward(${t})">PREMIUM</button>`;
     } else {
-      premBtnHtml = `<button class="bp-cell-btn locked-btn">LOCKED</button>`;
+      premBtnHtml = `<button class="bp-cell-btn locked-btn" onclick="claimBpPremReward(${t})">LOCKED</button>`;
     }
 
     premCell.innerHTML = `<span class="bp-cell-title">${premTitle}</span>${premBtnHtml}`;
@@ -4523,14 +4521,14 @@ if (giftTitle) {
     } else {
       giftBtn.disabled = false;
       giftBtn.className = 'shop-item-btn shop-btn-ad';
-      giftBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" style="flex:none; margin-right:4px;"><rect x="2" y="4" width="20" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="10,9 16,12 10,15" fill="currentColor"/></svg><span>WATCH AD</span>';
+      giftBtn.innerHTML = '<svg width="16" height="13" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:4px;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="currentColor"/></svg><span>WATCH AD</span>';
     }
   }
 
   const synthBtn = document.getElementById('synthPrismBtn');
   if (synthBtn) {
     const hasEnoughDiamonds = diamonds >= 20;
-    synthBtn.disabled = !hasEnoughDiamonds;
+    synthBtn.disabled = false; // Разрешаем клик для тоста
     synthBtn.className = `shop-item-btn shop-btn-buy shop-btn-exchange${hasEnoughDiamonds ? '' : ' dimmed'}`;
     synthBtn.innerHTML = `
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${hasEnoughDiamonds ? '#00e5ff' : '#f04878'}" stroke-width="2.2" stroke-linejoin="round" style="flex:none;">
@@ -4545,7 +4543,7 @@ if (giftTitle) {
   if (deconstructBtn) {
     const isUnlocked = (typeof devMode !== 'undefined' && devMode) || (typeof maxUnlockedLevel !== 'undefined' && maxUnlockedLevel >= 31) || (typeof clearedLevels !== 'undefined' && clearedLevels.includes(30));
     if (!isUnlocked) {
-      deconstructBtn.disabled = true;
+      deconstructBtn.disabled = false; // Разрешаем клик для тоста
       deconstructBtn.className = 'shop-item-btn shop-btn-buy locked-buy';
       deconstructBtn.innerHTML = `
         <svg width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="flex:none; margin-right:4px; opacity:0.7;">
@@ -4587,7 +4585,7 @@ if (giftTitle) {
       t2Btn.className = 'shop-item-btn shop-btn-claimed';
       t2Btn.innerHTML = '<span>OWNED</span>';
     } else if (timeModTier < 1) {
-      t2Btn.disabled = false;
+      t2Btn.disabled = false; // Разрешаем клик, чтобы сработал тост "Unlock Tier 1 first!"
       t2Btn.className = 'shop-item-btn shop-btn-buy locked-buy';
       const lockIconSvg = `
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none; opacity:0.8;">
@@ -4870,13 +4868,13 @@ function renderDailyLoginModal() {
         if (doubleLabel) doubleLabel.textContent = 'CLAIM x2 (FREE)';
         if (adIcon) {
           adIcon.style.display = 'inline-block';
-          adIcon.outerHTML = `<svg id="dailyDoubleAdIcon" width="18" height="15" viewBox="0 0 24 20" fill="none" stroke="currentColor" style="flex:none; margin-right:6px; vertical-align:middle;"><rect x="2" y="3" width="20" height="14" rx="3" fill="none" stroke-width="1.8" opacity="0.85"/><polygon points="9.5,7 15.5,10 9.5,13" fill="currentColor" stroke="none" opacity="0.75"/><line x1="3" y1="18" x2="21" y2="2" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+          adIcon.outerHTML = `<svg id="dailyDoubleAdIcon" width="18" height="15" viewBox="0 0 16 13" fill="none" stroke="currentColor" style="flex:none; margin-right:6px; vertical-align:middle;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke-width="1.6" opacity="0.85"/><polygon points="6,3.5 11,6.5 6,9.5" fill="currentColor" stroke="none" opacity="0.75"/><line x1="1.5" y1="12" x2="14.5" y2="1" stroke-width="1.8" stroke-linecap="round"/></svg>`;
         }
       } else {
         if (doubleLabel) doubleLabel.textContent = 'CLAIM x2';
         if (adIcon) {
           adIcon.style.display = 'inline-block';
-          adIcon.outerHTML = `<svg id="dailyDoubleAdIcon" width="18" height="14" viewBox="0 0 24 24" style="flex:none; margin-right:6px;"><rect x="2" y="4" width="20" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="10,9 16,12 10,15" fill="currentColor"/></svg>`;
+          adIcon.outerHTML = `<svg id="dailyDoubleAdIcon" width="18" height="15" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:6px;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="currentColor"/></svg>`;
         }
       }
     }
