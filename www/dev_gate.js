@@ -1,4 +1,4 @@
-// [DEV100] Developer Access Gate: Password lock overlay and authentication state check.
+//  Developer Access Gate: Password lock overlay and authentication state check.
 (function() {
   const SECRET_TOKEN = "MTMzNw=="; // ПИН-код (по умолчанию "1337"). Чтобы сменить: btoa("ваш_пин")
 
@@ -39,6 +39,7 @@
     document.addEventListener("DOMContentLoaded", () => document.body.appendChild(overlay));
   }
 
+  // [DEV.A]
   function handleAuth() {
     const pinInput = document.getElementById("dev-pin-input");
     const errorMsg = document.getElementById("dev-error-msg");
@@ -49,16 +50,19 @@
     } else {
       errorMsg.style.display = "block";
       pinInput.value = "";
+      // [DEV.B]
       setTimeout(() => { errorMsg.style.display = "none"; }, 2000);
     }
   }
 
   // Привязываем обработчики после вставки
+  // [DEV.C]
   setTimeout(() => {
     const btn = document.getElementById("dev-unlock-btn");
     const input = document.getElementById("dev-pin-input");
     if (btn && input) {
       btn.addEventListener("click", handleAuth);
+      // [DEV.D]
       input.addEventListener("keydown", (e) => {
         if (e.key === "Enter") handleAuth();
       });

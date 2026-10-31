@@ -1,11 +1,11 @@
-<!-- [HTM100] Version: 1.36.37 - Synth Wave Defense HTML application layout and script bindings. -->
+<!--  Version: 1.36.37 - Synth Wave Defense HTML application layout and script bindings. -->
 <!DOCTYPE html>
 
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <script>
-    // [HTM101] Environment Check: dynamically loads dev_gate.js if running in dev environment or localhost.
+    //  Environment Check: dynamically loads dev_gate.js if running in dev environment or localhost.
     const isDevHost = window.location.hostname.includes('dev-synth-wave-defense') || 
                     window.location.hostname === 'localhost' || 
                     window.location.protocol === 'file:';
@@ -27,6 +27,7 @@
 <body>
 
 <!-- Полноэкранный загрузочный экран при холодном старте -->
+<!-- [HTM.A] -->
 <div id="initialLoadingScreen" style="
   position: fixed;
   top: 0;
@@ -43,6 +44,7 @@
   -webkit-user-select: none;
 ">
   <!-- Блок жестко привязан к физическому центру матрицы экрана (50lvh) и не реагирует на ресайз шторок -->
+  <!-- [HTM.B] -->
   <div id="initialLoaderCenterBox" style="
     position: fixed;
     top: 50lvh;
@@ -57,6 +59,7 @@
     justify-content: center;
     gap: 16px;
   ">
+    <!-- [HTM.C] -->
     <div id="initialLoadingText" style="
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       font-size: clamp(17px, 4vw, 22px);
@@ -82,6 +85,7 @@
       box-sizing: border-box;
       overflow: hidden;
     ">
+      <!-- [HTM.D] -->
       <div id="initialProgressBarFill" style="
         width: 0%;
         height: 100%;
@@ -106,7 +110,7 @@
   </script>
 </div>
 
-<!-- [HTM102] Audio Onboarding Screen: Headphones recommendation and audio gate modal overlay. -->
+<!--  Audio Onboarding Screen: Headphones recommendation and audio gate modal overlay. -->
 <div class="loading-screen" id="loadingScreen">
   <div class="loading-inner audio-gate-content hidden" id="audioGateContent">
     <div class="audio-gate-icon">
@@ -117,17 +121,20 @@
     </div>
     <div class="audio-gate-title">Nice Music Incoming</div>
     <div class="audio-gate-subtitle">Headphones Recommended</div>
+    <!-- [HTM.E] -->
     <button class="menu-btn-primary-capsule audio-gate-ok-btn" id="audioGateOkBtn"><span>OK</span></button>
   </div>
 </div>
 
-<!-- [HTM103] Crash Safety Net: Global error logging and fallback UI overlay for unhandled runtime errors. -->
+<!--  Crash Safety Net: Global error logging and fallback UI overlay for unhandled runtime errors. -->
+<!-- [HTM.F] -->
 <div id="crashFallbackScreen" style="display:none; position:fixed; inset:0; z-index:999999; background:#06070d; color:#f1f5f9; flex-direction:column; align-items:center; justify-content:center; text-align:center; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; padding:24px;">
   <div style="font-size:42px; margin-bottom:14px;">😵</div>
   <div style="font-size:20px; font-weight:800; margin-bottom:10px; color:#00e5ff;">Sorry, we'll fix it!</div>
   <div style="font-size:14px; color:#94a3b8; max-width:320px; line-height:1.5; margin-bottom:22px;">
     Something went wrong and the game couldn't continue. Please try closing and reopening the app.
   </div>
+  <!-- [HTM.G] -->
   <button onclick="location.reload()" style="background:#00e5ff; color:#06070d; border:none; padding:13px 30px; border-radius:10px; font-weight:800; font-size:14px; cursor:pointer;">RELOAD</button>
 </div>
 <script>
@@ -206,9 +213,10 @@
 <script src="music.js"></script>
 <script src="updater.js"></script>
 
+<!-- [HTM.H] -->
 <canvas id="gameCanvas"></canvas>
 
-<!-- [HTM104] Top HUD Bar: Resource counters (diamonds, gold, base HP), level/wave indicator, and settings launcher. -->
+<!--  Top HUD Bar: Resource counters (diamonds, gold, base HP), level/wave indicator, and settings launcher. -->
 <div class="hud-top-bar" id="topHud">
   <div class="hud-left-group">
     <div class="badge-half" id="hudDiamondBadge" onclick="handleDevDiamondClick()">
@@ -263,6 +271,7 @@
       <div class="badge-half" id="levelHalf">
         <span class="match-val-text hud-static-label">LVL</span>
         <span class="match-val-text" id="levelText">1</span>
+        <!-- [HTM.I] -->
         <select id="devLevelSelect" class="hud-select-dropdown hidden" onchange="startSpecificLevel(parseInt(this.value, 10))"></select>
       </div>
 
@@ -270,10 +279,12 @@
 
       <div class="badge-half" id="waveHalf">
         <span class="match-val-text" id="waveText">1/2</span>
+        <!-- [HTM.J] -->
         <select id="devWaveSelect" class="hud-select-dropdown hidden" onchange="devJumpToWave(parseInt(this.value, 10))"></select>
       </div>
     </div>
     <div class="hud-corner-utilities">
+      <!-- [HTM.K] -->
       <button class="hud-gear-btn" id="hudSettingsBtn" onclick="handleHudSettingsClick()" title="Settings & Pause">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="hud-gear-svg">
           <circle cx="12" cy="12" r="3.2"></circle>
@@ -284,6 +295,7 @@
   </div>
 </div>
 
+<!-- [HTM.L] -->
 <button class="daily-bonus-quick-btn hidden" id="dailyBonusQuickBtn" onclick="openDailyLoginModal()" title="Daily Bonus">
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" class="daily-btn-svg">
     <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
@@ -298,8 +310,9 @@
   <span class="incoming-alert-text" id="incomingAlertText">Boss Incoming</span>
 </div>
 
-<!-- [HTM104.01] Speed Control Widget: Purchased time modulation drum control. -->
+<!--  Speed Control Widget: Purchased time modulation drum control. -->
 <div class="speed-widget hidden" id="hudSpeedWidget">
+  <!-- [HTM.M] -->
   <button class="spd-btn" id="hudSpeedFasterBtn" title="Speed Up" onclick="stepHudSpeed(1)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="5 15 12 8 19 15"></polyline>
@@ -315,6 +328,7 @@
     </div>
   </div>
 
+  <!-- [HTM.N] -->
   <button class="spd-btn" id="hudSpeedSlowerBtn" title="Slow Down" onclick="stepHudSpeed(-1)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="5 9 12 16 19 9"></polyline>
@@ -334,10 +348,11 @@
   </div>
 </div>
 
-<!-- [HTM105] Gameplay UI Layer: Floating wave circle button, tower build panel, and tower inspector overlay. -->
+<!--  Gameplay UI Layer: Floating wave circle button, tower build panel, and tower inspector overlay. -->
 <div class="ui-layer">
   <div></div>
 
+  <!-- [HTM.O] -->
   <button class="action-btn floating-wave-btn" id="waveBtn" onclick="triggerManualWave()">
     <div class="wave-circle-wrap">
       <svg class="wave-circle-svg" width="78" height="78" viewBox="0 0 78 78">
@@ -377,6 +392,7 @@
 
       <div class="selected-stats-box" id="inspectStatsBox"></div>
 
+      <!-- [HTM.P] -->
       <button class="btn-upgrade" id="inspectUpgradeBtn" onclick="upgradeSelectedTower()">
         <span class="upg-btn-title">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
@@ -392,6 +408,7 @@
         </span>
       </button>
 
+      <!-- [HTM.Q] -->
       <button class="btn-sell" id="inspectSellBtn" onclick="sellSelectedTower()">
         <span class="sell-btn-title">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff8fb0" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
@@ -407,6 +424,7 @@
         </span>
       </button>
 
+      <!-- [HTM.R] -->
       <button class="btn-close-inspect" id="inspectCloseBtn" onclick="deselectTower()" title="Close">
         <svg viewBox="0 0 24 24" fill="none">
           <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -417,13 +435,15 @@
   </div>
 </div>
 
-<!-- [HTM106] Developer Tools Overlay: Developer bar with game speed, custom enemy spawner, and save tools. -->
+<!--  Developer Tools Overlay: Developer bar with game speed, custom enemy spawner, and save tools. -->
 <div class="dev-bar hidden" id="devBar" style="width: 210px; max-width: 92vw; box-sizing: border-box;">
   <div class="dev-bar-top" style="display:flex; align-items:center; justify-content:space-between; gap:3px;">
     <div class="dev-fps-badge" id="devFpsBadge" style="font-size:11px; min-width:48px;">FPS: 60</div>
 
+    <!-- [HTM.S] -->
     <button type="button" class="dev-icon-btn dev-speed-step-btn" onclick="stepDevSpeed(-1)" title="Decrease speed">−</button>
 
+    <!-- [HTM.T] -->
     <select id="speedContainer" class="dev-speed-select" onchange="setGameSpeed(parseFloat(this.value))">
       <option value="0.5">0.5x</option>
       <option value="0.75">0.75x</option>
@@ -436,9 +456,12 @@
       <option value="8">8x</option>
     </select>
 
+    <!-- [HTM.U] -->
     <button type="button" class="dev-icon-btn dev-speed-step-btn" onclick="stepDevSpeed(1)" title="Increase speed">+</button>
 
+    <!-- [HTM.V] -->
     <button type="button" class="dev-icon-btn" id="devExpandBtn" onclick="toggleDevPanelExpand()" title="Details">▾</button>
+    <!-- [HTM.W] -->
     <button type="button" class="dev-icon-btn dev-close-btn" onclick="closeDevMode()" title="Close Dev Mode">✕</button>
   </div>
 
@@ -450,15 +473,19 @@
         <span>▸ GAME</span>
         <span id="devSubArrowGame">▾</span>
       </div>
+      <!-- [HTM.X] -->
       <div id="devSubBodyGame" class="hidden" style="margin-top:4px;">
         <div class="dev-actions-row" style="display:flex; flex-direction:column; gap:4px;">
+          <!-- [HTM.Y] -->
           <button type="button" class="dev-btn" id="livePauseBtn" onclick="toggleLivePause()" style="width:100%; font-size:10px; padding:4px;">PAUSE GAME</button>
+          <!-- [HTM.Z] -->
           <button type="button" class="dev-btn dev-danger-btn" id="devClearSaveBtn" onclick="handleClearSaveClick()" style="width:100%; font-size:10px; padding:4px;">CLEAR SAVE</button>
         </div>
 
         <div class="dev-spawner-sub" id="devCustomSpawner" style="margin-top:6px;">
           <div class="dev-sub-title" style="font-size:9px;">SPAWNER</div>
           <div style="display:flex; flex-direction:column; gap:4px; margin-top:3px;">
+            <!-- [HTM.AA] -->
             <select id="devSpawnType" style="width:100%; font-size:11px; box-sizing:border-box;">
               <option value="grunt">Grunt</option>
               <option value="scout">Scout</option>
@@ -473,8 +500,11 @@
               <option value="emp_overlord">Boss: Overlord</option>
             </select>
             <div style="display:flex; gap:4px;">
+              <!-- [HTM.AB] -->
               <input type="number" id="devSpawnCount" min="1" max="50" value="5" title="Count" style="width:55px; font-size:11px; box-sizing:border-box;">
+              <!-- [HTM.AC] -->
               <input type="hidden" id="devSpawnInterval" value="0.5">
+              <!-- [HTM.AD] -->
               <button type="button" class="dev-btn" onclick="devSpawnCustomEnemies()" style="flex:1; font-size:10px; padding:4px;">SPAWN</button>
             </div>
           </div>
@@ -488,6 +518,7 @@
         <span>▸ AUDIO</span>
         <span id="devSubArrowAudio">▾</span>
       </div>
+      <!-- [HTM.AE] -->
       <div id="devSubBodyAudio" class="hidden" style="margin-top:4px; display:flex; flex-direction:column; gap:3px;">
         <div style="font-size:10px; color:#8ef3ff; word-break:break-all; padding:2px 0;">
           <b>Track:</b> <span id="devTrackTitle" style="color:#fff;">None</span>
@@ -525,6 +556,7 @@
         <span>▸ VERSION</span>
         <span id="devSubArrowVersion">▾</span>
       </div>
+      <!-- [HTM.AF] -->
       <div id="devSubBodyVersion" class="hidden" style="margin-top:4px; display:flex; flex-direction:column; gap:3px;">
 
         <!-- 3 уровень: 1. Версии и Манифест (открыт по умолчанию внутри VERSION) -->
@@ -560,7 +592,9 @@
         </div>
 
         <div class="dev-actions-row" style="display:flex; gap:4px; margin-top:4px;">
+          <!-- [HTM.AG] -->
           <button type="button" class="dev-btn" onclick="window.AppUpdater && window.AppUpdater.init()" style="flex:1; font-size:9px; padding:4px 2px;">CHECK</button>
+          <!-- [HTM.AH] -->
           <button type="button" class="dev-btn" onclick="window.AppUpdater && window.AppUpdater.forceApplyNow()" style="flex:1; font-size:9px; padding:4px 2px;">APPLY NOW</button>
         </div>
       </div>
@@ -569,7 +603,7 @@
   </div>
 </div>
 
-<!-- [HTM107] Navigation & Menu Overlays: Main menu, tech tree, shop, settings/pause, level selection, and match result screens. -->
+<!--  Navigation & Menu Overlays: Main menu, tech tree, shop, settings/pause, level selection, and match result screens. -->
 <div class="overlay-screen transparent-bg" id="startScreen">
   <div class="start-screen-container">
     <div class="start-screen-top-zone">
@@ -578,6 +612,7 @@
     </div>
 
     <div class="start-screen-buttons-zone">
+      <!-- [HTM.AI] -->
       <button class="menu-btn-resume-capsule seq-in hidden" id="mainResumeBtn" onclick="resumeSavedBattle()">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;">
           <polygon points="3 4 13 12 3 20 3 4" fill="currentColor"/>
@@ -586,6 +621,7 @@
         <span>RESUME</span>
       </button>
 
+      <!-- [HTM.AJ] -->
       <button class="menu-btn-primary-capsule seq-in" id="mainPlayBtn" onclick="showLevelSelect()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none;">
           <polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/>
@@ -616,6 +652,7 @@
         <span class="scout-notification-dot hidden" id="startBpBadgeDot"></span>
       </div>
 
+      <!-- [HTM.AK] -->
       <button class="menu-btn-glass-capsule seq-in" id="mainUpgradesBtn" onclick="showUpgradesScreen('main')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:none;">
           <path d="M12 21 v-5 l-4 -3.5 v-4 m4 7.5 l4 -3.5 v-4 m-4 7.5 v-8" />
@@ -627,6 +664,7 @@
         <span>TECH TREE</span>
       </button>
 
+      <!-- [HTM.AL] -->
       <button class="menu-btn-glass-capsule seq-in" id="mainShopBtn" onclick="showShopScreen('start')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none;">
           <rect x="3" y="8" width="18" height="13" rx="2"/>
@@ -673,6 +711,7 @@
       </span>
     </div>
     <div class="upgrades-row-list" id="upgradesTreeBody"></div>
+    <!-- [HTM.AM] -->
     <button class="menu-btn-glass-capsule upgrades-back-btn" onclick="closeUpgradesScreen()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -729,6 +768,7 @@
             <span class="shop-card-sub" id="dailyGiftSubText">Next pack: 10 (1/3)</span>
           </div>
         </div>
+        <!-- [HTM.AN] -->
         <button id="dailyGiftClaimBtn" class="shop-item-btn shop-btn-free" onclick="claimDailyGiftsPack()">
           <span>FREE</span>
         </button>
@@ -748,6 +788,7 @@
             <span class="shop-card-sub">Unlock HUD speed controls (0.9x, 1.0x, 1.25x)</span>
           </div>
         </div>
+        <!-- [HTM.AO] -->
         <button id="timeModT1Btn" class="shop-item-btn shop-btn-buy" onclick="buyShopIAP('time_mod_t1')">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="flex:none;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>
           <span>40</span>
@@ -766,6 +807,7 @@
             <span class="shop-card-sub">Unlock extreme pacing limits (0.5x, 0.75x, 1.5x, 2.0x)</span>
           </div>
         </div>
+        <!-- [HTM.AP] -->
         <button id="timeModT2Btn" class="shop-item-btn shop-btn-buy" onclick="buyShopIAP('time_mod_t2')">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="flex:none;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>
           <span>50</span>
@@ -785,6 +827,7 @@
             <span class="shop-card-sub">Instant x2, Revives & Daily Gifts</span>
           </div>
         </div>
+        <!-- [HTM.AQ] -->
         <button id="noAdsBuyBtn" class="shop-item-btn shop-btn-buy" onclick="buyShopIAP('no_ads')">
           <span>$1.99</span>
         </button>
@@ -806,6 +849,7 @@
             <span class="shop-card-sub">Convert 20 Diamonds to +1 Prism</span>
           </div>
         </div>
+        <!-- [HTM.AR] -->
         <button id="synthPrismBtn" class="shop-item-btn shop-btn-buy shop-btn-exchange" onclick="synthesizePrism()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" style="flex:none;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>
           <span id="synthPrismCostVal" class="exchange-cost-val">20</span>
@@ -825,6 +869,7 @@
             <span class="shop-card-sub">Convert 1 Prism to +15 Diamonds</span>
           </div>
         </div>
+        <!-- [HTM.AS] -->
         <button id="deconstructPrismBtn" class="shop-item-btn shop-btn-buy shop-btn-prism shop-btn-exchange" onclick="deconstructPrism()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" style="flex:none;"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.3)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
           <span id="deconstructPrismCostVal" class="exchange-cost-val">1</span>
@@ -847,6 +892,7 @@
             <span class="shop-card-sub">+75 Diamonds</span>
           </div>
         </div>
+        <!-- [HTM.AT] -->
         <button class="shop-item-btn shop-btn-buy" onclick="buyShopIAP('diamonds_75')">
           <span>$0.49</span>
         </button>
@@ -866,6 +912,7 @@
             <span class="shop-card-sub">+180 Diamonds</span>
           </div>
         </div>
+        <!-- [HTM.AU] -->
         <button class="shop-item-btn shop-btn-buy" onclick="buyShopIAP('diamonds_180')">
           <span>$0.99</span>
         </button>
@@ -884,6 +931,7 @@
             <span class="shop-card-sub">+800 Diamonds</span>
           </div>
         </div>
+        <!-- [HTM.AV] -->
         <button class="shop-item-btn shop-btn-buy" onclick="buyShopIAP('diamonds_800')">
           <span>$3.49</span>
         </button>
@@ -905,6 +953,7 @@
             <span class="shop-card-sub prism-sub">+12 Prisms</span>
           </div>
         </div>
+        <!-- [HTM.AW] -->
         <button class="shop-item-btn shop-btn-buy shop-btn-prism" onclick="buyShopIAP('prisms_12')">
           <span>$0.99</span>
         </button>
@@ -924,6 +973,7 @@
             <span class="shop-card-sub prism-sub">+35 Prisms</span>
           </div>
         </div>
+        <!-- [HTM.AX] -->
         <button class="shop-item-btn shop-btn-buy shop-btn-prism" onclick="buyShopIAP('prisms_35')">
           <span>$1.99</span>
         </button>
@@ -943,12 +993,14 @@
             <span class="shop-card-sub prism-sub">+100 Prisms</span>
           </div>
         </div>
+        <!-- [HTM.AY] -->
         <button class="shop-item-btn shop-btn-buy shop-btn-prism shop-btn-prism-accent" onclick="buyShopIAP('prisms_100')">
           <span>$3.99</span>
         </button>
       </div>
     </div>
     
+    <!-- [HTM.AZ] -->
     <button class="menu-btn-glass-capsule upgrades-back-btn" onclick="closeShopScreen()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -967,6 +1019,7 @@
     </div>
     
     <div class="settings-combat-actions hidden" id="settingsCombatActions">
+      <!-- [HTM.BA] -->
       <button class="result-btn-pill result-btn-resume" onclick="closeSettings()">
         <svg class="resume-play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="3 4 13 12 3 20 3 4" fill="currentColor"/>
@@ -974,6 +1027,7 @@
         </svg>
         <span>RESUME</span>
       </button>
+      <!-- [HTM.BB] -->
       <button class="result-btn-pill result-btn-retry" onclick="retryLevel()">
         <svg class="retry-reload-icon" viewBox="0 0 16 16" fill="none">
           <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5c2.2 0 4.2.9 5.5 2.5" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
@@ -981,6 +1035,7 @@
         </svg>
         <span>RETRY</span>
       </button>
+      <!-- [HTM.BC] -->
       <button class="result-btn-pill result-btn-giveup" onclick="giveUpMatch()">
         <svg class="giveup-flag-icon" viewBox="0 0 16 18" fill="none">
           <line x1="2" y1="1" x2="2" y2="17" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" />
@@ -1004,6 +1059,7 @@
           <div class="setting-row">
             <span>Enemy Health Bar</span>
             <label class="switch">
+              <!-- [HTM.BD] -->
               <input type="checkbox" id="settingShowHp" checked onchange="toggleSettingHp(this.checked)">
               <span class="slider"></span>
             </label>
@@ -1011,6 +1067,7 @@
           <div class="setting-row">
             <span>Show Damage</span>
             <label class="switch">
+              <!-- [HTM.BE] -->
               <input type="checkbox" id="settingShowDamage" checked onchange="toggleSettingDamage(this.checked)">
               <span class="slider"></span>
             </label>
@@ -1018,6 +1075,7 @@
           <div class="setting-row">
             <span>Performance Mode</span>
             <label class="switch">
+              <!-- [HTM.BF] -->
               <input type="checkbox" id="settingPerfMode" onchange="toggleSettingPerf(this.checked)">
               <span class="slider"></span>
             </label>
@@ -1025,6 +1083,7 @@
           <div class="setting-row">
             <span>Vibration</span>
             <label class="switch">
+              <!-- [HTM.BG] -->
               <input type="checkbox" id="settingVibration" checked onchange="toggleSettingVibration(this.checked)">
               <span class="slider"></span>
             </label>
@@ -1034,6 +1093,7 @@
               <span>Music Audio</span>
               <span class="setting-slider-val" id="musicVolLabel">70%</span>
             </div>
+            <!-- [HTM.BH] -->
             <input type="range" class="vol-range" id="settingMusicVol" min="0" max="100" step="5" value="70"
                    oninput="setMusicVolume(this.value)">
           </div>
@@ -1042,11 +1102,13 @@
               <span>Sound Effects</span>
               <span class="setting-slider-val" id="sfxVolLabel">100%</span>
             </div>
+            <!-- [HTM.BI] -->
             <input type="range" class="vol-range" id="settingSfxVol" min="0" max="100" step="5" value="100"
                    oninput="setSfxVolume(this.value)">
           </div>
           <div class="setting-row">
             <span>Visual</span>
+            <!-- [HTM.BJ] -->
             <select id="settingPaletteSelect" class="hud-select-dropdown" onchange="selectPalette(this.value)"></select>
           </div>
           <div class="setting-version-label" id="settingsVersionLabel">Version: 1.36.37</div>
@@ -1054,6 +1116,7 @@
       </div>
     </div>
 
+    <!-- [HTM.BK] -->
     <button class="menu-btn-glass-capsule" id="settingsBackBtn" onclick="closeSettings()"><span>BACK</span></button>
   </div>
 </div>
@@ -1065,16 +1128,19 @@
     <div class="mode-3way-header">MODE</div>
 
     <div class="mode-3way-switcher" id="mode3WaySwitcher">
+      <!-- [HTM.BL] -->
       <button class="mode-3way-tab tab-normal active" id="tabNormal" onclick="selectLevelMode('normal')">
         <svg class="tab-icon" width="12" height="14" viewBox="0 0 12 16" fill="currentColor"><polygon points="6,0 0,9 5,9 2.5,16 11,7 6,7"/></svg>
         <span>NORMAL</span>
       </button>
+      <!-- [HTM.BM] -->
       <button class="mode-3way-tab tab-endless" id="tabEndless" onclick="selectLevelMode('endless')">
         <svg class="tab-icon" width="16" height="10" viewBox="0 0 16 10" fill="none">
           <path d="M4 2 C1.8 2 1 3.3 1 5 C1 6.7 1.8 8 4 8 C6.8 8 9.2 2 12 2 C14.2 2 15 3.3 15 5 C15 6.7 14.2 8 12 8 C9.2 8 6.8 2 4 2 Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </svg>
         <span>ENDLESS</span>
       </button>
+      <!-- [HTM.BN] -->
       <button class="mode-3way-tab tab-hardcore" id="tabOverdrive" onclick="selectLevelMode('overdrive')">
         <svg class="tab-icon" width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M8 14.5 L2.8 9.2 C1.2 7.6 1.2 5 3 3.2 C4.5 1.7 6.8 2 7.8 3.6 C8.8 2 11.1 1.7 12.6 3.2 C14.4 5 14.4 7.6 12.8 9.2 Z"/></svg>
         <span>HARDCORE</span>
@@ -1096,8 +1162,10 @@
     <div class="levels-campaign-view" id="levelsCampaignView">
       <!-- Sector Header Navigator -->
       <div class="level-part-navigator">
+        <!-- [HTM.BO] -->
         <button class="part-nav-btn" id="partNavPrev" onclick="navLevelSection(-1)">❮</button>
         <span class="part-nav-label" id="partNavLabel">CHAPTER 1</span>
+        <!-- [HTM.BP] -->
         <button class="part-nav-btn" id="partNavNext" onclick="navLevelSection(1)">❯</button>
       </div>
 
@@ -1114,8 +1182,10 @@
     <div class="endless-dashboard-view hidden" id="endlessDashboardView">
       <!-- Endless Chapter Map Navigator -->
       <div class="level-part-navigator endless-part-nav">
+        <!-- [HTM.BQ] -->
         <button class="part-nav-btn" id="endlessNavPrev" onclick="navEndlessLevel(-1)">❮</button>
         <span class="part-nav-label" id="endlessMapText">CHAPTER 1</span>
+        <!-- [HTM.BR] -->
         <button class="part-nav-btn" id="endlessNavNext" onclick="navEndlessLevel(1)">❯</button>
       </div>
 
@@ -1162,6 +1232,7 @@
       </div>
 
 <!-- Battle CTA Button -->
+      <!-- [HTM.BS] -->
       <button class="endless-battle-btn" id="endlessDeployBtn" onclick="confirmStartEndlessRun()">
         <span class="battle-btn-text">BATTLE</span>
         <span class="battle-btn-divider"></span>
@@ -1173,6 +1244,7 @@
   <!-- Shared Bottom Loadout Anchor & Main Menu Back Button -->
   <div class="loadout-anchor" id="loadoutAnchor-levels"></div>
 
+  <!-- [HTM.BT] -->
   <button class="menu-btn-glass-capsule levels-main-menu-btn" onclick="showStartScreen()">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
       <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -1206,6 +1278,7 @@
     </div>
 
     <!-- Точно такая же кнопка сдачи, как в меню паузы: те же классы, стили и белый флажок -->
+    <!-- [HTM.BU] -->
     <button class="result-btn-pill result-btn-giveup" onclick="confirmGiveUp()">
       <svg class="giveup-flag-icon" viewBox="0 0 16 18" fill="none">
         <line x1="2" y1="1" x2="2" y2="17" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
@@ -1216,6 +1289,7 @@
     </button>
 
     <!-- Кнопка Cancel со стрелкой назад, как в меню перехода -->
+    <!-- [HTM.BV] -->
     <button class="result-btn" onclick="cancelGiveUp()" style="margin-top: 8px;">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;">
         <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -1226,7 +1300,7 @@
   </div>
 </div>
 
-<!-- [HTM107.01] Battle Pass Screen overlay -->
+<!--  Battle Pass Screen overlay -->
 <div class="overlay-screen transparent-bg upgrades-bg hidden" id="battlePassScreen">
   <div class="upgrades-content-col bp-content-col">
     <div class="upgrades-top-bar">
@@ -1261,6 +1335,7 @@
         <div class="bp-tier-badge" id="bpTierBadgeText">TIER 1 / 30</div>
         <div class="bp-palette-picker-wrap" id="bpPalettePickerWrap" onclick="handleBpThemeClick(event)">
           <span class="bp-palette-label">Visual:</span>
+          <!-- [HTM.BW] -->
           <select id="bpPaletteSelect" class="hud-select-dropdown" onchange="selectPalette(this.value)"></select>
         </div>
       </div>
@@ -1269,9 +1344,11 @@
         <span class="bp-xp-bar-text" id="bpXpBarText">XP: 0 / 100</span>
       </div>
       <div class="bp-header-actions">
+        <!-- [HTM.BX] -->
         <button id="bpActivatePremBtn" class="bp-action-btn bp-btn-premium" onclick="buyBpPremiumIAP()">
           <span>ACTIVATE PREMIUM ($2.99)</span>
         </button>
+        <!-- [HTM.BY] -->
         <button class="bp-action-btn bp-btn-buy-tier" onclick="buyBpTierWithDiamonds()">
           <span>BUY TIER (30</span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" style="flex:none; margin-left:2px;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>
@@ -1279,7 +1356,9 @@
         </button>
       </div>
       <div class="bp-dev-controls hidden" id="bpDevControls">
+        <!-- [HTM.BZ] -->
         <button class="bp-dev-btn" onclick="devAddBpXp(100)">+100 BP XP</button>
+        <!-- [HTM.CA] -->
         <button class="bp-dev-btn" onclick="devToggleBpPremium()">TOGGLE PREMIUM</button>
       </div>
     </div>
@@ -1287,6 +1366,7 @@
     <!-- 30 tiers scrollable list -->
     <div class="upgrades-row-list bp-tier-list" id="bpTierListBody"></div>
 
+    <!-- [HTM.CB] -->
     <button class="menu-btn-glass-capsule upgrades-back-btn" onclick="closeBattlePassScreen()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -1301,6 +1381,7 @@
   <div class="daily-modal-card">
     <div class="daily-modal-header">
       <span class="daily-modal-title">DAILY REWARDS</span>
+      <!-- [HTM.CC] -->
       <button class="daily-modal-close-btn" onclick="closeDailyLoginModal()" title="Close">&times;</button>
     </div>
 
@@ -1314,9 +1395,11 @@
     </div>
 
     <div class="daily-modal-actions" id="dailyModalActions">
+      <!-- [HTM.CD] -->
       <button id="dailyLoginClaimNormalBtn" class="daily-claim-btn daily-claim-normal" onclick="claimDailyLoginReward(false)">
         <span>CLAIM</span>
       </button>
+      <!-- [HTM.CE] -->
       <button id="dailyLoginClaimDoubleBtn" class="daily-claim-btn daily-claim-double" onclick="claimDailyLoginReward(true)">
         <svg id="dailyDoubleAdIcon" width="18" height="15" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:6px;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="currentColor"/></svg>
         <span id="dailyClaimDoubleLabel">CLAIM x2</span>
@@ -1360,6 +1443,7 @@
       </div>
     </div>
 
+    <!-- [HTM.CF] -->
     <button class="result-btn completion-ok-btn" onclick="closeGameCompletionModal()">
       <span>AWESOME</span>
     </button>
@@ -1378,6 +1462,7 @@
       <div class="milestone-embed-grid" id="milestoneLoadoutGrid"></div>
       <div class="milestone-embed-hint" id="milestoneEmbedHint">Tap a tower to swap it in</div>
     </div>
+    <!-- [HTM.CG] -->
     <button class="result-btn result-btn-primary seq-in seq-d3" id="milestoneOkBtn" onclick="advanceMilestone()"><span>OK</span></button>
   </div>
 </div>
@@ -1400,16 +1485,19 @@
       </div>
     </div>
 	
+    <!-- [HTM.CH] -->
     <button class="result-btn victory-claim-btn seq-in seq-d4" id="claimX2Btn" onclick="claimX2Reward()">
       <svg width="18" height="15" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:6px;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke="#ffffff" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="#ffffff"/></svg>
       <span>CLAIM x2</span>
     </button>
+    <!-- [HTM.CI] -->
     <button class="result-btn seq-in seq-d4" onclick="nextLevel()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;">
         <path d="M5 12h14M12 5l7 7-7 7"/>
       </svg>
       <span>NEXT LEVEL</span>
     </button>
+    <!-- [HTM.CJ] -->
     <button class="result-btn seq-in seq-d5" onclick="retryLevel()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;">
         <path d="M21.5 2v6h-6M2.5 22v-6h6"/>
@@ -1417,6 +1505,7 @@
       </svg>
       <span>RETRY</span>
     </button>
+    <!-- [HTM.CK] -->
     <button class="result-btn seq-in seq-d5" id="victoryUpgradesBtn" onclick="showUpgradesScreen('victory')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:none; margin-right: 4px;">
         <path d="M12 21 v-5 l-4 -3.5 v-4 m4 7.5 l4 -3.5 v-4 m-4 7.5 v-8" />
@@ -1427,6 +1516,7 @@
       </svg>
       <span>TECH TREE</span>
     </button>
+    <!-- [HTM.CL] -->
     <button class="result-btn seq-in seq-d5" onclick="showLevelSelectFromGame()">
       <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" style="flex:none;">
         <rect x="0" y="0" width="5.5" height="5.5" rx="1.5" />
@@ -1436,6 +1526,7 @@
       </svg>
       <span>LEVELS</span>
     </button>
+    <!-- [HTM.CM] -->
     <button class="result-btn seq-in seq-d6" onclick="showShopScreen('victory')">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;">
         <rect x="2" y="7" width="20" height="14" rx="2" />
@@ -1456,7 +1547,9 @@
       <div class="result-title" style="font-size: 24px;">Success?</div>
     </div>
     <div style="display: flex; gap: 12px; margin-top: 16px; width: 100%;">
+      <!-- [HTM.CN] -->
       <button class="result-btn result-btn-primary" id="adSimYesBtn" style="flex: 1;"><span>Yes</span></button>
+      <!-- [HTM.CO] -->
       <button class="result-btn" id="adSimNoBtn" style="flex: 1;"><span>No</span></button>
     </div>
   </div>
@@ -1478,6 +1571,7 @@
       <div class="endless-loot-line" id="endlessLootLine">
 			<span style="color:#ffffff; font-weight:800; margin-right:6px; letter-spacing:0.5px;">REWARDS:</span><span style="color:#ffffff; font-weight:700;">+0</span> <svg class="loot-res-svg diamond" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: -2px; margin-left: 2px;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.3)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg> <span class="loot-line-sep" style="color:rgba(255,255,255,0.3); margin: 0 6px;">|</span><span style="color:#ffffff; font-weight:700;">+0</span> <svg class="loot-res-svg prism" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: -2px; margin-left: 2px;"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.3)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="22" x2="12" y2="22"/></svg>
 	  </div>
+      <!-- [HTM.CP] -->
       <button class="result-btn victory-claim-btn hidden" id="endlessDoubleBtn" onclick="claimEndlessDoubleRewards()" style="margin-top: 8px;">
         <svg width="18" height="15" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:6px;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke="#ffffff" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="#ffffff"/></svg>
         <span>CLAIM x2</span>
@@ -1493,6 +1587,7 @@
       <div class="revive-timer-number" id="reviveTimerNumber">3s</div>
     </div>
 
+    <!-- [HTM.CQ] -->
     <button class="result-btn result-btn-grunt hidden" id="reviveBtn" onclick="acceptEmergencyRevive()">
       <svg width="16" height="13" viewBox="0 0 16 13" fill="none" style="flex:none;">
         <rect x="0" y="0" width="16" height="13" rx="2.5" fill="none" stroke="#ffffff" stroke-width="1.6"/>
@@ -1500,8 +1595,10 @@
       </svg>
       <span id="reviveBtnLabel">REVIVE</span>
     </button>
+    <!-- [HTM.CR] -->
     <button class="result-skip-btn hidden" id="reviveSkipBtn" onclick="skipEmergencyRevive()">Skip</button>
 
+<!-- [HTM.CS] -->
 <button class="result-btn result-btn-primary seq-in seq-d2" id="defeatRetryBtn" onclick="retryLevel()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--neon-primary, #00e5ff)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;">
         <path d="M21.5 2v6h-6M2.5 22v-6h6"/>
@@ -1510,6 +1607,7 @@
       <span>RETRY</span>
     </button>
 
+    <!-- [HTM.CT] -->
     <button class="result-btn seq-in seq-d2" id="defeatUpgradesBtn" onclick="showUpgradesScreen('defeat')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:none; margin-right: 4px;">
         <path d="M12 21 v-5 l-4 -3.5 v-4 m4 7.5 l4 -3.5 v-4 m-4 7.5 v-8" />
@@ -1521,6 +1619,7 @@
       <span>TECH TREE</span>
     </button>
 
+    <!-- [HTM.CU] -->
     <button class="result-btn seq-in seq-d2" id="defeatLevelsBtn" onclick="showLevelSelectFromGame()">
       <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" style="flex:none;">
         <rect x="0" y="0" width="5.5" height="5.5" rx="1.5" />
@@ -1531,6 +1630,7 @@
       <span>LEVELS</span>
     </button>
 
+    <!-- [HTM.CV] -->
     <button class="result-btn seq-in seq-d3" id="defeatShopBtn" onclick="showShopScreen('defeat')">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;">
         <rect x="2" y="7" width="20" height="14" rx="2" />
@@ -1572,7 +1672,7 @@
 <script src="ui.js"></script>
 
 <script>
-// [HTM108] Application Bootstrap: Loads save data, configures audio systems, initializes build panel, and launches game loop.
+//  Application Bootstrap: Loads save data, configures audio systems, initializes build panel, and launches game loop.
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) forcePauseForBackground();
   else musicResume();
@@ -1638,7 +1738,7 @@ loadGame().then(() => {
 
 </script>
 
-<!-- [HTM109] Tutorial Overlay & Service Worker: First-run interactive spotlight layer and PWA offline Service Worker registration. -->
+<!--  Tutorial Overlay & Service Worker: First-run interactive spotlight layer and PWA offline Service Worker registration. -->
 <div class="tutorial-layer hidden" id="tutorialLayer">
   <div class="tutorial-spotlight hidden" id="tutorialSpotlight"></div>
   <div class="tutorial-drop-ring hidden" id="tutorialDropRing"></div>
@@ -1682,6 +1782,7 @@ loadGame().then(() => {
   </div>
   <div class="tutorial-bubble hidden" id="tutorialBubble"><span id="tutorialBubbleText"></span></div>
 </div>
+<!-- [HTM.CW] -->
 <button class="tutorial-skip-btn hidden" id="tutorialSkipBtn" onclick="skipTutorial()">Skip Tutorial</button>
 
 <div class="hint-toast" id="hintToast"></div>

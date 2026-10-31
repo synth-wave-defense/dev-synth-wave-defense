@@ -1,4 +1,4 @@
-/* [CSS100] Base layout and canvas viewport setup */
+/*  Base layout and canvas viewport setup */
 
 #initialLoadingScreen {
   position: fixed !important;
@@ -65,8 +65,9 @@ html, body {
   padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   overscroll-behavior: none;
 }
+/* [STY.A] */
 
-/* [CSS101] Top HUD status bar container */
+/*  Top HUD status bar container */
 .hud-top-bar {
   position: fixed;
   top: max(16px, env(safe-area-inset-top));
@@ -109,7 +110,7 @@ html, body {
   flex-shrink: 0;
 }
 
-/* [CSS101.01] HUD interactive badges and stat indicators */
+/*  HUD interactive badges and stat indicators */
 .hud-split-badge {
   display: inline-flex;
   align-items: center;
@@ -136,6 +137,7 @@ html, body {
   border-radius: 9px;
   flex-shrink: 0;
 }
+/* [STY.B] */
 .badge-half.interactive { cursor: pointer; }
 .badge-half.interactive:hover { background: rgba(0, 229, 255, 0.12); }
 .badge-half.interactive:active { background: rgba(0, 229, 255, 0.2); }
@@ -159,6 +161,7 @@ html, body {
   min-width: 20px;
   text-align: left;
 }
+/* [STY.C] */
 
 #goldVal {
   min-width: 28px;
@@ -193,6 +196,7 @@ html, body {
   text-align: right;
   display: inline-block;
 }
+/* [STY.D] */
 
 #waveText {
   min-width: 34px;
@@ -234,6 +238,7 @@ html, body {
   flex: 0 0 36px;
   width: 36px;
 }
+/* [STY.E] */
 
 .daily-bonus-quick-btn {
   position: fixed;
@@ -279,6 +284,7 @@ html, body {
     transform: scale(0.95);
     box-shadow: 0 0 6px rgba(255, 136, 0, 0.8), 0 0 12px rgba(255, 136, 0, 0.4);
   }
+/* [STY.F] */
   50% {
     transform: scale(1.18);
     box-shadow: 0 0 12px rgba(255, 150, 0, 1), 0 0 22px rgba(255, 136, 0, 0.7);
@@ -306,8 +312,9 @@ html, body {
 .hud-chapter-label {
   display: none !important;
 }
+/* [STY.G] */
 
-/* [CSS101.02] HUD gear settings button and interactive animations */
+/*  HUD gear settings button and interactive animations */
 .hud-gear-btn {
   width: 36px;
   height: 36px;
@@ -347,7 +354,7 @@ html, body {
   filter: drop-shadow(0 0 9px #00e5ff);
 }
 
-/* [CSS102] Wave notification alerts and banners */
+/*  Wave notification alerts and banners */
 .incoming-alert-banner {
   position: fixed;
   top: max(82px, calc(env(safe-area-inset-top) + 68px));
@@ -366,6 +373,7 @@ html, body {
   opacity: 0;
   visibility: hidden;
 }
+/* [STY.H] */
 .incoming-alert-banner.visible {
   opacity: 1;
   visibility: visible;
@@ -392,6 +400,7 @@ html, body {
   color: #ff9100;
   text-shadow: 0 0 8px rgba(255, 145, 0, 0.6);
 }
+/* [STY.I] */
 .incoming-alert-banner.boss .incoming-alert-text {
   font-size: 16px;
   font-weight: 900;
@@ -406,6 +415,7 @@ html, body {
 }
 @keyframes alertFlashBoss {
   0% { opacity: 0.5; transform: translateX(-50%) scale(0.96); filter: drop-shadow(0 0 4px #f05f9f); }
+/* [STY.J] */
   100% { opacity: 1; transform: translateX(-50%) scale(1.04); filter: drop-shadow(0 0 12px #f05f9f); }
 }
 
@@ -439,6 +449,7 @@ html, body {
 }
 @keyframes newTowerBannerGlow {
   0%, 100% { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), 0 0 12px rgba(0, 229, 255, 0.28); }
+/* [STY.K] */
   50%      { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), 0 0 24px rgba(0, 229, 255, 0.6); }
 }
 .new-tower-icon {
@@ -459,6 +470,7 @@ html, body {
   gap: 1px;
   min-width: 0;
 }
+/* [STY.L] */
 .new-tower-title {
   font-family: 'Montserrat', sans-serif;
   font-size: 10px;
@@ -482,7 +494,7 @@ html, body {
   line-height: 1.25;
 }
 
-/* [CSS103] Bottom controls panel and build toolbar */
+/*  Bottom controls panel and build toolbar */
 .controls-wrapper {
   position: relative;
   height: 96px;
@@ -508,13 +520,14 @@ html, body {
   width: 100%;
   transition: opacity 0.15s ease;
 }
+/* [STY.M] */
 .controls-panel.drag-hidden {
   opacity: 0;
   pointer-events: none;
 }
 .hidden { display: none !important; }
 
-/* [CSS103.01] Drag-and-drop cancel zone overlay */
+/*  Drag-and-drop cancel zone overlay */
 .cancel-zone-overlay {
   position: absolute;
   top: 0;
@@ -545,8 +558,9 @@ html, body {
   text-transform: uppercase;
   text-shadow: 0 0 10px rgba(242, 142, 174, 0.5);
 }
+/* [STY.N] */
 
-/* [CSS103.02] Tower selection build buttons and state modifiers */
+/*  Tower selection build buttons and state modifiers */
 .tower-btn {
   flex: 1;
   min-width: 0;
@@ -612,6 +626,7 @@ html, body {
   font-weight: 800;
   color: #ffffff;
 }
+/* [STY.O] */
 
 .tower-btn .tower-btn-cost {
   font-family: 'Montserrat', sans-serif;
@@ -663,6 +678,7 @@ html, body {
   transition: opacity 0.18s, transform 0.18s;
   box-shadow: 0 4px 18px rgba(0,0,0,0.5);
 }
+/* [STY.P] */
 .hint-toast.visible {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
@@ -705,6 +721,7 @@ html, body {
   text-transform: uppercase;
   white-space: nowrap;
 }
+/* [STY.Q] */
 
 .loadout-tower-btn.selected {
   border: 1.5px solid #ff9100;
@@ -741,6 +758,7 @@ html, body {
   flex-shrink: 0;
   pointer-events: none;
 }
+/* [STY.R] */
 
 .tower-btn-title {
   font-size: 10px;
@@ -772,7 +790,7 @@ html, body {
   flex-shrink: 0;
 }
 
-/* [CSS103.03] Wave start action button and progress ring */
+/*  Wave start action button and progress ring */
 .action-btn {
   flex: none;
   width: 78px;
@@ -797,6 +815,7 @@ html, body {
 .action-btn.btn-pushed:not(:disabled) {
   transform: scale(0.88) translateY(2px) !important;
 }
+/* [STY.S] */
 .action-btn:active:not(:disabled) .wave-circle-wrap::before,
 .action-btn.btn-pushed:not(:disabled) .wave-circle-wrap::before {
   box-shadow: 0 0 45px rgba(0, 229, 255, 0.95);
@@ -841,6 +860,7 @@ html, body {
   justify-content: center;
   gap: 0;
 }
+/* [STY.T] */
 .wave-circle-svg {
   position: absolute;
   left: 50%;
@@ -866,6 +886,7 @@ html, body {
   stroke: #ff9100;
   filter: drop-shadow(0 0 5px #ff9100);
 }
+/* [STY.U] */
 .wave-btn-label {
   position: relative;
   z-index: 2;
@@ -908,6 +929,7 @@ html, body {
   color: #ffffff;
   visibility: visible;
 }
+/* [STY.V] */
 .wave-go-bonus.visible svg { opacity: 1; }
 
 .action-btn.floating-wave-btn {
@@ -920,7 +942,7 @@ html, body {
   pointer-events: auto;
 }
 
-/* [CSS104] HUD time modulation speed drum widget */
+/*  HUD time modulation speed drum widget */
 .speed-widget {
   position: fixed;
   right: max(max(16px, env(safe-area-inset-right)), calc(50vw - 480px + 16px));
@@ -964,6 +986,7 @@ html, body {
   border-color: var(--neon-primary, #00e5ff) !important;
   box-shadow: 0 0 14px var(--neon-glow, rgba(0, 229, 255, 0.5)) !important;
 }
+/* [STY.W] */
 
 .spd-btn.disabled,
 .spd-btn:disabled {
@@ -1016,6 +1039,7 @@ html, body {
   animation: ridgeScroll 2.6s linear infinite;
   pointer-events: none;
 }
+/* [STY.X] */
 
 @keyframes ridgeScroll {
   from { background-position-y: 0; }
@@ -1037,6 +1061,7 @@ html, body {
   text-shadow: 0 0 12px var(--neon-glow, rgba(0, 229, 255, 0.8));
   pointer-events: none;
 }
+/* [STY.Y] */
 
 .drum-hint {
   position: relative;
@@ -1066,6 +1091,7 @@ html, body {
 
 @keyframes hintFloat {
   0%, 100% { transform: translateY(0); opacity: 0.35; }
+/* [STY.Z] */
   50%      { transform: translateY(-2px); opacity: 0.9; }
 }
 
@@ -1103,6 +1129,7 @@ html, body {
   opacity: 1;
   animation: tipPulse 2s ease-in-out 1;
 }
+/* [STY.AA] */
 
 @keyframes tipPulse {
   0%, 100% { opacity: 1; }
@@ -1119,7 +1146,7 @@ html, body {
   border-left-color: var(--neon-primary, #00e5ff);
 }
 
-/* [CSS105] Post-match result screens (victory and defeat, pause, settings) */
+/*  Post-match result screens (victory and defeat, pause, settings) */
 .result-screen {
   background: transparent !important;
   backdrop-filter: none !important;
@@ -1131,6 +1158,7 @@ html, body {
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y !important;
 }
+/* [STY.AB] */
 .result-screen::before {
   content: '';
   position: fixed;
@@ -1171,8 +1199,9 @@ html, body {
   align-items: center;
   gap: 2px;
 }
+/* [STY.AC] */
 
-/* [CSS105.01] Victory fanfare animation background */
+/*  Victory fanfare animation background */
 .victory-fanfare-rays {
   position: absolute;
   top: 40px;
@@ -1214,6 +1243,7 @@ html, body {
     opacity: 0.22;
     transform: scale3d(1.5, 1.5, 1) rotate(45deg);
   }
+/* [STY.AD] */
 }
 
 .result-kicker {
@@ -1238,6 +1268,7 @@ html, body {
 .result-screen.is-fail .result-title {
   text-shadow: 0 0 22px rgba(240, 95, 159, 0.85), 0 0 38px rgba(240, 95, 159, 0.45);
 }
+/* [STY.AE] */
 .result-subline {
   font-family: 'Montserrat', sans-serif;
   font-size: 11px;
@@ -1293,6 +1324,7 @@ html, body {
   color: #ffffff;
   font-weight: 900;
 }
+/* [STY.AF] */
 .result-btn-primary svg {
   flex: none;
   filter: drop-shadow(0 0 5px var(--neon-glow, rgba(0, 229, 255, 0.85)));
@@ -1326,6 +1358,7 @@ html, body {
     radial-gradient(75% 55% at 50% 45%, transparent 40%, rgba(12, 2, 8, 0.88) 100%),
     rgba(15, 3, 10, 0.7) !important;
 }
+/* [STY.AG] */
 
 .result-kicker-grunt { color: #f05f9f !important; }
 .result-title-grunt {
@@ -1357,6 +1390,7 @@ html, body {
 .revive-timer-track {
   stroke: rgba(0, 229, 255, 0.2);
 }
+/* [STY.AH] */
 
 .revive-timer-progress {
   stroke: var(--neon-primary, #00e5ff);
@@ -1395,6 +1429,7 @@ html, body {
   align-items: center;
   justify-content: space-between;
 }
+/* [STY.AI] */
 
 .tactical-tips-header-left {
   display: flex;
@@ -1432,6 +1467,7 @@ html, body {
   background: rgba(240, 95, 159, 0.25);
   margin: 8px 0;
 }
+/* [STY.AJ] */
 
 .tactical-tips-list {
   margin: 0;
@@ -1454,7 +1490,7 @@ html, body {
   margin-left: 1px;
 }
 
-/* [CSS105.02] Star rating slot animations */
+/*  Star rating slot animations */
 .result-stars-row {
   display: flex;
   align-items: center;
@@ -1471,6 +1507,7 @@ html, body {
   justify-content: center;
   flex: none;
 }
+/* [STY.AK] */
 .star-slot svg { width: 42px; height: 42px; overflow: visible; }
 .star-slot.filled svg {
   animation: starArrive 0.46s cubic-bezier(.2, 1.5, .4, 1) both;
@@ -1495,6 +1532,7 @@ html, body {
   background: radial-gradient(circle, rgba(245, 158, 11, 0.55), transparent 68%);
   animation: starBloom 0.58s ease-out both;
 }
+/* [STY.AL] */
 .star-slot.empty svg {
   opacity: 0.75;
   filter: none;
@@ -1515,6 +1553,7 @@ html, body {
   width: 96px;
   height: 76px;
 }
+/* [STY.AM] */
 
 .star-slot.overdrive-victory-badge svg {
   width: 96px;
@@ -1540,6 +1579,7 @@ html, body {
          filter: drop-shadow(0 0 0 rgba(245, 158, 11, 0)); }
   55%  { opacity: 1; transform: scale(1.32) rotate(7deg);
          filter: drop-shadow(0 0 22px rgba(245, 158, 11, 1)); }
+/* [STY.AN] */
   100% { opacity: 1; transform: scale(1) rotate(0deg);
          filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.65)); }
 }
@@ -1547,12 +1587,14 @@ html, body {
   0%   { opacity: 0; transform: scale(0.35); border-width: 3px; }
   18%  { opacity: 0.95; }
   100% { opacity: 0; transform: scale(2.1); border-width: 1px; }
+/* [STY.AO] */
 }
 @keyframes starBloom {
   0%   { opacity: 0; transform: scale(0.3); }
   40%  { opacity: 1; transform: scale(1.5); }
   100% { opacity: 0; transform: scale(2); }
 }
+/* [STY.AP] */
 
 .result-reward-chip {
   position: relative;
@@ -1618,6 +1660,7 @@ html, body {
   margin: 0 2px;
   user-select: none;
 }
+/* [STY.AQ] */
 
 .result-reward-chip .reward-amount {
   font-family: 'Montserrat', sans-serif;
@@ -1655,6 +1698,7 @@ html, body {
     opacity: 0;
     transform: translateY(16px);
   }
+/* [STY.AR] */
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1665,21 +1709,24 @@ html, body {
   animation: seqIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* [CSS105.03] Defeat glitch title effect and sweep overlay */
+/*  Defeat glitch title effect and sweep overlay */
 @keyframes failShake {
   0% { opacity: 0; transform: translateX(0) scale(1.06); }
   20% { opacity: 1; transform: translateX(-9px); }
+/* [STY.AS] */
   40% { transform: translateX(7px); }
   60% { transform: translateX(-4px); }
   80% { transform: translateX(2px); }
   100% { opacity: 1; transform: translateX(0) scale(1); }
 }
+/* [STY.AT] */
 
 .seq-d1 { animation-delay: 0.10s; }
 .seq-d2 { animation-delay: 0.18s; }
 .seq-d3 { animation-delay: 0.26s; }
 .seq-d4 { animation-delay: 0.34s; }
 .seq-d5 { animation-delay: 0.42s; }
+/* [STY.AU] */
 .seq-d6 { animation-delay: 0.50s; }
 .fail-shake { animation: failShake 0.55s ease-out both; }
 
@@ -1701,6 +1748,7 @@ html, body {
   clip-path: inset(12% 0 58% 0);
   animation: glitchSlipA 2.6s steps(1, end) 0.55s 2 both;
 }
+/* [STY.AV] */
 .result-screen.is-fail .result-title::after {
   color: var(--neon-primary, #00e5ff);
   text-shadow: none;
@@ -1712,12 +1760,14 @@ html, body {
   1%  { transform: translateX(-6px); opacity: 0.9; }
   3%  { transform: translateX(4px); opacity: 0.7; }
   5%  { transform: translateX(-2px); opacity: 0.5; }
+/* [STY.AW] */
 }
 @keyframes glitchSlipB {
   0%, 7%, 100% { transform: translateX(0); opacity: 0; }
   2%  { transform: translateX(5px); opacity: 0.8; }
   4%  { transform: translateX(-4px); opacity: 0.6; }
   6%  { transform: translateX(2px); opacity: 0.4; }
+/* [STY.AX] */
 }
 
 .defeat-flash {
@@ -1737,6 +1787,7 @@ html, body {
   0%   { opacity: 0; transform: translateY(-100%); }
   30%  { opacity: 1; }
   100% { opacity: 0.35; transform: translateY(0); }
+/* [STY.AY] */
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1745,7 +1796,7 @@ html, body {
   .star-slot::before, .star-slot::after { display: none !important; }
 }
 
-/* [CSS106] Full-screen overlay screens and modal dialogs */
+/*  Full-screen overlay screens and modal dialogs */
 .overlay-screen {
   position: absolute;
   top: 0;
@@ -1768,6 +1819,7 @@ html, body {
   overflow-x: hidden !important;
   box-sizing: border-box !important;
 }
+/* [STY.AZ] */
 .overlay-screen.transparent-bg {
   background: transparent !important;
   backdrop-filter: none !important;
@@ -1798,6 +1850,7 @@ html, body {
 #defeatScreen {
   gap: 16px;
 }
+/* [STY.BA] */
 
 .menu-btn {
   background: rgba(16, 21, 38, 0.94);
@@ -1841,8 +1894,9 @@ html, body {
   border: 1px solid #283354;
   color: #ffffff;
 }
+/* [STY.BB] */
 
-/* [CSS106.01] Start screen title layout and main action capsule buttons */
+/*  Start screen title layout and main action capsule buttons */
 .start-screen-container {
   position: absolute;
   inset: 0;
@@ -1896,6 +1950,7 @@ html, body {
   pointer-events: auto;
   margin: 0;
 }
+/* [STY.BC] */
 
 .menu-btn-primary-capsule {
   width: 248px;
@@ -1968,6 +2023,7 @@ html, body {
   transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   box-sizing: border-box;
 }
+/* [STY.BD] */
 
 .synth-pass-widget:active {
   transform: scale(0.92) translateY(2px) !important;
@@ -2009,6 +2065,7 @@ html, body {
   font-size: 10px;
   font-weight: 900;
 }
+/* [STY.BE] */
 
 .synth-pass-bar-bg {
   width: 100%;
@@ -2056,6 +2113,7 @@ html, body {
   cursor: not-allowed !important;
   transform: none !important;
 }
+/* [STY.BF] */
 .menu-btn-glass-capsule.no-press-feedback:hover,
 .menu-btn-glass-capsule.no-press-feedback:active,
 .menu-btn-glass-capsule.no-press-feedback:focus,
@@ -2072,7 +2130,7 @@ html, body {
   transform: none !important;
 }
 
-/* [CSS111] Synth Pass Battle Pass & Color Palette Skin Overlay Styles */
+/*  Synth Pass Battle Pass & Color Palette Skin Overlay Styles */
 :root {
   --neon-primary: #00e5ff;
   --neon-secondary: #ff007f;
@@ -2099,6 +2157,7 @@ html, body {
   gap: 8px;
   flex: none;
 }
+/* [STY.BG] */
 
 .bp-header-top {
   display: flex;
@@ -2149,6 +2208,7 @@ html, body {
   height: 20px;
   line-height: 20px;
 }
+/* [STY.BH] */
 
 .bp-xp-bar-container {
   position: relative;
@@ -2208,6 +2268,7 @@ html, body {
   transition: all 0.15s ease;
   border: none;
 }
+/* [STY.BI] */
 
 .bp-btn-premium {
   background: linear-gradient(135deg, #ffd700 0%, #9d4edd 100%);
@@ -2238,6 +2299,7 @@ html, body {
   gap: 6px;
   margin-top: 2px;
 }
+/* [STY.BJ] */
 
 .bp-dev-btn {
   flex: 1;
@@ -2285,6 +2347,7 @@ html, body {
   border: 1px solid rgba(0, 229, 255, 0.22);
   min-height: 52px;
 }
+/* [STY.BK] */
 
 .bp-cell-free {
   border-color: rgba(0, 229, 255, 0.22);
@@ -2324,6 +2387,7 @@ html, body {
   cursor: pointer;
   text-transform: uppercase;
 }
+/* [STY.BL] */
 
 .bp-cell-btn.claim-btn {
   background: var(--neon-primary, #00e5ff);
@@ -2358,6 +2422,7 @@ html, body {
   justify-content: center;
   gap: 1px;
 }
+/* [STY.BM] */
 
 .bp-tier-num {
   font-family: 'Montserrat', sans-serif;
@@ -2392,6 +2457,7 @@ html, body {
   stroke: #ffffff !important;
   fill: #ffffff !important;
 }
+/* [STY.BN] */
 
 .revive-skip-btn {
   -webkit-tap-highlight-color: transparent;
@@ -2419,7 +2485,7 @@ html, body {
   transform: none !important;
 }
 
-/* [CSS106.02] Level selection screen grid and chapter navigation */
+/*  Level selection screen grid and chapter navigation */
 .levels-bg {
   background: rgba(4, 6, 14, 0.65) !important;
   backdrop-filter: blur(8px) !important;
@@ -2436,6 +2502,7 @@ html, body {
 .levels-bg > * {
   flex-shrink: 0 !important;
 }
+/* [STY.BO] */
 
 .mode-3way-header {
   font-family: 'Montserrat', sans-serif;
@@ -2480,6 +2547,7 @@ html, body {
   gap: 3px !important;
   box-sizing: border-box !important;
 }
+/* [STY.BP] */
 
 .mode-3way-tab {
   flex: 1;
@@ -2523,6 +2591,7 @@ html, body {
   opacity: 1 !important;
   filter: drop-shadow(0 0 4px rgba(240, 95, 159, 0.5));
 }
+/* [STY.BQ] */
 
 .mode-3way-tab.locked,
 .mode-3way-tab:disabled {
@@ -2562,6 +2631,7 @@ html, body {
   color: #ffffff !important;
   box-shadow: 0 0 12px rgba(217, 70, 239, 0.35);
 }
+/* [STY.BR] */
 
 .mode-3way-tab.tab-hardcore.active {
   background: linear-gradient(180deg, rgba(80, 15, 45, 0.75) 0%, rgba(35, 6, 20, 0.9) 100%) !important;
@@ -2596,6 +2666,7 @@ html, body {
   color: var(--neon-primary, #00e5ff);
   opacity: 0.85;
 }
+/* [STY.BS] */
 
 @keyframes swipeHintPulse {
   0%, 100% { opacity: 0.55; transform: scale(0.98); }
@@ -2612,6 +2683,7 @@ html, body {
   color: #d946ef;
   text-shadow: 0 0 6px rgba(217, 70, 239, 0.5);
 }
+/* [STY.BT] */
 
 .mode-rules-banner {
   font-family: 'Montserrat', sans-serif;
@@ -2653,6 +2725,7 @@ html, body {
   gap: 12px;
   margin-bottom: 10px;
 }
+/* [STY.BU] */
 
 .loot-pill {
   display: flex;
@@ -2692,6 +2765,7 @@ html, body {
   justify-content: space-between;
   margin-bottom: 10px;
 }
+/* [STY.BV] */
 
 .highway-record-title {
   font-family: 'Montserrat', sans-serif;
@@ -2734,6 +2808,7 @@ html, body {
   border-radius: 5px;
   overflow: visible;
 }
+/* [STY.BW] */
 
 .highway-track-fill {
   position: absolute;
@@ -2776,6 +2851,7 @@ html, body {
 .highway-label-curr {
   color: #ffffff;
 }
+/* [STY.BX] */
 
 .highway-label-end {
   color: #f0abfc;
@@ -2824,6 +2900,7 @@ html, body {
   background: rgba(255, 255, 255, 0.25);
   flex-shrink: 0;
 }
+/* [STY.BY] */
 
 .battle-btn-status {
   flex: 1.15;
@@ -2859,6 +2936,7 @@ html, body {
 .levels-top-diamonds svg {
   filter: drop-shadow(0 0 7px rgba(0, 229, 255, 0.85));
 }
+/* [STY.BZ] */
 .levels-top-diamonds span {
   font-family: 'Montserrat', sans-serif;
   font-size: 14px;
@@ -2886,6 +2964,7 @@ html, body {
 #levelsScreen.mode-endless-active {
   background: radial-gradient(circle at 50% 30%, rgba(55, 10, 75, 0.55), rgba(4, 5, 14, 0.95)) !important;
 }
+/* [STY.CA] */
 
 .mode-overdrive-active .part-nav-label,
 .overdrive-active .part-nav-label {
@@ -2915,6 +2994,7 @@ html, body {
 #levelsScreen.mode-endless-active .part-nav-label {
   text-shadow: 0 0 16px rgba(217, 70, 239, 0.7);
 }
+/* [STY.CB] */
 
 #levelsScreen.mode-endless-active .part-nav-btn {
   background: rgba(8, 12, 24, 0.6);
@@ -2944,6 +3024,7 @@ html, body {
   border: 1px solid #f05f9f !important;
   box-shadow: 0 0 26px rgba(240, 95, 159, 0.45) !important;
 }
+/* [STY.CC] */
 
 #levelsScreen.mode-overdrive-active .level-card-btn:active:not(:disabled):not(.locked) {
   border-color: #f05f9f !important;
@@ -2974,6 +3055,7 @@ html, body {
   color: #d946ef;
   letter-spacing: 0.5px;
 }
+/* [STY.CD] */
 
 .level-part-navigator {
   display: flex;
@@ -3018,6 +3100,7 @@ html, body {
   text-align: center;
   text-shadow: 0 0 16px var(--neon-glow, rgba(0, 229, 255, 0.6));
 }
+/* [STY.CE] */
 
 .levels-content-zone,
 .levels-campaign-view {
@@ -3043,6 +3126,7 @@ html, body {
   0% { transform: translateX(0); opacity: 1; }
   100% { transform: translateX(-60px); opacity: 0; }
 }
+/* [STY.CF] */
 
 @keyframes gridSwipeOutRight {
   0% { transform: translateX(0); opacity: 1; }
@@ -3052,6 +3136,7 @@ html, body {
 @keyframes gridSwipeInRight {
   0% { transform: translateX(60px); opacity: 0; }
   100% { transform: translateX(0); opacity: 1; }
+/* [STY.CG] */
 }
 
 @keyframes gridSwipeInLeft {
@@ -3062,6 +3147,7 @@ html, body {
 .grid-swipe-out-left {
   animation: gridSwipeOutLeft 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
 }
+/* [STY.CH] */
 
 .grid-swipe-out-right {
   animation: gridSwipeOutRight 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
@@ -3101,6 +3187,7 @@ html, body {
   border-color: var(--neon-primary, #00e5ff) !important;
   box-shadow: 0 0 22px var(--neon-glow, rgba(0, 229, 255, 0.75)), inset 0 0 8px rgba(0, 229, 255, 0.3) !important;
 }
+/* [STY.CI] */
 .level-card-btn.current {
   background: linear-gradient(rgba(0, 229, 255, 0.3), rgba(0, 229, 255, 0.06)), rgba(8, 12, 24, 0.92);
   border: 1px solid var(--neon-primary, #00e5ff);
@@ -3130,6 +3217,7 @@ html, body {
   width: 100%;
   line-height: 1;
 }
+/* [STY.CJ] */
 .mini-star {
   font-size: 8px;
   text-shadow: none;
@@ -3153,8 +3241,9 @@ html, body {
   min-height: 44px;
   flex: none;
 }
+/* [STY.CK] */
 
-/* [CSS106.03] Global tech tree upgrade cards and branch lists */
+/*  Global tech tree upgrade cards and branch lists */
 .screen-bg-only > * { display: none !important; }
 
 .upgrades-bg {
@@ -3188,6 +3277,7 @@ html, body {
   justify-content: space-between;
   padding: 0 16px;
 }
+/* [STY.CL] */
 
 .upgrades-top-label {
   display: inline-flex;
@@ -3241,6 +3331,7 @@ html, body {
   padding: 4px 4px 12px;
   pointer-events: auto;
 }
+/* [STY.CM] */
 .upgrade-row-card,
 .upgrade-row-card * {
   touch-action: pan-y !important;
@@ -3272,6 +3363,7 @@ html, body {
   flex: none;
 }
 .upgrade-row-icon.locked-icon svg { opacity: 0.45; }
+/* [STY.CN] */
 .upgrade-row-icon svg { width: 25px; height: 25px; }
 .upgrade-row-info {
   flex: 1;
@@ -3298,6 +3390,7 @@ html, body {
   text-overflow: ellipsis;
 }
 .upgrade-row-name.locked-name { color: #5d6a85; }
+/* [STY.CO] */
 .upgrade-row-level {
   font-size: 11px;
   font-weight: 800;
@@ -3327,6 +3420,7 @@ html, body {
   transition: all 0.15s;
   font-family: 'Montserrat', sans-serif;
 }
+/* [STY.CP] */
 .upgrade-row-buy.dual-cost-btn {
   flex-direction: column;
   gap: 2px;
@@ -3356,6 +3450,7 @@ html, body {
   font-weight: 900;
   color: #ffffff;
 }
+/* [STY.CQ] */
 .upgrade-row-dev-minus {
   flex: none;
   width: 26px;
@@ -3382,7 +3477,7 @@ html, body {
   gap: 8px;
 }
 
-/* [CSS106.04] In-game settings modal and volume sliders */
+/*  In-game settings modal and volume sliders */
 .settings-box {
   display: flex;
   flex-direction: column;
@@ -3407,6 +3502,7 @@ html, body {
   flex: 1 1 50%;
   min-width: 0;
 }
+/* [STY.CR] */
 .setting-row > select {
   flex: 0 0 50%;
   width: 50%;
@@ -3433,6 +3529,7 @@ html, body {
   height: 24px;
 }
 .switch input { opacity: 0; width: 0; height: 0; }
+/* [STY.CS] */
 .slider {
   position: absolute;
   cursor: pointer;
@@ -3460,6 +3557,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   align-items: stretch;
   gap: 8px;
 }
+/* [STY.CT] */
 .setting-slider-head {
   display: flex;
   align-items: center;
@@ -3496,6 +3594,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   box-shadow: 0 0 8px var(--neon-glow, rgba(0, 229, 255, 0.6));
   cursor: pointer;
 }
+/* [STY.CU] */
 .vol-range::-moz-range-thumb {
   width: 15px;
   height: 15px;
@@ -3514,7 +3613,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   box-shadow: none;
 }
 
-/* [CSS107] In-game tower inspection and management panel */
+/*  In-game tower inspection and management panel */
 #inspectPanel {
   position: relative;
   z-index: 506 !important;
@@ -3537,6 +3636,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   flex: none;
   box-sizing: border-box;
 }
+/* [STY.CV] */
 
 .selected-info .selected-title {
   font-family: 'Montserrat', sans-serif;
@@ -3582,6 +3682,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   min-width: 0;
   width: 100%;
 }
+/* [STY.CW] */
 
 .selected-title {
   font-family: 'Montserrat', sans-serif;
@@ -3621,8 +3722,9 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   background: var(--neon-primary, #00e5ff);
   box-shadow: 0 0 5px var(--neon-glow, rgba(0, 229, 255, 0.6));
 }
+/* [STY.CX] */
 
-/* [CSS107.01] Tower upgrade and sell confirm action buttons */
+/*  Tower upgrade and sell confirm action buttons */
 .btn-upgrade {
   flex: 1.35 1 0%;
   min-width: 88px;
@@ -3673,6 +3775,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   font-weight: 900;
   color: #ffffff;
 }
+/* [STY.CY] */
 
 .btn-sell {
   flex: 1 1 0%;
@@ -3712,6 +3815,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   letter-spacing: 0.2px;
   color: #06070d !important;
 }
+/* [STY.CZ] */
 .btn-sell.confirm-armed .cost {
   color: #06070d !important;
 }
@@ -3765,6 +3869,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   border-color: #f05f9f !important;
   box-shadow: 0 0 20px rgba(240, 95, 159, 0.6) !important;
 }
+/* [STY.DA] */
 
 .btn-close-inspect svg {
   width: 18px;
@@ -3775,7 +3880,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   transition: stroke 0.2s ease;
 }
 
-/* [CSS108] Interactive tutorial overlay spotlight and target indicators */
+/*  Interactive tutorial overlay spotlight and target indicators */
 .tutorial-layer {
   position: fixed;
   inset: 0;
@@ -3794,6 +3899,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 @keyframes tutorialGlowPulse {
   0%, 100% { box-shadow: 0 0 0 2000px rgba(4, 6, 14, 0.72), 0 0 14px 2px rgba(0, 229, 255, 0.4); }
   50%      { box-shadow: 0 0 0 2000px rgba(4, 6, 14, 0.72), 0 0 26px 6px rgba(0, 229, 255, 0.85); }
+/* [STY.DB] */
 }
 
 .tutorial-pointer {
@@ -3817,6 +3923,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 @keyframes tutorialRingPulse {
   0%, 100% { opacity: 0.45; transform: scale(0.94); }
   50%      { opacity: 0.95; transform: scale(1.04); }
+/* [STY.DC] */
 }
 
 .tutorial-field-highlight {
@@ -3830,6 +3937,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   0%, 100% { opacity: 0.4; }
   50%      { opacity: 0.85; }
 }
+/* [STY.DD] */
 
 .tutorial-tap-pulse {
   position: absolute;
@@ -3854,6 +3962,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 @keyframes tutorialTapRing {
   0%   { transform: scale(0.35); opacity: 0.9; }
   70%  { opacity: 0.18; }
+/* [STY.DE] */
   100% { transform: scale(2.8); opacity: 0; }
 }
 
@@ -3902,6 +4011,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   box-shadow: 0 0 16px rgba(0, 229, 255, 0.6) !important;
   transform: scale(0.92) translateY(1px) !important;
 }
+/* [STY.DF] */
 
 .tutorial-close-btn-highlight {
   position: absolute;
@@ -3937,7 +4047,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   z-index: 503;
 }
 
-/* [CSS109] Developer control bar and spawner panel */
+/*  Developer control bar and spawner panel */
 .dev-bar {
   position: fixed;
   top: max(10px, env(safe-area-inset-top));
@@ -3965,6 +4075,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 .dev-bar:active {
   opacity: 0.9;
 }
+/* [STY.DG] */
 .dev-bar:active {
   cursor: grabbing;
 }
@@ -3989,6 +4100,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   align-items: center;
   gap: 8px;
 }
+/* [STY.DH] */
 .dev-fps-badge {
   font-size: 11px;
   font-weight: 800;
@@ -4026,6 +4138,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   color: #ff3366;
   border-color: rgba(255, 51, 102, 0.4);
 }
+/* [STY.DI] */
 .dev-details-pane {
   display: flex;
   flex-direction: column;
@@ -4055,6 +4168,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   border-color: #f05f9f;
   color: #f05f9f;
 }
+/* [STY.DJ] */
 .dev-sub-title {
   font-size: 9px;
   font-weight: 800;
@@ -4073,7 +4187,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   line-height: 1.35;
 }
 
-/* [CSS110] Collapsible accordion loadout and settings widgets */
+/*  Collapsible accordion loadout and settings widgets */
 #settingsScreen .settings-box {
   background: transparent;
   border: none;
@@ -4095,6 +4209,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 .settings-combat-actions.hidden {
   display: none !important;
 }
+/* [STY.DK] */
 
 .result-btn-pill {
   width: 248px;
@@ -4146,6 +4261,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   color: #f05f9f;
   font-weight: 900;
 }
+/* [STY.DL] */
 .result-btn-giveup:active {
   border-color: #f05f9f !important;
   color: #f05f9f !important;
@@ -4177,6 +4293,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 
 @keyframes endlessPulseGlow {
   0% { transform: translateX(-50%) scale(0.95); opacity: 0.7; }
+/* [STY.DM] */
   100% { transform: translateX(-50%) scale(1.08); opacity: 1; }
 }
 
@@ -4200,6 +4317,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 #defeatScreen.endless-result-active #endlessLootLine span {
   color: #ffffff !important;
 }
+/* [STY.DN] */
 
 #defeatScreen.endless-result-active #endlessDoubleBtn {
   background: linear-gradient(135deg, rgba(0, 229, 255, 0.4) 0%, rgba(168, 85, 247, 0.4) 50%, rgba(240, 95, 159, 0.4) 100%) !important;
@@ -4231,6 +4349,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 #defeatScreen.endless-result-active #defeatRetryBtn svg {
   stroke: #ffffff !important;
 }
+/* [STY.DO] */
 
 #defeatScreen.endless-result-active #tacticalTipsWidget {
   display: none !important;
@@ -4260,6 +4379,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   margin-top: 6px;
   min-height: 46px;
 }
+/* [STY.DP] */
 
 #settingsScreen {
   z-index: 250 !important;
@@ -4296,6 +4416,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   max-height: none !important;
   overflow: visible !important;
 }
+/* [STY.DQ] */
 .settings-collapsible-body.hidden {
   display: none !important;
 }
@@ -4339,6 +4460,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   letter-spacing: 0.5px;
   vertical-align: middle;
 }
+/* [STY.DR] */
 .loadout-widget-count.is-full {
   background: rgba(0, 229, 255, 0.22);
   border-color: var(--neon-primary, #00e5ff);
@@ -4370,6 +4492,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   box-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
 }
 .loadout-mini-icon svg { width: 20px; height: 20px; }
+/* [STY.DS] */
 
 .loadout-widget-arrow,
 .settings-collapsible-arrow {
@@ -4417,6 +4540,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   cursor: pointer !important;
   transition: transform 0.06s ease-out, background 0.06s ease-out, border-color 0.06s ease-out, box-shadow 0.06s ease-out !important;
 }
+/* [STY.DT] */
 
 .loadout-grid .loadout-tower-btn:active:not(.blocked),
 .loadout-grid .loadout-tower-btn.btn-pushed:not(.blocked) {
@@ -4458,6 +4582,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   text-overflow: ellipsis !important;
   line-height: 1 !important;
 }
+/* [STY.DU] */
 
 button,
 input,
@@ -4513,6 +4638,7 @@ label,
 .daily-modal-card::before {
   display: none !important;
 }
+/* [STY.DV] */
 
 @keyframes modalScaleUp {
   0% { transform: scale(0.85); opacity: 0; }
@@ -4537,6 +4663,7 @@ label,
   text-align: center;
   flex: 1;
 }
+/* [STY.DW] */
 
 .daily-modal-close-btn {
   background: rgba(8, 12, 24, 0.65);
@@ -4586,6 +4713,7 @@ label,
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
 }
+/* [STY.DX] */
 
 .daily-card {
   background: linear-gradient(180deg, #0f192d 0%, #09101d 100%);
@@ -4635,6 +4763,7 @@ label,
   border-radius: 8px;
   box-shadow: 0 0 8px rgba(217, 70, 239, 0.7);
 }
+/* [STY.DY] */
 
 .daily-card-num {
   font-family: 'Montserrat', sans-serif;
@@ -4668,6 +4797,7 @@ label,
   color: #ffffff;
   margin-bottom: 2px;
 }
+/* [STY.DZ] */
 
 .daily-check-pill {
   background: #041e28;
@@ -4703,6 +4833,7 @@ label,
   align-items: center;
   gap: 2px;
 }
+/* [STY.EA] */
 
 .daily-dual-plus {
   color: #a855f7;
@@ -4750,6 +4881,7 @@ label,
   align-items: flex-start;
   gap: 6px;
 }
+/* [STY.EB] */
 
 .day7-badge {
   background: #3b0747;
@@ -4794,6 +4926,7 @@ label,
   background: #071628;
   border: 1.2px solid rgba(0, 229, 255, 0.7);
 }
+/* [STY.EC] */
 
 .prism-capsule {
   background: #1d062b;
@@ -4836,6 +4969,7 @@ label,
   box-sizing: border-box;
   text-transform: uppercase;
 }
+/* [STY.ED] */
 
 .daily-claim-normal {
   flex: 1;
@@ -4871,6 +5005,7 @@ label,
   box-shadow: none !important;
   transform: none !important;
 }
+/* [STY.EE] */
 
 .endless-loot-line {
   display: inline-flex;
@@ -4898,12 +5033,13 @@ label,
   opacity: 0.45;
   margin: 0 4px;
 }
+/* [STY.EF] */
 
 #econHpSplitBadge > .badge-divider:first-child {
   display: none !important;
 }
 
-/* [CSS112] Gifts & Shop Screen Grid and Cards */
+/*  Gifts & Shop Screen Grid and Cards */
 #shopScreen {
   z-index: 210 !important;
   pointer-events: auto !important;
@@ -4944,6 +5080,7 @@ label,
   margin-bottom: 2px;
   padding-left: 2px;
 }
+/* [STY.EG] */
 
 .shop-card {
   border-radius: 18px;
@@ -4988,6 +5125,7 @@ label,
   border-color: #00e5ff;
   box-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
 }
+/* [STY.EH] */
 
 .shop-card-icon.gold-glow {
   border-color: #f59e0b;
@@ -5023,6 +5161,7 @@ label,
   font-weight: 600;
   color: #8ea3c4;
 }
+/* [STY.EI] */
 
 .shop-card-sub.prism-sub {
   color: #f0abfc;
@@ -5067,6 +5206,7 @@ label,
   color: #ffffff;
   box-shadow: 0 0 14px rgba(0, 229, 255, 0.4);
 }
+/* [STY.EJ] */
 
 .shop-btn-buy {
   background: rgba(14, 20, 38, 0.9);
@@ -5104,13 +5244,14 @@ label,
   font-weight: 900;
   color: #ffffff;
 }
+/* [STY.EK] */
 
 .exchange-cost-val.cost-red {
   color: #f05f9f !important;
   text-shadow: 0 0 6px rgba(240, 95, 159, 0.6);
 }
 
-/* [CSS113] Баннер режима выбора уровней */
+/*  Баннер режима выбора уровней */
 .mode-art-display {
   width: 100%;
   max-width: 380px;
@@ -5133,7 +5274,7 @@ label,
   display: block;
 }
 
-/* [CSS114] Стили строки и окаймления Daily Gift */
+/*  Стили строки и окаймления Daily Gift */
 .daily-gift-card {
   border-radius: 18px;
   background: rgba(8, 12, 24, 0.65);
@@ -5153,6 +5294,7 @@ label,
   margin-left: auto;
   flex-shrink: 0;
 }
+/* [STY.EL] */
 
 .shop-item-btn.locked-buy {
   white-space: normal !important;
@@ -5162,7 +5304,7 @@ label,
   max-width: 95px;
 }
 
-/* [CSS115] Отступы и разрядка карточек и секций на экране Gifts & Shop */
+/*  Отступы и разрядка карточек и секций на экране Gifts & Shop */
 #shopScreen .upgrades-row-list {
   gap: 12px !important;
   padding: 8px 4px 24px 4px !important;
@@ -5181,6 +5323,7 @@ label,
 #shopScreen .shop-card {
   margin-bottom: 2px;
 }
+/* [STY.EM] */
 
 @keyframes goBtnAppear {
   0% { 
@@ -5202,6 +5345,7 @@ label,
     box-shadow: 0 0 22px rgba(0, 229, 255, 0.85); 
     transform: translateX(-50%) scale(1.02);
   }
+/* [STY.EN] */
 }
 
 @keyframes titleAppearSoft {
@@ -5232,6 +5376,7 @@ label,
   box-sizing: border-box;
   animation: titleAppearSoft 1s ease-out forwards;
 }
+/* [STY.EO] */
 
 .loader-title-zone .start-sub-title {
   text-indent: 6px;
@@ -5279,6 +5424,7 @@ label,
   transform: scale(0.92) translateY(2px) !important;
   box-shadow: 0 0 32px rgba(255, 145, 0, 0.85), inset 0 0 14px rgba(255, 145, 0, 0.4) !important;
 }
+/* [STY.EP] */
 
 /* Строка бонусов характеристик в карточке Tech Tree */
 .upgrade-row-stats {
@@ -5324,6 +5470,7 @@ label,
   border: 1.5px solid rgba(140, 200, 255, 0.2);
   color: #8ea3c4;
 }
+/* [STY.EQ] */
 
 /* Блок характеристик башни: чистый вертикальный список БЕЗ рамки */
 .selected-stats-box {
@@ -5374,11 +5521,12 @@ label,
   white-space: nowrap !important;
 }
 
-/* [CSS116] Milestone & Achievement Unlock Modal Card + Live Tower Firing Demo */
+/*  Milestone & Achievement Unlock Modal Card + Live Tower Firing Demo */
 #milestoneScreen {
   z-index: 10005 !important;
   padding: 0 !important;
 }
+/* [STY.ER] */
 
 #milestoneScreen .result-stack {
   --ms-accent: #00e5ff;
@@ -5426,6 +5574,7 @@ label,
   padding: 0 22px;
   box-sizing: border-box;
 }
+/* [STY.ES] */
 
 .ms-stage-grid {
   position: absolute;
@@ -5477,6 +5626,7 @@ label,
   animation: msMobHitPulse 0.8s ease-in-out infinite;
   position: relative;
 }
+/* [STY.ET] */
 
 .ms-demo-mob.sm {
   width: 15px;
@@ -5507,6 +5657,7 @@ label,
   font-size: 11px;
   color: #38bdf8;
 }
+/* [STY.EU] */
 
 .ms-demo-mob-group {
   display: flex;
@@ -5527,6 +5678,7 @@ label,
   0%, 100% { transform: scale(1); filter: brightness(1); }
   50% { transform: scale(0.86); filter: brightness(1.6); }
 }
+/* [STY.EV] */
 
 @keyframes msMobSlowFloat {
   0%, 100% { transform: translateX(0); }
@@ -5535,6 +5687,7 @@ label,
 
 .ms-fx-bullet.b1 { animation: msBulletFly 0.7s linear infinite; }
 .ms-fx-bullet.b2 { animation: msBulletFly 0.7s linear 0.35s infinite; }
+/* [STY.EW] */
 .ms-fx-impact { animation: msImpactRing 0.7s ease-out infinite; transform-origin: 186px 45px; }
 
 @keyframes msBulletFly {
@@ -5542,6 +5695,7 @@ label,
   85% { transform: translateX(124px); opacity: 1; }
   100% { transform: translateX(124px); opacity: 0; }
 }
+/* [STY.EX] */
 
 @keyframes msImpactRing {
   0%, 70% { transform: scale(0.2); opacity: 0; }
@@ -5554,6 +5708,7 @@ label,
   filter: drop-shadow(0 0 6px var(--stage-col, #f05f9f));
   animation: msLaserCycle 3.0s ease-in-out infinite, msLaserThickPulse 0.16s ease-in-out infinite alternate;
 }
+/* [STY.EY] */
 
 .ms-fx-laser-core {
   stroke-width: 1.8px;
@@ -5575,6 +5730,7 @@ label,
     visibility: visible;
   }
 }
+/* [STY.EZ] */
 
 @keyframes msLaserThickPulse {
   0% {
@@ -5594,6 +5750,7 @@ label,
   100% {
     stroke-width: 2.6px;
   }
+/* [STY.FA] */
 }
 
 .ms-fx-mortar-shell {
@@ -5608,6 +5765,7 @@ label,
 @keyframes msMortarArc {
   0% { offset-distance: 0%; opacity: 1; }
   85% { offset-distance: 100%; opacity: 1; }
+/* [STY.FB] */
   100% { offset-distance: 100%; opacity: 0; }
 }
 
@@ -5615,6 +5773,7 @@ label,
   0%, 78% { transform: scale(0.1); opacity: 0; }
   85% { opacity: 1; }
   100% { transform: scale(1.35); opacity: 0; }
+/* [STY.FC] */
 }
 
 .ms-fx-zap {
@@ -5624,6 +5783,7 @@ label,
   0%, 100% { opacity: 1; }
   50% { opacity: 0.25; }
 }
+/* [STY.FD] */
 
 .ms-fx-stasis-wave.w1 { transform-origin: 46px 45px; animation: msStasisExpand 1.6s ease-out infinite; }
 .ms-fx-stasis-wave.w2 { transform-origin: 46px 45px; animation: msStasisExpand 1.6s ease-out 0.8s infinite; }
@@ -5632,6 +5792,7 @@ label,
   0% { transform: scale(0.6); opacity: 0.95; }
   100% { transform: scale(9.5); opacity: 0; }
 }
+/* [STY.FE] */
 
 .ms-fx-melter-beam {
   animation: msMelterRamp 1.8s ease-in infinite;
@@ -5641,6 +5802,7 @@ label,
   85% { stroke-width: 12px; opacity: 1; }
   100% { stroke-width: 1px; opacity: 0.1; }
 }
+/* [STY.FF] */
 
 .ms-fx-rail-glow, .ms-fx-rail-core {
   animation: msRailShot 1.3s ease-out infinite;
@@ -5650,6 +5812,7 @@ label,
   30% { opacity: 1; }
   75%, 100% { opacity: 0; }
 }
+/* [STY.FG] */
 
 .ms-feature-showcase {
   position: relative;
@@ -5684,6 +5847,7 @@ label,
 @keyframes msOrbitSpin {
   to { transform: rotate(360deg); }
 }
+/* [STY.FH] */
 
 .milestone-body {
   width: 100%;
@@ -5722,6 +5886,7 @@ label,
   gap: 7px;
   width: 100%;
 }
+/* [STY.FI] */
 
 .milestone-embed-hint {
   font-family: 'Montserrat', sans-serif;
@@ -5777,6 +5942,7 @@ label,
   gap: 2px;
   text-align: center;
 }
+/* [STY.FJ] */
 
 .completion-kicker {
   font-size: 10px;
@@ -5823,6 +5989,7 @@ label,
   justify-content: center;
   filter: drop-shadow(0 0 12px var(--neon-primary, #00e5ff));
 }
+/* [STY.FK] */
 
 .completion-chip-cyan {
   border-left-color: var(--neon-primary, #00e5ff) !important;
@@ -5856,9 +6023,10 @@ label,
   transform: scale(0.95) translateY(1px) !important;
   box-shadow: 0 0 32px rgba(0, 229, 255, 0.8), inset 0 0 16px rgba(0, 229, 255, 0.45) !important;
 }
+/* [STY.FL] */
 
 /* ============================================================================
-   [CSS117] UNIVERSAL DYNAMIC THEME SYSTEM (Variables --c1 .. --c5)
+    UNIVERSAL DYNAMIC THEME SYSTEM (Variables --c1 .. --c5)
    Автоматически применяется ко всем цветовым схемам из NEON_PALETTES
    ============================================================================ */
 
@@ -5917,6 +6085,7 @@ label,
 .bp-btn-buy-tier {
   color: var(--c1-light);
 }
+/* [STY.FM] */
 
 .menu-btn-glass-capsule:active:not(:disabled):not(.no-press-feedback),
 .result-btn:active:not(:disabled):not(.no-press-feedback):not(.btn-locked),
@@ -5949,6 +6118,7 @@ label,
 .daily-btn-svg {
   filter: drop-shadow(0 0 4px rgba(var(--c1-rgb), 0.6));
 }
+/* [STY.FN] */
 
 /* 2. ГЛАВНОЕ МЕНЮ: КНОПКА PLAY И ВИДЖЕТ SYNTH PASS */
 .menu-btn-primary-capsule {
@@ -5973,6 +6143,7 @@ label,
   color: var(--c1);
   filter: drop-shadow(0 0 5px rgba(var(--c1-rgb), 0.55));
 }
+/* [STY.FO] */
 .synth-pass-tier-text {
   color: var(--c1-light);
 }
@@ -6016,6 +6187,7 @@ label,
   border-color: var(--c1-light) !important;
   box-shadow: 0 0 32px rgba(var(--c1-rgb), 0.8) !important;
 }
+/* [STY.FP] */
 
 /* 4. ПОБЕДНЫЙ ЛУТБОКС И ЗВЕЗДА ХАРДКОРА */
 #victoryRewardBox {
@@ -6040,6 +6212,7 @@ label,
 .daily-card {
   border-color: rgba(var(--c1-rgb), 0.32);
 }
+/* [STY.FQ] */
 .daily-card.day5-card {
   border-color: rgba(var(--c2-rgb), 0.48);
 }
@@ -6061,6 +6234,7 @@ label,
   background: rgba(var(--c1-rgb), 0.14);
   border-color: rgba(var(--c1-rgb), 0.65);
 }
+/* [STY.FR] */
 .daily-check-pill svg {
   stroke: var(--c1) !important;
 }
@@ -6082,6 +6256,7 @@ label,
   border-color: var(--c2);
   box-shadow: 0 0 10px rgba(var(--c2-rgb), 0.35);
 }
+/* [STY.FS] */
 .daily-claim-normal {
   background: #0a152e;
   border-color: rgba(var(--c1-rgb), 0.62);
@@ -6124,6 +6299,7 @@ label,
   stroke: var(--c1) !important;
   filter: drop-shadow(0 0 6px rgba(var(--c1-rgb), 0.78)) !important;
 }
+/* [STY.FT] */
 #hudDiamondBadge svg polygon,
 .levels-top-diamonds svg polygon,
 .shop-card-icon.diamond-glow svg polygon,
@@ -6158,6 +6334,7 @@ label,
   border-color: var(--c2) !important;
   box-shadow: 0 0 12px rgba(var(--c2-rgb), 0.38) !important;
 }
+/* [STY.FU] */
 .shop-card-prism {
   background: linear-gradient(135deg, rgba(var(--c2-rgb), 0.14), rgba(12, 8, 22, 0.85));
   border-color: rgba(var(--c2-rgb), 0.4);
@@ -6183,6 +6360,7 @@ label,
 .settings-collapsible-arrow {
   color: var(--c1-light) !important;
 }
+/* [STY.FV] */
 .loadout-widget-count {
   background: rgba(var(--c1-rgb), 0.16);
   border-color: rgba(var(--c1-rgb), 0.48);
@@ -6209,6 +6387,7 @@ label,
   stroke: var(--c1);
   filter: drop-shadow(0 0 5px var(--c1));
 }
+/* [STY.FW] */
 .wave-circle-prog.counting-down {
   stroke: var(--c4);
   filter: drop-shadow(0 0 5px var(--c4));
@@ -6229,6 +6408,7 @@ label,
   border-color: var(--c1);
   box-shadow: 0 0 24px rgba(var(--c1-rgb), 0.45);
 }
+/* [STY.FX] */
 .upgrade-row-buy:not(.locked-buy):not(.max-buy) {
   background: linear-gradient(rgba(var(--c1-rgb), 0.28), rgba(var(--c1-rgb), 0.08)), rgba(8, 12, 24, 0.92);
   border-color: var(--c1);
@@ -6251,6 +6431,7 @@ label,
     transform: translateX(-50%) scale(1.02);
   }
 }
+/* [STY.FY] */
 
 /* 11. КАСТОМНАЯ ВЫПАДАШКА VISUAL В СТИЛЕ ИГРЫ */
 .bp-header-card,
@@ -6294,6 +6475,7 @@ label,
   box-shadow: 0 0 12px rgba(var(--c1-rgb), 0.4);
   color: #ffffff;
 }
+/* [STY.FZ] */
 
 .custom-palette-trigger.is-disabled {
   background: rgba(8, 12, 24, 0.5);
@@ -6344,6 +6526,7 @@ label,
   transition: background 0.12s ease, color 0.12s ease;
   white-space: nowrap;
 }
+/* [STY.GA] */
 
 .custom-palette-option:hover,
 .custom-palette-option:active {
@@ -6371,6 +6554,7 @@ label,
 .custom-palette-option.locked .pal-opt-dot {
   opacity: 0.4;
 }
+/* [STY.GB] */
 
 .pal-opt-name {
   flex: 1;

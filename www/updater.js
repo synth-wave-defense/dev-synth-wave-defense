@@ -33,6 +33,7 @@
     logs: []
   };
 
+  // [UPD.A]
   function logOta(msg) {
     const timeStr = new Date().toLocaleTimeString();
     const line = `[${timeStr}] ${msg}`;
@@ -43,6 +44,7 @@
 
   window.OtaDiagnostics = OtaDiagnostics;
 
+  // [UPD.B]
   function getPlugin(name) {
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins[name]) {
       return window.Capacitor.Plugins[name];
@@ -50,6 +52,7 @@
     return null;
   }
 
+  // [UPD.C]
   function formatErr(err) {
     if (!err) return 'unknown';
     if (typeof err === 'string') return err;
@@ -57,6 +60,7 @@
     try { return JSON.stringify(err); } catch (e) { return String(err); }
   }
 
+  // [UPD.D]
   function refreshNativeBridgeStatus() {
     if (window.NativeOtaBridge && typeof window.NativeOtaBridge.getStatusJson === 'function') {
       try {
@@ -76,6 +80,7 @@
     }
   }
 
+  // [UPD.E]
   async function fetchWithTimeout(url, timeoutMs) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -258,6 +263,7 @@
           OtaDiagnostics.lastError = res;
         } else {
           // Принудительно перезагружаем WebView для старта с новой версии
+          // [UPD.F]
           setTimeout(() => { window.location.reload(); }, 150);
         }
       } else {
