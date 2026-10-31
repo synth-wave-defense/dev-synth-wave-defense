@@ -1,6 +1,6 @@
-// [LVL100] Level Definitions Module: Campaign sector and wave definitions catalog, tower unlock overrides, and level editor metadata.
+//  Level Definitions Module: Campaign sector and wave definitions catalog, tower unlock overrides, and level editor metadata.
 
-// [LVL101] Campaign Level Waves Catalog: Sector level configurations defining starting resources, wave sequences, enemy spawn compositions, and bounty metrics.
+//  Campaign Level Waves Catalog: Sector level configurations defining starting resources, wave sequences, enemy spawn compositions, and bounty metrics.
 var LEVELS_DATA = {
   "1": {
     "mapId": "L1",
@@ -14935,7 +14935,7 @@ var LEVELS_DATA = {
   }
 };
 
-// [LVL103] Module Load Verification: Console logging diagnostic confirming levels data initialization.
+//  Module Load Verification: Console logging diagnostic confirming levels data initialization.
 if (typeof console !== "undefined") {
   console.log("[levels_data.js] Loaded successfully!", {
     totalLevels: typeof TOTAL_LEVELS !== "undefined" ? TOTAL_LEVELS : 50,

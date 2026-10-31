@@ -1,6 +1,6 @@
-// [TEL100] Telemetry & Analytics Module: Best-effort crash reporting and event logging.
+//  Telemetry & Analytics Module: Best-effort crash reporting and event logging.
 
-// [TEL101] Crash Reporting: Discord webhook error reporter.
+//  Crash Reporting: Discord webhook error reporter.
 const ERROR_WEBHOOK_URL = '';
 
 window.reportErrorToWebhook = function (info) {
@@ -17,10 +17,11 @@ window.reportErrorToWebhook = function (info) {
   sendJSON(ERROR_WEBHOOK_URL, { content: lines.join('\n') });
 };
 
-// [TEL102] Lightweight Gameplay Analytics: GA4 event tracker.
+//  Lightweight Gameplay Analytics: GA4 event tracker.
 const ANALYTICS_ENDPOINT_URL = '';
 const ANALYTICS_CLIENT_ID_KEY = 'sectorDefenseTD_analytics_cid';
 
+// [TEL.A]
 function getAnalyticsClientId() {
   try {
     let cid = localStorage.getItem(ANALYTICS_CLIENT_ID_KEY);
@@ -34,6 +35,7 @@ function getAnalyticsClientId() {
   }
 }
 
+// [TEL.B]
 function trackEvent(name, params) {
   if (!ANALYTICS_ENDPOINT_URL) return;
   sendJSON(ANALYTICS_ENDPOINT_URL, {
@@ -42,7 +44,8 @@ function trackEvent(name, params) {
   });
 }
 
-// [TEL103] Shared Fire-and-Forget POST Request Dispatcher.
+//  Shared Fire-and-Forget POST Request Dispatcher.
+// [TEL.C]
 function sendJSON(url, body) {
   if (!url) return;
   try {
@@ -53,7 +56,9 @@ function sendJSON(url, body) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
       signal: controller ? controller.signal : undefined
+    // [TEL.D]
     }).catch(() => { /* offline / unreachable -- silently drop, never retry-spam */ })
+      // [TEL.E]
       .finally(() => { if (timeoutId) clearTimeout(timeoutId); });
   } catch (e) {
     // fetch not available

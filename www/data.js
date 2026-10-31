@@ -1,10 +1,10 @@
-// [DAT100] Game configuration data: campaign constants, upgrade branch specifications, tower definitions, enemy parameters, map catalog, and level generator.
+//  Game configuration data: campaign constants, upgrade branch specifications, tower definitions, enemy parameters, map catalog, and level generator.
 
 if (typeof console !== 'undefined') {
   console.log('[data.js] Loading game data...');
 }
 
-// [DAT101] Campaign Constants & Meta Upgrade Branches: Defines campaign structure and purchasable tech tree branches for towers and base.
+//  Campaign Constants & Meta Upgrade Branches: Defines campaign structure and purchasable tech tree branches for towers and base.
 const TOTAL_LEVELS = 50;
 const LEVELS_PER_SECTION = 10;
 const TOTAL_SECTIONS = 5;
@@ -19,7 +19,7 @@ const DAILY_LOGIN_REWARDS = [
   { day: 7, diamonds: 50, prisms: 10 }
 ];
 
-// [DAT107] Synth Pass Battle Pass Tiers & Neon Color Palettes Configuration: Reward tiers and palettes.
+//  Synth Pass Battle Pass Tiers & Neon Color Palettes Configuration: Reward tiers and palettes.
 const BATTLE_PASS_TIERS = [
   { tier: 1,  freeReward: { type: 'diamonds', amount: 10 }, premReward: { type: 'palette', paletteId: 'cyber_gold', title: 'Cyber Gold Palette' } },
   { tier: 2,  freeReward: { type: 'diamonds', amount: 10 }, premReward: { type: 'diamonds', amount: 25 } },
@@ -129,6 +129,7 @@ const NEON_PALETTES = {
   }
 };
 
+// [DAT.A]
 function getBpTierInfo(xp) {
   const currentXp = Math.max(0, xp || 0);
   const tier = Math.min(30, Math.floor(currentXp / 100) + 1);
@@ -174,7 +175,7 @@ const TOWER_NAMES = {
   railgun: 'Railgun'
 };
 
-// [DAT102] Tower Visual Geometry: Geometric rendering specs for tower turrets, barrels, and levels.
+//  Tower Visual Geometry: Geometric rendering specs for tower turrets, barrels, and levels.
 const TOWER_GLYPH_DARK = '#0a0e1c';
 
 const TOWER_GLYPH_SPECS = {
@@ -211,7 +212,8 @@ const TOWER_GLYPH_FLAKES = {
       { cx: 5.5, cy: 0.5, scale: 0.85, sw: 2.24 }]
 };
 
-// [DAT102.01] Tower SVG Generator: Generates standalone SVG strings for tower icons across UI surfaces.
+//  Tower SVG Generator: Generates standalone SVG strings for tower icons across UI surfaces.
+// [DAT.B]
 function buildTowerIconSvg(type, level = 1, size = 28, angleDeg = 0) {
   const spec = TOWER_GLYPH_SPECS[type];
   const conf = TOWER_CONFIGS[type];
@@ -266,7 +268,7 @@ function buildTowerIconSvg(type, level = 1, size = 28, angleDeg = 0) {
   return out;
 }
 
-// [DAT103] Tower Configurations: Base costs, range, attack metrics, upgrade multipliers, and milestone unlocked blurbs.
+//  Tower Configurations: Base costs, range, attack metrics, upgrade multipliers, and milestone unlocked blurbs.
 const TOWER_CONFIGS = {
   gun: { cost: 50, range: 165, damage: 16, fireRate: 0.52, color: '#00e5ff', glow: '#00e5ff', type: 'projectile', costMultiplier: 1.3, damageMultiplier: 1.7, rateMultiplier: 0.8, rangeMultiplier: 1.1, powerDmg: 0.08, powerRate: 0.06, powerRange: 0.04 },
   laser: { cost: 70, range: 150, dps: 48, color: '#f05f9f', glow: '#f05f9f', type: 'beam', costMultiplier: 1.3, damageMultiplier: 1.85, rangeMultiplier: 1.1, powerDmg: 0.08, powerRate: 0.06, powerRange: 0.04 },
@@ -352,7 +354,8 @@ const TOWER_UNLOCK_BLURBS = {
 
 const UPGRADE_STEP_COSTS = [6, 7, 8, 9, 10, 11, 12, 13, 15, 19];
 
-// [DAT101.01] Tech Tree Upgrade Cost & Effective Level Calculators: Phase 1 (1-10), Phase 2 (11-15), Phase 3 (16+) spend and stat formulas.
+//  Tech Tree Upgrade Cost & Effective Level Calculators: Phase 1 (1-10), Phase 2 (11-15), Phase 3 (16+) spend and stat formulas.
+// [DAT.C]
 function getUpgradeCostForLevel(nextLvl) {
   if (nextLvl <= 10) {
     return {
@@ -376,6 +379,7 @@ function getUpgradeCostForLevel(nextLvl) {
   }
 }
 
+// [DAT.D]
 function isScalingBranch(key) {
   if (!key) return false;
   if (key.endsWith('_power') || key === 'base_hp' || key === 'base_gold') {
@@ -384,6 +388,7 @@ function isScalingBranch(key) {
   return false;
 }
 
+// [DAT.E]
 function areAllBranchesMaxPhase1() {
   const branches = [
     'gun_power', 'laser_power', 'mortar_power', 'tesla_power',
@@ -393,6 +398,7 @@ function areAllBranchesMaxPhase1() {
   return branches.every(key => (upgradeTreeData[key] || 0) >= 10);
 }
 
+// [DAT.F]
 function getUpgradeEffectiveLevel(key) {
   const lvl = upgradeTreeData[key] || 0;
   if (lvl <= 10) return lvl;
@@ -408,6 +414,7 @@ function getUpgradeEffectiveLevel(key) {
   return 16.5 + synthBonus;
 }
 
+// [DAT.G]
 function getUpgradeRangeBonus(towerType, effLvl) {
   const conf = TOWER_CONFIGS[towerType];
   if (!conf || !conf.powerRange) return 0;
@@ -419,16 +426,17 @@ function getUpgradeRangeBonus(towerType, effLvl) {
   return base10 + post10;
 }
 
-// [DAT103.01] Tower Target Lock-on Specs: Lock-on delay constants and targeted tower classification.
+//  Tower Target Lock-on Specs: Lock-on delay constants and targeted tower classification.
 const LOCK_ON_DELAY_LIGHT = 0.1;
 const LOCK_ON_DELAY_HEAVY = 0.5;
 const LOCKED_TARGET_TOWERS = ['laser', 'melter'];
 const MORTAR_BASE_TRAVEL_TIME = 1.0;
 
-// [DAT104] Enemy Configurations: Base stats, shapes, speeds, bounties, and swarm clump parameters.
+//  Enemy Configurations: Base stats, shapes, speeds, bounties, and swarm clump parameters.
 const SWARM_CLUMP_SIZE = 10;
 const SWARM_CLUMP_SIZE_DEBUT = 8;
 const SWARM_DEBUT_LEVEL = 11;
+// [DAT.H]
 function swarmClumpSizeFor(lvl) {
   return lvl === SWARM_DEBUT_LEVEL ? SWARM_CLUMP_SIZE_DEBUT : SWARM_CLUMP_SIZE;
 }
@@ -450,7 +458,7 @@ const ENEMY_CONFIGS = {
   emp_overlord: { shape: 'triangle_inverted', color: '#38bdf8', glow: '#f05f9f', size: 17, baseSpeed: 30, baseHp: 7200, baseBounty: 140 }
 };
 
-// [DAT105] Map Catalog: Grid dimensions, tile paths, and obstacle locations for campaign levels.
+//  Map Catalog: Grid dimensions, tile paths, and obstacle locations for campaign levels.
 const MAP_CATALOG = {
   L1: { name: "Straight Path", cols: 5, rows: 7, path: [{c: 2, r: 0}, {c: 2, r: 6}] },
   L2: { name: "First Turn", cols: 6, rows: 6, path: [{c: 4, r: 1}, {c: 4, r: 4}, {c: 1, r: 4}] },

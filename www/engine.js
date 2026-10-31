@@ -1,4 +1,4 @@
-// [ENG100] Game Engine Module: Primary simulation state, game loop, persistent storage, and entity managers.
+//  Game Engine Module: Primary simulation state, game loop, persistent storage, and entity managers.
 // Synth Wave Defense -- engine.js
 //
 // The simulation layer: everything about *what happens* in a match, with no
@@ -44,16 +44,19 @@ let newTowerBannerHideTimer = 0;
 let cameraShakeTimer = 0;
 let cameraShakeIntensity = 0;
 
-// [ENG101] Camera Shake & Audio Integration Wrappers: FX triggers, volume control, and haptic feedback.
+//  Camera Shake & Audio Integration Wrappers: FX triggers, volume control, and haptic feedback.
+// [ENG.A]
 function triggerCameraShake(dur = 0.5, intensity = 15) {
   cameraShakeTimer = dur;
   cameraShakeIntensity = intensity;
 }
 
+// [ENG.B]
 function hasClearedLevelBefore(lvl) {
   return maxUnlockedLevel > lvl;
 }
 
+// [ENG.C]
 function getBaseDamageFor(e) {
   if (e.isBoss) return 5;
   if (e.isMiniBoss) {
@@ -63,6 +66,7 @@ function getBaseDamageFor(e) {
   return 1;
 }
 
+// [ENG.D]
 function checkEnemyEnrage(e) {
   if (isOverdriveMode && e && e.hp > 0 && (e.hp / e.maxHp) <= 0.3 && !e.isEnraged) {
     e.isEnraged = true;
@@ -71,6 +75,7 @@ function checkEnemyEnrage(e) {
   }
 }
 
+// [ENG.E]
 function getNewlyUnlockedTowers(lvl) {
   const cur = (LEVELS_DATA[lvl] && LEVELS_DATA[lvl].unlockedTowers) || [];
   const prev = (LEVELS_DATA[lvl - 1] && LEVELS_DATA[lvl - 1].unlockedTowers) || [];
@@ -88,75 +93,89 @@ let settings = {
   sfxVolume: 100, musicVolume: 70
 };
 
+// [ENG.F]
 function sfx(name, arg) {
   if (!settings.sfxEnabled) return;
   try {
     if (typeof SFX !== 'undefined' && SFX) SFX.play(name, arg);
   } catch (e) { }
 }
+// [ENG.G]
 function sfxDeath(enemy) {
   if (!settings.sfxEnabled) return;
   try {
     if (typeof SFX !== 'undefined' && SFX) SFX.death(enemy);
   } catch (e) {}
 }
+// [ENG.H]
 function sfxBeam(kind, active, intensity) {
   if (!settings.sfxEnabled) return;
   try {
     if (typeof SFX !== 'undefined' && SFX) SFX.beam(kind, active, intensity);
   } catch (e) {}
 }
+// [ENG.I]
 function sfxStopBeams() {
   try {
     if (typeof SFX !== 'undefined' && SFX) SFX.stopBeams();
   } catch (e) {}
 }
+// [ENG.J]
 function sfxReap() {
   try {
     if (typeof SFX !== 'undefined' && SFX) SFX.reap();
   } catch (e) {}
 }
+// [ENG.K]
 function sfxSetEnabled(on) {
   try {
     if (typeof SFX !== 'undefined' && SFX) SFX.setEnabled(on);
   } catch (e) {}
 }
+// [ENG.L]
 function sfxSetVolume(v) {
   try {
     if (typeof SFX !== 'undefined' && SFX && SFX.setVolume) SFX.setVolume(v);
   } catch (e) {}
 }
 
+// [ENG.M]
 function music(category) {
   try {
     if (typeof MusicManager !== 'undefined' && MusicManager) MusicManager.play(category);
   } catch (e) { }
 }
+// [ENG.N]
 function musicSetEnabled(on) {
   try {
     if (typeof MusicManager !== 'undefined' && MusicManager) MusicManager.setEnabled(on);
   } catch (e) {}
 }
+// [ENG.O]
 function musicSetVolume(v) {
   try {
     if (typeof MusicManager !== 'undefined' && MusicManager && MusicManager.setVolume) MusicManager.setVolume(v);
   } catch (e) {}
 }
+// [ENG.P]
 function musicUnlock() {
   try {
     if (typeof MusicManager !== 'undefined' && MusicManager) MusicManager.unlock();
   } catch (e) {}
 }
+// [ENG.Q]
 function musicSuspend() {
   try {
     if (typeof MusicManager !== 'undefined' && MusicManager) MusicManager.suspend();
   } catch (e) {}
 }
+// [ENG.R]
 function musicResume() {
   try {
     if (typeof MusicManager !== 'undefined' && MusicManager) MusicManager.resume();
   } catch (e) {}
 }
+// [ENG.S]
 function musicSetDucked(on, dur) {
   try {
     if (typeof MusicManager !== 'undefined' && MusicManager && MusicManager.setDucked) MusicManager.setDucked(on, dur);
@@ -164,6 +183,7 @@ function musicSetDucked(on, dur) {
 }
 
 // Функция вибрации (должна быть доступна глобально):
+// [ENG.T]
 function vibrate(type = 'light') {
   if (!settings || !settings.vibrationEnabled) return;
   try {
@@ -191,6 +211,7 @@ window.vibrate = vibrate;
 let devMode = false;
 let devInputOpen = false;
 let suppressBackgroundPauseUntil = 0;
+// [ENG.U]
 function suppressBackgroundPause(ms = 900) {
   suppressBackgroundPauseUntil = Date.now() + ms;
 }
@@ -233,6 +254,7 @@ let endlessDailyRunsUsed = 0;
 let endlessDailyRunsDate = '';
 let endlessMilestonesClaimed = {};
 
+// [ENG.V]
 function resetEndlessDailyRunsIfNeeded() {
   const todayStr = new Date().toISOString().slice(0, 10);
   if (endlessDailyRunsDate !== todayStr) {
@@ -241,6 +263,7 @@ function resetEndlessDailyRunsIfNeeded() {
   }
 }
 
+// [ENG.W]
 function isEndlessUnlocked() {
   if (typeof devMode !== 'undefined' && devMode) return true;
   if (typeof maxUnlockedLevel === 'number' && maxUnlockedLevel > 15) return true;
@@ -248,6 +271,7 @@ function isEndlessUnlocked() {
   return false;
 }
 
+// [ENG.X]
 function getEndlessEntryStatus() {
   resetEndlessDailyRunsIfNeeded();
 
@@ -297,6 +321,7 @@ function getEndlessEntryStatus() {
 
 window.getEndlessEntryStatus = getEndlessEntryStatus;
 
+// [ENG.Y]
 function generateEndlessWaveData(w) {
   const arena = (typeof currentLevelSection !== 'undefined') ? Math.min(5, Math.max(1, currentLevelSection)) : 1;
   const cWave = ((w - 1) % 20) + 1; // Позиция внутри 20-волнового цикла (1..20)
@@ -720,6 +745,7 @@ function generateEndlessWaveData(w) {
   return { wave: w, delayAfter: 5.5, spawns };
 }
 
+// [ENG.Z]
 function isOverdriveUnlocked() {
   if (typeof devMode !== 'undefined' && devMode) return true;
   if (typeof clearedLevels !== 'undefined' && (clearedLevels.includes(20) || clearedLevels.some(l => l >= 20))) return true;
@@ -730,7 +756,7 @@ let upgradesPreviousSource = 'main';
 let lastVictoryDiamondsReward = 2;
 let hasClaimedX2ThisLevel = false;
 
-// [ENG102] Persistent Save State & LocalStorage Synchronization: Game progress serialization, save, and load pipeline.
+//  Persistent Save State & LocalStorage Synchronization: Game progress serialization, save, and load pipeline.
 // --- Gifts & Shop State ---
 let noAdsPurchased = false;
 let dailyGiftsClaimedDate = '';
@@ -753,6 +779,7 @@ let unlockedPalettes = ['default'];
 let activePalette = 'default';
 let sessionMobKillsCount = 0;
 
+// [ENG.AA]
 function addBpXp(amount) {
   if (!amount || amount <= 0) return;
   bpXp += amount;
@@ -763,6 +790,7 @@ function addBpXp(amount) {
 }
 
 // Вспомогательные функции конвертации HEX -> RGB и осветления
+// [ENG.AB]
 function hexToRgbObj(hex) {
   let h = String(hex || '#00e5ff').replace('#', '').trim();
   if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
@@ -777,6 +805,7 @@ function hexToRgbObj(hex) {
   };
 }
 
+// [ENG.AC]
 function mixHexWithWhite(hex, whiteRatio = 0.45) {
   const { r, g, b } = hexToRgbObj(hex);
   const mr = Math.round(r + (255 - r) * whiteRatio);
@@ -785,6 +814,7 @@ function mixHexWithWhite(hex, whiteRatio = 0.45) {
   return '#' + [mr, mg, mb].map(x => x.toString(16).padStart(2, '0')).join('');
 }
 
+// [ENG.AD]
 function darkenNormRgb(normArr, factor = 0.42) {
   return [
     +(normArr[0] * factor).toFixed(3),
@@ -793,6 +823,7 @@ function darkenNormRgb(normArr, factor = 0.42) {
   ];
 }
 
+// [ENG.AE]
 function applyPaletteColors(paletteId) {
   const pId = (typeof NEON_PALETTES !== 'undefined' && NEON_PALETTES[paletteId]) ? paletteId : 'default';
   activePalette = pId;
@@ -976,6 +1007,7 @@ let activeBattleSave = null;
 let battleUpgradeSnapshot = null; // Замороженный слепок Tech Tree для текущего боя
 let resumeThawTimer = 0;          // Таймер текущей разморозки
 
+// [ENG.AF]
 function getBattleUpgradeEffectiveLevel(key) {
   if (battleUpgradeSnapshot && typeof battleUpgradeSnapshot[key] === 'number') {
     const lvl = battleUpgradeSnapshot[key];
@@ -988,6 +1020,7 @@ function getBattleUpgradeEffectiveLevel(key) {
   return getUpgradeEffectiveLevel(key);
 }
 
+// [ENG.AG]
 function getBattleUpgradeRangeBonus(towerType, effLvl) {
   if (typeof getUpgradeRangeBonus === 'function') {
     return getUpgradeRangeBonus(towerType, effLvl);
@@ -998,6 +1031,7 @@ function getBattleUpgradeRangeBonus(towerType, effLvl) {
   return 10 * (conf.powerRange || 0) + (effLvl - 10) * 0.01;
 }
 
+// [ENG.AH]
 function saveActiveBattleSnapshot() {
   if (gameState !== 'PLAYING' && gameState !== 'PAUSED') return;
   if (baseHp <= 0) return;
@@ -1071,6 +1105,7 @@ function saveActiveBattleSnapshot() {
   };
 }
 
+// [ENG.AI]
 function clearActiveBattleSave() {
   battleUpgradeSnapshot = null;
   if (activeBattleSave !== null) {
@@ -1079,6 +1114,7 @@ function clearActiveBattleSave() {
   }
 }
 
+// [ENG.AJ]
 function resumeSavedBattle() {
   if (!activeBattleSave) return;
   const snap = activeBattleSave;
@@ -1233,6 +1269,7 @@ function resumeSavedBattle() {
 }
 window.resumeSavedBattle = resumeSavedBattle;
 
+// [ENG.AK]
 function serializeSaveData() {
   return {
     version: 1,
@@ -1266,6 +1303,7 @@ function serializeSaveData() {
   };
 }
 
+// [ENG.AL]
 function saveGame() {
   try {
     const dataStr = JSON.stringify(serializeSaveData());
@@ -1279,11 +1317,13 @@ function saveGame() {
   }
 }
 
+// [ENG.AM]
 function saveGameSoon() {
   if (saveGameTimer) clearTimeout(saveGameTimer);
   saveGameTimer = setTimeout(saveGame, 300);
 }
 
+// [ENG.AN]
 async function loadGame() {
   let raw = null;
 
@@ -1394,13 +1434,15 @@ async function loadGame() {
   return true;
 }
 
+// [ENG.AO]
 function safeTrack(name, params) {
   try {
     if (typeof trackEvent === 'function') trackEvent(name, params);
   } catch (e) { }
 }
 
-// [ENG103] Map Geometry & Path Grid Construction: Path nodes, cell blocking, and grid topology initialization.
+//  Map Geometry & Path Grid Construction: Path nodes, cell blocking, and grid topology initialization.
+// [ENG.AP]
 function buildLevelGeometry(pathNodes, colsCount, rowsCount, blockedCells) {
   COLS = colsCount || 10;
   ROWS = rowsCount || 7;
@@ -1519,7 +1561,8 @@ let perfDecided = false;
 let perfSampleFrames = 0;
 let perfSampleTime = 0;
 
-// [ENG104] Meta-Upgrade Tech Tree & Player Loadout Management: Tower unlocks, loadout slots, and skill tree node handlers.
+//  Meta-Upgrade Tech Tree & Player Loadout Management: Tower unlocks, loadout slots, and skill tree node handlers.
+// [ENG.AQ]
 function getMaxUpgradeStep() {
   const lvl = getLoadoutReferenceLevel();
   if (lvl < 11) return 0;
@@ -1528,6 +1571,7 @@ function getMaxUpgradeStep() {
   return 10;
 }
 
+// [ENG.AR]
 function handleNodeClick(key, stepIndex) {
   const currentVal = upgradeTreeData[key] || 0;
   if (devMode) {
@@ -1600,10 +1644,12 @@ if (targetStep <= 10) {
   }
 }
 
+// [ENG.AS]
 function getLoadoutReferenceLevel() {
   return Math.max(maxUnlockedLevel, currentLevel || 1);
 }
 
+// [ENG.AT]
 function getLoadoutStartLevel() {
   for (let l = 1; l <= TOTAL_LEVELS; l++) {
     const pool = LEVELS_DATA[l] && LEVELS_DATA[l].unlockedTowers;
@@ -1612,6 +1658,7 @@ function getLoadoutStartLevel() {
   return TOTAL_LEVELS + 1;
 }
 
+// [ENG.AU]
 function getTowerUnlockLevel(type) {
   for (let l = 1; l <= TOTAL_LEVELS; l++) {
     const pool = LEVELS_DATA[l] && LEVELS_DATA[l].unlockedTowers;
@@ -1620,6 +1667,7 @@ function getTowerUnlockLevel(type) {
   return 1;
 }
 
+// [ENG.AV]
 function getPlayerUnlockedTowers() {
   if (devMode) return Object.keys(TOWER_CONFIGS);
   const highestLvl = Math.max(maxUnlockedLevel || 1, currentLevel || 1);
@@ -1627,6 +1675,7 @@ function getPlayerUnlockedTowers() {
   return canonical.filter(t => getTowerUnlockLevel(t) <= highestLvl);
 }
 
+// [ENG.AW]
 function getBuildPanelPool(lvl) {
   if (devMode) return Object.keys(TOWER_CONFIGS);
   const highestLvl = Math.max(maxUnlockedLevel || 1, lvl || 1);
@@ -1646,6 +1695,7 @@ function getBuildPanelPool(lvl) {
   return (pool && pool.length > 0) ? pool.slice() : ['gun'];
 }
 
+// [ENG.AX]
 function isTowerActiveThisLevel(type) {
   if (devMode) return true;
   const loadoutStart = getLoadoutStartLevel();
@@ -1667,6 +1717,7 @@ function isTowerActiveThisLevel(type) {
   return pool.includes(type);
 }
 
+// [ENG.AY]
 function computeDefaultLoadout(lvl, pool) {
   const prevLvl = lvl - 1;
   const prevPool = (prevLvl >= 1 && LEVELS_DATA[prevLvl] && LEVELS_DATA[prevLvl].unlockedTowers)
@@ -1701,6 +1752,7 @@ function computeDefaultLoadout(lvl, pool) {
 
 let loadoutSyncedUpToLevel = 0;
 
+// [ENG.AZ]
 function refreshLoadoutForProgress() {
   const loadoutStart = getLoadoutStartLevel();
   const progressRef = getLoadoutReferenceLevel();
@@ -1733,12 +1785,14 @@ function refreshLoadoutForProgress() {
   }
 }
 
-// [ENG105] Game Match Lifecycle & State Controller: Level start, pause, hardware back button, and level reset routines.
+//  Game Match Lifecycle & State Controller: Level start, pause, hardware back button, and level reset routines.
+// [ENG.BA]
 function startSpecificLevel(lvl) {
   refreshLoadoutForProgress();
   reallyStartLevel(lvl);
 }
 
+// [ENG.BB]
 function startEndlessMatch() {
   isEndlessMode = true;
   isOverdriveMode = false;
@@ -1798,6 +1852,7 @@ function startEndlessMatch() {
   saveGameSoon();
 }
 
+// [ENG.BC]
 function reallyStartLevel(lvl) {
   isEndlessMode = false;
 	// Сброс анимации дорожки для нового боя:
@@ -1853,6 +1908,7 @@ function reallyStartLevel(lvl) {
   safeTrack('level_start', { level: lvl });
 }
 
+// [ENG.BD]
 function resetLevelState() {
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
   reviveUsedThisMatch = false;
@@ -1900,6 +1956,7 @@ function resetLevelState() {
   if (devMode) refreshDevDropdowns();
 }
 
+// [ENG.BE]
 function nextLevel() {
   if (currentLevel < TOTAL_LEVELS) {
     startSpecificLevel(currentLevel + 1);
@@ -1908,9 +1965,11 @@ function nextLevel() {
   }
 }
 
+// [ENG.BF]
 function retryLevel() {
   if (isEndlessMode) {
     const status = getEndlessEntryStatus();
+    // [ENG.BG]
     const launch = () => {
       endlessDailyRunsUsed++;
       saveGame();
@@ -1939,12 +1998,14 @@ function retryLevel() {
   }
 }
 
+// [ENG.BH]
 function togglePause() {
   if (typeof handleHudSettingsClick === 'function') {
     handleHudSettingsClick();
   }
 }
 
+// [ENG.BI]
 function forcePauseForBackground() {
   if (gameState === 'PLAYING' || gameState === 'PAUSED') {
     saveActiveBattleSnapshot();
@@ -1967,6 +2028,7 @@ function forcePauseForBackground() {
 let lastBackPressTime = 0;
 let lastHardwareBackRun = 0;
 
+// [ENG.BJ]
 function handleHardwareBack() {
   const now = Date.now();
   // Защита от дребезга системных событий
@@ -2060,7 +2122,8 @@ function handleHardwareBack() {
 }
 window.handleHardwareBack = handleHardwareBack;
 
-// [ENG106] Match Result & Victory/Defeat Handlers: Star calculations, rewards, revive prompt, and victory/defeat sequences.
+//  Match Result & Victory/Defeat Handlers: Star calculations, rewards, revive prompt, and victory/defeat sequences.
+// [ENG.BK]
 function calculateLevelStarsAndReward(lvl, currentHp, startingHp) {
   let earnedStars = 1;
   if (isOverdriveMode) {
@@ -2098,6 +2161,7 @@ function calculateLevelStarsAndReward(lvl, currentHp, startingHp) {
   return { stars: earnedStars, reward: rewardDiamonds, rewardLabel: rewardLabel };
 }
 
+// [ENG.BL]
 function showAdPlaceholder(onRewarded, onNotRewarded) {
   const adOverlay = document.getElementById('adSimOverlay');
   const yesBtn = document.getElementById('adSimYesBtn');
@@ -2110,6 +2174,7 @@ function showAdPlaceholder(onRewarded, onNotRewarded) {
 
   adOverlay.classList.remove('hidden');
 
+  // [ENG.BM]
   const cleanup = () => {
     adOverlay.classList.add('hidden');
     if (yesBtn) yesBtn.onclick = null;
@@ -2117,6 +2182,7 @@ function showAdPlaceholder(onRewarded, onNotRewarded) {
   };
 
   if (yesBtn) {
+    // [ENG.BN]
     yesBtn.onclick = () => {
       cleanup();
       if (onRewarded) onRewarded();
@@ -2124,6 +2190,7 @@ function showAdPlaceholder(onRewarded, onNotRewarded) {
   }
 
   if (noBtn) {
+    // [ENG.BO]
     noBtn.onclick = () => {
       cleanup();
       if (onNotRewarded) onNotRewarded();
@@ -2131,16 +2198,19 @@ function showAdPlaceholder(onRewarded, onNotRewarded) {
   }
 }
 
+// [ENG.BP]
 function getStandardAdIconSvg(isNoAds) {
   return isNoAds
     ? `<svg width="18" height="15" viewBox="0 0 16 13" fill="none" stroke="#ffffff" style="flex:none; margin-right:6px; vertical-align:middle;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke-width="1.6" opacity="0.85"/><polygon points="6,3.5 11,6.5 6,9.5" fill="#ffffff" stroke="none" opacity="0.75"/><line x1="1.5" y1="12" x2="14.5" y2="1" stroke-width="1.8" stroke-linecap="round"/></svg>`
     : `<svg width="18" height="15" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:6px;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke="#ffffff" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="#ffffff"/></svg>`;
 }
 
+// [ENG.BQ]
 function claimX2Reward() {
   if (hasClaimedX2ThisLevel) return;
   const claimBtn = document.getElementById('claimX2Btn');
 
+  // [ENG.BR]
   const executeGrant = () => {
     hasClaimedX2ThisLevel = true;
     diamonds += lastVictoryDiamondsReward;
@@ -2160,10 +2230,12 @@ function claimX2Reward() {
   }
 }
 
+// [ENG.BS]
 function claimOverdriveBonusPrism() {
   if (hasClaimedX2ThisLevel) return;
   const claimBtn = document.getElementById('claimX2Btn');
 
+  // [ENG.BT]
   const executeGrant = () => {
     hasClaimedX2ThisLevel = true;
     prisms += 1;
@@ -2189,6 +2261,7 @@ function claimOverdriveBonusPrism() {
   }
 }
 
+// [ENG.BU]
 function restoreNormalVictoryRewardBox() {
   const rewardBox = document.getElementById('victoryRewardBox');
   const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
@@ -2213,6 +2286,7 @@ function restoreNormalVictoryRewardBox() {
 
 let victoryFanfareTimer = null;
 
+// [ENG.BV]
 function playVictoryFanfare() {
   const stack = document.querySelector('#victoryScreen .result-stack');
   if (!stack) return;
@@ -2233,6 +2307,7 @@ function playVictoryFanfare() {
   stack.insertBefore(rays, stack.firstChild);
 }
 
+// [ENG.BW]
 function triggerVictory() {
   gameState = 'VICTORY';
   if (typeof syncTopHudVisibility === 'function') syncTopHudVisibility();
@@ -2368,6 +2443,7 @@ function triggerVictory() {
   pendingUpgradeUnlockFx = wasUpgradesLocked && nowUnlocked;
   pendingLoadoutRevealFx = pendingUpgradeUnlockFx;
 
+  // [ENG.BX]
   const showVictory = () => {
     document.getElementById('victoryScreen').classList.remove('hidden');
     showLoadoutWidgetIn('loadoutAnchor-victory');
@@ -2388,6 +2464,7 @@ function triggerVictory() {
   clearActiveBattleSave();
 }
 
+// [ENG.BY]
 function playVictoryUnlockFx() {
   if (pendingUpgradeUnlockFx) {
     const btn = document.getElementById('victoryUpgradesBtn');
@@ -2396,6 +2473,7 @@ function playVictoryUnlockFx() {
       btn.classList.add('btn-locked', 'btn-unlocking');
       btn.disabled = true;
       btn.innerHTML = pcbTreeIcon + '<span>TECH TREE</span>';
+      // [ENG.BZ]
       setTimeout(() => {
         btn.disabled = false;
         btn.classList.remove('btn-locked', 'btn-unlocking', 'no-press-feedback');
@@ -2416,6 +2494,7 @@ function playVictoryUnlockFx() {
   }
 }
 
+// [ENG.CA]
 function triggerDefeat() {
   musicSetDucked(false);
   sfxStopBeams();
@@ -2466,20 +2545,24 @@ function triggerDefeat() {
   clearActiveBattleSave();
 }
 
+// [ENG.CB]
 function registerDefeatOutcome() {
   safeTrack('level_failed', { level: currentLevel, wave });
 }
 
+// [ENG.CC]
 function showGameCompletionModal() {
   const modal = document.getElementById('gameCompletionModal');
   if (modal) modal.classList.remove('hidden');
 }
 
+// [ENG.CD]
 function closeGameCompletionModal() {
   const modal = document.getElementById('gameCompletionModal');
   if (modal) modal.classList.add('hidden');
 }
 
+// [ENG.CE]
 function setReviveBtnLabel(seconds) {
   const numEl = document.getElementById('reviveTimerNumber');
   if (numEl) numEl.textContent = `${seconds}s`;
@@ -2489,6 +2572,7 @@ function setReviveBtnLabel(seconds) {
 
 let defeatFlashTimeout = null;
 
+// [ENG.CF]
 function replayDefeatFlash() {
   if (typeof isEndlessMode !== 'undefined' && isEndlessMode) return;
   const defeatScreen = document.getElementById('defeatScreen');
@@ -2518,10 +2602,12 @@ let lastEndlessEarnedDiamonds = 0;
 let lastEndlessEarnedPrisms = 0;
 let endlessHasClaimedDouble = false;
 
+// [ENG.CG]
 function claimEndlessDoubleRewards() {
   if (endlessHasClaimedDouble || (lastEndlessEarnedDiamonds <= 0 && lastEndlessEarnedPrisms <= 0)) return;
   const doubleBtn = document.getElementById('endlessDoubleBtn');
 
+  // [ENG.CH]
   const executeDouble = () => {
     endlessHasClaimedDouble = true;
     diamonds += lastEndlessEarnedDiamonds;
@@ -2552,6 +2638,7 @@ function claimEndlessDoubleRewards() {
   }
 }
 
+// [ENG.CI]
 function updateDefeatWaveLine() {
   const el = document.getElementById('defeatWaveLine');
   const defeatScreen = document.getElementById('defeatScreen');
@@ -2653,6 +2740,7 @@ function updateDefeatWaveLine() {
   }
 }
 
+// [ENG.CJ]
 function updateRevivePromptHeadings() {
   const defeatScreen = document.getElementById('defeatScreen');
   const kicker = defeatScreen ? defeatScreen.querySelector('.result-kicker') : null;
@@ -2684,6 +2772,7 @@ function updateRevivePromptHeadings() {
   }
 }
 
+// [ENG.CK]
 function triggerEmergencyRevivePrompt() {
   gameState = 'DEFEAT';
   if (typeof syncTopHudVisibility === 'function') syncTopHudVisibility();
@@ -2734,12 +2823,14 @@ function triggerEmergencyRevivePrompt() {
   }
 
   if (reviveSkipShowTimer) clearTimeout(reviveSkipShowTimer);
+  // [ENG.CL]
   reviveSkipShowTimer = setTimeout(() => {
     reviveSkipShowTimer = null;
     if (skipBtn) skipBtn.classList.remove('hidden');
   }, 1000);
 
   if (reviveTimerInterval) clearInterval(reviveTimerInterval);
+  // [ENG.CM]
   reviveTimerInterval = setInterval(() => {
     reviveRemainingSeconds--;
     if (reviveBtn && reviveRemainingSeconds > 0) {
@@ -2751,6 +2842,7 @@ function triggerEmergencyRevivePrompt() {
   }, 1000);
 }
 
+// [ENG.CN]
 function finishRevivePromptWindow() {
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
   if (reviveSkipShowTimer) { clearTimeout(reviveSkipShowTimer); reviveSkipShowTimer = null; }
@@ -2788,16 +2880,19 @@ function finishRevivePromptWindow() {
   clearActiveBattleSave();
 }
 
+// [ENG.CO]
 function skipEmergencyRevive() {
   finishRevivePromptWindow();
 }
 
+// [ENG.CP]
 function acceptEmergencyRevive() {
   sfx('revive');
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
   if (reviveSkipShowTimer) { clearTimeout(reviveSkipShowTimer); reviveSkipShowTimer = null; }
   document.getElementById('defeatScreen').classList.add('hidden');
 
+  // [ENG.CQ]
   const executeRevive = () => {
     musicSetDucked(false);
     baseHp = Math.max(3, Math.round(matchStartBaseHp * 0.5));
@@ -2907,7 +3002,8 @@ function acceptEmergencyRevive() {
   }
 }
 
-// [ENG107] Tower Construction & Inspection Management: Build, upgrade, sell, and drag-and-drop placement logic.
+//  Tower Construction & Inspection Management: Build, upgrade, sell, and drag-and-drop placement logic.
+// [ENG.CR]
 function buildTowerAt(type, c, r) {
   const conf = TOWER_CONFIGS[type];
   if (grid[r][c] === 0 && gold >= conf.cost) {
@@ -2983,6 +3079,7 @@ function buildTowerAt(type, c, r) {
   return false;
 }
 
+// [ENG.CS]
 function handleDrop(worldX, worldY, clientX, clientY) {
   if (!draggingTower || gameState !== 'PLAYING') {
     draggingTower = null;
@@ -3007,6 +3104,7 @@ function handleDrop(worldX, worldY, clientX, clientY) {
   }
 }
 
+// [ENG.CT]
 function getUpgradeCost(towerOrType, level) {
   const type = typeof towerOrType === 'object' ? towerOrType.type : towerOrType;
   const lvl = typeof towerOrType === 'object' ? towerOrType.level : level;
@@ -3015,6 +3113,7 @@ function getUpgradeCost(towerOrType, level) {
   return Math.floor(conf.cost * Math.pow(costMult, lvl));
 }
 
+// [ENG.CU]
 function upgradeSelectedTower() {
   const lvlConfig = LEVELS_DATA[currentLevel];
   const isL1FirstTime = (currentLevel === 1 && !isEndlessMode && !isOverdriveMode && !hasClearedLevelBefore(1) && !devMode);
@@ -3067,6 +3166,7 @@ function upgradeSelectedTower() {
   }
 }
 
+// [ENG.CV]
 function sellSelectedTower() {
   if (!selectedTower) return;
   if (!sellConfirmArmed) {
@@ -3095,13 +3195,15 @@ function sellSelectedTower() {
   saveGameSoon();
 }
 
-// [ENG108] Wave Spawning & Enemy Queue Management: Auto/manual wave triggers, miniboss/boss delays, and spawn timers.
+//  Wave Spawning & Enemy Queue Management: Auto/manual wave triggers, miniboss/boss delays, and spawn timers.
+// [ENG.CW]
 function getAutoWaveDelay() {
   if (currentLevel >= 40) return 9.0;
   if (currentLevel >= 30) return 7.0;
   return 5.0;
 }
 
+// [ENG.CX]
 function triggerManualWave() {
   if (tutorialActive && tutorialLevel === 1 && tutorialStep === 1) {
     completeTutorial(1);
@@ -3148,12 +3250,15 @@ function triggerManualWave() {
   }
 }
 
+// [ENG.CY]
 function getMinibossPreDelay() { return 2.0; }
+// [ENG.CZ]
 function getBossPreDelay(lvl) {
   const clamped = Math.max(10, Math.min(50, lvl));
   return 2.5 + ((clamped - 10) / 40) * 2.5;
 }
 
+// [ENG.DA]
 function startWave() {
   if (isEndlessMode) {
     waveInProgress = true;
@@ -3336,7 +3441,8 @@ function startWave() {
   saveGameSoon();
 }
 
-// [ENG109] Developer Tools & Spawner Integration: Custom spawner injections, dev controls, and cheat handlers.
+//  Developer Tools & Spawner Integration: Custom spawner injections, dev controls, and cheat handlers.
+// [ENG.DB]
 function handleDevSpawnClick() {
   if (!devMode || gameState !== 'PLAYING') return;
   const typeSel = document.getElementById('devSpawnType');
@@ -3351,6 +3457,7 @@ function handleDevSpawnClick() {
   }
 }
 
+// [ENG.DC]
 function onDomReady() {
   if (window.AppUpdater && typeof window.AppUpdater.init === 'function') {
     window.AppUpdater.init();
@@ -3363,6 +3470,7 @@ if (document.readyState === 'loading') {
   onDomReady();
 }
 
+// [ENG.DD]
 function injectCustomSpawn(type, count, interval, hpMult, speedMult) {
   if (gameState !== 'PLAYING') return;
 
@@ -3405,7 +3513,8 @@ function injectCustomSpawn(type, count, interval, hpMult, speedMult) {
 
 let lastTime = performance.now();
 
-// [ENG110] Performance Monitor & Main Game Loop: Dynamic performance downgrades and main requestAnimationFrame loop.
+//  Performance Monitor & Main Game Loop: Dynamic performance downgrades and main requestAnimationFrame loop.
+// [ENG.DE]
 function samplePerfAndMaybeDowngrade(rawDt) {
   if (perfDecided) return;
   if (settings.perfModeOverride) { perfDecided = true; return; }
@@ -3422,6 +3531,7 @@ function samplePerfAndMaybeDowngrade(rawDt) {
   }
 }
 
+// [ENG.DF]
 function gameLoop(now) {
   sfxReap();
   const rawDt = Math.min((now - lastTime) / 1000, 0.1);
@@ -3448,6 +3558,7 @@ function gameLoop(now) {
 }
 
 const _elCache = Object.create(null);
+// [ENG.DG]
 function el(id) {
   let n = _elCache[id];
   if (n && n.isConnected !== false) return n;
@@ -3456,6 +3567,7 @@ function el(id) {
   return n;
 }
 
+// [ENG.DH]
 function handleClearSaveClick() {
   if (!devMode) return;
   devInputOpen = true;
@@ -3528,12 +3640,14 @@ function handleClearSaveClick() {
 }
 
 
-// [ENG111] Daily Rewards & In-App Purchases (IAP): Daily gifts login packs, shop state, and simulated IAP transactions.
+//  Daily Rewards & In-App Purchases (IAP): Daily gifts login packs, shop state, and simulated IAP transactions.
+// [ENG.DI]
 function getTodayDateString() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+// [ENG.DJ]
 function checkDailyGiftReset() {
   const today = getTodayDateString();
   if (dailyGiftsClaimedDate !== today) {
@@ -3544,6 +3658,7 @@ function checkDailyGiftReset() {
 }
 window.forcePauseForBackground = forcePauseForBackground;
 
+// [ENG.DK]
 function claimDailyGiftsPack() {
   checkDailyGiftReset();
   if (dailyGiftsClaimedCount >= 3) {
@@ -3553,6 +3668,7 @@ function claimDailyGiftsPack() {
 
   const needsAd = dailyGiftsClaimedCount > 0 && !noAdsPurchased;
 
+  // [ENG.DL]
   const grantGift = () => {
     let msg = '';
     if (dailyGiftsClaimedCount === 0) {
@@ -3583,6 +3699,7 @@ function claimDailyGiftsPack() {
   }
 }
 
+// [ENG.DM]
 function synthesizePrism() {
   if (diamonds < 20) {
     showHintToast('Not enough Diamonds! (20 required)');
@@ -3599,6 +3716,7 @@ function synthesizePrism() {
   showHintToast('+1 Prism synthesized!');
 }
 
+// [ENG.DN]
 function deconstructPrism() {
   const isUnlocked = (typeof devMode !== 'undefined' && devMode) || (typeof maxUnlockedLevel !== 'undefined' && maxUnlockedLevel >= 31) || (typeof clearedLevels !== 'undefined' && clearedLevels.includes(30));
   if (!isUnlocked) {
@@ -3622,6 +3740,7 @@ function deconstructPrism() {
 }
 
 // Заглушка покупок (симуляция Google Play Billing)
+// [ENG.DO]
 function buyShopIAP(productId) {
   sfx('confirm');
 
@@ -3678,6 +3797,7 @@ function buyShopIAP(productId) {
   }
 
   // 2. Покупки за реальные деньги ($) — проходят через попап "Success?"
+  // [ENG.DP]
   const executePurchase = () => {
     if (productId === 'no_ads') {
       noAdsPurchased = true;
@@ -3738,9 +3858,10 @@ function buyShopIAP(productId) {
 }
 window.buyShopIAP = buyShopIAP;
 
-// [ENG112] Navigation & Screen Transition Helpers: Start screen, level selection, and chapter label controllers.
-// [ENG113] Simulation Step Update Pipeline: Enemy movement, tower targeting, projectile physics, and status effects.
+//  Navigation & Screen Transition Helpers: Start screen, level selection, and chapter label controllers.
+//  Simulation Step Update Pipeline: Enemy movement, tower targeting, projectile physics, and status effects.
 // javascript-obfuscator: disable
+// [ENG.DQ]
 function update(dt) {
   if (cameraShakeTimer > 0) {
     cameraShakeTimer -= dt;

@@ -1,5 +1,6 @@
-// [UI100] Presentation layer and rendering pipeline initialization.
+//  Presentation layer and rendering pipeline initialization.
 
+// [UI.A]
 function getTheme() {
   if (typeof window !== 'undefined' && window.activeThemeColors) {
     return window.activeThemeColors;
@@ -16,14 +17,16 @@ function getTheme() {
   };
 }
 
-// [UI100.01] Thread Lag & Memory Monitor: High-frequency sampler tracking WebView thread freezes (>20ms).
+//  Thread Lag & Memory Monitor: High-frequency sampler tracking WebView thread freezes (>20ms).
 window._maxThreadLag = 0;
 window._lastThreadLag = 0;
 
+// [UI.B]
 (function initThreadLagMonitor() {
   let lastTick = performance.now();
   const lagSamples = [];
 
+  // [UI.C]
   setInterval(() => {
     const now = performance.now();
     const delta = now - lastTick;
@@ -53,6 +56,7 @@ window._lastThreadLag = 0;
   }, 20);
 })();
 
+// [UI.D]
 function getJSHeapSizeMB() {
   if (typeof performance !== 'undefined' && performance.memory && typeof performance.memory.usedJSHeapSize === 'number') {
     return performance.memory.usedJSHeapSize / (1024 * 1024);
@@ -67,8 +71,9 @@ window.perfProfiler = {
   report: ''
 };
 
-// [UI101] Glow sprites cache for high-performance additive blending.
+//  Glow sprites cache for high-performance additive blending.
 const GLOW_SPRITES = Object.create(null);
+// [UI.E]
 function createGlowSprite(color) {
   const size = 64;
   const c = document.createElement('canvas');
@@ -87,14 +92,16 @@ function createGlowSprite(color) {
   return c;
 }
 
-// [UI102] Offscreen canvas cache for static grid and track rendering.
+//  Offscreen canvas cache for static grid and track rendering.
 let offscreenGridCanvas = null;
 let offscreenGridDirty = true;
 
+// [UI.F]
 function invalidateGridCache() {
   offscreenGridDirty = true;
 }
 
+// [UI.G]
 function updateOffscreenGrid() {
   if (!offscreenGridCanvas) {
     offscreenGridCanvas = document.createElement('canvas');
@@ -115,7 +122,7 @@ function updateOffscreenGrid() {
   const c1Rgb = th.rgb1 ? th.rgb1.cssRgb : '0, 229, 255';
   const c2Rgb = th.rgb2 ? th.rgb2.cssRgb : '217, 70, 239';
 
-  // [UI102.01] Static grid cell background rendering.
+  //  Static grid cell background rendering.
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       const cellVal = grid[r] ? grid[r][c] : 0;
@@ -136,7 +143,7 @@ function updateOffscreenGrid() {
   oCtx.strokeStyle = `rgba(${c2Rgb}, 0.28)`;
   oCtx.lineWidth = 1.5;
 
-  // [UI102.02] Static track side rails rendering.
+  //  Static track side rails rendering.
   if (typeof pathCells !== 'undefined' && Array.isArray(pathCells)) {
     pathCells.forEach(cell => {
       if (cell.rails) {
@@ -161,8 +168,9 @@ function updateOffscreenGrid() {
   offscreenGridDirty = false;
 }
 
-// [UI103] Offscreen neon disc sprite cache for particle rendering optimization.
+//  Offscreen neon disc sprite cache for particle rendering optimization.
 const NEON_DISC_SPRITES = Object.create(null);
+// [UI.H]
 function getNeonDiscSprite(color) {
   if (NEON_DISC_SPRITES[color]) return NEON_DISC_SPRITES[color];
   const size = 32;
@@ -184,9 +192,10 @@ function getNeonDiscSprite(color) {
   return c;
 }
 
-// [UI104] Offscreen sprite cache for enemy geometry rendering.
+//  Offscreen sprite cache for enemy geometry rendering.
 const ENEMY_SPRITE_CACHE = Object.create(null);
 
+// [UI.I]
 function getEnemyShapeSprite(shape, color, radius, glowColor) {
   const safeShape = shape || 'circle';
   const safeColor = color || '#00e5ff';
@@ -208,7 +217,7 @@ function getEnemyShapeSprite(shape, color, radius, glowColor) {
   sCtx.save();
   sCtx.translate(cx, cy);
 
-  // [UI104.01] Diffuse neon glow lighting pass.
+  //  Diffuse neon glow lighting pass.
   const grad = sCtx.createRadialGradient(0, 0, 2, 0, 0, safeR * 2.2);
   grad.addColorStop(0, safeGlow + '66');
   grad.addColorStop(0.5, safeGlow + '20');
@@ -218,7 +227,7 @@ function getEnemyShapeSprite(shape, color, radius, glowColor) {
   sCtx.arc(0, 0, safeR * 2.2, 0, Math.PI * 2);
   sCtx.fill();
 
-  // [UI104.02] Primary geometry body and neon outline pass.
+  //  Primary geometry body and neon outline pass.
   sCtx.fillStyle = safeGlow + '33';
   sCtx.strokeStyle = safeColor;
   sCtx.lineWidth = 2.4;
@@ -288,8 +297,9 @@ function getEnemyShapeSprite(shape, color, radius, glowColor) {
   return ENEMY_SPRITE_CACHE[key];
 }
 
-// [UI105] Offscreen concentric smoke sprite cache.
+//  Offscreen concentric smoke sprite cache.
 let SMOKE_SPRITE = null;
+// [UI.J]
 function getSmokeSprite() {
   if (SMOKE_SPRITE) return SMOKE_SPRITE;
   const size = 64;
@@ -311,6 +321,7 @@ function getSmokeSprite() {
   return c;
 }
 
+// [UI.K]
 function getGlowSprite(color) {
   if (!GLOW_SPRITES[color]) {
     GLOW_SPRITES[color] = createGlowSprite(color);
@@ -318,7 +329,8 @@ function getGlowSprite(color) {
   return GLOW_SPRITES[color];
 }
 
-// [UI107] Banner and incoming threat alert visual indicators.
+//  Banner and incoming threat alert visual indicators.
+// [UI.L]
 function showNewTowerBanner(type) {
   const banner = document.getElementById('newTowerBanner');
   if (!banner) return;
@@ -330,12 +342,14 @@ function showNewTowerBanner(type) {
   newTowerBannerHideTimer = 4.5;
 }
 
+// [UI.M]
 function hideNewTowerBanner() {
   const banner = document.getElementById('newTowerBanner');
   if (banner) banner.classList.remove('visible');
   newTowerBannerHideTimer = 0;
 }
 
+// [UI.N]
 function showIncomingAlert(type) {
   const banner = document.getElementById('incomingAlertBanner');
   const textEl = document.getElementById('incomingAlertText');
@@ -358,13 +372,15 @@ function showIncomingAlert(type) {
   bossAlertHideTimer = 3.0;
 }
 
+// [UI.O]
 function hideIncomingAlert() {
   const banner = document.getElementById('incomingAlertBanner');
   if (banner) banner.classList.remove('visible');
   activeBossAlertType = null;
 }
 
-// [UI108] Viewport canvas resize and camera coordinate transform system.
+//  Viewport canvas resize and camera coordinate transform system.
+// [UI.P]
 function resizeCanvasAndCamera() {
   const vpWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
   const vpHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
@@ -428,6 +444,7 @@ function resizeCanvasAndCamera() {
   }
 }
 
+// [UI.Q]
 function clampCamera() {
   const screenW = window.visualViewport ? window.visualViewport.width : window.innerWidth;
   const screenH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
@@ -473,6 +490,7 @@ function clampCamera() {
   }
 }
 
+// [UI.R]
 function screenToWorld(sx, sy) {
   const rect = canvas.getBoundingClientRect();
   const relX = sx - rect.left;
@@ -483,6 +501,7 @@ function screenToWorld(sx, sy) {
   };
 }
 
+// [UI.S]
 function worldToScreen(wx, wy) {
   const rect = canvas.getBoundingClientRect();
   return {
@@ -492,6 +511,7 @@ function worldToScreen(wx, wy) {
 }
 
 window.addEventListener('resize', resizeCanvasAndCamera);
+// [UI.T]
 window.addEventListener('orientationchange', () => {
   setTimeout(resizeCanvasAndCamera, 100);
 });
@@ -501,7 +521,8 @@ if (window.visualViewport) {
 }
 window.addEventListener('load', resizeCanvasAndCamera);
 
-// [UI109] Lock default touch behaviors on active canvas and UI overlays.
+//  Lock default touch behaviors on active canvas and UI overlays.
+// [UI.U]
 document.addEventListener('touchmove', (e) => {
   const isScrollableOverlay = e.target.closest && e.target.closest(
     '.result-stack, .upgrades-row-list, .settings-box, .settings-collapsible-body, .settings-collapsible-widget, .loadout-widget, .loadout-widget-expanded, .loadout-grid, .levels-bg, .bp-tier-list, .shop-list-body'
@@ -514,7 +535,8 @@ document.addEventListener('touchmove', (e) => {
   }
 }, { passive: false });
 
-// [UI110] Interactive level tutorial overlay and sequence step controller.
+//  Interactive level tutorial overlay and sequence step controller.
+// [UI.V]
 function initTutorialForLevel(lvl) {
   tutorialActive = false;
   tutorialLevel = null;
@@ -539,6 +561,7 @@ function initTutorialForLevel(lvl) {
   }
 }
 
+// [UI.W]
 function hideTutorialUI() {
   const layer = document.getElementById('tutorialLayer');
   if (layer) layer.classList.add('hidden');
@@ -548,6 +571,7 @@ function hideTutorialUI() {
   if (closeHighlight) closeHighlight.classList.add('hidden');
 }
 
+// [UI.X]
 function completeTutorial(lvl) {
   tutorialActive = false;
   tutorialLevel = null;
@@ -560,17 +584,21 @@ function completeTutorial(lvl) {
   safeTrack('tutorial_step_complete', { level: lvl });
 }
 
+// [UI.Y]
 function skipTutorial() {
   if (!tutorialActive || !tutorialLevel) return;
   completeTutorial(tutorialLevel);
 }
 
+// [UI.Z]
 function buildDiagnostics() {
+  // [UI.AA]
   const probe = (label, fn) => {
     try { return { label, ok: true, value: fn() }; }
     catch (e) { return { label, ok: false, value: 'ERROR: ' + (e && e.message ? e.message : e) }; }
   };
 
+  // [UI.AB]
   function audioReport() {
     const rows = [];
     rows.push(probe('audio.js loaded', () => typeof SFX !== 'undefined' && !!SFX));
@@ -580,10 +608,12 @@ function buildDiagnostics() {
     rows.push(probe('SFX.isEnabled()', () => SFX.isEnabled()));
     rows.push(probe('MUSIC.isEnabled()', () => MusicManager.isEnabled()));
     rows.push(probe('MUSIC.current()', () => MusicManager.current()));
+    // [UI.AC]
     rows.push(probe('AudioContext state', () => {
       const c = SFX._ctx && SFX._ctx();
       return c ? c.state : 'no context yet (needs a tap)';
     }));
+    // [UI.AD]
     rows.push(probe('sample pack loaded', () => {
       const n = SFX.sampleNames ? SFX.sampleNames() : [];
       return n.length ? n.length + ' samples' : 'none (using synth ticks)';
@@ -591,13 +621,16 @@ function buildDiagnostics() {
     return rows;
   }
 
+  // [UI.AE]
   function generalReport() {
     return [
       probe('game booted', () => !!window.__gameBooted),
       probe('gameState', () => gameState),
+      // [UI.AF]
       probe('currentLevel / maxUnlocked', () => `${currentLevel} / ${maxUnlockedLevel}`),
       probe('devMode', () => devMode),
       probe('perfMode', () => perfMode),
+      // [UI.AG]
       probe('towers / enemies / projectiles', () => `${towers.length} / ${enemies.length} / ${projectiles.length}`),
       probe('data.js levels', () => Object.keys(LEVELS_DATA).length),
       probe('save present', () => !!localStorage.getItem('sectorDefenseTD_save_v1')),
@@ -605,6 +638,7 @@ function buildDiagnostics() {
     ];
   }
 
+  // [UI.AH]
   function print(title, rows) {
     console.group('%c' + title, 'color:#00e5ff;font-weight:bold');
     rows.forEach(r => {
@@ -683,6 +717,7 @@ window.resetTutorial = function () {
   console.log('Tutorial flags reset.');
 };
 
+// [UI.AI]
 function findTutorialBuildCell() {
   const centerC = (COLS - 1) / 2;
   const centerR = (ROWS - 1) / 2;
@@ -702,6 +737,7 @@ function findTutorialBuildCell() {
   return best;
 }
 
+// [UI.AJ]
 function applyTutorialHighlight(rect, text, mode) {
   const pad = 10;
   const spotlight = document.getElementById('tutorialSpotlight');
@@ -743,18 +779,21 @@ function applyTutorialHighlight(rect, text, mode) {
   }
 }
 
+// [UI.AK]
 function positionTutorialTapOnElement(el, text) {
   if (!el) return;
   const r = el.getBoundingClientRect();
   applyTutorialHighlight({ x: r.left, y: r.top, w: r.width, h: r.height }, text, 'tap');
 }
 
+// [UI.AL]
 function positionTutorialTapAtWorld(wx, wy, text) {
   const screen = worldToScreen(wx, wy);
   const radius = 26 * camZoom;
   applyTutorialHighlight({ x: screen.x - radius, y: screen.y - radius, w: radius * 2, h: radius * 2 }, text, 'tap');
 }
 
+// [UI.AM]
 function positionTutorialCloseStep() {
   const topLeft = worldToScreen(0, 0);
   const bottomRight = worldToScreen(FIELD_WIDTH, FIELD_HEIGHT);
@@ -791,6 +830,7 @@ function positionTutorialCloseStep() {
     towerBlock.style.width = tileSizeScreen + 'px';
     towerBlock.style.height = tileSizeScreen + 'px';
     towerBlock.classList.remove('hidden');
+    // [UI.AN]
     towerBlock.onclick = (e) => {
       e.stopPropagation();
       if (typeof showHintToast === 'function') {
@@ -856,6 +896,7 @@ function positionTutorialCloseStep() {
   if (dropRing) dropRing.classList.add('hidden');
 }
 
+// [UI.AO]
 function animateTutorialTapGesture(now) {
   const pointer = document.getElementById('tutorialPointer');
   if (!pointer || pointer.classList.contains('hidden')) return;
@@ -865,6 +906,7 @@ function animateTutorialTapGesture(now) {
   pointer.style.transform = `translate(${offset * 0.7}px, ${offset * 0.7}px) scale(${1 - offset * 0.015})`;
 }
 
+// [UI.AP]
 function updateTutorialOverlay(now) {
   const layer = document.getElementById('tutorialLayer');
   const skipBtn = document.getElementById('tutorialSkipBtn');
@@ -903,6 +945,7 @@ function updateTutorialOverlay(now) {
   }
 }
 
+// [UI.AQ]
 function positionTutorialDrag(now) {
   const srcEl = document.getElementById('btn-gun');
   if (!srcEl || !tutorialDestCell) return;
@@ -972,6 +1015,7 @@ function positionTutorialDrag(now) {
   if (tapPulse) tapPulse.classList.add('hidden');
 }
 
+// [UI.AR]
 function setGlow(color, blur) {
   if (perfMode === 'low') {
     ctx.shadowBlur = 0;
@@ -981,6 +1025,7 @@ function setGlow(color, blur) {
   ctx.shadowBlur = Math.min(blur, 8);
 }
 
+// [UI.AS]
 function pushParticle(p) {
   const cap = perfMode === 'low' ? 55 : 95;
   if (particles.length > cap) {
@@ -990,6 +1035,7 @@ function pushParticle(p) {
   particles.push(p);
 }
 
+// [UI.AT]
 function formatResourceVal(val) {
   const n = Math.floor(Number(val) || 0);
   if (n < 1000) return String(n);
@@ -1005,6 +1051,7 @@ function formatResourceVal(val) {
 }
 
 // Единый контроллер видимости элементов верхней панели
+// [UI.AU]
 function syncTopHudVisibility() {
   const isActiveBattle = (typeof gameState !== 'undefined' && gameState === 'PLAYING');
 
@@ -1026,6 +1073,7 @@ function syncTopHudVisibility() {
 }
 window.syncTopHudVisibility = syncTopHudVisibility;
 
+// [UI.AV]
 function updateDiamondUI() {
   const formatted = formatResourceVal(diamonds);
   const el = document.getElementById('globalDiamondsVal');
@@ -1051,6 +1099,7 @@ function updateDiamondUI() {
   syncTopHudVisibility();
 }
 
+// [UI.AW]
 function updatePrismUI() {
   const formatted = formatResourceVal(prisms);
   const el = document.getElementById('globalPrismsVal');
@@ -1080,6 +1129,7 @@ let devHoldTimer = null;
 let devHoldTriggered = false;
 let devHoldStartPos = { x: 0, y: 0 };
 
+// [UI.AX]
 function promptDevDiamonds() {
   if (!devMode) return;
   devInputOpen = true;
@@ -1097,6 +1147,7 @@ function promptDevDiamonds() {
   }
 }
 
+// [UI.AY]
 function promptDevPrisms() {
   if (!devMode) return;
   devInputOpen = true;
@@ -1114,6 +1165,7 @@ function promptDevPrisms() {
   }
 }
 
+// [UI.AZ]
 function promptDevGold() {
   if (!devMode) return;
   devInputOpen = true;
@@ -1129,6 +1181,7 @@ function promptDevGold() {
   }
 }
 
+// [UI.BA]
 function promptDevHp() {
   if (!devMode) return;
   devInputOpen = true;
@@ -1144,6 +1197,7 @@ function promptDevHp() {
   }
 }
 
+// [UI.BB]
 function devPromptLevelSelect() {
   if (!devMode) return;
   devInputOpen = true;
@@ -1159,6 +1213,7 @@ function devPromptLevelSelect() {
   }
 }
 
+// [UI.BC]
 function devPromptWaveSelect() {
   if (!devMode) return;
   const lvlConfig = (typeof LEVELS_DATA !== 'undefined') ? LEVELS_DATA[currentLevel] : null;
@@ -1177,18 +1232,22 @@ function devPromptWaveSelect() {
   }
 }
 
-// [UI111] Dev mode resource click and hold handlers.
+//  Dev mode resource click and hold handlers.
+// [UI.BD]
 function initDevResourceHold() {
+  // [UI.BE]
   const setupHold = (id, promptFn) => {
     const el = document.getElementById(id);
     if (!el || el.dataset.holdBound) return;
     el.dataset.holdBound = '1';
 
+    // [UI.BF]
     el.addEventListener('pointerdown', (e) => {
       if (!devMode) return;
       devHoldTriggered = false;
       devHoldStartPos = { x: e.clientX, y: e.clientY };
       clearTimeout(devHoldTimer);
+      // [UI.BG]
       devHoldTimer = setTimeout(() => {
         devHoldTriggered = true;
         if (typeof vibrate === 'function') vibrate('light');
@@ -1197,6 +1256,7 @@ function initDevResourceHold() {
       }, 500);
     });
 
+    // [UI.BH]
     el.addEventListener('pointermove', (e) => {
       if (!devHoldTimer) return;
       if (Math.hypot(e.clientX - devHoldStartPos.x, e.clientY - devHoldStartPos.y) > 10) {
@@ -1205,6 +1265,7 @@ function initDevResourceHold() {
       }
     });
 
+    // [UI.BI]
     const cancel = () => {
       clearTimeout(devHoldTimer);
       devHoldTimer = null;
@@ -1219,6 +1280,7 @@ function initDevResourceHold() {
   setupHold('hpHalf', promptDevHp);
 }
 
+// [UI.BJ]
 function handleDevDiamondClick() {
   if (!devMode) return;
   if (devHoldTriggered) {
@@ -1231,6 +1293,7 @@ function handleDevDiamondClick() {
   saveGameSoon();
 }
 
+// [UI.BK]
 function handleDevPrismClick() {
   if (!devMode) return;
   if (devHoldTriggered) {
@@ -1243,6 +1306,7 @@ function handleDevPrismClick() {
   saveGameSoon();
 }
 
+// [UI.BL]
 function handleDevGoldClick() {
   if (!devMode) return;
   if (devHoldTriggered) {
@@ -1253,6 +1317,7 @@ function handleDevGoldClick() {
   updateUI();
 }
 
+// [UI.BM]
 function handleDevHpClick() {
   if (!devMode) return;
   if (devHoldTriggered) {
@@ -1271,6 +1336,7 @@ const BASE_BRANCH_COLORS = { base_hp: '#f05f9f', base_gold: '#ff9100' };
 
 const CUSTOM_LOCK_SVG = `<svg width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><path d="M 7,10 V 6 C 7,3.5 9,2 12,2 C 15,2 17,3.5 17,6 V 10"/><rect x="4" y="10" width="16" height="12" rx="3" fill="currentColor" fill-opacity="0.2"/></svg>`;
 
+// [UI.BN]
 function enablePointerScroll(el) {
   if (!el || el.dataset.pointerScrollBound) return;
   el.dataset.pointerScrollBound = '1';
@@ -1280,6 +1346,7 @@ function enablePointerScroll(el) {
   let scrollTop = 0;
   let isDragging = false;
 
+  // [UI.BO]
   el.addEventListener('pointerdown', (e) => {
     isDown = true;
     isDragging = false;
@@ -1287,6 +1354,7 @@ function enablePointerScroll(el) {
     scrollTop = el.scrollTop;
   });
 
+  // [UI.BP]
   el.addEventListener('pointermove', (e) => {
     if (!isDown) return;
     const dy = e.clientY - startY;
@@ -1296,13 +1364,16 @@ function enablePointerScroll(el) {
     }
   });
 
+  // [UI.BQ]
   const endDrag = (e) => {
     if (isDragging && e) {
+      // [UI.BR]
       const preventClick = (clickEv) => {
         clickEv.stopPropagation();
         clickEv.preventDefault();
       };
       el.addEventListener('click', preventClick, { capture: true, once: true });
+      // [UI.BS]
       setTimeout(() => el.removeEventListener('click', preventClick, { capture: true }), 50);
     }
     isDown = false;
@@ -1314,6 +1385,7 @@ function enablePointerScroll(el) {
   el.addEventListener('pointerleave', endDrag);
 }
 
+// [UI.BT]
 function getUpgradeStatSummary(key, currentLvl) {
   const curEff = typeof getUpgradeEffectiveLevel === 'function' ? getUpgradeEffectiveLevel(key) : currentLvl;
   const isMaxed = currentLvl >= 15 && typeof isScalingBranch === 'function' && !isScalingBranch(key);
@@ -1385,6 +1457,7 @@ function getUpgradeStatSummary(key, currentLvl) {
   return `<span class="upg-stat-cur">DPS ${curDmg} · RNG ${curRng}</span> ${nextTag}`;
 }
 
+// [UI.BU]
 function getUpgradeDetailedToast(key) {
   const curEff = typeof getUpgradeEffectiveLevel === 'function' ? getUpgradeEffectiveLevel(key) : (upgradeTreeData[key] || 0);
   if (key === 'base_hp') {
@@ -1415,7 +1488,8 @@ function getUpgradeDetailedToast(key) {
   return `${name} Lv.1 Stats: ${dmg} DPS · ${rng} RNG`;
 }
 
-// [UI112] Meta-upgrade skill tree DOM interface renderer.
+//  Meta-upgrade skill tree DOM interface renderer.
+// [UI.BV]
 function renderUpgradeTree() {
   updateDiamondUI();
   updatePrismUI();
@@ -1455,6 +1529,7 @@ function renderUpgradeTree() {
     lockedLabel: br.name
   }));
 
+  // [UI.BW]
   const addGroupLabel = (text) => {
     const label = document.createElement('div');
     label.className = 'upgrades-row-group-label';
@@ -1462,6 +1537,7 @@ function renderUpgradeTree() {
     container.appendChild(label);
   };
 
+  // [UI.BX]
   const addRow = (row) => {
     const currentLvl = upgradeTreeData[row.key] || 0;
     const nextStep = currentLvl + 1;
@@ -1587,6 +1663,7 @@ function renderUpgradeTree() {
       const reqLvl = getTowerUnlockLevel(row.key.replace('_power', ''));
       buyBtn.classList.add('locked-buy');
       buyBtn.innerHTML = `${CUSTOM_LOCK_SVG}<span class="upgrade-row-buy-cost" style="color:#8ea3c4; font-size:11px; margin-left:3px; font-weight:900;">L${reqLvl}</span>`;
+      // [UI.BY]
       buyBtn.onclick = () => {
         if (typeof sfx === 'function') sfx('denied');
         if (typeof showHintToast === 'function') showHintToast(`Unlocks on Level ${reqLvl}`);
@@ -1594,6 +1671,7 @@ function renderUpgradeTree() {
     } else if (currentLvl >= 15 && !isScalingBranch(row.key)) {
       buyBtn.classList.add('locked-buy', 'max-buy');
       buyBtn.innerHTML = `<span class="upgrade-row-buy-cost" style="color:#d946ef; font-size:10px;">ASCENDED MAX</span>`;
+      // [UI.BZ]
       buyBtn.onclick = () => {
         if (typeof sfx === 'function') sfx('denied');
         if (typeof showHintToast === 'function') showHintToast('Branch is ASCENDED MAX (Lvl 15)');
@@ -1601,6 +1679,7 @@ function renderUpgradeTree() {
     } else if (isSectorGated) {
       buyBtn.classList.add('locked-buy');
       buyBtn.innerHTML = `${CUSTOM_LOCK_SVG}<span class="upgrade-row-buy-cost" style="color:#8ea3c4; font-size:11px; margin-left:3px; font-weight:900;">L${lvlNeeded}</span>`;
+      // [UI.CA]
       buyBtn.onclick = () => {
         if (typeof sfx === 'function') sfx('denied');
         if (typeof showHintToast === 'function') showHintToast(`Unlocks on Level ${lvlNeeded}`);
@@ -1608,6 +1687,7 @@ function renderUpgradeTree() {
     } else if (isAscGatedByBranches) {
       buyBtn.classList.add('locked-buy');
       buyBtn.innerHTML = `${CUSTOM_LOCK_SVG}<span class="upgrade-row-buy-cost" style="color:#d946ef; font-size:11px; margin-left:3px; font-weight:900;">ASC</span>`;
+      // [UI.CB]
       buyBtn.onclick = () => {
         if (typeof sfx === 'function') sfx('denied');
         if (typeof showHintToast === 'function') showHintToast('Upgrade all branches to 10/10 first to unlock ASC');
@@ -1661,6 +1741,7 @@ function renderUpgradeTree() {
 let isNavigatingSection = false;
 let modeLevelSections = { normal: 1, overdrive: 1, endless: 1 };
 
+// [UI.CC]
 function navLevelSection(dir) {
   if (isNavigatingSection) return;
   const target = currentLevelSection + dir;
@@ -1694,6 +1775,7 @@ function navLevelSection(dir) {
 
   grid.classList.add(outClass);
 
+  // [UI.CD]
   setTimeout(() => {
     currentLevelSection = target;
     modeLevelSections[currentLevelMode] = target;
@@ -1702,6 +1784,7 @@ function navLevelSection(dir) {
     void grid.offsetWidth;
     grid.classList.add(inClass);
 
+    // [UI.CE]
     setTimeout(() => {
       grid.classList.remove(inClass);
       isNavigatingSection = false;
@@ -1711,6 +1794,7 @@ function navLevelSection(dir) {
 
 let currentLevelMode = 'normal';
 
+// [UI.CF]
 function selectLevelMode(mode) {
   if (mode === 'overdrive') {
     if (!isOverdriveUnlocked()) {
@@ -1763,6 +1847,7 @@ function selectLevelMode(mode) {
   }
 }
 
+// [UI.CG]
 function updateModeSwitcherUI() {
   const tabNormal = document.getElementById('tabNormal');
   const tabOverdrive = document.getElementById('tabOverdrive');
@@ -1962,6 +2047,7 @@ function updateModeSwitcherUI() {
   }
 }
 
+// [UI.CH]
 function renderEndlessDashboardUI() {
   const valEl = document.getElementById('endlessRecordVal');
   const mapEl = document.getElementById('endlessMapText');
@@ -2036,6 +2122,7 @@ function renderEndlessDashboardUI() {
   }
 }
 
+// [UI.CI]
 function navEndlessLevel(dir) {
   const target = currentLevelSection + dir;
   if (target < 1 || (typeof TOTAL_SECTIONS !== 'undefined' && target > TOTAL_SECTIONS)) return;
@@ -2054,6 +2141,7 @@ function navEndlessLevel(dir) {
 window.navEndlessLevel = navEndlessLevel;
 window.selectLevelMode = selectLevelMode;
 
+// [UI.CJ]
 function confirmStartEndlessRun() {
   if (!isEndlessUnlocked()) {
     if (typeof showHintToast === 'function') showHintToast('Complete Normal Level 15 to unlock Endless Arena');
@@ -2067,6 +2155,7 @@ function confirmStartEndlessRun() {
 
   const status = (typeof getEndlessEntryStatus === 'function') ? getEndlessEntryStatus() : { type: 'free', cost: 0 };
 
+  // [UI.CK]
   const launch = () => {
     endlessDailyRunsUsed++;
     if (typeof saveGame === 'function') saveGame();
@@ -2099,6 +2188,7 @@ if (typeof getEndlessEntryStatus !== 'undefined') {
   window.getEndlessEntryStatus = getEndlessEntryStatus;
 }
 
+// [UI.CL]
 function renderLevelsGrid() {
   updateModeSwitcherUI();
   const levelsGrid = document.getElementById('levelsGrid');
@@ -2212,7 +2302,8 @@ function renderLevelsGrid() {
 let isDevModeActive = false;
 let isDevExpanded = false;
 
-// [UI113] Developer mode panel interface and visibility control.
+//  Developer mode panel interface and visibility control.
+// [UI.CM]
 function openDevMode() {
   isDevModeActive = true;
   devMode = true;
@@ -2244,6 +2335,7 @@ function openDevMode() {
   updatePaletteSelectDropdown('bpPaletteSelect');
 }
 
+// [UI.CN]
 function closeDevMode() {
   isDevModeActive = false;
   devMode = false;
@@ -2292,6 +2384,7 @@ function closeDevMode() {
   updatePrismUI();
 }
 
+// [UI.CO]
 function toggleDevPanelExpand() {
   isDevExpanded = !isDevExpanded;
   const pane = document.getElementById('devDetailsPane');
@@ -2323,6 +2416,7 @@ window.devMetricExpanded = {
   VerLogs: false
 };
 
+// [UI.CP]
 function toggleDevSubSection(name) {
   if (!window.devSubExpanded) window.devSubExpanded = {};
   const willOpen = !window.devSubExpanded[name];
@@ -2342,6 +2436,7 @@ function toggleDevSubSection(name) {
   }
 }
 
+// [UI.CQ]
 function toggleDevMetricGroup(groupKey) {
   if (!window.devMetricExpanded) window.devMetricExpanded = {};
   const willOpen = !window.devMetricExpanded[groupKey];
@@ -2371,6 +2466,7 @@ function toggleDevMetricGroup(groupKey) {
   });
 }
 
+// [UI.CR]
 function devSpawnCustomEnemies() {
   if (gameState !== 'PLAYING') {
     showHintToast('Start a level first to spawn enemies!');
@@ -2381,7 +2477,8 @@ function devSpawnCustomEnemies() {
   }
 }
 
-// [UI114] Drag handler for developer control panel.
+//  Drag handler for developer control panel.
+// [UI.CS]
 (function initDevBarDrag() {
   let isDragging = false;
   let startX = 0;
@@ -2389,6 +2486,7 @@ function devSpawnCustomEnemies() {
   let initialLeft = 0;
   let initialTop = 0;
 
+  // [UI.CT]
   function onPointerDown(e) {
     if (['BUTTON', 'SELECT', 'INPUT', 'OPTION'].includes(e.target.tagName)) return;
     
@@ -2415,6 +2513,7 @@ function devSpawnCustomEnemies() {
     window.addEventListener('touchend', onPointerUp);
   }
 
+  // [UI.CU]
   function onPointerMove(e) {
     if (!isDragging) return;
     if (e.cancelable) e.preventDefault();
@@ -2434,6 +2533,7 @@ function devSpawnCustomEnemies() {
     }
   }
 
+  // [UI.CV]
   function onPointerUp() {
     isDragging = false;
     window.removeEventListener('mousemove', onPointerMove);
@@ -2442,6 +2542,7 @@ function devSpawnCustomEnemies() {
     window.removeEventListener('touchend', onPointerUp);
   }
 
+  // [UI.CW]
   document.addEventListener('DOMContentLoaded', () => {
     const bar = document.getElementById('devBar');
     if (bar) {
@@ -2451,11 +2552,13 @@ function devSpawnCustomEnemies() {
   });
 })();
 
+// [UI.CX]
 function toggleDevMode(enabled) {
   if (enabled) openDevMode();
   else closeDevMode();
 }
 
+// [UI.CY]
 function refreshDevDropdowns() {
   ['devLevelSelect', 'devWaveSelect'].forEach(id => {
     const el = document.getElementById(id);
@@ -2503,6 +2606,7 @@ function refreshDevDropdowns() {
   }
 }
 
+// [UI.CZ]
 function devJumpToWave(targetWave) {
   const lvlConfig = LEVELS_DATA[currentLevel];
   const maxW = lvlConfig ? lvlConfig.totalWaves : 10;
@@ -2521,7 +2625,8 @@ function devJumpToWave(targetWave) {
 
 const DEV_SPEED_STEPS = [0.5, 0.75, 0.9, 1, 1.25, 1.5, 2, 4, 8];
 
-// [UI115] Time modulation speed levels and HUD controls.
+//  Time modulation speed levels and HUD controls.
+// [UI.DA]
 function getHudAllowedSpeeds() {
   const tier = typeof timeModTier !== 'undefined' ? timeModTier : 0;
   if (tier >= 2) {
@@ -2532,6 +2637,7 @@ function getHudAllowedSpeeds() {
   return [1.0];
 }
 
+// [UI.DB]
 function updateHudSpeedWidget() {
   const widget = document.getElementById('hudSpeedWidget');
   if (!widget) return;
@@ -2570,6 +2676,7 @@ function updateHudSpeedWidget() {
   }
 }
 
+// [UI.DC]
 function setGameSpeed(speed) {
   if (typeof gameTimeScale !== 'undefined') {
     gameTimeScale = speed;
@@ -2581,6 +2688,7 @@ function setGameSpeed(speed) {
   updateHudSpeedWidget();
 }
 
+// [UI.DD]
 function stepHudSpeed(direction) {
   const allowed = devMode ? DEV_SPEED_STEPS : getHudAllowedSpeeds();
   if (allowed.length <= 1) return;
@@ -2600,6 +2708,7 @@ function stepHudSpeed(direction) {
   }
 }
 
+// [UI.DE]
 function stepDevSpeed(direction) {
   const selects = document.querySelectorAll('.dev-speed-floating, .dev-speed-select, #speedContainer, .dev-bar select');
   if (!selects || selects.length === 0) return;
@@ -2631,7 +2740,8 @@ function stepDevSpeed(direction) {
   setGameSpeed(newSpeed);
 }
 
-// [UI116] Interactive speed drum drag and scroll gesture controller.
+//  Interactive speed drum drag and scroll gesture controller.
+// [UI.DF]
 (function initHudSpeedDrumGesture() {
   let isDragging = false;
   let startY = 0;
@@ -2639,12 +2749,14 @@ function stepDevSpeed(direction) {
   let allowedSpeeds = [1.0];
   let tipShown = false;
 
+  // [UI.DG]
   function dismissTip() {
     tipShown = true;
     const dragTip = document.getElementById('hudDragTip');
     if (dragTip) dragTip.classList.remove('show');
   }
 
+  // [UI.DH]
   function showTipIfNeeded() {
     if (tipShown) return;
     const widget = document.getElementById('hudSpeedWidget');
@@ -2656,6 +2768,7 @@ function stepDevSpeed(direction) {
 
   setTimeout(showTipIfNeeded, 1500);
 
+  // [UI.DI]
   function onPointerDown(e) {
     dismissTip();
     const drumEl = document.getElementById('hudSpeedDrum');
@@ -2683,6 +2796,7 @@ function stepDevSpeed(direction) {
     window.addEventListener('touchend', onPointerUp);
   }
 
+  // [UI.DJ]
   function onPointerMove(e) {
     if (!isDragging) return;
     if (e.cancelable) e.preventDefault();
@@ -2703,6 +2817,7 @@ function stepDevSpeed(direction) {
     }
   }
 
+  // [UI.DK]
   function onPointerUp() {
     if (!isDragging) return;
     isDragging = false;
@@ -2716,6 +2831,7 @@ function stepDevSpeed(direction) {
     window.removeEventListener('touchend', onPointerUp);
   }
 
+  // [UI.DL]
   function onWheel(e) {
     dismissTip();
     const drumEl = document.getElementById('hudSpeedDrum');
@@ -2724,6 +2840,7 @@ function stepDevSpeed(direction) {
     stepHudSpeed(e.deltaY < 0 ? 1 : -1);
   }
 
+  // [UI.DM]
   function setupListeners() {
     const drumEl = document.getElementById('hudSpeedDrum');
     if (drumEl) {
@@ -2744,6 +2861,7 @@ function stepDevSpeed(direction) {
   }
 })();
 
+// [UI.DN]
 function toggleLivePause() {
   isLivePaused = !isLivePaused;
   const btn = document.getElementById('livePauseBtn');
@@ -2760,13 +2878,15 @@ function toggleLivePause() {
   updateDailyBonusBtnVisibility();
 }
 
+// [UI.DO]
 function updateStartChapterLabel(show, text) {
   const el = document.getElementById('startChapterLabel');
   if (el) el.classList.add('hidden');
 }
 
-// [UI117] Navigation & screen visibility controllers.
+//  Navigation & screen visibility controllers.
 
+// [UI.DP]
 function updateDailyBonusBtnVisibility() {
   const btn = document.getElementById('dailyBonusQuickBtn');
   if (!btn) return;
@@ -2780,6 +2900,7 @@ function updateDailyBonusBtnVisibility() {
     'milestoneScreen', 'victoryScreen', 'defeatScreen'
   ];
 
+  // [UI.DQ]
   const isAnyModalOpen = modals.some(id => {
     const el = document.getElementById(id);
     return el && !el.classList.contains('hidden');
@@ -2792,6 +2913,7 @@ function updateDailyBonusBtnVisibility() {
   }
 }
 
+// [UI.DR]
 function showStartScreen() {
   isEndlessMode = false;
   music('menu');
@@ -2870,6 +2992,7 @@ function showStartScreen() {
   updateDailyBonusBtnVisibility();
 }
 
+// [UI.DS]
 function updateUpgradeButtonsLock() {
   const unlockLevel = getLoadoutStartLevel();
   const isUpgradesUnlocked = devMode || getLoadoutReferenceLevel() >= unlockLevel;
@@ -2893,7 +3016,8 @@ let settingsAccordionExpanded = false;
 let devSettingsTapCount = 0;
 let devSettingsTapTimer = null;
 
-// [UI118] Settings accordion toggle and pause menu controller.
+//  Settings accordion toggle and pause menu controller.
+// [UI.DT]
 function toggleSettingsAccordion(forceState) {
   if (typeof forceState === 'boolean') {
     settingsAccordionExpanded = forceState;
@@ -2911,9 +3035,11 @@ function toggleSettingsAccordion(forceState) {
   }
 }
 
+// [UI.DU]
 function handleHudSettingsClick() {
   devSettingsTapCount++;
   if (devSettingsTapTimer) clearTimeout(devSettingsTapTimer);
+  // [UI.DV]
   devSettingsTapTimer = setTimeout(() => {
     devSettingsTapCount = 0;
     devSettingsTapTimer = null;
@@ -2954,6 +3080,7 @@ function handleHudSettingsClick() {
   }
 }
 
+// [UI.DW]
 function showSettings(fromSource = 'start') {
   settingsPreviousSource = fromSource;
   if (fromSource === 'combat' || fromSource === 'pause') {
@@ -3048,9 +3175,10 @@ function showSettings(fromSource = 'start') {
   updateDailyBonusBtnVisibility();
 }
 
-// [UI122] Synth Pass & Custom Neon Color Palette UI Handlers.
+//  Synth Pass & Custom Neon Color Palette UI Handlers.
 let bpPreviousSource = 'start';
 
+// [UI.DX]
 function updateBpProgressUI() {
   const { tier, xpInTier, isMax, totalXp } = getBpTierInfo(bpXp);
 
@@ -3083,17 +3211,20 @@ const PALETTE_UNLOCK_TOASTS = {
   blood_moon: 'Unlocks with Premium Synth Pass at Tier 30!'
 };
 
+// [UI.DY]
 function closeCustomPaletteMenus() {
   document.querySelectorAll('.custom-palette-menu').forEach(m => m.classList.add('hidden'));
   document.querySelectorAll('.custom-palette-trigger').forEach(t => t.classList.remove('open'));
 }
 
+// [UI.DZ]
 document.addEventListener('pointerdown', (e) => {
   if (!e.target.closest('.custom-palette-dropdown')) {
     closeCustomPaletteMenus();
   }
 });
 
+// [UI.EA]
 function updatePaletteSelectDropdown(selectId) {
   const selectEl = document.getElementById(selectId);
   if (!selectEl || typeof NEON_PALETTES === 'undefined') return;
@@ -3144,6 +3275,7 @@ function updatePaletteSelectDropdown(selectId) {
       ${!isUnlocked ? `<span class="pal-opt-lock">${CUSTOM_LOCK_SVG}</span>` : (isSelected ? `<span class="pal-opt-check">●</span>` : '')}
     `;
 
+    // [UI.EB]
     item.onclick = (e) => {
       e.stopPropagation();
       if (!isUnlocked) {
@@ -3158,6 +3290,7 @@ function updatePaletteSelectDropdown(selectId) {
     menu.appendChild(item);
   });
 
+  // [UI.EC]
   trigger.onclick = (e) => {
     e.stopPropagation();
     if (isLockedInitial) {
@@ -3178,10 +3311,12 @@ function updatePaletteSelectDropdown(selectId) {
   wrapper.appendChild(menu);
 }
 
+// [UI.ED]
 function handleBpThemeClick(e) {
   // Обработка клика теперь полностью внутри кастомного триггера updatePaletteSelectDropdown
 }
 
+// [UI.EE]
 function selectPalette(paletteId) {
   if (!unlockedPalettes.includes(paletteId) && !devMode) {
     sfx('denied');
@@ -3199,6 +3334,7 @@ function selectPalette(paletteId) {
   showHintToast(`Visual: ${NEON_PALETTES[paletteId] ? NEON_PALETTES[paletteId].name : paletteId}`);
 }
 
+// [UI.EF]
 function showBattlePassScreen(fromSource = 'start') {
   bpPreviousSource = fromSource;
   const bgScreenId = (fromSource === 'victory') ? 'victoryScreen'
@@ -3234,6 +3370,7 @@ function showBattlePassScreen(fromSource = 'start') {
   updateDailyBonusBtnVisibility();
 }
 
+// [UI.EG]
 function closeBattlePassScreen() {
   const bpScreen = document.getElementById('battlePassScreen');
   if (bpScreen) bpScreen.classList.add('hidden');
@@ -3262,6 +3399,7 @@ function closeBattlePassScreen() {
   updateDailyBonusBtnVisibility();
 }
 
+// [UI.EH]
 function renderBattlePassScreen() {
   const dVal = document.getElementById('bpDiamondVal');
   if (dVal) dVal.textContent = diamonds;
@@ -3315,6 +3453,7 @@ function renderBattlePassScreen() {
     const isFreeClaimed = !!bpClaimedFree[t];
     freeCell.className = `bp-cell bp-cell-free${isFreeClaimed ? ' claimed' : ''}`;
 
+    // [UI.EI]
     const formatRewardText = (str) => {
       if (!str) return '';
       let s = str.replace(/\(\s*(\+?\s*\d+\s*[\u{1F52E}🔮\u{1F48E}💎])\s*\)/gu, '$1');
@@ -3383,6 +3522,7 @@ function renderBattlePassScreen() {
   });
 }
 
+// [UI.EJ]
 function claimBpFreeReward(t) {
   const { tier } = getBpTierInfo(bpXp);
   if (tier < t) {
@@ -3395,6 +3535,7 @@ function claimBpFreeReward(t) {
   if (!item) return;
   const fr = item.freeReward;
 
+  // [UI.EK]
   const executeClaim = () => {
     bpClaimedFree[t] = true;
     let toast = '';
@@ -3437,6 +3578,7 @@ function claimBpFreeReward(t) {
   }
 }
 
+// [UI.EL]
 function claimBpPremReward(t) {
   if (!bpPremiumPurchased) {
     showHintToast('Activate Premium Pass first!');
@@ -3488,12 +3630,14 @@ function claimBpPremReward(t) {
   showHintToast(toast);
 }
 
+// [UI.EM]
 function buyBpPremiumIAP() {
   if (bpPremiumPurchased) {
     showHintToast('Premium Pass already activated!');
     return;
   }
 
+  // [UI.EN]
   const executePurchase = () => {
     bpPremiumPurchased = true;
     if (!unlockedPalettes.includes('cyber_gold')) {
@@ -3513,6 +3657,7 @@ function buyBpPremiumIAP() {
 }
 window.buyBpPremiumIAP = buyBpPremiumIAP;
 
+// [UI.EO]
 function buyBpTierWithDiamonds() {
   const { tier } = getBpTierInfo(bpXp);
   if (tier >= 30 && bpXp >= 3000) {
@@ -3531,6 +3676,7 @@ function buyBpTierWithDiamonds() {
   showHintToast('+1 Tier purchased (+100 XP)!');
 }
 
+// [UI.EP]
 function devAddBpXp(amount) {
   if (!devMode) return;
   addBpXp(amount);
@@ -3538,6 +3684,7 @@ function devAddBpXp(amount) {
   showHintToast(`Dev: +${amount} BP XP added`);
 }
 
+// [UI.EQ]
 function devToggleBpPremium() {
   if (!devMode) return;
   bpPremiumPurchased = !bpPremiumPurchased;
@@ -3549,6 +3696,7 @@ function devToggleBpPremium() {
   showHintToast(`Dev: Premium Pass ${bpPremiumPurchased ? 'ON' : 'OFF'}`);
 }
 
+// [UI.ER]
 function closeSettings() {
   const settingsSc = document.getElementById('settingsScreen');
   if (settingsSc) settingsSc.classList.add('hidden');
@@ -3594,10 +3742,13 @@ function closeSettings() {
   updateDailyBonusBtnVisibility();
 }
 
+// [UI.ES]
 function toggleSettingHp(isChecked) { settings.showEnemyHp = isChecked; saveGameSoon(); }
 
+// [UI.ET]
 function toggleSettingDamage(isChecked) { settings.showDamage = isChecked; saveGameSoon(); }
 
+// [UI.EU]
 function toggleSettingVibration(isChecked) {
   settings.vibrationEnabled = isChecked;
   if (isChecked) {
@@ -3607,6 +3758,7 @@ function toggleSettingVibration(isChecked) {
   saveGameSoon();
 }
 
+// [UI.EV]
 function applySfxVolume(pct, persist) {
   const v = Math.max(0, Math.min(100, Math.round(Number(pct) || 0)));
   settings.sfxVolume = v;
@@ -3626,6 +3778,7 @@ function applySfxVolume(pct, persist) {
   if (persist) saveGameSoon();
 }
 
+// [UI.EW]
 function applyMusicVolume(pct, persist) {
   const v = Math.max(0, Math.min(100, Math.round(Number(pct) || 0)));
   settings.musicVolume = v;
@@ -3644,9 +3797,12 @@ function applyMusicVolume(pct, persist) {
   if (persist) saveGameSoon();
 }
 
+// [UI.EX]
 function setSfxVolume(pct) { applySfxVolume(pct, true); }
+// [UI.EY]
 function setMusicVolume(pct) { applyMusicVolume(pct, true); }
 
+// [UI.EZ]
 function toggleSettingPerf(isChecked) {
   perfMode = isChecked ? 'low' : 'high';
   settings.perfModeOverride = perfMode;
@@ -3654,7 +3810,8 @@ function toggleSettingPerf(isChecked) {
   saveGameSoon();
 }
 
-// [UI113.01] Level select horizontal swipe gesture handler.
+//  Level select horizontal swipe gesture handler.
+// [UI.FA]
 (function initLevelSelectSwipeGesture() {
   let touchStartX = 0;
   let touchStartY = 0;
@@ -3663,6 +3820,7 @@ function toggleSettingPerf(isChecked) {
   let swipeTriggered = false;
   let isPointerDown = false;
 
+  // [UI.FB]
   function onPointerDown(e) {
     if (gameState !== 'LEVELS') return;
     const levelsScreen = document.getElementById('levelsScreen');
@@ -3684,6 +3842,7 @@ function toggleSettingPerf(isChecked) {
     swipeTriggered = false;
   }
 
+  // [UI.FC]
   function onPointerMove(e) {
     if (!isPointerDown || gameState !== 'LEVELS' || swipeTriggered || isNavigatingSection) return;
     if (!e.touches && e.buttons === 0) {
@@ -3713,6 +3872,7 @@ function toggleSettingPerf(isChecked) {
     }
   }
 
+  // [UI.FD]
   function onPointerUp(e) {
     if (!isPointerDown || gameState !== 'LEVELS') {
       isPointerDown = false;
@@ -3745,6 +3905,7 @@ function toggleSettingPerf(isChecked) {
     }
   }
 
+  // [UI.FE]
   function onClickCapture(e) {
     if (isSwiping) {
       e.stopPropagation();
@@ -3753,16 +3914,19 @@ function toggleSettingPerf(isChecked) {
     }
   }
 
+  // [UI.FF]
   function setupListeners() {
     const levelsScreen = document.getElementById('levelsScreen');
     if (levelsScreen) {
       levelsScreen.addEventListener('touchstart', onPointerDown, { passive: true });
       levelsScreen.addEventListener('touchmove', onPointerMove, { passive: true });
       levelsScreen.addEventListener('touchend', onPointerUp, { passive: true });
+      // [UI.FG]
       levelsScreen.addEventListener('touchcancel', () => { isPointerDown = false; }, { passive: true });
       levelsScreen.addEventListener('mousedown', onPointerDown);
       levelsScreen.addEventListener('mousemove', onPointerMove);
       levelsScreen.addEventListener('mouseup', onPointerUp);
+      // [UI.FH]
       levelsScreen.addEventListener('mouseleave', () => { isPointerDown = false; });
       levelsScreen.addEventListener('click', onClickCapture, true);
     }
@@ -3775,6 +3939,7 @@ function toggleSettingPerf(isChecked) {
   }
 })();
 
+// [UI.FI]
 function showLevelSelect() {
   music('menu');
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
@@ -3806,6 +3971,7 @@ function showLevelSelect() {
   updateDailyBonusBtnVisibility();
 }
 
+// [UI.FJ]
 function giveUpMatch() {
   const confirmModal = document.getElementById('giveUpConfirmModal');
   if (confirmModal) {
@@ -3815,6 +3981,7 @@ function giveUpMatch() {
   }
 }
 
+// [UI.FK]
 function cancelGiveUp() {
   const confirmModal = document.getElementById('giveUpConfirmModal');
   if (confirmModal) {
@@ -3822,6 +3989,7 @@ function cancelGiveUp() {
   }
 }
 
+// [UI.FL]
 function confirmGiveUp() {
   const confirmModal = document.getElementById('giveUpConfirmModal');
   if (confirmModal) confirmModal.classList.add('hidden');
@@ -3844,6 +4012,7 @@ function confirmGiveUp() {
   }
 }
 
+// [UI.FM]
 function showLevelSelectFromGame() {
   const curCat = (typeof MusicManager !== 'undefined' && MusicManager.current) ? MusicManager.current() : null;
   if (curCat !== 'win' && curCat !== 'lose') {
@@ -3896,10 +4065,11 @@ function showLevelSelectFromGame() {
   updateDailyBonusBtnVisibility();
 }
 
-// [UI119] Player loadout slot configuration and milestone sequence manager.
+//  Player loadout slot configuration and milestone sequence manager.
 
 let loadoutWidgetExpanded = false;
 
+// [UI.FN]
 function showLoadoutWidgetIn(anchorId) {
   const widget = document.getElementById('loadoutWidget');
   const anchor = document.getElementById(anchorId);
@@ -3920,6 +4090,7 @@ function showLoadoutWidgetIn(anchorId) {
   renderLoadoutWidgetBody();
 }
 
+// [UI.FO]
 function toggleLoadoutWidgetExpanded() {
   loadoutWidgetExpanded = !loadoutWidgetExpanded;
   if (!loadoutWidgetExpanded) {
@@ -3932,6 +4103,7 @@ function toggleLoadoutWidgetExpanded() {
   renderLoadoutWidgetBody();
 }
 
+// [UI.FP]
 function renderLoadoutWidgetBody() {
   const miniIcons = document.getElementById('loadoutWidgetMiniIcons');
   const expandedBox = document.getElementById('loadoutWidgetExpanded');
@@ -3960,6 +4132,7 @@ function renderLoadoutWidgetBody() {
   }
 }
 
+// [UI.FQ]
 function renderLoadoutWidgetGrid() {
   const grid = document.getElementById('loadoutWidgetGrid');
   if (!grid) return;
@@ -3981,11 +4154,13 @@ function renderLoadoutWidgetGrid() {
       <div class="tower-btn-icon">${TOWER_ICONS[type] || ''}</div>
       <span class="tower-btn-title">${TOWER_NAMES[type] || type}</span>
     `;
+    // [UI.FR]
     btn.onclick = (e) => { e.stopPropagation(); toggleLoadoutWidgetTower(type); };
     grid.appendChild(btn);
   });
 }
 
+// [UI.FS]
 function toggleLoadoutWidgetTower(type) {
   sfx('tap');
   const idx = selectedLoadout.indexOf(type);
@@ -4008,11 +4183,13 @@ let milestoneOnComplete = null;
 let pendingUpgradeUnlockFx = false;
 let pendingLoadoutRevealFx = false;
 
+// [UI.FT]
 function hasMilestoneForLevel(clearedLevel) {
   return buildMilestoneSteps(clearedLevel).length > 0;
 }
 window.hasMilestoneForLevel = hasMilestoneForLevel;
 
+// [UI.FU]
 function buildTowerFiringDemoHtml(type) {
   const conf = TOWER_CONFIGS[type] || TOWER_CONFIGS.gun;
   const col = conf.color || '#00e5ff';
@@ -4095,6 +4272,7 @@ function buildTowerFiringDemoHtml(type) {
     </div>`;
 }
 
+// [UI.FV]
 function buildFeatureVisualHtml(feature, color) {
   let iconSvg = '';
   if (feature === 'tech_tree') {
@@ -4116,6 +4294,7 @@ function buildFeatureVisualHtml(feature, color) {
     </div>`;
 }
 
+// [UI.FW]
 function buildMilestoneSteps(clearedLevel) {
   const steps = [];
   const nextLvl = clearedLevel + 1;
@@ -4214,6 +4393,7 @@ function buildMilestoneSteps(clearedLevel) {
   return steps;
 }
 
+// [UI.FX]
 function showMilestoneSequence(clearedLevel, onComplete) {
   milestoneSteps = buildMilestoneSteps(clearedLevel);
   milestoneIndex = 0;
@@ -4227,6 +4407,7 @@ function showMilestoneSequence(clearedLevel, onComplete) {
   renderMilestoneStep();
 }
 
+// [UI.FY]
 function renderMilestoneStep() {
   const step = milestoneSteps[milestoneIndex];
   if (!step) return;
@@ -4300,6 +4481,7 @@ function renderMilestoneStep() {
 
 let teslaDemoAnimId = null;
 
+// [UI.FZ]
 function renderMilestoneLoadoutGrid() {
   const grid = document.getElementById('milestoneLoadoutGrid');
   if (!grid) return;
@@ -4319,6 +4501,7 @@ function renderMilestoneLoadoutGrid() {
       <div class="tower-btn-icon">${TOWER_ICONS[type] || ''}</div>
       <span class="tower-btn-title">${TOWER_NAMES[type] || type}</span>
     `;
+    // [UI.GA]
     btn.onclick = (e) => {
       e.stopPropagation();
       toggleLoadoutWidgetTower(type);
@@ -4330,6 +4513,7 @@ function renderMilestoneLoadoutGrid() {
   if (hint) hint.textContent = `${selectedLoadout.length}/${LOADOUT_SIZE} selected \u2014 tap a selected tower to free a slot`;
 }
 
+// [UI.GB]
 function advanceMilestone() {
   milestoneIndex++;
   if (milestoneIndex < milestoneSteps.length) {
@@ -4343,6 +4527,7 @@ function advanceMilestone() {
   if (done) done();
 }
 
+// [UI.GC]
 function showUpgradesScreen(fromSource) {
   const unlockLevel = getLoadoutStartLevel();
   const isUpgradesUnlocked = devMode || getLoadoutReferenceLevel() >= unlockLevel;
@@ -4398,6 +4583,7 @@ function showUpgradesScreen(fromSource) {
   updateDailyBonusBtnVisibility();
 }
 
+// [UI.GD]
 function closeUpgradesScreen() {
   document.getElementById('upgradesScreen').classList.add('hidden');
   
@@ -4427,6 +4613,7 @@ function closeUpgradesScreen() {
   updateDailyBonusBtnVisibility();
 }
 
+// [UI.GE]
 function showShopScreen(fromSource) {
   if (!fromSource) {
     if (gameState === 'VICTORY') fromSource = 'victory';
@@ -4471,6 +4658,7 @@ function showShopScreen(fromSource) {
   updateDailyBonusBtnVisibility();
 }
 
+// [UI.GF]
 function closeShopScreen() {
   document.getElementById('shopScreen').classList.add('hidden');
 
@@ -4497,6 +4685,7 @@ function closeShopScreen() {
   updateDailyBonusBtnVisibility();
 }
 
+// [UI.GG]
 function renderShopScreen() {
   checkDailyGiftReset();
   updateMenuBadges();
@@ -4645,11 +4834,13 @@ function renderShopScreen() {
 }
 
 // --- Daily Login 7-Day Calendar Logic ---
+// [UI.GH]
 function checkDailyLoginState() {
   const todayStr = getTodayDateString();
   return lastLoginClaimDate === todayStr;
 }
 
+// [UI.GI]
 function updateMenuBadges() {
   const dailyBadge = document.getElementById('dailyBonusBadgeDot') || document.getElementById('dailyCalendarBadge');
   if (dailyBadge) {
@@ -4677,18 +4868,21 @@ function updateMenuBadges() {
   }
 }
 
+// [UI.GJ]
 function getDailyDiamondSvg(size = 20, opacity = 1) {
   const th = getTheme();
   const c1Rgb = th.rgb1 ? th.rgb1.cssRgb : '0, 229, 255';
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${th.c1}" stroke-width="2" stroke-linejoin="round"${opacity < 1 ? ` style="opacity:${opacity};"` : ''}><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(${c1Rgb}, 0.28)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
 }
 
+// [UI.GK]
 function getDailyPrismSvg(size = 20, opacity = 1) {
   const th = getTheme();
   const c2Rgb = th.rgb2 ? th.rgb2.cssRgb : '217, 70, 239';
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${th.c2}" stroke-width="2" stroke-linejoin="round"${opacity < 1 ? ` style="opacity:${opacity};"` : ''}><polygon points="12 2 21 12 12 22 3 12" fill="rgba(${c2Rgb}, 0.35)"/><line x1="12" y1="2" x2="12" y2="22"/><polyline points="3 12 12 15 21 12" fill="none"/></svg>`;
 }
 
+// [UI.GL]
 function renderDailyLoginModal() {
   const grid = document.getElementById('dailyCalendarGrid');
   if (!grid) return;
@@ -4909,6 +5103,7 @@ function renderDailyLoginModal() {
   }
 }
 
+// [UI.GM]
 function openDailyLoginModal() {
   const modal = document.getElementById('dailyLoginModal');
   if (!modal) return;
@@ -4919,6 +5114,7 @@ function openDailyLoginModal() {
   updateDailyBonusBtnVisibility();
 }
 
+// [UI.GN]
 function closeDailyLoginModal() {
   dailyLoginDismissedThisSession = true;
   const modal = document.getElementById('dailyLoginModal');
@@ -4927,6 +5123,7 @@ function closeDailyLoginModal() {
   updateDailyBonusBtnVisibility();
 }
 
+// [UI.GO]
 function claimDailyLoginReward(isDouble) {
   if (checkDailyLoginState()) {
     showHintToast('Already claimed today!');
@@ -4936,6 +5133,7 @@ function claimDailyLoginReward(isDouble) {
   const currentReward = DAILY_LOGIN_REWARDS[loginStreakDay - 1];
   if (!currentReward) return;
 
+  // [UI.GP]
   const executeGrantReward = () => {
     const mult = isDouble ? 2 : 1;
     const addDiamonds = currentReward.diamonds * mult;
@@ -4972,6 +5170,7 @@ function claimDailyLoginReward(isDouble) {
   }
 }
 
+// [UI.GQ]
 function renderVictoryStars(starsCount) {
   const row = document.getElementById('victoryStarsRow');
   if (!row) return;
@@ -5024,6 +5223,7 @@ function renderVictoryStars(starsCount) {
   }
 }
 
+// [UI.GR]
 function isOverCancelZone(clientX, clientY) {
   if (clientX === undefined || clientY === undefined) return false;
   const wrapper = document.getElementById('controlsWrapper');
@@ -5037,6 +5237,7 @@ function isOverCancelZone(clientX, clientY) {
   );
 }
 
+// [UI.GS]
 function showCancelZoneVisual(show) {
   const overlay = document.getElementById('cancelZoneOverlay');
   const buildPanel = document.getElementById('buildPanel');
@@ -5052,6 +5253,7 @@ function showCancelZoneVisual(show) {
   }
 }
 
+// [UI.GT]
 function updateCancelZoneHover(clientX, clientY) {
   const overlay = document.getElementById('cancelZoneOverlay');
   if (!overlay || overlay.classList.contains('hidden')) return;
@@ -5062,6 +5264,7 @@ function updateCancelZoneHover(clientX, clientY) {
   }
 }
 
+// [UI.GU]
 canvas.addEventListener('touchstart', (e) => {
   if (gameState !== 'PLAYING') return;
   if (e.touches.length === 1 && !draggingTower) {
@@ -5078,6 +5281,7 @@ canvas.addEventListener('touchstart', (e) => {
   }
 }, { passive: false });
 
+// [UI.GV]
 canvas.addEventListener('touchmove', (e) => {
   if (e.touches.length === 1 && isPanning) {
     const dx = e.touches[0].clientX - panStartTouch.x;
@@ -5099,11 +5303,13 @@ canvas.addEventListener('touchmove', (e) => {
   }
 }, { passive: false });
 
+// [UI.GW]
 canvas.addEventListener('touchend', (e) => {
   if (e.touches.length < 2) initialPinchDist = null;
   if (e.touches.length === 0) isPanning = false;
 });
 
+// [UI.GX]
 window.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && (e.code === 'KeyR' || e.key === 'r' || e.key === 'R')) {
     if (gameState === 'PLAYING' || gameState === 'PAUSED' || gameState === 'VICTORY' || gameState === 'DEFEAT') {
@@ -5119,6 +5325,7 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
+// [UI.GY]
 window.addEventListener('keyup', (e) => {
   if (e.code === 'Space') {
     mouseSpacePressed = false;
@@ -5126,6 +5333,7 @@ window.addEventListener('keyup', (e) => {
   }
 });
 
+// [UI.GZ]
 canvas.addEventListener('mousedown', (e) => {
   if (gameState !== 'PLAYING') return;
   if (e.button === 1 || (e.button === 0 && mouseSpacePressed)) {
@@ -5136,6 +5344,7 @@ canvas.addEventListener('mousedown', (e) => {
   }
 });
 
+// [UI.HA]
 canvas.addEventListener('mousemove', (e) => {
   if (!isMousePanning) return;
   const dx = e.clientX - panStartMouse.x;
@@ -5145,10 +5354,12 @@ canvas.addEventListener('mousemove', (e) => {
   clampCamera();
 });
 
+// [UI.HB]
 canvas.addEventListener('mouseup', () => {
   isMousePanning = false;
 });
 
+// [UI.HC]
 canvas.addEventListener('wheel', (e) => {
   if (gameState !== 'PLAYING') return;
   e.preventDefault();
@@ -5161,16 +5372,19 @@ canvas.addEventListener('wheel', (e) => {
 }, { passive: false });
 
 let hintToastTimer = null;
+// [UI.HD]
 function showHintToast(message) {
   const el = document.getElementById('hintToast');
   if (!el) return;
   el.textContent = message;
   el.classList.add('visible');
   if (hintToastTimer) clearTimeout(hintToastTimer);
+  // [UI.HE]
   hintToastTimer = setTimeout(() => { el.classList.remove('visible'); }, 2000);
 }
 
-// [UI120] Tower selection, build panel UI and inspection state controller.
+//  Tower selection, build panel UI and inspection state controller.
+// [UI.HF]
 function initBuildPanel() {
   const panel = document.getElementById('buildPanel');
   if (!panel || typeof TOWER_CONFIGS === 'undefined') return;
@@ -5199,6 +5413,7 @@ function initBuildPanel() {
       </span>
     `;
 
+    // [UI.HG]
     btn.addEventListener('mousedown', (e) => {
       if (gameState !== 'PLAYING') return;
       if (!isTowerActiveThisLevel(type)) {
@@ -5211,6 +5426,7 @@ function initBuildPanel() {
       showCancelZoneVisual(true);
     });
 
+    // [UI.HH]
     btn.addEventListener('touchstart', (e) => {
       if (gameState !== 'PLAYING') return;
       if (!isTowerActiveThisLevel(type)) {
@@ -5230,6 +5446,7 @@ function initBuildPanel() {
   });
 }
 
+// [UI.HI]
 window.addEventListener('mousemove', (e) => {
   if (!draggingTower) return;
   const worldPos = screenToWorld(e.clientX, e.clientY);
@@ -5238,6 +5455,7 @@ window.addEventListener('mousemove', (e) => {
   updateCancelZoneHover(e.clientX, e.clientY);
 });
 
+// [UI.HJ]
 window.addEventListener('touchmove', (e) => {
   if (!draggingTower || e.touches.length > 1) return;
   const touch = e.touches[0];
@@ -5247,10 +5465,12 @@ window.addEventListener('touchmove', (e) => {
   updateCancelZoneHover(touch.clientX, touch.clientY);
 }, { passive: false });
 
+// [UI.HK]
 window.addEventListener('mouseup', (e) => {
   if (draggingTower) handleDrop(draggingTower.worldX, draggingTower.worldY, e.clientX, e.clientY);
 });
 
+// [UI.HL]
 window.addEventListener('touchend', (e) => {
   if (draggingTower) {
     let cx, cy;
@@ -5262,6 +5482,7 @@ window.addEventListener('touchend', (e) => {
   }
 });
 
+// [UI.HM]
 canvas.addEventListener('click', (e) => {
   if (gameState !== 'PLAYING' || isPanning) return;
   const worldPos = screenToWorld(e.clientX, e.clientY);
@@ -5283,9 +5504,11 @@ canvas.addEventListener('click', (e) => {
   }
 });
 
+// [UI.HN]
 function armSellConfirm() {
   sellConfirmArmed = true;
   if (sellConfirmTimer) clearTimeout(sellConfirmTimer);
+  // [UI.HO]
   sellConfirmTimer = setTimeout(() => {
     sellConfirmArmed = false;
     sellConfirmTimer = null;
@@ -5294,11 +5517,13 @@ function armSellConfirm() {
   updateInspectUI();
 }
 
+// [UI.HP]
 function resetSellConfirm() {
   sellConfirmArmed = false;
   if (sellConfirmTimer) { clearTimeout(sellConfirmTimer); sellConfirmTimer = null; }
 }
 
+// [UI.HQ]
 function selectTower(tower) {
   selectedTower = tower;
   resetSellConfirm();
@@ -5311,6 +5536,7 @@ function selectTower(tower) {
   }
 }
 
+// [UI.HR]
 function deselectTower() {
   selectedTower = null;
   resetSellConfirm();
@@ -5324,6 +5550,7 @@ function deselectTower() {
   }
 }
 
+// [UI.HS]
 function updateInspectUI() {
   if (!selectedTower) return;
   const t = selectedTower;
@@ -5434,6 +5661,7 @@ function updateInspectUI() {
   }
 }
 
+// [UI.HT]
 function updateWaveCircle(dt) {
   const progEl = el('waveCircleProg');
   if (!progEl) return;
@@ -5493,7 +5721,8 @@ function updateWaveCircle(dt) {
   bonusEl.classList.toggle('visible', bonus > 0);
 }
 
-// [UI121] Main UI frame update and HUD sync loop.
+//  Main UI frame update and HUD sync loop.
+// [UI.HU]
 function updateUI() {
   const lvlConfig = LEVELS_DATA[currentLevel];
   const maxW = lvlConfig ? lvlConfig.totalWaves : 10;
@@ -5535,6 +5764,7 @@ function updateUI() {
   if (selectedTower) updateInspectUI();
 }
 
+// [UI.HV]
 function createFloatingDamage(x, y, damage, color = '#f05f9f') {
   if (typeof settings !== 'undefined' && settings.showDamage === false) return;
   const dmgVal = typeof damage === 'number' ? Math.round(damage) : damage;
@@ -5553,6 +5783,7 @@ function createFloatingDamage(x, y, damage, color = '#f05f9f') {
   });
 }
 
+// [UI.HW]
 function createDamageShards(x, y, color, damage = 16, isDeath = false) {
   const count = isDeath ? (perfMode === 'low' ? 5 : 8) : Math.max(1, Math.min(3, Math.ceil(damage / 25)));
   const baseSize = isDeath ? 7.5 : Math.max(3.2, Math.min(6.0, 2.2 + damage * 0.06));
@@ -5603,6 +5834,7 @@ function createDamageShards(x, y, color, damage = 16, isDeath = false) {
   }
 }
 
+// [UI.HX]
 function createImpactSmoke(x, y, size = 10) {
   if (perfMode === 'low' && Math.random() < 0.4) return;
   const sAngle = Math.random() * Math.PI * 2;
@@ -5620,10 +5852,12 @@ function createImpactSmoke(x, y, size = 10) {
   });
 }
 
+// [UI.HY]
 function createSparks(x, y, color1, count = 6, color2 = null) {
   createDamageShards(x, y, color1, count * 5, false);
 }
 
+// [UI.HZ]
 function createSteamPuff(x, y) {
   const angle = -Math.PI / 2 + (Math.random() - 0.5) * 1.0;
   const speed = 12 + Math.random() * 16;
@@ -5640,6 +5874,7 @@ function createSteamPuff(x, y) {
   });
 }
 
+// [UI.IA]
 function createExplosion(x, y, radius, color1 = '#ff9100', color2 = null, kind = 'standard') {
   const c1 = color1;
   const c2 = color2 || (kind === 'mortar' ? '#f05f9f' : '#00e5ff');
@@ -5740,6 +5975,7 @@ function createExplosion(x, y, radius, color1 = '#ff9100', color2 = null, kind =
   }
 }
 
+// [UI.IB]
 function createRailBeamFx(x1, y1, x2, y2, color) {
   const beamColor = color || (typeof TOWER_CONFIGS !== 'undefined' && TOWER_CONFIGS.railgun ? TOWER_CONFIGS.railgun.color : '#a275df');
   lightningBolts.push({
@@ -5752,12 +5988,14 @@ function createRailBeamFx(x1, y1, x2, y2, color) {
   });
 }
 
+// [UI.IC]
 function createShockwave(x, y, maxRadius, color) {
   shockwaves.push({ x, y, maxRadius, color, duration: 0.32, elapsed: 0 });
 }
 
-// [UI207] Math and random generator utilities for procedural background generation.
+//  Math and random generator utilities for procedural background generation.
 
+// [UI.ID]
 function mulberry32(a) {
   return function () {
     a |= 0; a = (a + 0x6D2B79F5) | 0;
@@ -5767,6 +6005,7 @@ function mulberry32(a) {
   };
 }
 
+// [UI.IE]
 function randn() {
   let u = 0, v = 0;
   while (u === 0) u = Math.random();
@@ -5774,14 +6013,16 @@ function randn() {
   return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
 }
 
+// [UI.IF]
 function clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
 
+// [UI.IG]
 function smoothstep(a, b, x) {
   const t = clamp01((x - a) / (b - a));
   return t * t * (3 - 2 * t);
 }
 
-// [UI207.01] 2D Perlin Noise permutation table and gradient sampler.
+//  2D Perlin Noise permutation table and gradient sampler.
 const perlin = (function () {
   const rnd = mulberry32(1337);
   const perm = [];
@@ -5816,6 +6057,7 @@ const perlin = (function () {
   };
 })();
 
+// [UI.IH]
 function fbm(x, y, oct) {
   let s = 0, a = 0.5, f = 1;
   for (let i = 0; i < oct; i++) {
@@ -5825,6 +6067,7 @@ function fbm(x, y, oct) {
   return s;
 }
 
+// [UI.II]
 function ridged(x, y, oct) {
   let s = 0, a = 0.5, f = 1;
   for (let i = 0; i < oct; i++) {
@@ -5837,11 +6080,11 @@ function ridged(x, y, oct) {
 }
 
 
-// [UI208] Cosmic nebula and baked starfield texture renderer.
+//  Cosmic nebula and baked starfield texture renderer.
 
 const NEBULA_DENSITY = 1.0;
 
-// [UI208.01] Nebula color clusters aligned with logo gradient.
+//  Nebula color clusters aligned with logo gradient.
 const NEBULA_CLUSTERS = [
   // Top-left cluster (pink-purple).
   { cx: 0.22, cy: 0.22, scale: 0.42, angle: 0.38, aspect: 0.64, intensity: 1.0,
@@ -5873,6 +6116,7 @@ const HYPERION_NEBULA_CLUSTERS = [
     base: [0.58, 0.20, 0.02], hot: [0.95, 0.55, 0.08] }
 ];
 
+// [UI.IJ]
 function getActiveNebulaClusters() {
   if (typeof window !== 'undefined' && window.activeThemeColors && window.activeThemeColors.nebulaClusters) {
     return window.activeThemeColors.nebulaClusters;
@@ -5886,7 +6130,7 @@ const NEB_OFF = [Math.random() * 200, Math.random() * 200];
 let nebulaCache = null;
 let nebulaCacheKey = '';
 
-// [UI209] Starfield parameters and sprite generation.
+//  Starfield parameters and sprite generation.
 const BAKED_STAR_COUNT = 1620;
 const TWINKLE_STAR_COUNT = 160;
 const TWINKLE_STAR_COUNT_LOW = 65;
@@ -5912,6 +6156,7 @@ const STAR_CLASSES = [
 let synthStars = [];
 let lastStarUpdateTime = performance.now();
 
+// [UI.IK]
 function pickTint() {
   let r = Math.random();
   for (let i = 0; i < STAR_TINTS.length; i++) {
@@ -5921,6 +6166,7 @@ function pickTint() {
   return 2;
 }
 
+// [UI.IL]
 function pickNebulaStarPosition() {
   const clusters = getActiveNebulaClusters();
   const idx = Math.random() < 0.75
@@ -5935,6 +6181,7 @@ function pickNebulaStarPosition() {
   return { x: Math.min(1, Math.max(0, x)), y: Math.min(1, Math.max(0, y)) };
 }
 
+// [UI.IM]
 function renderNebulaCache(w, h, dpr) {
   const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low');
   const effectiveDpr = isLowPerf ? Math.min(1.0, dpr) : dpr;
@@ -6117,6 +6364,7 @@ function renderNebulaCache(w, h, dpr) {
   return off;
 }
 
+// [UI.IN]
 function getDpr() {
   if (typeof window !== 'undefined' && window.devicePixelRatio) {
     return window.devicePixelRatio;
@@ -6124,6 +6372,7 @@ function getDpr() {
   return 1;
 }
 
+// [UI.IO]
 function isMenuSceneActive() {
   const isUpgradesFromCombat = (typeof gameState !== 'undefined' && gameState === 'UPGRADES' && (typeof upgradesPreviousSource !== 'undefined' && (upgradesPreviousSource === 'victory' || upgradesPreviousSource === 'defeat')));
   const isSettingsFromCombat = (typeof gameState !== 'undefined' && gameState === 'SETTINGS' && (typeof settingsPreviousSource !== 'undefined' && settingsPreviousSource === 'pause'));
@@ -6136,6 +6385,7 @@ function isMenuSceneActive() {
 let combatDimAlpha = 0;
 let lastDimUpdateTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
 
+// [UI.IP]
 function drawCosmicNebulaBackground(w, h, customDim = null) {
   const dpr = getDpr();
   const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low') ? 'low' : 'high';
@@ -6156,6 +6406,7 @@ function drawCosmicNebulaBackground(w, h, customDim = null) {
 
 let initialLoaderHidden = false;
 
+// [UI.IQ]
 function warmUpNebulaAndHideLoader() {
   if (initialLoaderHidden) return;
   initialLoaderHidden = true;
@@ -6164,19 +6415,24 @@ function warmUpNebulaAndHideLoader() {
   const barFill = document.getElementById('initialProgressBarFill');
   const loadingTextEl = document.getElementById('initialLoadingText');
 
+  // [UI.IR]
   const setProgress = (pct) => {
     if (barFill) barFill.style.width = pct + '%';
   };
 
+  // [UI.IS]
   const stepWait = (pct, delayMs = 140) => new Promise(resolve => {
+    // [UI.IT]
     requestAnimationFrame(() => {
       setProgress(pct);
+      // [UI.IU]
       requestAnimationFrame(() => {
         setTimeout(resolve, delayMs);
       });
     });
   });
 
+  // [UI.IV]
   (async () => {
     try {
       const dpr = getDpr();
@@ -6257,12 +6513,14 @@ function warmUpNebulaAndHideLoader() {
       goBtn.style.animation = 'goBtnAppear 1s ease-out forwards, goBtnPulse 2s infinite ease-in-out 1s';
       goBtn.innerHTML = '<span>GO</span>';
 
+      // [UI.IW]
       goBtn.onclick = () => {
         if (typeof SFX !== 'undefined' && typeof SFX.unlock === 'function') SFX.unlock();
         if (typeof musicUnlock === 'function') musicUnlock();
 
         loader.style.opacity = '0';
         loader.style.pointerEvents = 'none';
+        // [UI.IX]
         setTimeout(() => {
           if (loader.parentNode) loader.parentNode.removeChild(loader);
         }, 400);
@@ -6273,8 +6531,9 @@ function warmUpNebulaAndHideLoader() {
   })();
 }
 
-// [UI211] Lightweight dynamic twinkling star overlay.
+//  Lightweight dynamic twinkling star overlay.
 
+// [UI.IY]
 function createStar(randomizeLife = false, inNebula = false) {
   const maxLife = Math.random() * 16.0 + 10.0;
   const u = Math.random();
@@ -6296,6 +6555,7 @@ function createStar(randomizeLife = false, inNebula = false) {
   };
 }
 
+// [UI.IZ]
 function initSynthStars() {
   synthStars = [];
   for (let i = 0; i < TWINKLE_STAR_COUNT; i++) {
@@ -6304,6 +6564,7 @@ function initSynthStars() {
 }
 initSynthStars();
 
+// [UI.JA]
 function updateAndDrawStars(w, h, now) {
   const dt = Math.min((now - lastStarUpdateTime) / 1000, 0.1);
   lastStarUpdateTime = now;
@@ -6357,6 +6618,7 @@ function updateAndDrawStars(w, h, now) {
 let triangleLogoCache = null;
 let triangleLogoCacheKey = '';
 
+// [UI.JB]
 function renderTriangleLogoCache(w, horizonY, dpr) {
   const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low');
   const effDpr = isLowPerf ? Math.min(1.25, dpr) : dpr;
@@ -6387,8 +6649,10 @@ function renderTriangleLogoCache(w, horizonY, dpr) {
   const inY = (sa * A.y + sb * B.y + sc * C.y) / per;
   const inR = (halfW * (tipY - topY)) / (per / 2);
 
+  // [UI.JC]
   const triPath = (offset) => {
     const k = 1 + offset / inR;
+    // [UI.JD]
     const p = v => ({ x: inX + (v.x - inX) * k, y: inY + (v.y - inY) * k });
     const a = p(A), b = p(B), d = p(C);
     c.beginPath();
@@ -6404,6 +6668,7 @@ const th = getTheme();
   const c2Rgb = th.rgb2 ? th.rgb2.cssRgb : '217, 70, 239';
   const c3Rgb = th.rgb3 ? th.rgb3.cssRgb : '240, 95, 159';
 
+  // [UI.JE]
   const makeGrad = (lighten) => {
     const g = c.createLinearGradient(B.x - 20, 0, C.x + 20, 0);
     if (lighten) {
@@ -6418,7 +6683,7 @@ const th = getTheme();
     return g;
   };
 
-  // [UI212.01] Soft atmospheric vertex glow pass.
+  //  Soft atmospheric vertex glow pass.
   c.save();
   c.globalCompositeOperation = 'lighter';
 
@@ -6443,7 +6708,7 @@ const th = getTheme();
 
   c.restore();
 
-  // [UI212.02] Multi-layered Gaussian glow contour stroke renderer.
+  //  Multi-layered Gaussian glow contour stroke renderer.
   const GLOW_FALLOFF = [
     { mult: 9.5, alpha: 0.012 },
     { mult: 7.8, alpha: 0.016 },
@@ -6456,6 +6721,7 @@ const th = getTheme();
     { mult: 1.3, alpha: 0.120 }
   ];
 
+  // [UI.JF]
   const neonTriSoft = (offset, width, lighten, strength) => {
     c.save();
     c.lineJoin = 'round';
@@ -6498,6 +6764,7 @@ const th = getTheme();
   return { canvas: off, height: ch };
 }
 
+// [UI.JG]
 function drawSynthWaveTriangleLogo5C(w, horizonY, time) {
   const dpr = getDpr();
   const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low') ? 'low' : 'high';
@@ -6516,7 +6783,8 @@ function drawSynthWaveTriangleLogo5C(w, horizonY, time) {
   ctx.restore();
 }
 
-// [UI213] Multi-pass neon horizon beam renderer.
+//  Multi-pass neon horizon beam renderer.
+// [UI.JH]
 function drawSynthWaveHorizonBeam(w, horizonY, time) {
   const cx = w * 0.5;
   const pulse = 0.95 + 0.05 * Math.sin(time * 3.2);
@@ -6528,7 +6796,7 @@ function drawSynthWaveHorizonBeam(w, horizonY, time) {
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
 
-  // [UI213.01] Vertical exponential bloom gradient pass.
+  //  Vertical exponential bloom gradient pass.
   const bloomR = 46;
   const vBloom = ctx.createLinearGradient(0, horizonY - bloomR, 0, horizonY + bloomR);
   vBloom.addColorStop(0.00, `rgba(${c2Rgb}, 0)`);
@@ -6543,7 +6811,7 @@ function drawSynthWaveHorizonBeam(w, horizonY, time) {
   ctx.fillStyle = vBloom;
   ctx.fillRect(0, horizonY - bloomR, w, bloomR * 2);
 
-  // [UI213.02] Lateral atmospheric glow cushions.
+  //  Lateral atmospheric glow cushions.
   const sideRx = w * 0.46;
   const sideRy = 26;
 
@@ -6575,7 +6843,7 @@ function drawSynthWaveHorizonBeam(w, horizonY, time) {
   ctx.fill();
   ctx.restore();
 
-  // [UI213.03] Tight horizontal beam glow.
+  //  Tight horizontal beam glow.
   const tightR = 7;
   const tightBloom = ctx.createLinearGradient(0, horizonY - tightR, 0, horizonY + tightR);
   tightBloom.addColorStop(0.00, 'rgba(255, 255, 255, 0)');
@@ -6586,7 +6854,7 @@ function drawSynthWaveHorizonBeam(w, horizonY, time) {
   ctx.fillStyle = tightBloom;
   ctx.fillRect(0, horizonY - tightR, w, tightR * 2);
 
-  // [UI213.04] Primary neon beam core stroke.
+  //  Primary neon beam core stroke.
   const hBeamGrad = ctx.createLinearGradient(0, 0, w, 0);
   hBeamGrad.addColorStop(0.00, `rgba(${c3Rgb}, 0.05)`);
   hBeamGrad.addColorStop(0.16, th.c3);
@@ -6605,7 +6873,7 @@ function drawSynthWaveHorizonBeam(w, horizonY, time) {
   ctx.lineTo(w, horizonY);
   ctx.stroke();
 
-  // [UI213.05] Incandescent white beam center line.
+  //  Incandescent white beam center line.
   const coreGrad = ctx.createLinearGradient(0, 0, w, 0);
   coreGrad.addColorStop(0.00, 'rgba(255, 255, 255, 0)');
   coreGrad.addColorStop(0.12, 'rgba(255, 255, 255, 0.82)');
@@ -6622,7 +6890,7 @@ function drawSynthWaveHorizonBeam(w, horizonY, time) {
   ctx.lineTo(w, horizonY);
   ctx.stroke();
 
-  // [UI213.06] Anamorphic center flare under triangle vertex.
+  //  Anamorphic center flare under triangle vertex.
   const flareW = Math.min(w * 0.36, 220);
   const flareH = 18;
   ctx.save();
@@ -6642,7 +6910,8 @@ function drawSynthWaveHorizonBeam(w, horizonY, time) {
   ctx.restore();
 }
 
-// [UI200] Synthwave background perspective grid scene renderer.
+//  Synthwave background perspective grid scene renderer.
+// [UI.JI]
 function drawSynthWavePerspectiveScene(now) {
   const w = window.innerWidth;
   const h = window.innerHeight;
@@ -6782,6 +7051,7 @@ function drawSynthWavePerspectiveScene(now) {
   drawSynthWaveHorizonBeam(w, horizonY, time);
   drawSynthWaveTriangleLogo5C(w, horizonY, time);
 }
+// [UI.JJ]
 function drawChevron(centerX, centerY, angle, size, color, glowColor) {
   ctx.save();
   ctx.translate(centerX, centerY);
@@ -6801,6 +7071,7 @@ function drawChevron(centerX, centerY, angle, size, color, glowColor) {
   ctx.restore();
 }
 
+// [UI.JK]
 function drawPathPortals() {
   if (!activePathTiles || activePathTiles.length < 2) return;
   const th = getTheme();
@@ -6833,6 +7104,7 @@ function drawPathPortals() {
   });
 }
 
+// [UI.JL]
 function renderCellRails(cell) {
   if (!cell.isTurn && cell.rails) {
     ctx.beginPath();
@@ -6855,7 +7127,8 @@ let battlePathAlpha = 1.0;
 let lastPathTime = performance.now();
 let battleStartedOnce = false;
 
-// [UI201] Dynamic track flow and animated path rails pass.
+//  Dynamic track flow and animated path rails pass.
+// [UI.JM]
 function drawPathRails(now) {
   if (!pathCells || pathCells.length <= 2) return;
   const totalCells = pathCells.length;
@@ -6909,65 +7182,11 @@ function drawPathRails(now) {
   ctx.restore();
 }
 
-let battlePathAlpha = 1.0;
-let lastPathTime = performance.now();
-let battleStartedOnce = false;
 
-// [UI201] Dynamic track flow and animated path rails pass.
-function drawPathRails(now) {
-  if (!pathCells || pathCells.length <= 2) return;
-  const totalCells = pathCells.length;
-  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
-
-  ctx.save();
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-
-  ctx.strokeStyle = isHyperion ? 'rgba(255, 145, 0, 0.25)' : 'rgba(0, 229, 255, 0.18)';
-  ctx.lineWidth = 3.5;
-  ctx.setLineDash([]);
-  for (let i = 1; i < totalCells - 1; i++) {
-    renderCellRails(pathCells[i]);
-  }
-
-  const curTime = (typeof now === 'number' && now > 0) ? now : performance.now();
-  const dt = Math.min((curTime - (lastPathTime || curTime)) / 1000, 0.1);
-  lastPathTime = curTime;
-
-  const isBattleActive = (typeof waveInProgress !== 'undefined' && waveInProgress) || 
-                         (typeof enemies !== 'undefined' && enemies.length > 0);
-
-  if (isBattleActive) {
-    battleStartedOnce = true;
-  }
-
-  if (battleStartedOnce || isBattleActive) {
-    if (battlePathAlpha > 0) {
-      battlePathAlpha = Math.max(0, battlePathAlpha - dt * 0.5);
-    }
-  } else {
-    battlePathAlpha = 1.0;
-  }
-
-  if (battlePathAlpha > 0.005) {
-    ctx.strokeStyle = isHyperion
-      ? `rgba(255, 195, 70, ${0.92 * battlePathAlpha})`
-      : `rgba(165, 243, 252, ${0.90 * battlePathAlpha})`;
-    ctx.lineWidth = 1.8;
-    ctx.setLineDash([12, 10]);
-
-    ctx.lineDashOffset = -((curTime / 1000) * 36);
-
-    for (let i = 1; i < totalCells - 1; i++) {
-      renderCellRails(pathCells[i]);
-    }
-  }
-
-  ctx.restore();
-}
-
-// [UI202] Tower vector glyph sprite and model geometry renderer.
+//  Tower vector glyph sprite and model geometry renderer.
+// [UI.JN]
 function drawTowerGlyphOps(ops, color, isDisabled, isCooling) {
+  // [UI.JO]
   const fillOf = (f) => {
     if (f === 'd') return TOWER_GLYPH_DARK;
     return isDisabled ? '#475569' : color;
@@ -7012,6 +7231,7 @@ function drawTowerGlyphOps(ops, color, isDisabled, isCooling) {
   });
 }
 
+// [UI.JP]
 function drawTowerModel(type, angle, color, level = 1, glow = '#00e5ff', isDisabled = false, isCooling = false, isShooting = false, heatProgress = 0) {
   ctx.save();
   if (isDisabled) ctx.globalAlpha = 0.45;
@@ -7142,7 +7362,8 @@ function drawTowerModel(type, angle, color, level = 1, glow = '#00e5ff', isDisab
   ctx.restore();
 }
 
-// [UI203] Enemy model vector graphics and health bar renderer.
+//  Enemy model vector graphics and health bar renderer.
+// [UI.JQ]
 function drawEnemyModel(e, showHpBar = true) {
   if (!e || typeof e.x !== 'number' || typeof e.y !== 'number') return;
   const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
@@ -7405,7 +7626,7 @@ function drawEnemyModel(e, showHpBar = true) {
     ctx.restore();
   }
 
-  // [UI203.01] Enemy health bar status indicator pass.
+  //  Enemy health bar status indicator pass.
   if (showHpBar && typeof settings !== 'undefined' && settings.showEnemyHp && (e.isBoss || e.isMiniBoss || (e.hp < e.maxHp))) {
     ctx.shadowBlur = 0;
     const rad = e.radius || 12;
@@ -7424,7 +7645,8 @@ function drawEnemyModel(e, showHpBar = true) {
   ctx.restore();
 }
 
-// [UI204] Jagged lightning path generator and beam renderer.
+//  Jagged lightning path generator and beam renderer.
+// [UI.JR]
 function drawJaggedLightning(x1, y1, x2, y3, color, alpha, progress = 1.0) {
   const fullDist = Math.hypot(x2 - x1, y3 - y1);
   if (fullDist <= 0 || progress <= 0) return;
@@ -7502,9 +7724,10 @@ function drawJaggedLightning(x1, y1, x2, y3, color, alpha, progress = 1.0) {
   ctx.restore();
 }
 
-// [UI205] Master gameplay canvas graphics rendering pipeline.
+//  Master gameplay canvas graphics rendering pipeline.
 let reviveStartTime = 0;
 
+// [UI.JS]
 function render(now) {
   const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -7907,7 +8130,7 @@ function render(now) {
 
   const _tFxStart = performance.now();
   
-  // [UI205.02] Particle pass 1: Concentric smoke and steam.
+  //  Particle pass 1: Concentric smoke and steam.
   ctx.globalCompositeOperation = 'source-over';
   const smokeSprite = typeof getSmokeSprite === 'function' ? getSmokeSprite() : null;
 
@@ -7960,7 +8183,7 @@ function render(now) {
     ctx.restore();
   }
 
-  // [UI205.04] Particle pass 3: Energy sparks and glow halos.
+  //  Particle pass 3: Energy sparks and glow halos.
   ctx.globalCompositeOperation = 'lighter';
   for (let i = 0; i < particles.length; i++) {
     const pt = particles[i];
@@ -8062,6 +8285,7 @@ if (typeof window !== 'undefined') {
   initDevResourceHold();
 }
 
+// [UI.JT]
 function toggleTacticalTips() {
   const body = document.getElementById('tacticalTipsBody');
   const arrow = document.getElementById('tacticalTipsArrow');
@@ -8079,7 +8303,8 @@ function toggleTacticalTips() {
 }
 window.toggleTacticalTips = toggleTacticalTips;
 
-// [UI206] Listener to intercept Back button on Android.
+//  Listener to intercept Back button on Android.
+// [UI.JU]
 document.addEventListener('DOMContentLoaded', () => {
   if (window.Capacitor && window.Capacitor.Plugins) {
     if (window.Capacitor.Plugins.StatusBar) {
@@ -8088,6 +8313,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const App = window.Capacitor.Plugins.App;
     if (App && typeof App.addListener === 'function') {
+      // [UI.JV]
       App.addListener('backButton', () => {
         if (typeof handleHardwareBack === 'function') handleHardwareBack();
       });

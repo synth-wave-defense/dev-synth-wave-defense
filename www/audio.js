@@ -1,5 +1,5 @@
 // Synth Wave Defense -- audio.js  v2.5 (1.36.19)
-// [AUD100] SFX Engine Module: Handles sound effect playback, custom synthesis, and dynamic throttling.
+//  SFX Engine Module: Handles sound effect playback, custom synthesis, and dynamic throttling.
 
 window._audioCtxStateStalls = 0;
 window._audioCtxState = 'closed';
@@ -7,12 +7,12 @@ window._audioCtxState = 'closed';
 const SFX = (function () {
   'use strict';
 
-  // [AUD101] Core Audio Constants
+  //  Core Audio Constants
   const MASTER_VOLUME = 0.45;
   const MAX_VOICES = 128; // Increased to accommodate delayed node cleanup
   const BEAM_KEEPALIVE = 0.14;
 
-  // [AUD101.01] Default Sound Throttling Configuration (minimum interval between duplicate sounds in seconds)
+  //  Default Sound Throttling Configuration (minimum interval between duplicate sounds in seconds)
   const THROTTLE = {
     gun: 0.055, mortarFire: 0.09, explosion: 0.07, tesla: 0.09,
     railgun: 0.11, stasis: 0.12, steam: 0.10, enemyDeath: 0.045,
@@ -20,7 +20,7 @@ const SFX = (function () {
     laserHit: 0.035, melterHit: 0.045, beamHit: 0.045
   };
 
-  // [AUD101.02] Voice Allocation Priorities
+  //  Voice Allocation Priorities
   const LOW_PRIORITY = {
     gun: true, tesla: true, railgun: true, stasis: true,
     enemyDeath: true, explosion: true, steam: true, mortarFire: true,
@@ -44,8 +44,10 @@ const SFX = (function () {
   const lastPlayed = Object.create(null);
   const customThrottles = Object.create(null); // name -> seconds
 
+  // [AUD.A]
   function now() { return ctx ? ctx.currentTime : 0; }
 
+  // [AUD.B]
   function makeDistortionCurve(amount = 20) {
     const k = typeof amount === 'number' ? amount : 20;
     const n_samples = 44100;
@@ -58,7 +60,8 @@ const SFX = (function () {
     return curve;
   }
 
-  // [AUD102] AudioContext Initialization & DSP Graph Pipeline
+  //  AudioContext Initialization & DSP Graph Pipeline
+  // [AUD.C]
   function ensureCtx() {
     if (ctx) return ctx;
     try {
@@ -66,6 +69,7 @@ const SFX = (function () {
       if (!AC) return null;
       ctx = new AC({ latencyHint: 0.045 });
 
+      // [AUD.D]
       ctx.addEventListener('statechange', () => {
         if (ctx) window._audioCtxState = ctx.state;
         if (ctx && (ctx.state === 'suspended' || ctx.state === 'interrupted')) {
@@ -76,7 +80,7 @@ const SFX = (function () {
       });
       window._audioCtxState = ctx.state;
 
-      // [AUD102.01] Dynamics Compressor Setup
+      //  Dynamics Compressor Setup
       comp = ctx.createDynamicsCompressor();
       comp.threshold.setValueAtTime(-18, ctx.currentTime);
       comp.knee.setValueAtTime(8, ctx.currentTime);
@@ -84,7 +88,7 @@ const SFX = (function () {
       comp.attack.setValueAtTime(0.001, ctx.currentTime);
       comp.release.setValueAtTime(0.10, ctx.currentTime);
 
-      // [AUD102.02] Audio Gain Buses Configuration & Analyser Setup
+      //  Audio Gain Buses Configuration & Analyser Setup
       master = ctx.createGain();
       master.gain.value = MASTER_VOLUME * volume;
 
@@ -95,13 +99,13 @@ const SFX = (function () {
       analyser.fftSize = 2048;
       timeDomainData = new Float32Array(analyser.fftSize);
 
-      // [AUD102.03] Master Signal Routing: sfxBus -> comp -> master -> analyser -> destination
+      //  Master Signal Routing: sfxBus -> comp -> master -> analyser -> destination
       sfxBus.connect(comp);
       comp.connect(master);
       master.connect(analyser);
       analyser.connect(ctx.destination);
 
-      // [AUD102.04] Audio Noise Buffer Generation
+      //  Audio Noise Buffer Generation
       const len = Math.floor(ctx.sampleRate * 2);
       
       whiteNoiseBuffer = ctx.createBuffer(1, len, ctx.sampleRate);
@@ -127,17 +131,20 @@ const SFX = (function () {
     }
   }
   
+  // [AUD.E]
   function resume() {
     if (!ctx) return;
     try { if (ctx.state === 'suspended') ctx.resume(); } catch (e) { }
   }
 
-  // [AUD103] Sample Asset Loader & Registry
+  //  Sample Asset Loader & Registry
   const samples = Object.create(null);
   const customSynths = Object.create(null);
   let sampleBase = 'sfx/';
 
+  // [AUD.F]
   function decode(arrayBuffer) {
+    // [AUD.G]
     return new Promise((resolve, reject) => {
       if (!ensureCtx()) { reject(new Error('no audio context')); return; }
       let p;
@@ -146,6 +153,7 @@ const SFX = (function () {
     });
   }
 
+  // [AUD.H]
   function store(name, buf, opts) {
     const slot = samples[name] || (samples[name] = { bufs: [], gain: 1, pitch: 0 });
     slot.bufs.push(buf);
@@ -155,6 +163,7 @@ const SFX = (function () {
     }
   }
 
+  // [AUD.I]
   function normalise(entry) {
     if (!entry) return null;
     if (typeof entry === 'string') return { src: [entry], gain: 1, pitch: 0 };
@@ -163,6 +172,7 @@ const SFX = (function () {
     return { src, gain: entry.gain == null ? 1 : entry.gain, pitch: entry.pitch || 0 };
   }
 
+  // [AUD.J]
   function loadSamples(manifest, baseUrl) {
     if (baseUrl != null) sampleBase = baseUrl;
     if (!manifest || !ensureCtx()) return Promise.resolve({ ok: [], failed: Object.keys(manifest || {}) });
@@ -177,23 +187,29 @@ const SFX = (function () {
         const url = /^(https?:|data:|blob:|\/)/.test(file) ? file : sampleBase + file;
         jobs.push(
           fetch(url)
+            // [AUD.K]
             .then(r => { if (!r.ok) throw new Error(r.status + ' ' + url); return r.arrayBuffer(); })
             .then(decode)
+            // [AUD.L]
             .then(buf => { store(name, buf, spec); if (ok.indexOf(name) < 0) ok.push(name); })
+            // [AUD.M]
             .catch(() => { if (failed.indexOf(file) < 0) failed.push(file); })
         );
       });
     });
 
+    // [AUD.N]
     return Promise.all(jobs).then(() => ({ ok, failed }));
   }
 
+  // [AUD.O]
   function registerBuffer(name, buf, opts) {
     if (!buf) return;
     if (opts && opts.replace !== false) delete samples[name];
     store(name, buf, opts);
   }
 
+  // [AUD.P]
   function clearSample(name) {
     if (name == null) { 
       Object.keys(samples).forEach(k => delete samples[k]); 
@@ -206,9 +222,11 @@ const SFX = (function () {
     delete customThrottles[name];
   }
 
+  // [AUD.Q]
   function hasSample(name) { return !!(samples[name] && samples[name].bufs.length); }
   function sampleNames() { return Object.keys(samples).filter(hasSample); }
 
+  // [AUD.R]
   function playSample(name) {
     const slot = samples[name];
     if (!slot || !slot.bufs.length) return false;
@@ -231,19 +249,23 @@ const SFX = (function () {
     return true;
   }
 
+  // [AUD.S]
   function budget(name) {
     if (voices >= MAX_VOICES) return !LOW_PRIORITY[name];
     return true;
   }
 
+  // [AUD.T]
   function track(node, dur) {
     voices++;
+    // [AUD.U]
     const release = () => { voices = Math.max(0, voices - 1); };
     try { node.onended = release; } catch (e) { }
     setTimeout(release, (dur + 0.3) * 1000);
   }
 
-  // [AUD104] Procedural Tone Synthesizer
+  //  Procedural Tone Synthesizer
+  // [AUD.V]
   function tone(o) {
     if (!ensureCtx()) return;
     const t0 = (o.at || 0) + now();
@@ -295,7 +317,8 @@ const SFX = (function () {
     return osc;
   }
 
-  // [AUD105] Procedural Noise Synthesizer
+  //  Procedural Noise Synthesizer
+  // [AUD.W]
   function noise(o) {
     if (!ensureCtx()) return;
     const t0 = (o.at || 0) + now();
@@ -339,25 +362,28 @@ const SFX = (function () {
     return src;
   }
 
+  // [AUD.X]
   function uiTick(variant) {
     const c = 2600 + (variant || 0) * 180;
     noise({ dur: 0.030, gain: 0.20, attack: 0.001, filter: 'bandpass', cutoff: c, cutoff2: c * 0.75, q: 0.9 });
     noise({ dur: 0.014, gain: 0.10, attack: 0.001, filter: 'highpass', cutoff: 5200 });
   }
 
+  // [AUD.Y]
   function fireTick() {
     const c = 1500 + Math.random() * 260;
     noise({ dur: 0.038, gain: 0.17, attack: 0.001, filter: 'bandpass', cutoff: c, cutoff2: c * 0.6, q: 0.8 });
     noise({ dur: 0.016, gain: 0.07, attack: 0.001, filter: 'lowpass', cutoff: 900 });
   }
 
+  // [AUD.Z]
   function hitTick() {
     const c = 5200 + Math.random() * 900;
     noise({ dur: 0.024, gain: 0.14, attack: 0.001, filter: 'highpass', cutoff: c });
     noise({ dur: 0.012, gain: 0.06, attack: 0.001, filter: 'bandpass', cutoff: 3400, q: 1.1 });
   }
 
-  // [AUD106] Sound Alias & Default FX Mappings
+  //  Sound Alias & Default FX Mappings
   const SOUND_ALIAS = {
     tap: ['ui', 0], back: ['ui', -1], toggle: ['ui', 1], confirm: ['ui', 2],
     denied: ['ui', -2], build: ['ui', 1], upgrade: ['ui', 2], sell: ['ui', -1],
@@ -374,6 +400,7 @@ const SFX = (function () {
   const SOUNDS = Object.create(null);
   Object.keys(SOUND_ALIAS).forEach(name => {
     const [kind, variant] = SOUND_ALIAS[name];
+    // [AUD.AA]
     SOUNDS[name] = () => {
       if (kind === 'ui') uiTick(variant || 0);
       else if (kind === 'fire') fireTick();
@@ -381,15 +408,18 @@ const SFX = (function () {
     };
   });
 
+  // [AUD.AB]
   function beam() { return; }
 
+  // [AUD.AC]
   function playLayer(layer) {
     if (!layer) return;
     if (layer.synth === 'tone') tone(layer);
     else noise(layer);
   }
 
-  // [AUD107] Audio Dispatcher & Playback Control
+  //  Audio Dispatcher & Playback Control
+  // [AUD.AD]
   function play(name, arg) {
     if (!enabled) return;
     if (!ensureCtx()) return;
@@ -423,6 +453,7 @@ const SFX = (function () {
     } catch (e) { }
   }
 
+  // [AUD.AE]
   function death(e) {
     if (!e) return play('enemyDeath');
     if (e.isBoss) return play('bossDeath');
@@ -430,7 +461,8 @@ const SFX = (function () {
     return play('enemyDeath');
   }
 
-  // [AUD110] Real-Time Audio Diagnostics Metrics
+  //  Real-Time Audio Diagnostics Metrics
+  // [AUD.AF]
   function getAudioMetrics() {
     if (ctx) window._audioCtxState = ctx.state;
     if (!ctx || !analyser) {
@@ -467,11 +499,13 @@ const SFX = (function () {
     };
   }
 
+  // [AUD.AG]
   function setEnabled(on) {
     enabled = !!on;
     if (enabled) { ensureCtx(); resume(); }
   }
 
+  // [AUD.AH]
   function setVolume(v) {
     volume = Math.max(0, Math.min(1, v));
     if (master) {
@@ -479,6 +513,7 @@ const SFX = (function () {
     }
   }
 
+  // [AUD.AI]
   function isEnabled() { return enabled; }
 
   const TAPPABLE = 'button, .menu-btn, .menu-btn-primary-capsule, .menu-btn-glass-capsule,' +
@@ -487,8 +522,10 @@ const SFX = (function () {
     '.result-btn, .result-skip-btn, .tutorial-skip-btn, .setting-row, .badge-half, .switch,' +
     '.loadout-widget-header, .build-slot, .upgrade-node, [data-sfx], [onclick]';
 
-  // [AUD108] User Interface Event Listeners & Audio Unlocking
+  //  User Interface Event Listeners & Audio Unlocking
+  // [AUD.AJ]
   function installUiHooks() {
+    // [AUD.AK]
     document.addEventListener('pointerdown', (ev) => {
       if (!unlocked) { unlocked = true; ensureCtx(); resume(); }
       let el = ev.target;
@@ -501,6 +538,7 @@ const SFX = (function () {
 
       if (!hit.disabled && !hit.classList.contains('disabled') && !hit.classList.contains('no-press-feedback')) {
         hit.classList.add('btn-pushed');
+        // [AUD.AL]
         setTimeout(() => { hit.classList.remove('btn-pushed'); }, 120);
       }
 
@@ -511,6 +549,7 @@ const SFX = (function () {
       play(override || 'tap');
     }, { passive: true, capture: true });
 
+    // [AUD.AM]
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) resume();
     });
@@ -524,7 +563,7 @@ const SFX = (function () {
     unlock() { ensureCtx(); resume(); },
     loadSamples, registerBuffer, clearSample, hasSample, sampleNames,
 
-    // [AUD109] Manifest Auto-Loader & Custom Synth Configuration
+    //  Manifest Auto-Loader & Custom Synth Configuration
     autoload() {
       try {
         if (typeof window.SFX_MANIFEST !== 'undefined' && window.SFX_MANIFEST) {

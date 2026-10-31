@@ -1,5 +1,5 @@
 // Synth Wave Defense -- music.js  v2.7 (1.36.38)
-// [MUS100] Background Music Engine Module: Manages buffer-based music tracks, category transitions, Web Audio graph routing, and dynamic OTA asset resolution.
+//  Background Music Engine Module: Manages buffer-based music tracks, category transitions, Web Audio graph routing, and dynamic OTA asset resolution.
 
 window._activeMusicNode = null;
 window._activeMusicNodeCount = 0;
@@ -7,7 +7,7 @@ window._activeMusicNodeCount = 0;
 const MusicManager = (function () {
   'use strict';
 
-  // [MUS101] Track Playlist Registry (mapped by game screen state)
+  //  Track Playlist Registry (mapped by game screen state)
   const TRACKS = {
     menu: [
       'music/menu_01.ogg',
@@ -33,7 +33,7 @@ const MusicManager = (function () {
     ]
   };
 
-  // [MUS101.01] Music Category Behaviors (volume, looping, and fade durations)
+  //  Music Category Behaviors (volume, looping, and fade durations)
   const CATEGORY = {
     menu:   { loop: true,  volume: 0.45, fadeIn: 1.2,  fadeOut: 0.8 },
     battle: { loop: true,  volume: 0.38, fadeIn: 0.9,  fadeOut: 0.6 },
@@ -41,7 +41,7 @@ const MusicManager = (function () {
     lose:   { loop: true,  volume: 0.55, fadeIn: 0.05, fadeOut: 0.4 }
   };
 
-  // [MUS102] Music Engine State Variables
+  //  Music Engine State Variables
   let enabled = true;
   let volume = 1;          // player's master music trim, 0..1
   let ducked = false;      // menu/pause ducking state for in-battle music
@@ -57,10 +57,11 @@ const MusicManager = (function () {
   let unlocked = false;
   let playlist = [];          // remaining shuffled tracks for a looping category
 
-  // [MUS103] Buffer Caching & Preloading Pipeline
+  //  Buffer Caching & Preloading Pipeline
   const bufferCache = Object.create(null);
   const loadingPromises = Object.create(null);
 
+  // [MUS.A]
   async function resolveUrl(path) {
     if (window.MusicDownloader && typeof window.MusicDownloader.resolveTrackUrl === 'function') {
       return await window.MusicDownloader.resolveTrackUrl(path);
@@ -68,6 +69,7 @@ const MusicManager = (function () {
     return path;
   }
 
+  // [MUS.B]
   function loadTrackBuffer(path) {
     if (bufferCache[path]) return Promise.resolve(bufferCache[path]);
     if (loadingPromises[path]) return loadingPromises[path];
@@ -77,20 +79,25 @@ const MusicManager = (function () {
 
     loadingPromises[path] = resolveUrl(path)
       .then(actualUrl => fetch(actualUrl))
+      // [MUS.C]
       .then(res => {
         if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + path);
         return res.arrayBuffer();
       })
+      // [MUS.D]
       .then(arrayBuffer => {
+        // [MUS.E]
         return new Promise((resolve, reject) => {
           ctx.decodeAudioData(arrayBuffer, resolve, reject);
         });
       })
+      // [MUS.F]
       .then(audioBuffer => {
         bufferCache[path] = audioBuffer;
         delete loadingPromises[path];
         return audioBuffer;
       })
+      // [MUS.G]
       .catch(err => {
         delete loadingPromises[path];
         throw err;
@@ -100,6 +107,7 @@ const MusicManager = (function () {
   }
 
   // Декодируем во время экрана LOADING... только треки меню, чтобы при нажатии GO не было фризов CPU
+  // [MUS.H]
   async function warmUpMenuAudio() {
     ensureAudioCtx();
     setupAudioGraph();
@@ -111,10 +119,11 @@ const MusicManager = (function () {
     }
   }
 
-  // [MUS104] Web Audio Graph Singleton Setup
+  //  Web Audio Graph Singleton Setup
   let audioCtx = null;
   let filterNode = null;
 
+  // [MUS.I]
   function ensureAudioCtx() {
     if (typeof SFX !== 'undefined' && SFX && typeof SFX._ctx === 'function') {
       const sfxCtx = SFX._ctx();
@@ -133,7 +142,8 @@ const MusicManager = (function () {
     return audioCtx;
   }
 
-  // [MUS104.01] Audio Output Graph Configuration
+  //  Audio Output Graph Configuration
+  // [MUS.J]
   function setupAudioGraph() {
     const ctx = ensureAudioCtx();
     if (!ctx) return null;
@@ -156,6 +166,7 @@ const MusicManager = (function () {
     return ctx;
   }
 
+  // [MUS.K]
   function shuffle(list) {
     const a = list.slice();
     for (let i = a.length - 1; i > 0; i--) {
@@ -165,12 +176,14 @@ const MusicManager = (function () {
     return a;
   }
 
-  // [MUS105] Volume Fading & Dynamic Automation
+  //  Volume Fading & Dynamic Automation
+  // [MUS.L]
   function levelFor(cfg) {
     if (!cfg) return volume * (ducked ? DUCK_FACTOR : 1.0);
     return cfg.volume * volume * (ducked ? DUCK_FACTOR : 1.0);
   }
 
+  // [MUS.M]
   function decrementNodeCount(node) {
     if (node && !node._hasEnded) {
       node._hasEnded = true;
@@ -178,6 +191,7 @@ const MusicManager = (function () {
     }
   }
 
+  // [MUS.N]
   function stopAndDisconnectNode(node) {
     if (!node) return;
     try { node.onended = null; } catch (e) {}
@@ -189,6 +203,7 @@ const MusicManager = (function () {
     }
   }
 
+  // [MUS.O]
   function fadeOutAndStop(track, duration) {
     if (!track || !track.gainNode || !track.sourceNode) return;
     const ctx = ensureAudioCtx();
@@ -208,12 +223,14 @@ const MusicManager = (function () {
       try { gNode.gain.value = 0.0001; } catch (err) {}
     }
 
+    // [MUS.P]
     setTimeout(() => {
       stopAndDisconnectNode(src);
       try { gNode.disconnect(); } catch (e) {}
     }, (dur + 0.05) * 1000);
   }
 
+  // [MUS.Q]
   function fadeActiveTrackTo(targetVol, duration) {
     if (!activeTrack || !activeTrack.gainNode) return;
     const ctx = ensureAudioCtx();
@@ -232,7 +249,8 @@ const MusicManager = (function () {
     }
   }
 
-  // [MUS106] Playback Execution & Playlist Management
+  //  Playback Execution & Playlist Management
+  // [MUS.R]
   function setDucked(on, dur) {
     ducked = !!on;
     const duration = dur != null ? dur : 0.08;
@@ -256,12 +274,14 @@ const MusicManager = (function () {
     }
   }
 
+  // [MUS.S]
   function startTrack(path, cat, cfg, reqId) {
     const ctx = setupAudioGraph();
     if (!ctx) return;
 
     loadingCategory = cat;
 
+    // [MUS.T]
     loadTrackBuffer(path).then(audioBuffer => {
       // Если за время загрузки пришёл другой валидный запрос или категория сменилась — отменяем устаревший запуск
       if (reqId !== currentRequestId || category !== cat || !enabled) return;
@@ -323,10 +343,13 @@ const MusicManager = (function () {
       // Спокойно предзагружаем следующий трек в списке через 1.5 секунды, когда меню уже плавно работает
       if (playlist.length > 0) {
         const nextInQueue = playlist[0];
+        // [MUS.U]
         setTimeout(() => {
+          // [MUS.V]
           loadTrackBuffer(nextInQueue).catch(() => {});
         }, 1500);
       }
+    // [MUS.W]
     }).catch(err => {
       loadingCategory = null;
       console.warn('[music] Failed to play track buffer:', path, err);
@@ -336,6 +359,7 @@ const MusicManager = (function () {
     });
   }
 
+  // [MUS.X]
   function advance(cat, cfg, reqId) {
     if (!playlist.length) playlist = shuffle(TRACKS[cat] || []);
     const next = playlist.shift();
@@ -343,6 +367,7 @@ const MusicManager = (function () {
     startTrack(next, cat, cfg, reqId);
   }
 
+  // [MUS.Y]
   function stopCurrent(fadeOut) {
     loadingCategory = null;
     currentRequestId++;
@@ -354,7 +379,8 @@ const MusicManager = (function () {
     }
   }
 
-  // [MUS106.02] Category Playback Switcher
+  //  Category Playback Switcher
+  // [MUS.Z]
   function playCategory(cat) {
     const cfg = CATEGORY[cat];
     if (!cfg) return;
@@ -380,6 +406,7 @@ const MusicManager = (function () {
     startCategoryFresh(cat, cfg, list);
   }
 
+  // [MUS.AA]
   function startCategoryFresh(cat, cfg, list) {
     category = cat;
 
@@ -396,7 +423,7 @@ const MusicManager = (function () {
     advance(cat, cfg, reqId);
   }
 
-  // [MUS107] Public Interface & Lifecycle Control
+  //  Public Interface & Lifecycle Control
   return {
     menu: function () { playCategory('menu'); },
     battle: function () { playCategory('battle'); },
@@ -485,7 +512,7 @@ const MusicManager = (function () {
     _tracks: function () { return TRACKS; },
     _categories: function () { return CATEGORY; },
 
-    // [MUS107.01] Diagnostic Inspector Function
+    //  Diagnostic Inspector Function
     diagnose: function () {
       const counts = {};
       Object.keys(TRACKS).forEach(function (k) { counts[k] = (TRACKS[k] || []).length; });

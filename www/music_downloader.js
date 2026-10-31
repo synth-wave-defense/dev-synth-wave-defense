@@ -7,6 +7,7 @@
   let isDownloading = false;
   let activeManifest = null;
 
+  // [MUSD.A]
   async function getFilesystemPlugin() {
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem) {
       return window.Capacitor.Plugins.Filesystem;
@@ -14,6 +15,7 @@
     return null;
   }
 
+  // [MUSD.B]
   async function checkFileExists(fs, path) {
     try {
       await fs.stat({
@@ -103,6 +105,7 @@
       }
 
       const filename = relativePath.split('/').pop();
+      // [MUSD.C]
       const trackEntry = activeManifest.music.find(t => (t.filename === filename || `${t.id}.ogg` === filename));
 
       // Bundled tracks play directly from assets
