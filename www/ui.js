@@ -1,5 +1,21 @@
 // [UI100] Presentation layer and rendering pipeline initialization.
 
+function getTheme() {
+  if (typeof window !== 'undefined' && window.activeThemeColors) {
+    return window.activeThemeColors;
+  }
+  return {
+    id: 'default',
+    c1: '#00e5ff', c2: '#d946ef', c3: '#f05f9f', c4: '#ff9100', c5: '#38bdf8', bg: '#03050d',
+    c1Light: '#8ef3ff', c2Light: '#f0abfc', c3Light: '#ff8fb0', c4Light: '#ffc166', c5Light: '#93c5fd',
+    rgb1: { r: 0, g: 229, b: 255, cssRgb: '0, 229, 255', norm: [0, 0.898, 1] },
+    rgb2: { r: 217, g: 70, b: 239, cssRgb: '217, 70, 239', norm: [0.851, 0.275, 0.937] },
+    rgb3: { r: 240, g: 95, b: 159, cssRgb: '240, 95, 159', norm: [0.941, 0.373, 0.624] },
+    rgb4: { r: 255, g: 145, b: 0, cssRgb: '255, 145, 0', norm: [1, 0.569, 0] },
+    rgb5: { r: 56, g: 189, b: 248, cssRgb: '56, 189, 248', norm: [0.22, 0.741, 0.973] }
+  };
+}
+
 // [UI100.01] Thread Lag & Memory Monitor: High-frequency sampler tracking WebView thread freezes (>20ms).
 window._maxThreadLag = 0;
 window._lastThreadLag = 0;
@@ -83,42 +99,43 @@ function updateOffscreenGrid() {
   if (!offscreenGridCanvas) {
     offscreenGridCanvas = document.createElement('canvas');
   }
-  
+
   const w = COLS * TILE_SIZE;
   const h = ROWS * TILE_SIZE;
-  
+
   if (offscreenGridCanvas.width !== w || offscreenGridCanvas.height !== h) {
     offscreenGridCanvas.width = w;
     offscreenGridCanvas.height = h;
   }
-  
+
   const oCtx = offscreenGridCanvas.getContext('2d');
   oCtx.clearRect(0, 0, w, h);
 
-  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
-  
+  const th = getTheme();
+  const c1Rgb = th.rgb1 ? th.rgb1.cssRgb : '0, 229, 255';
+  const c2Rgb = th.rgb2 ? th.rgb2.cssRgb : '217, 70, 239';
+
   // [UI102.01] Static grid cell background rendering.
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       const cellVal = grid[r] ? grid[r][c] : 0;
-      if (isHyperion) {
-        oCtx.fillStyle = (cellVal === 1) ? 'rgba(12, 32, 85, 0.55)' : (cellVal === 3 ? 'rgba(0, 0, 0, 0.78)' : 'rgba(6, 12, 30, 0.42)');
-        oCtx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-        oCtx.strokeStyle = (cellVal === 1) ? 'rgba(59, 130, 246, 0.72)' : (cellVal === 3 ? 'rgba(0, 0, 0, 0.90)' : 'rgba(30, 58, 138, 0.42)');
-      } else {
-        oCtx.fillStyle = (cellVal === 1) ? 'rgba(16, 26, 52, 0.50)' : (cellVal === 3 ? 'rgba(0, 0, 0, 0.75)' : 'rgba(10, 14, 26, 0.35)');
-        oCtx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-        oCtx.strokeStyle = (cellVal === 1) ? 'rgba(35, 60, 110, 0.60)' : (cellVal === 3 ? 'rgba(0, 0, 0, 0.90)' : 'rgba(20, 32, 58, 0.40)');
-      }
+      oCtx.fillStyle = (cellVal === 1)
+        ? `rgba(${c1Rgb}, 0.14)`
+        : (cellVal === 3 ? 'rgba(0, 0, 0, 0.78)' : 'rgba(8, 12, 26, 0.40)');
+      oCtx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+
+      oCtx.strokeStyle = (cellVal === 1)
+        ? `rgba(${c1Rgb}, 0.48)`
+        : (cellVal === 3 ? 'rgba(0, 0, 0, 0.90)' : `rgba(${c1Rgb}, 0.16)`);
       oCtx.lineWidth = 1;
       oCtx.strokeRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
     }
   }
 
   oCtx.save();
-  oCtx.strokeStyle = isHyperion ? 'rgba(255, 145, 0, 0.32)' : 'rgba(0, 229, 255, 0.22)';
+  oCtx.strokeStyle = `rgba(${c2Rgb}, 0.28)`;
   oCtx.lineWidth = 1.5;
-  
+
   // [UI102.02] Static track side rails rendering.
   if (typeof pathCells !== 'undefined' && Array.isArray(pathCells)) {
     pathCells.forEach(cell => {
@@ -1407,8 +1424,12 @@ function renderUpgradeTree() {
   enablePointerScroll(container);
   container.innerHTML = '';
 
-  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
-  const primaryAccent = isHyperion ? '#3b82f6' : '#00e5ff';
+  const th = getTheme();
+  const primaryAccent = th.c1;
+  BASE_BRANCH_COLORS.base_hp = th.c3;
+  BASE_BRANCH_COLORS.base_gold = th.c4;
+  BASE_BRANCH_ICONS.base_hp = `<svg width="25" height="25" viewBox="-32 -32 64 64"><circle cx="0" cy="0" r="17" fill="none" stroke="${th.c3}" stroke-width="1.6"/><circle cx="0" cy="0" r="11" fill="none" stroke="${th.c3}" stroke-width="1" opacity=".35"/><path d="M 0 8 L -7.5 0.5 A 4.8 4.8 0 0 1 0 -6 A 4.8 4.8 0 0 1 7.5 0.5 Z" fill="${th.c3}"/></svg>`;
+  BASE_BRANCH_ICONS.base_gold = `<svg width="25" height="25" viewBox="-32 -32 64 64"><circle cx="0" cy="0" r="17" fill="none" stroke="${th.c4}" stroke-width="1.6"/><circle cx="0" cy="0" r="11" fill="none" stroke="${th.c4}" stroke-width="1" opacity=".35"/><g transform="translate(-12, -12)"><circle cx="12" cy="12" r="11" fill="${th.c4}"/><text x="12" y="17.5" font-size="16" font-weight="900" fill="#000000" text-anchor="middle" font-family="Montserrat, sans-serif">$</text></g></svg>`;
 
   const maxStep = devMode ? 10 : getMaxUpgradeStep();
   const isPhase2UnlockedGlobally = devMode || getLoadoutReferenceLevel() >= 31 || maxUnlockedLevel >= 31 || (typeof clearedLevels !== 'undefined' && clearedLevels.includes(30));
@@ -1500,7 +1521,7 @@ function renderUpgradeTree() {
       lvlEl.style.color = '#d946ef';
       lvlEl.textContent = 'ASCENDED MAX';
     } else {
-      lvlEl.style.color = isHyperion ? '#ffb700' : '#00e5ff';
+      lvlEl.style.color = th.c1;
       lvlEl.textContent = `SYNTH +${currentLvl - 15}`;
     }
 
@@ -1534,12 +1555,8 @@ function renderUpgradeTree() {
       const seg = document.createElement('div');
       seg.className = 'upgrade-row-seg';
       seg.style.flex = '1';
-      seg.style.background = isHyperion
-        ? 'linear-gradient(90deg, #3b82f6, #ff6b00, #ffb700)'
-        : 'linear-gradient(90deg, #00e5ff, #d946ef)';
-      seg.style.boxShadow = isHyperion
-        ? '0 0 10px rgba(255, 145, 0, 0.5)'
-        : '0 0 10px rgba(217, 70, 239, 0.5)';
+      seg.style.background = `linear-gradient(90deg, ${th.c1}, ${th.c2}, ${th.c3})`;
+      seg.style.boxShadow = `0 0 10px rgba(${th.rgb2 ? th.rgb2.cssRgb : '217, 70, 239'}, 0.5)`;
       segs.appendChild(seg);
     }
     info.appendChild(segs);
@@ -3058,50 +3075,117 @@ function updateBpProgressUI() {
   }
 }
 
+const VISIBLE_PALETTE_IDS = ['default', 'matrix_green', 'cyber_gold', 'blood_moon'];
+
+const PALETTE_UNLOCK_TOASTS = {
+  matrix_green: 'Unlocks for free at Synth Pass Tier 10!',
+  cyber_gold: 'Unlocks with Premium Synth Pass at Tier 1!',
+  blood_moon: 'Unlocks with Premium Synth Pass at Tier 30!'
+};
+
+function closeCustomPaletteMenus() {
+  document.querySelectorAll('.custom-palette-menu').forEach(m => m.classList.add('hidden'));
+  document.querySelectorAll('.custom-palette-trigger').forEach(t => t.classList.remove('open'));
+}
+
+document.addEventListener('pointerdown', (e) => {
+  if (!e.target.closest('.custom-palette-dropdown')) {
+    closeCustomPaletteMenus();
+  }
+});
+
 function updatePaletteSelectDropdown(selectId) {
   const selectEl = document.getElementById(selectId);
   if (!selectEl || typeof NEON_PALETTES === 'undefined') return;
-  selectEl.innerHTML = '';
+
+  // Скрываем нативный <select> и строим рядом кастомный игровой дропдаун
+  selectEl.style.display = 'none';
+
+  let wrapper = selectEl.parentNode.querySelector(`.custom-palette-dropdown[data-for="${selectId}"]`);
+  if (!wrapper) {
+    wrapper = document.createElement('div');
+    wrapper.className = 'custom-palette-dropdown';
+    wrapper.dataset.for = selectId;
+    selectEl.parentNode.insertBefore(wrapper, selectEl.nextSibling);
+  }
 
   const totalUnlocked = unlockedPalettes.length;
-  const forceDisabled = totalUnlocked <= 1 && !devMode;
+  const isLockedInitial = (totalUnlocked <= 1 && !devMode);
+  const currentPal = NEON_PALETTES[activePalette] || NEON_PALETTES.default;
 
-  Object.keys(NEON_PALETTES).forEach(pId => {
+  wrapper.innerHTML = '';
+
+  const trigger = document.createElement('button');
+  trigger.type = 'button';
+  trigger.className = 'custom-palette-trigger' + (isLockedInitial ? ' is-disabled' : '');
+  trigger.innerHTML = `
+    ${isLockedInitial ? `<span class="pal-lock-icon">${CUSTOM_LOCK_SVG}</span>` : ''}
+    <span class="pal-trigger-name">${currentPal.name}</span>
+    <span class="pal-trigger-arrow">▾</span>
+  `;
+
+  const menu = document.createElement('div');
+  menu.className = 'custom-palette-menu hidden';
+
+  VISIBLE_PALETTE_IDS.forEach(pId => {
     const pal = NEON_PALETTES[pId];
-    // В Dev Mode доступны абсолютно все темы!
+    if (!pal) return;
     const isUnlocked = (typeof devMode !== 'undefined' && devMode) || unlockedPalettes.includes(pId);
-    const opt = document.createElement('option');
-    opt.value = pId;
-    if (isUnlocked) {
-      opt.textContent = pal.name;
-    } else {
-      const hint = pal.unlockHint ? ` (${pal.unlockHint})` : '';
-      opt.textContent = `🔒 ${pal.name}${hint}`;
-    }
-    if (pId === activePalette) opt.selected = true;
-    if (!isUnlocked) opt.disabled = true;
-    selectEl.appendChild(opt);
+    const isSelected = (pId === activePalette);
+
+    const item = document.createElement('div');
+    item.className = 'custom-palette-option'
+      + (isSelected ? ' selected' : '')
+      + (!isUnlocked ? ' locked' : '');
+
+    item.innerHTML = `
+      <span class="pal-opt-dot" style="background:${pal.c1}; box-shadow: 0 0 6px ${pal.c1};"></span>
+      <span class="pal-opt-name">${pal.name}</span>
+      ${!isUnlocked ? `<span class="pal-opt-lock">${CUSTOM_LOCK_SVG}</span>` : (isSelected ? `<span class="pal-opt-check">●</span>` : '')}
+    `;
+
+    item.onclick = (e) => {
+      e.stopPropagation();
+      if (!isUnlocked) {
+        if (typeof sfx === 'function') sfx('denied');
+        showHintToast(PALETTE_UNLOCK_TOASTS[pId] || `Locked: ${pal.unlockHint || 'Synth Pass'}`);
+        return;
+      }
+      closeCustomPaletteMenus();
+      selectPalette(pId);
+    };
+
+    menu.appendChild(item);
   });
 
-  if (forceDisabled) {
-    selectEl.disabled = true;
-  } else {
-    selectEl.disabled = false;
-  }
+  trigger.onclick = (e) => {
+    e.stopPropagation();
+    if (isLockedInitial) {
+      if (typeof sfx === 'function') sfx('denied');
+      showHintToast('Free Visual theme unlocks at Synth Pass Tier 10');
+      return;
+    }
+    const wasHidden = menu.classList.contains('hidden');
+    closeCustomPaletteMenus();
+    if (wasHidden) {
+      menu.classList.remove('hidden');
+      trigger.classList.add('open');
+      if (typeof sfx === 'function') sfx('tap');
+    }
+  };
+
+  wrapper.appendChild(trigger);
+  wrapper.appendChild(menu);
 }
 
 function handleBpThemeClick(e) {
-  const selectEl = document.getElementById('bpPaletteSelect');
-  if (unlockedPalettes.length <= 1 && !devMode) {
-    sfx('denied');
-    showHintToast('You have only 1 Theme now. Unlock new tiers and buy premium to have more Themes.');
-  }
+  // Обработка клика теперь полностью внутри кастомного триггера updatePaletteSelectDropdown
 }
 
 function selectPalette(paletteId) {
   if (!unlockedPalettes.includes(paletteId) && !devMode) {
     sfx('denied');
-    showHintToast('Palette locked in Synth Pass!');
+    showHintToast(PALETTE_UNLOCK_TOASTS[paletteId] || 'Visual theme locked in Synth Pass!');
     return;
   }
   if (!unlockedPalettes.includes(paletteId) && devMode) {
@@ -3112,7 +3196,7 @@ function selectPalette(paletteId) {
   saveGame();
   updatePaletteSelectDropdown('settingPaletteSelect');
   updatePaletteSelectDropdown('bpPaletteSelect');
-  showHintToast(`Active Theme: ${NEON_PALETTES[paletteId] ? NEON_PALETTES[paletteId].name : paletteId}`);
+  showHintToast(`Visual: ${NEON_PALETTES[paletteId] ? NEON_PALETTES[paletteId].name : paletteId}`);
 }
 
 function showBattlePassScreen(fromSource = 'start') {
@@ -3234,17 +3318,17 @@ function renderBattlePassScreen() {
     const formatRewardText = (str) => {
       if (!str) return '';
       let s = str.replace(/\(\s*(\+?\s*\d+\s*[\u{1F52E}🔮\u{1F48E}💎])\s*\)/gu, '$1');
-      s = s.replace(/(\+?\s*\d+)\s*[\u{1F52E}🔮]/gu, `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:2px; color:#f0abfc;">$1 ${prismIcon}</span>`);
-      s = s.replace(/(\+?\s*\d+)\s*[\u{1F48E}💎]/gu, `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:2px; color:#8ef3ff;">$1 ${diamondIcon}</span>`);
+      s = s.replace(/(\+?\s*\d+)\s*[\u{1F52E}🔮]/gu, `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:2px; color:#ffffff;">$1 ${prismIcon}</span>`);
+      s = s.replace(/(\+?\s*\d+)\s*[\u{1F48E}💎]/gu, `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:2px; color:#ffffff;">$1 ${diamondIcon}</span>`);
       s = s.replace(/[\u{1F52E}🔮]/gu, prismIcon).replace(/[\u{1F48E}💎]/gu, diamondIcon);
       return s;
     };
 
     let freeTitle = '';
     const fr = item.freeReward;
-    if (fr.type === 'diamonds') freeTitle = `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:3px; color:#8ef3ff;">+${fr.amount} ${diamondIcon}</span>`;
-    else if (fr.type === 'prisms') freeTitle = `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:3px; color:#f0abfc;">+${fr.amount} ${prismIcon}</span>`;
-    else if (fr.type === 'ad_capsule') freeTitle = `Ad-Capsule <span style="white-space:nowrap; display:inline-flex; align-items:center; gap:2px; color:#f0abfc;">+2 ${prismIcon}</span>`;
+    if (fr.type === 'diamonds') freeTitle = `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:3px; color:#ffffff;">+${fr.amount} ${diamondIcon}</span>`;
+    else if (fr.type === 'prisms') freeTitle = `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:3px; color:#ffffff;">+${fr.amount} ${prismIcon}</span>`;
+    else if (fr.type === 'ad_capsule') freeTitle = `Ad-Capsule <span style="white-space:nowrap; display:inline-flex; align-items:center; gap:2px; color:#ffffff;">+2 ${prismIcon}</span>`;
     else if (fr.title) freeTitle = formatRewardText(fr.title);
 
     let freeBtnHtml = '';
@@ -3272,8 +3356,8 @@ function renderBattlePassScreen() {
 
     let premTitle = '';
     const pr = item.premReward;
-    if (pr.type === 'diamonds') premTitle = `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:3px; color:#8ef3ff;">+${pr.amount} ${diamondIcon}</span>`;
-    else if (pr.type === 'prisms') premTitle = `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:3px; color:#f0abfc;">+${pr.amount} ${prismIcon}</span>`;
+    if (pr.type === 'diamonds') premTitle = `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:3px; color:#ffffff;">+${pr.amount} ${diamondIcon}</span>`;
+    else if (pr.type === 'prisms') premTitle = `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:3px; color:#ffffff;">+${pr.amount} ${prismIcon}</span>`;
     else if (pr.type === 'palette' || pr.type === 'perk' || pr.type === 'ultimate') {
       premTitle = formatRewardText(pr.title);
     }
@@ -4594,17 +4678,15 @@ function updateMenuBadges() {
 }
 
 function getDailyDiamondSvg(size = 20, opacity = 1) {
-  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
-  const stroke = isHyperion ? '#3b82f6' : '#00e5ff';
-  const fill = isHyperion ? 'rgba(59,130,246,0.28)' : 'rgba(0,229,255,0.28)';
-  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"${opacity < 1 ? ` style="opacity:${opacity};"` : ''}><polygon points="6 3 18 3 22 9 12 22 2 9" fill="${fill}"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
+  const th = getTheme();
+  const c1Rgb = th.rgb1 ? th.rgb1.cssRgb : '0, 229, 255';
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${th.c1}" stroke-width="2" stroke-linejoin="round"${opacity < 1 ? ` style="opacity:${opacity};"` : ''}><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(${c1Rgb}, 0.28)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
 }
 
 function getDailyPrismSvg(size = 20, opacity = 1) {
-  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
-  const stroke = isHyperion ? '#ff6b00' : '#d946ef';
-  const fill = isHyperion ? 'rgba(255,107,0,0.35)' : 'rgba(217,70,239,0.35)';
-  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"${opacity < 1 ? ` style="opacity:${opacity};"` : ''}><polygon points="12 2 21 12 12 22 3 12" fill="${fill}"/><line x1="12" y1="2" x2="12" y2="22"/><polyline points="3 12 12 15 21 12" fill="none"/></svg>`;
+  const th = getTheme();
+  const c2Rgb = th.rgb2 ? th.rgb2.cssRgb : '217, 70, 239';
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${th.c2}" stroke-width="2" stroke-linejoin="round"${opacity < 1 ? ` style="opacity:${opacity};"` : ''}><polygon points="12 2 21 12 12 22 3 12" fill="rgba(${c2Rgb}, 0.35)"/><line x1="12" y1="2" x2="12" y2="22"/><polyline points="3 12 12 15 21 12" fill="none"/></svg>`;
 }
 
 function renderDailyLoginModal() {
@@ -5792,8 +5874,8 @@ const HYPERION_NEBULA_CLUSTERS = [
 ];
 
 function getActiveNebulaClusters() {
-  if (typeof activePalette !== 'undefined' && activePalette === 'matrix_green') {
-    return HYPERION_NEBULA_CLUSTERS;
+  if (typeof window !== 'undefined' && window.activeThemeColors && window.activeThemeColors.nebulaClusters) {
+    return window.activeThemeColors.nebulaClusters;
   }
   return NEBULA_CLUSTERS;
 }
@@ -6317,28 +6399,21 @@ function renderTriangleLogoCache(w, horizonY, dpr) {
   };
 
   // Horizontal gradient: Hyperion Sunburst (Cobalt Blue left -> Solar Orange -> Gold right)
+const th = getTheme();
+  const c1Rgb = th.rgb1 ? th.rgb1.cssRgb : '0, 229, 255';
+  const c2Rgb = th.rgb2 ? th.rgb2.cssRgb : '217, 70, 239';
+  const c3Rgb = th.rgb3 ? th.rgb3.cssRgb : '240, 95, 159';
+
   const makeGrad = (lighten) => {
     const g = c.createLinearGradient(B.x - 20, 0, C.x + 20, 0);
-    if (isHyperion) {
-      if (lighten) {
-        g.addColorStop(0.00, '#93c5fd');
-        g.addColorStop(0.48, '#fdba74');
-        g.addColorStop(1.00, '#fef08a');
-      } else {
-        g.addColorStop(0.00, '#2563eb');
-        g.addColorStop(0.50, '#ff6b00');
-        g.addColorStop(1.00, '#ffb700');
-      }
+    if (lighten) {
+      g.addColorStop(0.00, th.c3Light);
+      g.addColorStop(0.48, th.c2Light);
+      g.addColorStop(1.00, th.c1Light);
     } else {
-      if (lighten) {
-        g.addColorStop(0.00, '#ff8be8');
-        g.addColorStop(0.45, '#d9b8ff');
-        g.addColorStop(1.00, '#b8fff6');
-      } else {
-        g.addColorStop(0.00, '#ff2fd0');
-        g.addColorStop(0.45, '#9a4dff');
-        g.addColorStop(1.00, '#00f0d8');
-      }
+      g.addColorStop(0.00, th.c3);
+      g.addColorStop(0.48, th.c2);
+      g.addColorStop(1.00, th.c1);
     }
     return g;
   };
@@ -6349,35 +6424,23 @@ function renderTriangleLogoCache(w, horizonY, dpr) {
 
   const cornerR = halfW * 0.42;
   const bGlow = c.createRadialGradient(B.x, B.y, 0, B.x, B.y, cornerR);
-  if (isHyperion) {
-    bGlow.addColorStop(0.0, 'rgba(37, 99, 235, 0.28)');
-    bGlow.addColorStop(0.4, 'rgba(59, 130, 246, 0.12)');
-    bGlow.addColorStop(1.0, 'rgba(59, 130, 246, 0)');
-  } else {
-    bGlow.addColorStop(0.0, 'rgba(255, 47, 208, 0.20)');
-    bGlow.addColorStop(0.4, 'rgba(154, 77, 255, 0.08)');
-    bGlow.addColorStop(1.0, 'rgba(154, 77, 255, 0)');
-  }
+  bGlow.addColorStop(0.0, `rgba(${c3Rgb}, 0.24)`);
+  bGlow.addColorStop(0.4, `rgba(${c2Rgb}, 0.10)`);
+  bGlow.addColorStop(1.0, `rgba(${c2Rgb}, 0)`);
   c.fillStyle = bGlow;
   c.beginPath();
   c.arc(B.x, B.y, cornerR, 0, Math.PI * 2);
   c.fill();
 
   const cGlow = c.createRadialGradient(C.x, C.y, 0, C.x, C.y, cornerR);
-  if (isHyperion) {
-    cGlow.addColorStop(0.0, 'rgba(255, 183, 0, 0.28)');
-    cGlow.addColorStop(0.4, 'rgba(255, 107, 0, 0.12)');
-    cGlow.addColorStop(1.0, 'rgba(255, 107, 0, 0)');
-  } else {
-    cGlow.addColorStop(0.0, 'rgba(0, 240, 216, 0.20)');
-    cGlow.addColorStop(0.4, 'rgba(0, 210, 255, 0.08)');
-    cGlow.addColorStop(1.0, 'rgba(0, 210, 255, 0)');
-  }
+  cGlow.addColorStop(0.0, `rgba(${c1Rgb}, 0.24)`);
+  cGlow.addColorStop(0.4, `rgba(${c1Rgb}, 0.10)`);
+  cGlow.addColorStop(1.0, `rgba(${c1Rgb}, 0)`);
   c.fillStyle = cGlow;
   c.beginPath();
   c.arc(C.x, C.y, cornerR, 0, Math.PI * 2);
   c.fill();
-  
+
   c.restore();
 
   // [UI212.02] Multi-layered Gaussian glow contour stroke renderer.
@@ -6457,7 +6520,10 @@ function drawSynthWaveTriangleLogo5C(w, horizonY, time) {
 function drawSynthWaveHorizonBeam(w, horizonY, time) {
   const cx = w * 0.5;
   const pulse = 0.95 + 0.05 * Math.sin(time * 3.2);
-  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
+  const th = getTheme();
+  const c1Rgb = th.rgb1 ? th.rgb1.cssRgb : '0, 229, 255';
+  const c2Rgb = th.rgb2 ? th.rgb2.cssRgb : '217, 70, 239';
+  const c3Rgb = th.rgb3 ? th.rgb3.cssRgb : '240, 95, 159';
 
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
@@ -6465,27 +6531,15 @@ function drawSynthWaveHorizonBeam(w, horizonY, time) {
   // [UI213.01] Vertical exponential bloom gradient pass.
   const bloomR = 46;
   const vBloom = ctx.createLinearGradient(0, horizonY - bloomR, 0, horizonY + bloomR);
-  if (isHyperion) {
-    vBloom.addColorStop(0.00, 'rgba(37, 99, 235, 0)');
-    vBloom.addColorStop(0.22, `rgba(37, 99, 235, ${0.04 * pulse})`);
-    vBloom.addColorStop(0.36, `rgba(255, 107, 0, ${0.12 * pulse})`);
-    vBloom.addColorStop(0.45, `rgba(255, 165, 0, ${0.28 * pulse})`);
-    vBloom.addColorStop(0.50, `rgba(255, 245, 210, ${0.46 * pulse})`);
-    vBloom.addColorStop(0.55, `rgba(255, 145, 0, ${0.28 * pulse})`);
-    vBloom.addColorStop(0.64, `rgba(255, 107, 0, ${0.12 * pulse})`);
-    vBloom.addColorStop(0.78, `rgba(37, 99, 235, ${0.04 * pulse})`);
-    vBloom.addColorStop(1.00, 'rgba(37, 99, 235, 0)');
-  } else {
-    vBloom.addColorStop(0.00, 'rgba(140, 80, 255, 0)');
-    vBloom.addColorStop(0.22, `rgba(140, 80, 255, ${0.03 * pulse})`);
-    vBloom.addColorStop(0.36, `rgba(150, 100, 255, ${0.10 * pulse})`);
-    vBloom.addColorStop(0.45, `rgba(170, 180, 255, ${0.24 * pulse})`);
-    vBloom.addColorStop(0.50, `rgba(220, 245, 255, ${0.42 * pulse})`);
-    vBloom.addColorStop(0.55, `rgba(0, 229, 255, ${0.24 * pulse})`);
-    vBloom.addColorStop(0.64, `rgba(0, 229, 255, ${0.10 * pulse})`);
-    vBloom.addColorStop(0.78, `rgba(0, 229, 255, ${0.03 * pulse})`);
-    vBloom.addColorStop(1.00, 'rgba(0, 229, 255, 0)');
-  }
+  vBloom.addColorStop(0.00, `rgba(${c2Rgb}, 0)`);
+  vBloom.addColorStop(0.22, `rgba(${c2Rgb}, ${0.04 * pulse})`);
+  vBloom.addColorStop(0.36, `rgba(${c2Rgb}, ${0.11 * pulse})`);
+  vBloom.addColorStop(0.45, `rgba(${c1Rgb}, ${0.25 * pulse})`);
+  vBloom.addColorStop(0.50, `rgba(240, 250, 255, ${0.44 * pulse})`);
+  vBloom.addColorStop(0.55, `rgba(${c1Rgb}, ${0.25 * pulse})`);
+  vBloom.addColorStop(0.64, `rgba(${c1Rgb}, ${0.11 * pulse})`);
+  vBloom.addColorStop(0.78, `rgba(${c1Rgb}, ${0.04 * pulse})`);
+  vBloom.addColorStop(1.00, `rgba(${c1Rgb}, 0)`);
   ctx.fillStyle = vBloom;
   ctx.fillRect(0, horizonY - bloomR, w, bloomR * 2);
 
@@ -6493,44 +6547,28 @@ function drawSynthWaveHorizonBeam(w, horizonY, time) {
   const sideRx = w * 0.46;
   const sideRy = 26;
 
-  // Left soft bloom.
   ctx.save();
   ctx.translate(w * 0.27, horizonY);
   ctx.scale(1, sideRy / sideRx);
   const leftGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, sideRx);
-  if (isHyperion) {
-    leftGlow.addColorStop(0.00, `rgba(37, 99, 235, ${0.42 * pulse})`);
-    leftGlow.addColorStop(0.35, `rgba(59, 130, 246, ${0.20 * pulse})`);
-    leftGlow.addColorStop(0.70, `rgba(29, 78, 216, ${0.06 * pulse})`);
-    leftGlow.addColorStop(1.00, 'rgba(29, 78, 216, 0)');
-  } else {
-    leftGlow.addColorStop(0.00, `rgba(255, 47, 208, ${0.38 * pulse})`);
-    leftGlow.addColorStop(0.35, `rgba(168, 85, 247, ${0.18 * pulse})`);
-    leftGlow.addColorStop(0.70, `rgba(140, 60, 220, ${0.05 * pulse})`);
-    leftGlow.addColorStop(1.00, 'rgba(140, 60, 220, 0)');
-  }
+  leftGlow.addColorStop(0.00, `rgba(${c3Rgb}, ${0.38 * pulse})`);
+  leftGlow.addColorStop(0.35, `rgba(${c2Rgb}, ${0.18 * pulse})`);
+  leftGlow.addColorStop(0.70, `rgba(${c2Rgb}, ${0.05 * pulse})`);
+  leftGlow.addColorStop(1.00, `rgba(${c2Rgb}, 0)`);
   ctx.fillStyle = leftGlow;
   ctx.beginPath();
   ctx.arc(0, 0, sideRx, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
-  // Right soft bloom.
   ctx.save();
   ctx.translate(w * 0.73, horizonY);
   ctx.scale(1, sideRy / sideRx);
   const rightGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, sideRx);
-  if (isHyperion) {
-    rightGlow.addColorStop(0.00, `rgba(255, 145, 0, ${0.44 * pulse})`);
-    rightGlow.addColorStop(0.35, `rgba(255, 107, 0, ${0.22 * pulse})`);
-    rightGlow.addColorStop(0.70, `rgba(217, 119, 6, ${0.06 * pulse})`);
-    rightGlow.addColorStop(1.00, 'rgba(217, 119, 6, 0)');
-  } else {
-    rightGlow.addColorStop(0.00, `rgba(0, 240, 216, ${0.38 * pulse})`);
-    rightGlow.addColorStop(0.35, `rgba(0, 210, 255, ${0.18 * pulse})`);
-    rightGlow.addColorStop(0.70, `rgba(0, 160, 230, ${0.05 * pulse})`);
-    rightGlow.addColorStop(1.00, 'rgba(0, 160, 230, 0)');
-  }
+  rightGlow.addColorStop(0.00, `rgba(${c1Rgb}, ${0.38 * pulse})`);
+  rightGlow.addColorStop(0.35, `rgba(${c1Rgb}, ${0.18 * pulse})`);
+  rightGlow.addColorStop(0.70, `rgba(${c1Rgb}, ${0.05 * pulse})`);
+  rightGlow.addColorStop(1.00, `rgba(${c1Rgb}, 0)`);
   ctx.fillStyle = rightGlow;
   ctx.beginPath();
   ctx.arc(0, 0, sideRx, 0, Math.PI * 2);
@@ -6540,41 +6578,23 @@ function drawSynthWaveHorizonBeam(w, horizonY, time) {
   // [UI213.03] Tight horizontal beam glow.
   const tightR = 7;
   const tightBloom = ctx.createLinearGradient(0, horizonY - tightR, 0, horizonY + tightR);
-  if (isHyperion) {
-    tightBloom.addColorStop(0.00, 'rgba(255, 255, 255, 0)');
-    tightBloom.addColorStop(0.30, `rgba(96, 165, 250, ${0.32 * pulse})`);
-    tightBloom.addColorStop(0.50, `rgba(255, 255, 255, ${0.82 * pulse})`);
-    tightBloom.addColorStop(0.70, `rgba(255, 183, 0, ${0.35 * pulse})`);
-    tightBloom.addColorStop(1.00, 'rgba(255, 255, 255, 0)');
-  } else {
-    tightBloom.addColorStop(0.00, 'rgba(255, 255, 255, 0)');
-    tightBloom.addColorStop(0.30, `rgba(200, 170, 255, ${0.28 * pulse})`);
-    tightBloom.addColorStop(0.50, `rgba(255, 255, 255, ${0.75 * pulse})`);
-    tightBloom.addColorStop(0.70, `rgba(120, 245, 255, ${0.28 * pulse})`);
-    tightBloom.addColorStop(1.00, 'rgba(255, 255, 255, 0)');
-  }
+  tightBloom.addColorStop(0.00, 'rgba(255, 255, 255, 0)');
+  tightBloom.addColorStop(0.30, `rgba(${c2Rgb}, ${0.30 * pulse})`);
+  tightBloom.addColorStop(0.50, `rgba(255, 255, 255, ${0.78 * pulse})`);
+  tightBloom.addColorStop(0.70, `rgba(${c1Rgb}, ${0.30 * pulse})`);
+  tightBloom.addColorStop(1.00, 'rgba(255, 255, 255, 0)');
   ctx.fillStyle = tightBloom;
   ctx.fillRect(0, horizonY - tightR, w, tightR * 2);
 
   // [UI213.04] Primary neon beam core stroke.
   const hBeamGrad = ctx.createLinearGradient(0, 0, w, 0);
-  if (isHyperion) {
-    hBeamGrad.addColorStop(0.00, 'rgba(37, 99, 235, 0.05)');
-    hBeamGrad.addColorStop(0.16, '#2563eb');
-    hBeamGrad.addColorStop(0.42, '#ff6b00');
-    hBeamGrad.addColorStop(0.50, '#ffffff');
-    hBeamGrad.addColorStop(0.58, '#ff9100');
-    hBeamGrad.addColorStop(0.84, '#ffb700');
-    hBeamGrad.addColorStop(1.00, 'rgba(255, 183, 0, 0.05)');
-  } else {
-    hBeamGrad.addColorStop(0.00, 'rgba(255, 47, 208, 0.05)');
-    hBeamGrad.addColorStop(0.16, '#ff2fd0');
-    hBeamGrad.addColorStop(0.42, '#a855f7');
-    hBeamGrad.addColorStop(0.50, '#ffffff');
-    hBeamGrad.addColorStop(0.58, '#00e5ff');
-    hBeamGrad.addColorStop(0.84, '#00f0d8');
-    hBeamGrad.addColorStop(1.00, 'rgba(0, 240, 216, 0.05)');
-  }
+  hBeamGrad.addColorStop(0.00, `rgba(${c3Rgb}, 0.05)`);
+  hBeamGrad.addColorStop(0.16, th.c3);
+  hBeamGrad.addColorStop(0.42, th.c2);
+  hBeamGrad.addColorStop(0.50, '#ffffff');
+  hBeamGrad.addColorStop(0.58, th.c1);
+  hBeamGrad.addColorStop(0.84, th.c1Light);
+  hBeamGrad.addColorStop(1.00, `rgba(${c1Rgb}, 0.05)`);
 
   ctx.globalCompositeOperation = 'source-over';
   ctx.strokeStyle = hBeamGrad;
@@ -6588,9 +6608,9 @@ function drawSynthWaveHorizonBeam(w, horizonY, time) {
   // [UI213.05] Incandescent white beam center line.
   const coreGrad = ctx.createLinearGradient(0, 0, w, 0);
   coreGrad.addColorStop(0.00, 'rgba(255, 255, 255, 0)');
-  coreGrad.addColorStop(0.12, isHyperion ? 'rgba(219, 234, 254, 0.85)' : 'rgba(255, 230, 252, 0.80)');
+  coreGrad.addColorStop(0.12, 'rgba(255, 255, 255, 0.82)');
   coreGrad.addColorStop(0.50, 'rgba(255, 255, 255, 1)');
-  coreGrad.addColorStop(0.88, isHyperion ? 'rgba(254, 243, 199, 0.85)' : 'rgba(220, 255, 252, 0.80)');
+  coreGrad.addColorStop(0.88, 'rgba(255, 255, 255, 0.82)');
   coreGrad.addColorStop(1.00, 'rgba(255, 255, 255, 0)');
 
   ctx.globalCompositeOperation = 'lighter';
@@ -6609,17 +6629,10 @@ function drawSynthWaveHorizonBeam(w, horizonY, time) {
   ctx.translate(cx, horizonY);
   ctx.scale(1, flareH / flareW);
   const centerFlare = ctx.createRadialGradient(0, 0, 0, 0, 0, flareW);
-  if (isHyperion) {
-    centerFlare.addColorStop(0.00, `rgba(255, 235, 180, ${0.85 * pulse})`);
-    centerFlare.addColorStop(0.25, `rgba(255, 145, 0, ${0.55 * pulse})`);
-    centerFlare.addColorStop(0.60, `rgba(255, 107, 0, ${0.18 * pulse})`);
-    centerFlare.addColorStop(1.00, 'rgba(255, 107, 0, 0)');
-  } else {
-    centerFlare.addColorStop(0.00, `rgba(255, 255, 255, ${0.65 * pulse})`);
-    centerFlare.addColorStop(0.25, `rgba(215, 185, 255, ${0.30 * pulse})`);
-    centerFlare.addColorStop(0.60, `rgba(0, 229, 255, ${0.10 * pulse})`);
-    centerFlare.addColorStop(1.00, 'rgba(0, 229, 255, 0)');
-  }
+  centerFlare.addColorStop(0.00, `rgba(255, 255, 255, ${0.72 * pulse})`);
+  centerFlare.addColorStop(0.25, `rgba(${c2Rgb}, ${0.42 * pulse})`);
+  centerFlare.addColorStop(0.60, `rgba(${c1Rgb}, ${0.14 * pulse})`);
+  centerFlare.addColorStop(1.00, `rgba(${c1Rgb}, 0)`);
   ctx.fillStyle = centerFlare;
   ctx.beginPath();
   ctx.arc(0, 0, flareW, 0, Math.PI * 2);
@@ -6629,7 +6642,6 @@ function drawSynthWaveHorizonBeam(w, horizonY, time) {
   ctx.restore();
 }
 
-//------------------------------------------------------------
 // [UI200] Synthwave background perspective grid scene renderer.
 function drawSynthWavePerspectiveScene(now) {
   const w = window.innerWidth;
@@ -6638,24 +6650,20 @@ function drawSynthWavePerspectiveScene(now) {
   const horizonY = h * 0.44;
   const floorH = h - horizonY;
   const vpX = w * 0.5;
-  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
+  const th = getTheme();
+  const c1Rgb = th.rgb1 ? th.rgb1.cssRgb : '0, 229, 255';
+  const c2Rgb = th.rgb2 ? th.rgb2.cssRgb : '217, 70, 239';
+  const c4Rgb = th.rgb4 ? th.rgb4.cssRgb : '255, 145, 0';
 
   drawCosmicNebulaBackground(w, h);
   updateAndDrawStars(w, h, now);
 
   ctx.save();
 
-  // Semi-transparent perspective plane background.
   const planeGrad = ctx.createLinearGradient(0, horizonY, 0, h);
-  if (isHyperion) {
-    planeGrad.addColorStop(0, 'rgba(12, 24, 58, 0.08)');
-    planeGrad.addColorStop(0.35, 'rgba(10, 20, 48, 0.22)');
-    planeGrad.addColorStop(1, 'rgba(6, 12, 30, 0.38)');
-  } else {
-    planeGrad.addColorStop(0, 'rgba(16, 26, 52, 0.06)');
-    planeGrad.addColorStop(0.35, 'rgba(16, 26, 52, 0.18)');
-    planeGrad.addColorStop(1, 'rgba(12, 20, 42, 0.34)');
-  }
+  planeGrad.addColorStop(0, 'rgba(14, 22, 48, 0.06)');
+  planeGrad.addColorStop(0.35, 'rgba(12, 20, 44, 0.18)');
+  planeGrad.addColorStop(1, 'rgba(8, 14, 32, 0.36)');
   ctx.fillStyle = planeGrad;
   ctx.fillRect(0, horizonY, w, floorH);
 
@@ -6663,7 +6671,7 @@ function drawSynthWavePerspectiveScene(now) {
   ctx.rect(0, horizonY, w, floorH);
   ctx.clip();
 
-  setGlow(isHyperion ? '#ff9100' : '#00e5ff', 5);
+  setGlow(th.c1, 5);
 
   const horizCount = 14;
   const bottomStep = Math.max(34, (floorH / horizCount) * 1.5);
@@ -6674,11 +6682,7 @@ function drawSynthWavePerspectiveScene(now) {
   for (let i = -numLines; i <= numLines; i++) {
     const bottomX = vpX + (i + 0.5) * targetBottomCellWidth;
     const topX = vpX + (i + 0.5) * (targetBottomCellWidth * 0.32);
-    if (isHyperion) {
-      ctx.strokeStyle = (i < 0) ? 'rgba(59, 130, 246, 0.38)' : 'rgba(255, 145, 0, 0.38)';
-    } else {
-      ctx.strokeStyle = 'rgba(125, 165, 255, 0.35)';
-    }
+    ctx.strokeStyle = (i < 0) ? `rgba(${c2Rgb}, 0.34)` : `rgba(${c1Rgb}, 0.34)`;
     ctx.beginPath();
     ctx.moveTo(topX, horizonY);
     ctx.lineTo(bottomX, h);
@@ -6688,7 +6692,7 @@ function drawSynthWavePerspectiveScene(now) {
   const roadTopHalfW = targetBottomCellWidth * 0.16;
   const roadBottomHalfW = targetBottomCellWidth * 0.50;
 
-  ctx.fillStyle = isHyperion ? 'rgba(12, 22, 50, 0.28)' : 'rgba(16, 26, 52, 0.22)';
+  ctx.fillStyle = 'rgba(12, 20, 44, 0.25)';
   ctx.beginPath();
   ctx.moveTo(vpX - roadTopHalfW, horizonY);
   ctx.lineTo(vpX + roadTopHalfW, horizonY);
@@ -6699,58 +6703,32 @@ function drawSynthWavePerspectiveScene(now) {
 
   ctx.lineWidth = 2.6;
   ctx.setLineDash([]);
-  if (isHyperion) {
-    ctx.strokeStyle = 'rgba(59, 130, 246, 0.32)';
-    ctx.beginPath();
-    ctx.moveTo(vpX - roadTopHalfW, horizonY);
-    ctx.lineTo(vpX - roadBottomHalfW, h);
-    ctx.stroke();
-
-    ctx.strokeStyle = 'rgba(255, 145, 0, 0.32)';
-    ctx.beginPath();
-    ctx.moveTo(vpX + roadTopHalfW, horizonY);
-    ctx.lineTo(vpX + roadBottomHalfW, h);
-    ctx.stroke();
-  } else {
-    ctx.strokeStyle = 'rgba(0, 229, 255, 0.20)';
-    ctx.beginPath();
-    ctx.moveTo(vpX - roadTopHalfW, horizonY);
-    ctx.lineTo(vpX - roadBottomHalfW, h);
-    ctx.moveTo(vpX + roadTopHalfW, horizonY);
-    ctx.lineTo(vpX + roadBottomHalfW, h);
-    ctx.stroke();
-  }
+  ctx.strokeStyle = `rgba(${c1Rgb}, 0.24)`;
+  ctx.beginPath();
+  ctx.moveTo(vpX - roadTopHalfW, horizonY);
+  ctx.lineTo(vpX - roadBottomHalfW, h);
+  ctx.moveTo(vpX + roadTopHalfW, horizonY);
+  ctx.lineTo(vpX + roadBottomHalfW, h);
+  ctx.stroke();
 
   ctx.save();
   ctx.lineWidth = 1.8;
-  // [UI200.01] Perspective track edge and grid ray rendering pass.
   ctx.setLineDash([12, 10]);
   ctx.lineDashOffset = (time * 36);
 
-  if (isHyperion) {
-    setGlow('#3b82f6', 6);
-    ctx.strokeStyle = 'rgba(96, 165, 250, 0.92)';
-    ctx.beginPath();
-    ctx.moveTo(vpX - roadTopHalfW, horizonY);
-    ctx.lineTo(vpX - roadBottomHalfW, h);
-    ctx.stroke();
+  setGlow(th.c1, 6);
+  ctx.strokeStyle = th.c1Light;
+  ctx.beginPath();
+  ctx.moveTo(vpX - roadTopHalfW, horizonY);
+  ctx.lineTo(vpX - roadBottomHalfW, h);
+  ctx.stroke();
 
-    setGlow('#ff9100', 6);
-    ctx.strokeStyle = 'rgba(255, 183, 0, 0.92)';
-    ctx.beginPath();
-    ctx.moveTo(vpX + roadTopHalfW, horizonY);
-    ctx.lineTo(vpX + roadBottomHalfW, h);
-    ctx.stroke();
-  } else {
-    ctx.strokeStyle = 'rgba(165, 243, 252, 0.88)';
-    setGlow('#00e5ff', 6);
-    ctx.beginPath();
-    ctx.moveTo(vpX - roadTopHalfW, horizonY);
-    ctx.lineTo(vpX - roadBottomHalfW, h);
-    ctx.moveTo(vpX + roadTopHalfW, horizonY);
-    ctx.lineTo(vpX + roadBottomHalfW, h);
-    ctx.stroke();
-  }
+  setGlow(th.c2, 6);
+  ctx.strokeStyle = th.c2Light;
+  ctx.beginPath();
+  ctx.moveTo(vpX + roadTopHalfW, horizonY);
+  ctx.lineTo(vpX + roadBottomHalfW, h);
+  ctx.stroke();
   ctx.restore();
 
   const gridOffset = (time * 0.42) % 1;
@@ -6758,13 +6736,9 @@ function drawSynthWavePerspectiveScene(now) {
     const progress = (j + gridOffset) / horizCount;
     const currentY = horizonY + Math.pow(progress, 1.95) * floorH;
     const alpha = Math.min(0.42, 0.08 + progress * 0.35);
-    if (isHyperion) {
-      ctx.strokeStyle = (j % 2 === 0)
-        ? `rgba(59, 130, 246, ${alpha})`
-        : `rgba(255, 145, 0, ${alpha})`;
-    } else {
-      ctx.strokeStyle = `rgba(125, 165, 255, ${alpha})`;
-    }
+    ctx.strokeStyle = (j % 2 === 0)
+      ? `rgba(${c1Rgb}, ${alpha})`
+      : `rgba(${c2Rgb}, ${alpha})`;
     ctx.lineWidth = 1.2;
     ctx.beginPath();
     ctx.moveTo(0, currentY);
@@ -6772,8 +6746,8 @@ function drawSynthWavePerspectiveScene(now) {
     ctx.stroke();
   }
 
-  const scoutColor = isHyperion ? '#ffb700' : '#ff9100';
-  const scoutGlow = isHyperion ? '#ff9100' : '#ffaa33';
+  const scoutColor = th.c4;
+  const scoutGlow = th.c4Light;
   const mobCycleDuration = 13.5;
   const mobLinearProgress = (time % mobCycleDuration) / mobCycleDuration;
   const u = 1 - mobLinearProgress;
@@ -6786,11 +6760,10 @@ function drawSynthWavePerspectiveScene(now) {
   ctx.save();
   ctx.translate(vpX, mobY);
   ctx.globalAlpha = Math.max(0, mobFade);
-
   ctx.rotate(-Math.PI / 2);
 
   setGlow(scoutGlow, 8 * mobScale);
-  ctx.fillStyle = isHyperion ? 'rgba(255, 183, 0, 0.35)' : 'rgba(255, 170, 51, 0.32)';
+  ctx.fillStyle = `rgba(${c4Rgb}, 0.34)`;
   ctx.strokeStyle = scoutColor;
   ctx.lineWidth = 1.8 * mobScale;
 
@@ -6803,22 +6776,12 @@ function drawSynthWavePerspectiveScene(now) {
   ctx.fill();
   ctx.stroke();
 
-  if (isHyperion) {
-    ctx.fillStyle = '#60a5fa';
-    ctx.beginPath();
-    ctx.arc(0, 0, Math.max(1.5, 3.2 * mobScale), 0, Math.PI * 2);
-    ctx.fill();
-  }
-
+  ctx.restore();
   ctx.restore();
 
-  ctx.restore();
-
-  // Render neon horizon beam and synthwave triangle logo.
   drawSynthWaveHorizonBeam(w, horizonY, time);
   drawSynthWaveTriangleLogo5C(w, horizonY, time);
 }
-
 function drawChevron(centerX, centerY, angle, size, color, glowColor) {
   ctx.save();
   ctx.translate(centerX, centerY);
@@ -6840,14 +6803,14 @@ function drawChevron(centerX, centerY, angle, size, color, glowColor) {
 
 function drawPathPortals() {
   if (!activePathTiles || activePathTiles.length < 2) return;
-  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
+  const th = getTheme();
   const startTile = activePathTiles[0];
   const nextTile = activePathTiles[1];
   const spawnX = startTile.c * TILE_SIZE;
   const spawnY = startTile.r * TILE_SIZE;
   const spawnAngle = Math.atan2(nextTile.r - startTile.r, nextTile.c - startTile.c);
 
-  const spawnCol = isHyperion ? '#ff9100' : '#00f0ff';
+  const spawnCol = th.c1;
   const spawnOffsets = [-14, 0, 14];
   spawnOffsets.forEach(off => {
     const px = spawnX + 35 + Math.cos(spawnAngle) * off;
@@ -6861,7 +6824,7 @@ function drawPathPortals() {
   const baseY = endTile.r * TILE_SIZE;
   const baseAngle = Math.atan2(endTile.r - prevTile.r, endTile.c - prevTile.c);
 
-  const baseCol = isHyperion ? '#ffb700' : '#f05f9f';
+  const baseCol = th.c3;
   const baseOffsets = [-14, 0, 14];
   baseOffsets.forEach(off => {
     const px = baseX + 35 + Math.cos(baseAngle) * off;
@@ -6886,6 +6849,64 @@ function renderCellRails(cell) {
     ctx.arc(cell.turnPivot.x, cell.turnPivot.y, cell.turnRadii[1], cell.turnAngles.start, cell.turnAngles.end, cell.turnAngles.anticlockwise);
     ctx.stroke();
   }
+}
+
+let battlePathAlpha = 1.0;
+let lastPathTime = performance.now();
+let battleStartedOnce = false;
+
+// [UI201] Dynamic track flow and animated path rails pass.
+function drawPathRails(now) {
+  if (!pathCells || pathCells.length <= 2) return;
+  const totalCells = pathCells.length;
+  const th = getTheme();
+  const c1Rgb = th.rgb1 ? th.rgb1.cssRgb : '0, 229, 255';
+  const c2Rgb = th.rgb2 ? th.rgb2.cssRgb : '217, 70, 239';
+
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // Фоновые контуры рельсов под цвет темы (c2)
+  ctx.strokeStyle = `rgba(${c2Rgb}, 0.22)`;
+  ctx.lineWidth = 3.5;
+  ctx.setLineDash([]);
+  for (let i = 1; i < totalCells - 1; i++) {
+    renderCellRails(pathCells[i]);
+  }
+
+  const curTime = (typeof now === 'number' && now > 0) ? now : performance.now();
+  const dt = Math.min((curTime - (lastPathTime || curTime)) / 1000, 0.1);
+  lastPathTime = curTime;
+
+  const isBattleActive = (typeof waveInProgress !== 'undefined' && waveInProgress) || 
+                         (typeof enemies !== 'undefined' && enemies.length > 0);
+
+  if (isBattleActive) {
+    battleStartedOnce = true;
+  }
+
+  if (battleStartedOnce || isBattleActive) {
+    if (battlePathAlpha > 0) {
+      battlePathAlpha = Math.max(0, battlePathAlpha - dt * 0.5);
+    }
+  } else {
+    battlePathAlpha = 1.0;
+  }
+
+  // Анимированные бегущие пунктирные рельсы под основной цвет темы (c1)
+  if (battlePathAlpha > 0.005) {
+    ctx.strokeStyle = `rgba(${c1Rgb}, ${0.88 * battlePathAlpha})`;
+    ctx.lineWidth = 1.8;
+    ctx.setLineDash([12, 10]);
+    ctx.lineDashOffset = -((curTime / 1000) * 36);
+
+    for (let i = 1; i < totalCells - 1; i++) {
+      renderCellRails(pathCells[i]);
+    }
+  }
+
+  ctx.restore();
 }
 
 let battlePathAlpha = 1.0;

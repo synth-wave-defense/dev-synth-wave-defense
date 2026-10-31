@@ -56,38 +56,76 @@ const BATTLE_PASS_TIERS = [
 const NEON_PALETTES = {
   default: {
     id: 'default',
-    name: 'Default Cyan',
-    primary: '#00e5ff',
-    secondary: '#f05f9f',
-    glow: 'rgba(0, 229, 255, 0.75)',
-    bgGlow: 'rgba(0, 229, 255, 0.25)'
+    name: 'Cyan Sunset',
+    c1: '#00e5ff', // Основной: UI, Алмазы, Gun, Правая туманность
+    c2: '#d946ef', // Вторичный: Призмы, Танк, Railgun, Левая туманность
+    c3: '#f05f9f', // Акцент/Враги: HP, Hardcore, Laser/Melter, Grunt
+    c4: '#ff9100', // Теплый: Золото $, Splash, Scout
+    c5: '#38bdf8', // Вспомогательный: Stasis, Tesla, Swarm, Blinker
+    bg: '#03050d'
   },
   matrix_green: {
     id: 'matrix_green',
     name: 'Hyperion Sunburst',
-    primary: '#3b82f6',
-    secondary: '#ff6b00',
-    glow: 'rgba(255, 145, 0, 0.85)',
-    bgGlow: 'rgba(59, 130, 246, 0.35)',
+    c1: '#3b82f6', // Синий кобальт
+    c2: '#ff6b00', // Солнечно-оранжевый
+    c3: '#ffb700', // Желто-золотой
+    c4: '#ff9100', // Янтарный
+    c5: '#60a5fa', // Небесно-синий
+    bg: '#03050d',
     unlockHint: 'Free Pass Tier 10'
   },
   cyber_gold: {
     id: 'cyber_gold',
     name: 'Cyber Gold',
-    primary: '#ffd700',
-    secondary: '#9d4edd',
-    glow: 'rgba(255, 215, 0, 0.85)',
-    bgGlow: 'rgba(157, 78, 221, 0.35)',
+    c1: '#ffd700', // Чистое золото
+    c2: '#9d4edd', // Королевский фиолет
+    c3: '#ff007f', // Неоновая фуксия
+    c4: '#ff9100', // Оранжевое золото
+    c5: '#c084fc', // Светлый аметист
+    bg: '#06040d',
     unlockHint: 'Premium Pass Tier 1'
   },
   blood_moon: {
     id: 'blood_moon',
     name: 'Blood Moon',
-    primary: '#f05f9f',
-    secondary: '#ff8a00',
-    glow: 'rgba(240, 95, 159, 0.85)',
-    bgGlow: 'rgba(255, 138, 0, 0.35)',
+    c1: '#ff003c', // Кроваво-алый
+    c2: '#9d4edd', // Темно-фиолетовый
+    c3: '#ff6b00', // Огненно-оранжевый
+    c4: '#ffb700', // Золотой
+    c5: '#fb7185', // Розово-алый лед
+    bg: '#0a0306',
     unlockHint: 'Premium Pass Tier 30'
+  },
+  bio_venom: {
+    id: 'bio_venom',
+    name: 'Bio-Venom Matrix',
+    c1: '#84cc16', // Кислотный лайм
+    c2: '#a855f7', // Неоновый фиолет
+    c3: '#d946ef', // Яркий пурпур
+    c4: '#a3e635', // Желто-лаймовый
+    c5: '#22c55e', // Изумрудный
+    bg: '#070410'
+  },
+  sakura_wave: {
+    id: 'sakura_wave',
+    name: 'Sakura Vaporwave',
+    c1: '#00ffcc', // Мятная бирюза
+    c2: '#38bdf8', // Ледяной голубой
+    c3: '#ff4da6', // Розовая сакура
+    c4: '#ffb3c6', // Нежно-персиковый
+    c5: '#7dd3fc', // Небесный
+    bg: '#09040e'
+  },
+  solar_inferno: {
+    id: 'solar_inferno',
+    name: 'Solar Inferno',
+    c1: '#ffb700', // Янтарное золото
+    c2: '#ff6b00', // Огненный оранж
+    c3: '#ff2a00', // Лавовый красный
+    c4: '#fde047', // Солнечно-лимонный
+    c5: '#fb923c', // Раскаленный уголь
+    bg: '#0d0402'
   }
 };
 

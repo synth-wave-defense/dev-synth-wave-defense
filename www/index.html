@@ -64,8 +64,8 @@
       letter-spacing: 0.28em;
       line-height: 24px;
       height: 24px;
-      color: var(--neon-primary, #00e5ff);
-      text-shadow: 0 0 16px var(--neon-glow, rgba(0, 229, 255, 0.75)), 0 0 32px rgba(168, 85, 247, 0.45);
+      color: #ffffff;
+      text-shadow: 0 0 16px rgba(255, 255, 255, 0.55), 0 0 28px rgba(0, 229, 255, 0.35);
       white-space: nowrap;
       text-align: center;
     ">LOADING...</div>
@@ -1046,7 +1046,7 @@
                    oninput="setSfxVolume(this.value)">
           </div>
           <div class="setting-row">
-            <span>VISUAL THEME</span>
+            <span>Visual</span>
             <select id="settingPaletteSelect" class="hud-select-dropdown" onchange="selectPalette(this.value)"></select>
           </div>
           <div class="setting-version-label" id="settingsVersionLabel">Version: 1.36.37</div>
@@ -1260,7 +1260,7 @@
       <div class="bp-header-top">
         <div class="bp-tier-badge" id="bpTierBadgeText">TIER 1 / 30</div>
         <div class="bp-palette-picker-wrap" id="bpPalettePickerWrap" onclick="handleBpThemeClick(event)">
-          <span class="bp-palette-label">VISUAL THEME:</span>
+          <span class="bp-palette-label">Visual:</span>
           <select id="bpPaletteSelect" class="hud-select-dropdown" onchange="selectPalette(this.value)"></select>
         </div>
       </div>
@@ -1621,7 +1621,8 @@ loadGame().then(() => {
     perfMode = settings.perfModeOverride;
     perfDecided = true;
   }
-
+  
+  applyPaletteColors(activePalette || 'default');
   initBuildPanel();
   toggleDevMode(initialDevState);
   updateDiamondUI();

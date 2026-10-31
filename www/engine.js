@@ -762,70 +762,138 @@ function addBpXp(amount) {
   }
 }
 
-function applyPaletteColors(paletteId) {
-  const pId = (NEON_PALETTES && NEON_PALETTES[paletteId]) ? paletteId : 'default';
-  activePalette = pId;
-  const cfg = NEON_PALETTES[pId] || NEON_PALETTES['default'];
+// Вспомогательные функции конвертации HEX -> RGB и осветления
+function hexToRgbObj(hex) {
+  let h = String(hex || '#00e5ff').replace('#', '').trim();
+  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  const num = parseInt(h, 16) || 0;
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  return {
+    r, g, b,
+    cssRgb: `${r}, ${g}, ${b}`,
+    norm: [+(r / 255).toFixed(3), +(g / 255).toFixed(3), +(b / 255).toFixed(3)]
+  };
+}
 
+function mixHexWithWhite(hex, whiteRatio = 0.45) {
+  const { r, g, b } = hexToRgbObj(hex);
+  const mr = Math.round(r + (255 - r) * whiteRatio);
+  const mg = Math.round(g + (255 - g) * whiteRatio);
+  const mb = Math.round(b + (255 - b) * whiteRatio);
+  return '#' + [mr, mg, mb].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
+function darkenNormRgb(normArr, factor = 0.42) {
+  return [
+    +(normArr[0] * factor).toFixed(3),
+    +(normArr[1] * factor).toFixed(3),
+    +(normArr[2] * factor).toFixed(3)
+  ];
+}
+
+function applyPaletteColors(paletteId) {
+  const pId = (typeof NEON_PALETTES !== 'undefined' && NEON_PALETTES[paletteId]) ? paletteId : 'default';
+  activePalette = pId;
+  const def = (typeof NEON_PALETTES !== 'undefined' && NEON_PALETTES['default']) || {};
+  const raw = (typeof NEON_PALETTES !== 'undefined' && NEON_PALETTES[pId]) || def;
+
+  // 5 базовых цветовых слотов темы
+  const c1 = raw.c1 || raw.primary   || def.c1 || '#00e5ff';
+  const c2 = raw.c2 || def.c2        || '#d946ef';
+  const c3 = raw.c3 || raw.secondary || def.c3 || '#f05f9f';
+  const c4 = raw.c4 || def.c4        || '#ff9100';
+  const c5 = raw.c5 || def.c5        || '#38bdf8';
+  const bg = raw.bg || def.bg        || '#03050d';
+
+  const rgb1 = hexToRgbObj(c1);
+  const rgb2 = hexToRgbObj(c2);
+  const rgb3 = hexToRgbObj(c3);
+  const rgb4 = hexToRgbObj(c4);
+  const rgb5 = hexToRgbObj(c5);
+
+  const c1Light = mixHexWithWhite(c1, 0.48);
+  const c2Light = mixHexWithWhite(c2, 0.48);
+  const c3Light = mixHexWithWhite(c3, 0.45);
+  const c4Light = mixHexWithWhite(c4, 0.45);
+  const c5Light = mixHexWithWhite(c5, 0.45);
+
+// Сохраняем глобальный объект текущей темы для Canvas (ui.js и engine.js)
+  window.activeThemeColors = {
+    id: pId,
+    c1, c2, c3, c4, c5, bg,
+    c1Light, c2Light, c3Light, c4Light, c5Light,
+    rgb1, rgb2, rgb3, rgb4, rgb5,
+    // Кластеры туманности: поменяли местами (слева c1, справа c2)
+    nebulaClusters: [
+      { cx: 0.22, cy: 0.22, scale: 0.43, angle: 0.38,  aspect: 0.65, intensity: 1.08, base: darkenNormRgb(rgb1.norm, 0.45), hot: rgb1.norm },
+      { cx: 0.78, cy: 0.20, scale: 0.42, angle: -0.38, aspect: 0.65, intensity: 1.08, base: darkenNormRgb(rgb2.norm, 0.45), hot: rgb2.norm },
+      { cx: 0.20, cy: 0.76, scale: 0.45, angle: -0.28, aspect: 0.70, intensity: 0.52, base: darkenNormRgb(rgb1.norm, 0.35), hot: rgb1.norm },
+      { cx: 0.80, cy: 0.74, scale: 0.44, angle: 0.32,  aspect: 0.70, intensity: 0.52, base: darkenNormRgb(rgb2.norm, 0.35), hot: rgb2.norm }
+    ]
+  };
+
+  // Записываем все переменные в CSS :root
   if (typeof document !== 'undefined') {
-    if (document.documentElement) {
-      document.documentElement.style.setProperty('--neon-primary', cfg.primary);
-      document.documentElement.style.setProperty('--neon-secondary', cfg.secondary);
-      document.documentElement.style.setProperty('--neon-glow', cfg.glow);
+    const root = document.documentElement;
+    if (root) {
+      root.style.setProperty('--c1', c1);
+      root.style.setProperty('--c2', c2);
+      root.style.setProperty('--c3', c3);
+      root.style.setProperty('--c4', c4);
+      root.style.setProperty('--c5', c5);
+      root.style.setProperty('--bg-dark', bg);
+
+      root.style.setProperty('--c1-rgb', rgb1.cssRgb);
+      root.style.setProperty('--c2-rgb', rgb2.cssRgb);
+      root.style.setProperty('--c3-rgb', rgb3.cssRgb);
+      root.style.setProperty('--c4-rgb', rgb4.cssRgb);
+      root.style.setProperty('--c5-rgb', rgb5.cssRgb);
+
+      root.style.setProperty('--c1-light', c1Light);
+      root.style.setProperty('--c2-light', c2Light);
+      root.style.setProperty('--c3-light', c3Light);
+      root.style.setProperty('--c4-light', c4Light);
+      root.style.setProperty('--c5-light', c5Light);
+
+      // Обратная совместимость со старыми переменными
+      root.style.setProperty('--neon-primary', c1);
+      root.style.setProperty('--neon-secondary', c3);
+      root.style.setProperty('--neon-glow', `rgba(${rgb1.cssRgb}, 0.8)`);
     }
     if (document.body) {
       document.body.setAttribute('data-theme', pId);
     }
   }
 
+  // Автоматическая привязка всех 7 башен к слотам c1..c5
   if (typeof TOWER_CONFIGS !== 'undefined' && TOWER_CONFIGS.gun) {
-    TOWER_CONFIGS.gun.color = '#00e5ff';     TOWER_CONFIGS.gun.glow = '#00e5ff';
-    TOWER_CONFIGS.laser.color = '#f05f9f';   TOWER_CONFIGS.laser.glow = '#f05f9f';
-    TOWER_CONFIGS.mortar.color = '#ff9100';  TOWER_CONFIGS.mortar.glow = '#ff9100';
-    TOWER_CONFIGS.tesla.color = '#00ffcc';   TOWER_CONFIGS.tesla.glow = '#00ffcc';
-    TOWER_CONFIGS.stasis.color = '#38bdf8';  TOWER_CONFIGS.stasis.glow = '#38bdf8';
-    TOWER_CONFIGS.melter.color = '#e85268';  TOWER_CONFIGS.melter.glow = '#e477a3';
-    TOWER_CONFIGS.railgun.color = '#a275df'; TOWER_CONFIGS.railgun.glow = '#b57fdd';
-
-    if (pId === 'matrix_green') {
-      TOWER_CONFIGS.gun.color = '#3b82f6';     TOWER_CONFIGS.gun.glow = '#60a5fa';
-      TOWER_CONFIGS.stasis.color = '#60a5fa';  TOWER_CONFIGS.stasis.glow = '#93c5fd';
-      TOWER_CONFIGS.laser.color = '#ff6b00';   TOWER_CONFIGS.laser.glow = '#ff9100';
-      TOWER_CONFIGS.mortar.color = '#ffb700';  TOWER_CONFIGS.mortar.glow = '#ff9100';
-      TOWER_CONFIGS.tesla.color = '#38bdf8';   TOWER_CONFIGS.tesla.glow = '#3b82f6';
-      TOWER_CONFIGS.melter.color = '#ff5500';  TOWER_CONFIGS.melter.glow = '#ff9100';
-      TOWER_CONFIGS.railgun.color = '#f59e0b'; TOWER_CONFIGS.railgun.glow = '#fbbf24';
-    } else if (pId === 'cyber_gold') {
-      TOWER_CONFIGS.gun.color = '#ffd700';     TOWER_CONFIGS.gun.glow = '#ffd700';
-      TOWER_CONFIGS.laser.color = '#9d4edd';   TOWER_CONFIGS.laser.glow = '#9d4edd';
-    } else if (pId === 'blood_moon') {
-      TOWER_CONFIGS.gun.color = '#ff003c';     TOWER_CONFIGS.gun.glow = '#ff003c';
-      TOWER_CONFIGS.laser.color = '#ff8a00';   TOWER_CONFIGS.laser.glow = '#ff8a00';
-    }
+    TOWER_CONFIGS.gun.color     = c1; TOWER_CONFIGS.gun.glow     = c1Light;
+    TOWER_CONFIGS.stasis.color  = c5; TOWER_CONFIGS.stasis.glow  = c5Light;
+    TOWER_CONFIGS.tesla.color   = c5; TOWER_CONFIGS.tesla.glow   = c1;
+    TOWER_CONFIGS.laser.color   = c3; TOWER_CONFIGS.laser.glow   = c3Light;
+    TOWER_CONFIGS.melter.color  = c3; TOWER_CONFIGS.melter.glow  = c4;
+    TOWER_CONFIGS.mortar.color  = c4; TOWER_CONFIGS.mortar.glow  = c4Light;
+    TOWER_CONFIGS.railgun.color = c2; TOWER_CONFIGS.railgun.glow = c2Light;
   }
 
+  // Автоматическая привязка всех мобов и боссов к слотам c1..c5
   if (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS.grunt) {
-    if (pId === 'matrix_green') {
-      ENEMY_CONFIGS.grunt.color = '#ff6b00';        ENEMY_CONFIGS.grunt.glow = '#ff9100';
-      ENEMY_CONFIGS.scout.color = '#ffb700';        ENEMY_CONFIGS.scout.glow = '#fde047';
-      ENEMY_CONFIGS.tank.color = '#2563eb';         ENEMY_CONFIGS.tank.glow = '#3b82f6';
-      ENEMY_CONFIGS.swarm.color = '#3b82f6';        ENEMY_CONFIGS.swarm.glow = '#60a5fa';
-      ENEMY_CONFIGS.blinker.color = '#60a5fa';      ENEMY_CONFIGS.blinker.glow = '#93c5fd';
-      ENEMY_CONFIGS.goliath.color = '#d97706';      ENEMY_CONFIGS.goliath.glow = '#f59e0b';
-      ENEMY_CONFIGS.emp_bomber.color = '#2563eb';   ENEMY_CONFIGS.emp_bomber.glow = '#f05f9f';
-      ENEMY_CONFIGS.emp_overlord.color = '#2563eb'; ENEMY_CONFIGS.emp_overlord.glow = '#f05f9f';
-    } else {
-      ENEMY_CONFIGS.grunt.color = '#f05f9f';        ENEMY_CONFIGS.grunt.glow = '#f05f9f';
-      ENEMY_CONFIGS.scout.color = '#ff9100';        ENEMY_CONFIGS.scout.glow = '#ffaa33';
-      ENEMY_CONFIGS.tank.color = '#a06fdc';         ENEMY_CONFIGS.tank.glow = '#825cc2';
-      ENEMY_CONFIGS.swarm.color = '#00ffcc';        ENEMY_CONFIGS.swarm.glow = '#00ffcc';
-      ENEMY_CONFIGS.blinker.color = '#3b82f6';      ENEMY_CONFIGS.blinker.glow = '#60a5fa';
-      ENEMY_CONFIGS.goliath.color = '#8964c4';      ENEMY_CONFIGS.goliath.glow = '#7050a4';
-      ENEMY_CONFIGS.emp_bomber.color = '#38bdf8';   ENEMY_CONFIGS.emp_bomber.glow = '#f05f9f';
-      ENEMY_CONFIGS.emp_overlord.color = '#38bdf8'; ENEMY_CONFIGS.emp_overlord.glow = '#f05f9f';
-    }
+    ENEMY_CONFIGS.grunt.color        = c3; ENEMY_CONFIGS.grunt.glow        = c3;
+    ENEMY_CONFIGS.scout.color        = c4; ENEMY_CONFIGS.scout.glow        = c4Light;
+    ENEMY_CONFIGS.tank.color         = c2; ENEMY_CONFIGS.tank.glow         = c2;
+    ENEMY_CONFIGS.swarm.color        = c5; ENEMY_CONFIGS.swarm.glow        = c5;
+    ENEMY_CONFIGS.blinker.color      = c5; ENEMY_CONFIGS.blinker.glow      = c5Light;
+    ENEMY_CONFIGS.goliath.color      = c2; ENEMY_CONFIGS.goliath.glow      = c2;
+    ENEMY_CONFIGS.emp_bomber.color   = c1; ENEMY_CONFIGS.emp_bomber.glow   = c3;
+    ENEMY_CONFIGS.hive_empress.color = c5; ENEMY_CONFIGS.hive_empress.glow = c5;
+    ENEMY_CONFIGS.chronos_warp.color = c1; ENEMY_CONFIGS.chronos_warp.glow = c5Light;
+    ENEMY_CONFIGS.titan_core.color   = c4; ENEMY_CONFIGS.titan_core.glow   = c4Light;
+    ENEMY_CONFIGS.emp_overlord.color = c1; ENEMY_CONFIGS.emp_overlord.glow = c3;
   }
 
+  // Перестраиваем SVG-иконки башен и обновляем живые сущности на поле
   if (typeof TOWER_ICONS !== 'undefined' && typeof buildTowerIconSvg === 'function') {
     Object.keys(TOWER_CONFIGS).forEach(k => {
       TOWER_ICONS[k] = buildTowerIconSvg(k);
@@ -854,6 +922,7 @@ function applyPaletteColors(paletteId) {
     renderLoadoutWidgetBody();
   }
 
+  // Сброс кэшей Canvas для мгновенной перерисовки фона, логотипа, сетки и мобов
   if (typeof nebulaCache !== 'undefined') nebulaCache = null;
   if (typeof nebulaCacheKey !== 'undefined') nebulaCacheKey = '';
   if (typeof triangleLogoCache !== 'undefined') triangleLogoCache = null;

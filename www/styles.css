@@ -5858,357 +5858,532 @@ label,
 }
 
 /* ============================================================================
-   [CSS117] HYPERION SUNBURST THEME OVERRIDES (data-theme="matrix_green")
-   Electric Cobalt Blue (#2563eb / #3b82f6) & Solar Orange-Gold (#ff6b00 / #ffb700)
+   [CSS117] UNIVERSAL DYNAMIC THEME SYSTEM (Variables --c1 .. --c5)
+   Автоматически применяется ко всем цветовым схемам из NEON_PALETTES
    ============================================================================ */
 
-/* 1. БАЗОВЫЙ ЦВЕТ ОБВОДКИ ВСЕХ КНОПОК И ЭЛЕМЕНТОВ UI -> СИНИЙ */
-body[data-theme="matrix_green"] .hud-top-bar,
-body[data-theme="matrix_green"] .upgrades-top-bar,
-body[data-theme="matrix_green"] .controls-wrapper,
-body[data-theme="matrix_green"] .menu-btn-glass-capsule,
-body[data-theme="matrix_green"] .result-btn:not(.result-btn-primary):not(.victory-claim-btn):not(.result-btn-grunt),
-body[data-theme="matrix_green"] .result-btn-pill:not(.result-btn-resume),
-body[data-theme="matrix_green"] .upgrade-row-card,
-body[data-theme="matrix_green"] .shop-card,
-body[data-theme="matrix_green"] .bp-header-card,
-body[data-theme="matrix_green"] .bp-tier-row,
-body[data-theme="matrix_green"] .bp-cell-free,
-body[data-theme="matrix_green"] .bp-btn-buy-tier,
-body[data-theme="matrix_green"] .bp-xp-bar-container,
-body[data-theme="matrix_green"] .settings-box,
-body[data-theme="matrix_green"] .mode-3way-switcher,
-body[data-theme="matrix_green"] .loadout-tower-btn:not(.selected) {
-  border-color: rgba(59, 130, 246, 0.38) !important;
+:root {
+  --c1: #00e5ff;
+  --c2: #d946ef;
+  --c3: #f05f9f;
+  --c4: #ff9100;
+  --c5: #38bdf8;
+  --bg-dark: #03050d;
+
+  --c1-rgb: 0, 229, 255;
+  --c2-rgb: 217, 70, 239;
+  --c3-rgb: 240, 95, 159;
+  --c4-rgb: 255, 145, 0;
+  --c5-rgb: 56, 189, 248;
+
+  --c1-light: #8ef3ff;
+  --c2-light: #f0abfc;
+  --c3-light: #ff8fb0;
+  --c4-light: #ffc166;
+  --c5-light: #93c5fd;
 }
 
-body[data-theme="matrix_green"] .hud-top-bar,
-body[data-theme="matrix_green"] .upgrades-top-bar {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 16px rgba(37, 99, 235, 0.18);
+/* 1. БАЗОВЫЕ ОБВОДКИ И ПАНЕЛИ (Слот 1: --c1) */
+.hud-top-bar,
+.upgrades-top-bar,
+.controls-wrapper,
+.menu-btn-glass-capsule,
+.result-btn:not(.result-btn-primary):not(.victory-claim-btn):not(.result-btn-grunt),
+.result-btn-pill:not(.result-btn-resume),
+.upgrade-row-card,
+.shop-card:not(.shop-card-prism),
+.bp-header-card,
+.bp-tier-row,
+.bp-cell-free,
+.bp-btn-buy-tier,
+.bp-xp-bar-container,
+.settings-box,
+.loadout-tower-btn:not(.selected) {
+  border-color: rgba(var(--c1-rgb), 0.32) !important;
 }
 
-body[data-theme="matrix_green"] .menu-btn-glass-capsule,
-body[data-theme="matrix_green"] .result-btn:not(.result-btn-primary):not(.victory-claim-btn):not(.result-btn-grunt),
-body[data-theme="matrix_green"] .result-btn-pill:not(.result-btn-resume):not(.result-btn-giveup),
-body[data-theme="matrix_green"] .bp-btn-buy-tier {
-  color: #dbeafe;
+.hud-top-bar,
+.upgrades-top-bar {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.58), 0 0 14px rgba(var(--c1-rgb), 0.14);
 }
 
-body[data-theme="matrix_green"] .menu-btn-glass-capsule:active:not(:disabled):not(.no-press-feedback),
-body[data-theme="matrix_green"] .result-btn:active:not(:disabled):not(.no-press-feedback):not(.btn-locked),
-body[data-theme="matrix_green"] .result-btn-pill:active:not(.result-btn-giveup) {
-  border-color: #3b82f6 !important;
+.controls-wrapper {
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.78), 0 0 16px rgba(var(--c1-rgb), 0.14);
+}
+
+.menu-btn-glass-capsule,
+.result-btn:not(.result-btn-primary):not(.victory-claim-btn):not(.result-btn-grunt),
+.result-btn-pill:not(.result-btn-resume):not(.result-btn-giveup),
+.bp-btn-buy-tier {
+  color: var(--c1-light);
+}
+
+.menu-btn-glass-capsule:active:not(:disabled):not(.no-press-feedback),
+.result-btn:active:not(:disabled):not(.no-press-feedback):not(.btn-locked),
+.result-btn-pill:active:not(.result-btn-giveup) {
+  border-color: var(--c1) !important;
   color: #ffffff !important;
-  box-shadow: 0 0 24px rgba(59, 130, 246, 0.65), inset 0 0 10px rgba(59, 130, 246, 0.3) !important;
-  background: rgba(14, 26, 56, 0.88) !important;
+  box-shadow: 0 0 24px rgba(var(--c1-rgb), 0.65), inset 0 0 10px rgba(var(--c1-rgb), 0.28) !important;
+  background: rgba(14, 24, 48, 0.88) !important;
 }
 
-body[data-theme="matrix_green"] .upgrades-top-label,
-body[data-theme="matrix_green"] .match-val-text,
-body[data-theme="matrix_green"] .setting-slider-val:not(.is-muted),
-body[data-theme="matrix_green"] .hud-select-dropdown {
-  color: #93c5fd;
+.upgrades-top-label,
+.match-val-text,
+.setting-slider-val:not(.is-muted),
+.hud-select-dropdown,
+.start-sub-title {
+  color: var(--c1-light) !important;
 }
 
-body[data-theme="matrix_green"] .hud-gear-btn,
-body[data-theme="matrix_green"] .daily-bonus-quick-btn {
-  border-color: rgba(59, 130, 246, 0.52);
-  color: #60a5fa;
-  box-shadow: 0 0 12px rgba(37, 99, 235, 0.22), inset 0 0 8px rgba(59, 130, 246, 0.08);
-}
-body[data-theme="matrix_green"] .hud-gear-svg,
-body[data-theme="matrix_green"] .daily-btn-svg {
-  filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.65));
+.start-main-title {
+  text-shadow: 0 0 24px rgba(var(--c1-rgb), 0.85), 0 2px 14px rgba(2, 3, 8, 0.95) !important;
 }
 
-body[data-theme="matrix_green"] .start-sub-title {
-  color: #93c5fd;
+.hud-gear-btn,
+.daily-bonus-quick-btn {
+  border-color: rgba(var(--c1-rgb), 0.45);
+  color: var(--c1-light);
+  box-shadow: 0 0 12px rgba(var(--c1-rgb), 0.18), inset 0 0 8px rgba(var(--c1-rgb), 0.06);
 }
-body[data-theme="matrix_green"] .start-main-title {
-  text-shadow: 0 0 24px rgba(255, 145, 0, 0.85), 0 2px 14px rgba(2, 3, 8, 0.95);
-}
-
-/* Главная кнопка PLAY в меню */
-body[data-theme="matrix_green"] .menu-btn-primary-capsule {
-  background: linear-gradient(90deg, rgba(37, 99, 235, 0.65) 0%, rgba(255, 107, 0, 0.72) 55%, rgba(255, 183, 0, 0.75) 100%), rgba(8, 12, 24, 0.92);
-  border: 1.4px solid #ff9100;
-  box-shadow: 0 0 28px rgba(255, 107, 0, 0.5), -6px 0 20px rgba(37, 99, 235, 0.35);
-}
-body[data-theme="matrix_green"] .menu-btn-primary-capsule span {
-  text-shadow: 0 0 14px rgba(255, 183, 0, 0.9);
-}
-body[data-theme="matrix_green"] .menu-btn-primary-capsule:active:not(:disabled) {
-  background: linear-gradient(90deg, rgba(59, 130, 246, 0.8) 0%, rgba(255, 145, 0, 0.85) 55%, rgba(255, 200, 0, 0.9) 100%), rgba(10, 18, 36, 0.98) !important;
-  border-color: #ffb700 !important;
-  box-shadow: 0 0 40px rgba(255, 145, 0, 0.9), inset 0 0 15px rgba(255, 183, 0, 0.4) !important;
+.hud-gear-svg,
+.daily-btn-svg {
+  filter: drop-shadow(0 0 4px rgba(var(--c1-rgb), 0.6));
 }
 
-/* Виджет SYNTH PASS в главном меню */
-body[data-theme="matrix_green"] .synth-pass-widget {
-  border-color: rgba(59, 130, 246, 0.45);
-  box-shadow: 0 0 18px rgba(37, 99, 235, 0.22);
+/* 2. ГЛАВНОЕ МЕНЮ: КНОПКА PLAY И ВИДЖЕТ SYNTH PASS */
+.menu-btn-primary-capsule {
+  background: linear-gradient(rgba(var(--c1-rgb), 0.26), rgba(var(--c1-rgb), 0.06)), rgba(8, 12, 24, 0.92) !important;
+  border: 1.5px solid var(--c1) !important;
+  box-shadow: 0 0 28px rgba(var(--c1-rgb), 0.48) !important;
 }
-body[data-theme="matrix_green"] .synth-pass-icon {
-  color: #ff9100;
-  filter: drop-shadow(0 0 6px rgba(255, 145, 0, 0.6));
+.menu-btn-primary-capsule span {
+  text-shadow: 0 0 14px var(--c1) !important;
 }
-body[data-theme="matrix_green"] .synth-pass-tier-text {
-  color: #ffb700;
-}
-body[data-theme="matrix_green"] .synth-pass-bar-fill,
-body[data-theme="matrix_green"] .bp-xp-bar-fill {
-  background: linear-gradient(90deg, #2563eb 0%, #ff6b00 55%, #ffb700 100%);
-  box-shadow: 0 0 10px #ff9100;
+.menu-btn-primary-capsule:active:not(:disabled) {
+  background: linear-gradient(rgba(var(--c1-rgb), 0.52), rgba(var(--c1-rgb), 0.18)), rgba(10, 18, 36, 0.98) !important;
+  border-color: var(--c1-light) !important;
+  box-shadow: 0 0 40px rgba(var(--c1-rgb), 0.9), inset 0 0 15px rgba(var(--c1-rgb), 0.4) !important;
 }
 
-/* 2. ЛУТБОКС ПРИ ПОБЕДЕ -> СИНЯЯ ОБВОДКА */
-body[data-theme="matrix_green"] #victoryRewardBox {
-  --chip-border: #3b82f6 !important;
-  --chip-label: #93c5fd !important;
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 18px rgba(59, 130, 246, 0.4), inset 0 0 10px rgba(59, 130, 246, 0.12) !important;
+.synth-pass-widget {
+  border-color: rgba(var(--c1-rgb), 0.32);
+  box-shadow: 0 0 16px rgba(var(--c1-rgb), 0.15);
 }
-body[data-theme="matrix_green"] #victoryRewardBox .reward-label {
-  border-color: #3b82f6 !important;
-  color: #93c5fd !important;
+.synth-pass-icon {
+  color: var(--c1);
+  filter: drop-shadow(0 0 5px rgba(var(--c1-rgb), 0.55));
 }
-body[data-theme="matrix_green"] #victoryRewardBox .reward-amount {
-  text-shadow: 0 0 10px rgba(59, 130, 246, 0.65) !important;
+.synth-pass-tier-text {
+  color: var(--c1-light);
 }
 
-/* 3. CLAIM X2 И ВСЕ РЕКЛАМНЫЕ КНОПКИ -> СИНЕ-ЖЕЛТЫЙ ГРАДИЕНТ */
-body[data-theme="matrix_green"] .victory-claim-btn,
-body[data-theme="matrix_green"] #reviveBtn,
-body[data-theme="matrix_green"] .revive-btn,
-body[data-theme="matrix_green"] #defeatScreen.endless-result-active #endlessDoubleBtn,
-body[data-theme="matrix_green"] .daily-claim-double,
-body[data-theme="matrix_green"] .shop-btn-ad,
-body[data-theme="matrix_green"] .bp-cell-btn.ad-btn {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.55) 0%, rgba(255, 107, 0, 0.52) 55%, rgba(255, 183, 0, 0.55) 100%) !important;
-  border-color: #ffb700 !important;
-  box-shadow: 0 0 24px rgba(255, 145, 0, 0.45), -4px 0 16px rgba(37, 99, 235, 0.35) !important;
+/* Фиксированная ширина градиента для прогресс-баров во всех темах */
+.synth-pass-bar-fill {
+  background-image: linear-gradient(90deg, var(--c1) 0%, var(--c2) 60%, var(--c3) 100%) !important;
+  background-size: 170px 100% !important;
+  background-repeat: no-repeat !important;
+  box-shadow: 0 0 8px var(--c1) !important;
+}
+.bp-xp-bar-fill {
+  background-image: linear-gradient(90deg, var(--c1) 0%, var(--c2) 60%, var(--c3) 100%) !important;
+  background-size: 400px 100% !important;
+  background-repeat: no-repeat !important;
+  box-shadow: 0 0 12px var(--c1) !important;
+}
+
+/* 3. CLAIM X2 И ВСЕ РЕКЛАМНЫЕ КНОПКИ (Градиент --c1 -> --c2 -> --c3) */
+.victory-claim-btn,
+#reviveBtn,
+.revive-btn,
+#defeatScreen.endless-result-active #endlessDoubleBtn,
+.daily-claim-double,
+.shop-btn-ad,
+.bp-cell-btn.ad-btn {
+  background: linear-gradient(135deg, rgba(var(--c1-rgb), 0.48) 0%, rgba(var(--c2-rgb), 0.48) 52%, rgba(var(--c3-rgb), 0.48) 100%) !important;
+  border: 1.6px solid var(--c1) !important;
+  box-shadow: 0 0 24px rgba(var(--c1-rgb), 0.42), 0 0 14px rgba(var(--c2-rgb), 0.3) !important;
   color: #ffffff !important;
 }
 
-body[data-theme="matrix_green"] .victory-claim-btn:active:not(:disabled),
-body[data-theme="matrix_green"] #reviveBtn:active,
-body[data-theme="matrix_green"] .revive-btn:active,
-body[data-theme="matrix_green"] #defeatScreen.endless-result-active #endlessDoubleBtn:active,
-body[data-theme="matrix_green"] .daily-claim-double:active:not(:disabled),
-body[data-theme="matrix_green"] .shop-btn-ad:active:not(:disabled),
-body[data-theme="matrix_green"] .bp-cell-btn.ad-btn:active {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.72) 0%, rgba(255, 145, 0, 0.7) 55%, rgba(255, 205, 0, 0.75) 100%) !important;
-  border-color: #fde047 !important;
-  box-shadow: 0 0 32px rgba(255, 183, 0, 0.8) !important;
+.victory-claim-btn:active:not(:disabled),
+#reviveBtn:active,
+.revive-btn:active,
+#defeatScreen.endless-result-active #endlessDoubleBtn:active,
+.daily-claim-double:active:not(:disabled),
+.shop-btn-ad:active:not(:disabled),
+.bp-cell-btn.ad-btn:active {
+  background: linear-gradient(135deg, rgba(var(--c1-rgb), 0.68) 0%, rgba(var(--c2-rgb), 0.68) 52%, rgba(var(--c3-rgb), 0.68) 100%) !important;
+  border-color: var(--c1-light) !important;
+  box-shadow: 0 0 32px rgba(var(--c1-rgb), 0.8) !important;
 }
 
-/* 4. DAILY BONUS MODAL -> СИНЕ-ЖЕЛТЫЕ ЦВЕТА */
-body[data-theme="matrix_green"] .daily-modal-card {
-  border-color: rgba(59, 130, 246, 0.65);
-  box-shadow: 0 0 26px rgba(37, 99, 235, 0.3), inset 0 0 18px rgba(59, 130, 246, 0.1);
+/* 4. ПОБЕДНЫЙ ЛУТБОКС И ЗВЕЗДА ХАРДКОРА */
+#victoryRewardBox {
+  --chip-border: var(--c1);
+  --chip-label: var(--c1-light);
+  border-color: var(--c1);
+  box-shadow: 0 0 18px rgba(var(--c1-rgb), 0.38), inset 0 0 10px rgba(var(--c1-rgb), 0.1);
 }
-body[data-theme="matrix_green"] .daily-modal-close-btn {
-  border-color: rgba(59, 130, 246, 0.45);
-  color: #93c5fd;
-}
-body[data-theme="matrix_green"] .daily-card {
-  border-color: rgba(59, 130, 246, 0.35);
-}
-body[data-theme="matrix_green"] .daily-card.day5-card {
-  border-color: rgba(255, 145, 0, 0.5);
-}
-body[data-theme="matrix_green"] .daily-dual-plus {
-  color: #ffb700;
-  text-shadow: 0 0 6px rgba(255, 183, 0, 0.6);
-}
-body[data-theme="matrix_green"] .daily-card.active {
-  background: linear-gradient(180deg, rgba(68, 32, 6, 0.88) 0%, rgba(28, 12, 3, 0.96) 100%);
-  border: 2.2px solid #ffb700;
-  box-shadow: 0 0 18px rgba(255, 183, 0, 0.5), inset 0 0 10px rgba(255, 145, 0, 0.22);
-}
-body[data-theme="matrix_green"] .daily-today-badge {
-  background: linear-gradient(90deg, #ff6b00, #ffb700);
-  color: #060913;
-  box-shadow: 0 0 10px rgba(255, 183, 0, 0.75);
-}
-body[data-theme="matrix_green"] .daily-check-pill {
-  background: #081838;
-  border-color: rgba(59, 130, 246, 0.7);
-}
-body[data-theme="matrix_green"] .daily-check-pill svg {
-  stroke: #60a5fa !important;
-}
-body[data-theme="matrix_green"] .daily-card.day7-card {
-  background-image: linear-gradient(#0d1424, #0d1424), linear-gradient(90deg, #2563eb 0%, #ff6b00 50%, #ffb700 100%);
-  box-shadow: 0 0 18px rgba(255, 145, 0, 0.28);
-}
-body[data-theme="matrix_green"] .day7-badge {
-  background: #361704;
-  border-color: #ff9100;
-  color: #fde68a;
-}
-body[data-theme="matrix_green"] .diamond-capsule {
-  background: #07152e;
-  border-color: rgba(59, 130, 246, 0.75);
-}
-body[data-theme="matrix_green"] .prism-capsule {
-  background: #2b1104;
-  border-color: #ff9100;
-  box-shadow: 0 0 10px rgba(255, 145, 0, 0.35);
-}
-body[data-theme="matrix_green"] .daily-claim-normal {
-  background: #0a152e;
-  border-color: rgba(59, 130, 246, 0.65);
-  color: #dbeafe;
+.star-slot.overdrive-victory-badge.filled::before {
+  border-color: rgba(var(--c1-rgb), 0.95) !important;
 }
 
-/* 5.1. КНОПКИ БАШЕН В МЕНЮ ПОСТРОЙКИ ПО ТИПАМ БАШЕН (data-type) */
-/* Gun, Tesla, Stasis -> Синеватые */
-body[data-theme="matrix_green"] .tower-btn[data-type="gun"],
-body[data-theme="matrix_green"] .tower-btn[data-type="tesla"],
-body[data-theme="matrix_green"] .tower-btn[data-type="stasis"] {
-  background: rgba(10, 18, 40, 0.92) !important;
-  border-color: rgba(59, 130, 246, 0.55) !important;
+/* 5. DAILY BONUS MODAL */
+.daily-modal-card {
+  border-color: rgba(var(--c1-rgb), 0.6);
+  box-shadow: 0 0 26px rgba(var(--c1-rgb), 0.28), inset 0 0 18px rgba(var(--c1-rgb), 0.08);
 }
-/* Laser, Melter -> Оранжеватые (как было у Splash) */
-body[data-theme="matrix_green"] .tower-btn[data-type="laser"],
-body[data-theme="matrix_green"] .tower-btn[data-type="melter"] {
-  background: rgba(28, 12, 6, 0.92) !important;
-  border-color: rgba(255, 107, 0, 0.58) !important;
+.daily-modal-close-btn {
+  border-color: rgba(var(--c1-rgb), 0.4);
+  color: var(--c1-light);
 }
-/* Splash (mortar), Railgun -> Желтоватые (как было у Tesla) */
-body[data-theme="matrix_green"] .tower-btn[data-type="mortar"],
-body[data-theme="matrix_green"] .tower-btn[data-type="railgun"] {
-  background: rgba(28, 18, 6, 0.92) !important;
-  border-color: rgba(255, 183, 0, 0.58) !important;
+.daily-card {
+  border-color: rgba(var(--c1-rgb), 0.32);
 }
-
-/* 6. АЛМАЗЫ (СИНИЕ) И ПРИЗМЫ (ОРАНЖЕВО-ЗОЛОТЫЕ) ВЕЗДЕ В UI */
-body[data-theme="matrix_green"] #hudDiamondBadge svg,
-body[data-theme="matrix_green"] .levels-top-diamonds svg,
-body[data-theme="matrix_green"] .shop-card-icon.diamond-glow svg,
-body[data-theme="matrix_green"] .upgrade-row-buy svg[stroke="#00e5ff"],
-body[data-theme="matrix_green"] .bp-btn-buy-tier svg,
-body[data-theme="matrix_green"] .bp-cell-title svg[stroke="#00e5ff"],
-body[data-theme="matrix_green"] .mode-rules-banner svg[stroke="#00e5ff"],
-body[data-theme="matrix_green"] .loot-pill.diamond-pill svg,
-body[data-theme="matrix_green"] #synthPrismBtn svg,
-body[data-theme="matrix_green"] #timeModT1Btn svg,
-body[data-theme="matrix_green"] #timeModT2Btn svg {
-  stroke: #3b82f6 !important;
-  filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.8)) !important;
+.daily-card.day5-card {
+  border-color: rgba(var(--c2-rgb), 0.48);
 }
-body[data-theme="matrix_green"] #hudDiamondBadge svg polygon,
-body[data-theme="matrix_green"] .levels-top-diamonds svg polygon,
-body[data-theme="matrix_green"] .shop-card-icon.diamond-glow svg polygon,
-body[data-theme="matrix_green"] .upgrade-row-buy svg[stroke="#00e5ff"] polygon {
-  fill: rgba(59, 130, 246, 0.3) !important;
+.daily-dual-plus {
+  color: var(--c2);
+  text-shadow: 0 0 6px rgba(var(--c2-rgb), 0.6);
 }
-body[data-theme="matrix_green"] .shop-card-icon.diamond-glow {
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.4) !important;
+.daily-card.active {
+  background: linear-gradient(180deg, rgba(var(--c2-rgb), 0.28) 0%, rgba(12, 16, 30, 0.95) 100%);
+  border: 2.2px solid var(--c2);
+  box-shadow: 0 0 18px rgba(var(--c2-rgb), 0.5), inset 0 0 10px rgba(var(--c2-rgb), 0.2);
 }
-
-/* Призмы -> Солнечно-оранжевые (#ff6b00 / #ff9100) */
-body[data-theme="matrix_green"] #hudPrismBadge svg,
-body[data-theme="matrix_green"] .levels-top-prisms svg,
-body[data-theme="matrix_green"] .shop-card-icon.prism-glow svg,
-body[data-theme="matrix_green"] .upgrade-row-buy svg[stroke="#d946ef"],
-body[data-theme="matrix_green"] .bp-cell-title svg[stroke="#d946ef"],
-body[data-theme="matrix_green"] .mode-rules-banner svg[stroke="#d946ef"],
-body[data-theme="matrix_green"] .loot-pill.prism-pill svg,
-body[data-theme="matrix_green"] .highway-reward-badge svg,
-body[data-theme="matrix_green"] .level-card-overdrive-badge svg,
-body[data-theme="matrix_green"] #deconstructPrismBtn svg {
-  stroke: #ff6b00 !important;
-  filter: drop-shadow(0 0 6px rgba(255, 107, 0, 0.85)) !important;
-}
-body[data-theme="matrix_green"] #hudPrismBadge svg polygon,
-body[data-theme="matrix_green"] .levels-top-prisms svg polygon,
-body[data-theme="matrix_green"] .shop-card-icon.prism-glow svg polygon,
-body[data-theme="matrix_green"] .upgrade-row-buy svg[stroke="#d946ef"] polygon {
-  fill: rgba(255, 107, 0, 0.32) !important;
-}
-body[data-theme="matrix_green"] .shop-card-icon.prism-glow {
-  border-color: #ff6b00 !important;
-  box-shadow: 0 0 12px rgba(255, 107, 0, 0.4) !important;
-}
-body[data-theme="matrix_green"] .shop-card-prism {
-  background: linear-gradient(135deg, rgba(36, 16, 8, 0.78), rgba(18, 8, 4, 0.85));
-  border-color: rgba(255, 107, 0, 0.42);
-}
-body[data-theme="matrix_green"] .shop-card-sub.prism-sub {
-  color: #fdba74;
-}
-body[data-theme="matrix_green"] .shop-btn-prism {
-  background: rgba(38, 16, 8, 0.88);
-  border-color: rgba(255, 107, 0, 0.55);
-}
-
-/* 7. АККОРДЕОНЫ SETTINGS И LOADOUT -> СИНЕВАТЫЙ СТЕКЛЯННЫЙ ФОН, СИНИЕ ОБВОДКИ И ШРИФТ */
-body[data-theme="matrix_green"] .loadout-widget,
-body[data-theme="matrix_green"] .settings-collapsible-widget {
-  background: linear-gradient(180deg, rgba(10, 18, 40, 0.92) 0%, rgba(6, 11, 26, 0.96) 100%) !important;
-  border: 1.2px solid rgba(59, 130, 246, 0.38) !important;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5), inset 0 0 14px rgba(37, 99, 235, 0.08) !important;
-}
-body[data-theme="matrix_green"] .loadout-widget-label,
-body[data-theme="matrix_green"] .settings-collapsible-label,
-body[data-theme="matrix_green"] .loadout-widget-arrow,
-body[data-theme="matrix_green"] .settings-collapsible-arrow {
-  color: #60a5fa !important;
-}
-body[data-theme="matrix_green"] .loadout-widget-count {
-  background: rgba(59, 130, 246, 0.16);
-  border-color: rgba(59, 130, 246, 0.48);
-  color: #93c5fd;
-}
-body[data-theme="matrix_green"] .loadout-widget-count.is-full {
-  background: rgba(59, 130, 246, 0.28);
-  border-color: #3b82f6;
+.daily-today-badge {
+  background: var(--c2);
   color: #ffffff;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 0 10px rgba(var(--c2-rgb), 0.75);
 }
-body[data-theme="matrix_green"] .loadout-widget-expanded,
-body[data-theme="matrix_green"] .settings-collapsible-body {
-  border-top-color: rgba(59, 130, 246, 0.2);
+.daily-check-pill {
+  background: rgba(var(--c1-rgb), 0.14);
+  border-color: rgba(var(--c1-rgb), 0.65);
+}
+.daily-check-pill svg {
+  stroke: var(--c1) !important;
+}
+.daily-card.day7-card {
+  background-image: linear-gradient(#0d1424, #0d1424), linear-gradient(90deg, var(--c1) 0%, var(--c2) 50%, var(--c3) 100%);
+  box-shadow: 0 0 18px rgba(var(--c2-rgb), 0.28);
+}
+.day7-badge {
+  background: rgba(var(--c3-rgb), 0.22);
+  border-color: var(--c3);
+  color: var(--c3-light);
+}
+.diamond-capsule {
+  background: rgba(var(--c1-rgb), 0.12);
+  border-color: rgba(var(--c1-rgb), 0.72);
+}
+.prism-capsule {
+  background: rgba(var(--c2-rgb), 0.16);
+  border-color: var(--c2);
+  box-shadow: 0 0 10px rgba(var(--c2-rgb), 0.35);
+}
+.daily-claim-normal {
+  background: #0a152e;
+  border-color: rgba(var(--c1-rgb), 0.62);
+  color: var(--c1-light);
 }
 
-/* 9. ЗВЕЗДА ПРИ ВЫИГРЫШЕ В ХАРДКОРЕ -> СИНЯЯ УДАРНАЯ ВОЛНА */
-body[data-theme="matrix_green"] .star-slot.overdrive-victory-badge.filled::before {
-  border-color: rgba(59, 130, 246, 0.95) !important;
+/* 6. КНОПКИ БАШЕН В МЕНЮ ПОСТРОЙКИ ПО СЛОТАМ (data-type) */
+/* Gun, Tesla, Stasis -> Слот 1/5 (--c1 / --c5) */
+.tower-btn[data-type="gun"],
+.tower-btn[data-type="tesla"],
+.tower-btn[data-type="stasis"] {
+  background: rgba(var(--c1-rgb), 0.08) !important;
+  border-color: rgba(var(--c1-rgb), 0.48) !important;
+}
+/* Laser, Melter -> Слот 2/3 (--c2 / --c3) */
+.tower-btn[data-type="laser"],
+.tower-btn[data-type="melter"] {
+  background: rgba(var(--c2-rgb), 0.09) !important;
+  border-color: rgba(var(--c2-rgb), 0.52) !important;
+}
+/* Splash (mortar), Railgun -> Слот 4 (--c4) */
+.tower-btn[data-type="mortar"],
+.tower-btn[data-type="railgun"] {
+  background: rgba(var(--c4-rgb), 0.09) !important;
+  border-color: rgba(var(--c4-rgb), 0.52) !important;
 }
 
-/* Круглая кнопка волны GO в бою и инспектор */
-body[data-theme="matrix_green"] .action-btn {
-  box-shadow: 0 0 18px rgba(255, 107, 0, 0.35);
+/* 7. ИКОНКИ АЛМАЗОВ (--c1) И ПРИЗМ (--c2) ВЕЗДЕ В UI */
+#hudDiamondBadge svg,
+.levels-top-diamonds svg,
+.shop-card-icon.diamond-glow svg,
+.upgrade-row-buy svg[stroke="#00e5ff"],
+.bp-btn-buy-tier svg,
+.bp-cell-title svg[stroke="#00e5ff"],
+.mode-rules-banner svg[stroke="#00e5ff"],
+.loot-pill.diamond-pill svg,
+#synthPrismBtn svg,
+#timeModT1Btn svg,
+#timeModT2Btn svg {
+  stroke: var(--c1) !important;
+  filter: drop-shadow(0 0 6px rgba(var(--c1-rgb), 0.78)) !important;
 }
-body[data-theme="matrix_green"] .wave-circle-wrap::before {
-  background: radial-gradient(circle at 50% 50%, rgba(255, 107, 0, 0.36), rgba(255, 107, 0, 0.08));
-  border-color: #ff6b00;
-  box-shadow: 0 0 28px rgba(255, 107, 0, 0.6);
+#hudDiamondBadge svg polygon,
+.levels-top-diamonds svg polygon,
+.shop-card-icon.diamond-glow svg polygon,
+.upgrade-row-buy svg[stroke="#00e5ff"] polygon {
+  fill: rgba(var(--c1-rgb), 0.28) !important;
 }
-body[data-theme="matrix_green"] .wave-circle-prog {
-  stroke: #ffb700;
-  filter: drop-shadow(0 0 5px #ff9100);
+.shop-card-icon.diamond-glow {
+  border-color: var(--c1) !important;
+  box-shadow: 0 0 12px rgba(var(--c1-rgb), 0.38) !important;
 }
-body[data-theme="matrix_green"] .wave-btn-label {
-  text-shadow: 0 0 14px #ff9100;
+
+#hudPrismBadge svg,
+.levels-top-prisms svg,
+.shop-card-icon.prism-glow svg,
+.upgrade-row-buy svg[stroke="#d946ef"],
+.bp-cell-title svg[stroke="#d946ef"],
+.mode-rules-banner svg[stroke="#d946ef"],
+.loot-pill.prism-pill svg,
+.highway-reward-badge svg,
+.level-card-overdrive-badge svg,
+#deconstructPrismBtn svg {
+  stroke: var(--c2) !important;
+  filter: drop-shadow(0 0 6px rgba(var(--c2-rgb), 0.8)) !important;
 }
-body[data-theme="matrix_green"] .btn-upgrade {
-  background: linear-gradient(rgba(255, 145, 0, 0.32), rgba(255, 107, 0, 0.08)), rgba(18, 12, 8, 0.94);
-  border-color: #ff9100;
-  box-shadow: 0 0 22px rgba(255, 145, 0, 0.35);
+#hudPrismBadge svg polygon,
+.levels-top-prisms svg polygon,
+.shop-card-icon.prism-glow svg polygon,
+.upgrade-row-buy svg[stroke="#d946ef"] polygon {
+  fill: rgba(var(--c2-rgb), 0.3) !important;
 }
-body[data-theme="matrix_green"] .level-card-btn {
-  border-color: rgba(59, 130, 246, 0.48);
+.shop-card-icon.prism-glow {
+  border-color: var(--c2) !important;
+  box-shadow: 0 0 12px rgba(var(--c2-rgb), 0.38) !important;
 }
-body[data-theme="matrix_green"] .level-card-btn.current {
-  background: linear-gradient(rgba(255, 145, 0, 0.32), rgba(37, 99, 235, 0.12)), rgba(8, 12, 24, 0.92);
-  border-color: #ff9100;
-  box-shadow: 0 0 24px rgba(255, 145, 0, 0.45);
+.shop-card-prism {
+  background: linear-gradient(135deg, rgba(var(--c2-rgb), 0.14), rgba(12, 8, 22, 0.85));
+  border-color: rgba(var(--c2-rgb), 0.4);
 }
-body[data-theme="matrix_green"] .upgrade-row-buy:not(.locked-buy):not(.max-buy) {
-  background: linear-gradient(rgba(255, 145, 0, 0.3), rgba(37, 99, 235, 0.12)), rgba(10, 14, 28, 0.94);
-  border-color: #ff9100;
+.shop-card-sub.prism-sub {
+  color: var(--c2-light);
+}
+.shop-btn-prism {
+  background: rgba(var(--c2-rgb), 0.16);
+  border-color: rgba(var(--c2-rgb), 0.5);
+}
+
+/* 8. АККОРДЕОНЫ SETTINGS И LOADOUT */
+.loadout-widget,
+.settings-collapsible-widget {
+  background: linear-gradient(180deg, rgba(10, 18, 38, 0.92) 0%, rgba(6, 11, 24, 0.96) 100%) !important;
+  border: 1.2px solid rgba(var(--c1-rgb), 0.36) !important;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5), inset 0 0 14px rgba(var(--c1-rgb), 0.08) !important;
+}
+.loadout-widget-label,
+.settings-collapsible-label,
+.loadout-widget-arrow,
+.settings-collapsible-arrow {
+  color: var(--c1-light) !important;
+}
+.loadout-widget-count {
+  background: rgba(var(--c1-rgb), 0.16);
+  border-color: rgba(var(--c1-rgb), 0.48);
+  color: var(--c1-light);
+}
+.loadout-widget-count.is-full {
+  background: rgba(var(--c1-rgb), 0.26);
+  border-color: var(--c1);
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(var(--c1-rgb), 0.4);
+}
+.loadout-widget-expanded,
+.settings-collapsible-body {
+  border-top-color: rgba(var(--c1-rgb), 0.2);
+}
+
+/* 9. КНОПКА ВОЛНЫ GO, ИНСПЕКТОР И КАРТОЧКИ УРОВНЕЙ */
+.wave-circle-wrap::before {
+  background: radial-gradient(circle at 50% 50%, rgba(var(--c1-rgb), 0.35), rgba(var(--c1-rgb), 0.08));
+  border-color: var(--c1);
+  box-shadow: 0 0 28px rgba(var(--c1-rgb), 0.55);
+}
+.wave-circle-prog {
+  stroke: var(--c1);
+  filter: drop-shadow(0 0 5px var(--c1));
+}
+.wave-circle-prog.counting-down {
+  stroke: var(--c4);
+  filter: drop-shadow(0 0 5px var(--c4));
+}
+.wave-btn-label {
+  text-shadow: 0 0 14px var(--c1);
+}
+.btn-upgrade {
+  background: linear-gradient(rgba(var(--c1-rgb), 0.3), rgba(var(--c1-rgb), 0.06)), rgba(8, 12, 24, 0.92);
+  border-color: var(--c1);
+  box-shadow: 0 0 22px rgba(var(--c1-rgb), 0.35);
+}
+.level-card-btn {
+  border-color: rgba(var(--c1-rgb), 0.45);
+}
+.level-card-btn.current {
+  background: linear-gradient(rgba(var(--c1-rgb), 0.3), rgba(var(--c1-rgb), 0.06)), rgba(8, 12, 24, 0.92);
+  border-color: var(--c1);
+  box-shadow: 0 0 24px rgba(var(--c1-rgb), 0.45);
+}
+.upgrade-row-buy:not(.locked-buy):not(.max-buy) {
+  background: linear-gradient(rgba(var(--c1-rgb), 0.28), rgba(var(--c1-rgb), 0.08)), rgba(8, 12, 24, 0.92);
+  border-color: var(--c1);
+}
+/* 10. КНОПКА GO НА ЛОАДЕРЕ И .shop-btn-free ПОД ЦВЕТ ТЕМЫ (--c1) */
+.shop-btn-free {
+  background: linear-gradient(180deg, rgba(var(--c1-rgb), 0.36) 0%, rgba(var(--c1-rgb), 0.14) 100%) !important;
+  border: 1.4px solid var(--c1) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 14px rgba(var(--c1-rgb), 0.4) !important;
+}
+
+@keyframes goBtnPulse {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(var(--c1-rgb), 0.38);
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(var(--c1-rgb), 0.88);
+    transform: translateX(-50%) scale(1.02);
+  }
+}
+
+/* 11. КАСТОМНАЯ ВЫПАДАШКА VISUAL В СТИЛЕ ИГРЫ */
+.bp-header-card,
+.bp-header-top,
+.bp-palette-picker-wrap {
+  overflow: visible !important;
+}
+
+.bp-palette-label {
+  text-transform: none !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #94a3b8 !important;
+}
+
+.custom-palette-dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.custom-palette-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(10, 16, 32, 0.85);
+  border: 1px solid rgba(var(--c1-rgb), 0.42);
+  border-radius: 10px;
+  padding: 4px 9px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--c1-light);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.custom-palette-trigger.open {
+  border-color: var(--c1);
+  box-shadow: 0 0 12px rgba(var(--c1-rgb), 0.4);
+  color: #ffffff;
+}
+
+.custom-palette-trigger.is-disabled {
+  background: rgba(8, 12, 24, 0.5);
+  border-color: rgba(140, 200, 255, 0.16);
+  color: #64748b;
+  opacity: 0.8;
+}
+
+.pal-lock-icon {
+  display: inline-flex;
+  align-items: center;
+  color: #64748b;
+}
+
+.pal-trigger-arrow {
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+.custom-palette-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 176px;
+  background: linear-gradient(180deg, rgba(12, 18, 36, 0.98) 0%, rgba(6, 10, 22, 0.99) 100%);
+  border: 1.4px solid var(--c1);
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.85), 0 0 18px rgba(var(--c1-rgb), 0.3);
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 9999;
+  backdrop-filter: blur(14px);
+}
+
+.custom-palette-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+  white-space: nowrap;
+}
+
+.custom-palette-option:hover,
+.custom-palette-option:active {
+  background: rgba(var(--c1-rgb), 0.16);
+  color: #ffffff;
+}
+
+.custom-palette-option.selected {
+  background: rgba(var(--c1-rgb), 0.22);
+  color: #ffffff;
+}
+
+.custom-palette-option.locked {
+  color: #64748b;
+  background: rgba(8, 12, 22, 0.4);
+}
+
+.pal-opt-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.custom-palette-option.locked .pal-opt-dot {
+  opacity: 0.4;
+}
+
+.pal-opt-name {
+  flex: 1;
+  text-align: left;
+}
+
+.pal-opt-lock {
+  display: inline-flex;
+  align-items: center;
+  color: #64748b;
+}
+
+.pal-opt-check {
+  font-size: 9px;
+  color: var(--c1);
 }
