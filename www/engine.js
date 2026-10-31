@@ -85,6 +85,94 @@ async function preloadRewardedAd() {
   }
 }
 
+// [ENG.AB] Диагностический объект AdMob для Dev-панели
+window.AdDiagnostics = {
+  pluginAvailable: false,
+  isNative: false,
+  initialized: false,
+  videoReady: false,
+  lastEvent: 'NONE',
+  lastError: 'None',
+  logs: []
+};
+
+function logAdEvent(msg) {
+  const time = new Date().toTimeString().split(' ')[0];
+  const line = `[${time}] ${msg}`;
+  window.AdDiagnostics.logs.unshift(line);
+  if (window.AdDiagnostics.logs.length > 20) window.AdDiagnostics.logs.pop();
+  window.AdDiagnostics.lastEvent = msg;
+  console.log('[AdMob]', line);
+}
+
+// Конфигурация AdMob (Тестовый Unit ID для Rewarded Video)
+const ADMOB_REWARDED_TEST_ID = 'ca-app-pub-3940256099942544/5224354917';
+let isAdMobInitialized = false;
+let isAdMobVideoReady = false;
+
+async function initAdMobBridge() {
+  const isNative = typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform();
+  window.AdDiagnostics.isNative = isNative;
+  
+  const isPluginAvail = !!(window.Capacitor && window.Capacitor.isPluginAvailable && window.Capacitor.isPluginAvailable('AdMob'));
+  window.AdDiagnostics.pluginAvailable = isPluginAvail;
+
+  if (!isPluginAvail) {
+    logAdEvent('Plugin AdMob NOT available');
+    return;
+  }
+
+  try {
+    const { AdMob } = window.Capacitor.Plugins;
+    logAdEvent('Calling AdMob.initialize()...');
+    await AdMob.initialize({ initializeForTesting: true });
+    isAdMobInitialized = true;
+    window.AdDiagnostics.initialized = true;
+    logAdEvent('AdMob initialized successfully');
+    preloadRewardedAd();
+  } catch (err) {
+    const errStr = (err && err.message) ? err.message : JSON.stringify(err);
+    window.AdDiagnostics.lastError = errStr;
+    logAdEvent('Init Error: ' + errStr);
+  }
+}
+
+async function preloadRewardedAd() {
+  if (!isAdMobInitialized || !window.Capacitor?.Plugins?.AdMob) {
+    logAdEvent('Cannot preload: not initialized');
+    return;
+  }
+  try {
+    const { AdMob } = window.Capacitor.Plugins;
+    logAdEvent('Preloading Reward Video...');
+    await AdMob.prepareRewardVideoAd({
+      adId: ADMOB_REWARDED_TEST_ID,
+      isTesting: true
+    });
+    isAdMobVideoReady = true;
+    window.AdDiagnostics.videoReady = true;
+    logAdEvent('Reward Video is READY');
+  } catch (err) {
+    isAdMobVideoReady = false;
+    window.AdDiagnostics.videoReady = false;
+    const errStr = (err && err.message) ? err.message : JSON.stringify(err);
+    window.AdDiagnostics.lastError = errStr;
+    logAdEvent('Preload Failed: ' + errStr);
+  }
+}
+
+// Функции для ручного запуска из Dev-меню
+window.devPreloadRewardAd = function() {
+  preloadRewardedAd();
+};
+
+window.devShowRewardAd = function() {
+  showAdPlaceholder(
+    () => { if (typeof showHintToast === 'function') showHintToast('Dev: Ad Rewarded!'); },
+    () => { if (typeof showHintToast === 'function') showHintToast('Dev: Ad Dismissed (No Reward)'); }
+  );
+};
+
 // [ENG.B]
 function hasClearedLevelBefore(lvl) {
   return maxUnlockedLevel > lvl;
@@ -2207,23 +2295,27 @@ async function showAdPlaceholder(onRewarded, onNotRewarded) {
     let failedListener = null;
 
     try {
-      // 1. Если SDK ещё не инициализирован, инициализируем
       if (!isAdMobInitialized) {
+        if (typeof logAdEvent === 'function') logAdEvent('Init via showAd...');
         await AdMob.initialize({ initializeForTesting: true });
         isAdMobInitialized = true;
+        if (window.AdDiagnostics) window.AdDiagnostics.initialized = true;
       }
 
-      // 2. Вешаем слушатели событий
+      // Слушатель успешного просмотра
       rewardListener = await AdMob.addListener('onRewarded', () => {
         userEarnedReward = true;
+        if (typeof logAdEvent === 'function') logAdEvent('Event: onRewarded');
       });
 
+      // Слушатель закрытия рекламы
       dismissListener = await AdMob.addListener('onRewardVideoAdDismissed', () => {
+        if (typeof logAdEvent === 'function') logAdEvent('Event: Ad Dismissed');
         if (rewardListener) rewardListener.remove();
         if (dismissListener) dismissListener.remove();
         if (failedListener) failedListener.remove();
         
-        preloadRewardedAd(); // Готовим следующий ролик
+        preloadRewardedAd();
 
         if (userEarnedReward) {
           if (onRewarded) onRewarded();
@@ -2232,28 +2324,40 @@ async function showAdPlaceholder(onRewarded, onNotRewarded) {
         }
       });
 
+      // Слушатель ошибки загрузки
       failedListener = await AdMob.addListener('onRewardVideoAdFailedToLoad', (err) => {
+        const errStr = JSON.stringify(err);
         console.warn('Reward ad failed to load:', err);
+        if (window.AdDiagnostics) window.AdDiagnostics.lastError = errStr;
+        if (typeof logAdEvent === 'function') logAdEvent('FailedToLoad: ' + errStr);
       });
 
-      // 3. Подготавливаем и показываем ролик
+      if (typeof logAdEvent === 'function') logAdEvent('Preparing ad before show...');
       await AdMob.prepareRewardVideoAd({
         adId: ADMOB_REWARDED_TEST_ID,
         isTesting: true
       });
 
+      if (typeof logAdEvent === 'function') logAdEvent('Calling showRewardVideoAd...');
       await AdMob.showRewardVideoAd();
-      return; // Успешно показали рекламу
+      return;
     } catch (e) {
+      const errStr = (e && e.message) ? e.message : String(e);
       console.warn('AdMob execution error:', e);
+      if (window.AdDiagnostics) window.AdDiagnostics.lastError = errStr;
+      if (typeof logAdEvent === 'function') logAdEvent('Show Error: ' + errStr);
+
       if (rewardListener) rewardListener.remove();
       if (dismissListener) dismissListener.remove();
       if (failedListener) failedListener.remove();
-      // При сбое переходим к диалогу симуляции ниже
+    }
+  } else {
+    if (typeof logAdEvent === 'function') {
+      logAdEvent(`Fallback: isNative=${isNative}, AdMob=${!!AdMob}`);
     }
   }
 
-  // Фоллбэк для веб-версии / симулятора
+  // Фоллбэк: работа в браузере или при сбое нативного плагина
   const adOverlay = document.getElementById('adSimOverlay');
   const yesBtn = document.getElementById('adSimYesBtn');
   const noBtn = document.getElementById('adSimNoBtn');

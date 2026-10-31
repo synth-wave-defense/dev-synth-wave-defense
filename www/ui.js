@@ -2372,8 +2372,8 @@ function closeDevMode() {
   }
   setGameSpeed(1);
 
-  window.devSubExpanded = { Game: false, Audio: false, Version: false };
-  ['Game', 'Audio', 'Version'].forEach(k => {
+  window.devSubExpanded = { Game: false, Audio: false, Version: false, Ads: false };
+  ['Game', 'Audio', 'Version', 'Ads'].forEach(k => {
     const b = document.getElementById('devSubBody' + k);
     const a = document.getElementById('devSubArrow' + k);
     if (b) b.classList.add('hidden');
@@ -2421,7 +2421,7 @@ function toggleDevSubSection(name) {
   if (!window.devSubExpanded) window.devSubExpanded = {};
   const willOpen = !window.devSubExpanded[name];
 
-  ['Game', 'Audio', 'Version'].forEach(key => {
+  ['Game', 'Audio', 'Version', 'Ads'].forEach(key => {
     const isNowOpen = (key === name) ? willOpen : false;
     window.devSubExpanded[key] = isNowOpen;
     const body = document.getElementById('devSubBody' + key);
@@ -2441,10 +2441,14 @@ function toggleDevMetricGroup(groupKey) {
   if (!window.devMetricExpanded) window.devMetricExpanded = {};
   const willOpen = !window.devMetricExpanded[groupKey];
 
-  const isAudioGroup = groupKey.startsWith('Audio');
-  const siblingKeys = isAudioGroup
-    ? ['AudioHw', 'AudioDsp', 'AudioMem']
-    : ['VerManifest', 'VerDownload', 'VerPlugin', 'VerLogs'];
+  let siblingKeys = [];
+  if (groupKey.startsWith('Audio')) {
+    siblingKeys = ['AudioHw', 'AudioDsp', 'AudioMem'];
+  } else if (groupKey.startsWith('Ver')) {
+    siblingKeys = ['VerManifest', 'VerDownload', 'VerPlugin', 'VerLogs'];
+  } else if (groupKey.startsWith('Ad')) {
+    siblingKeys = ['AdStatus', 'AdLogs'];
+  }
 
   const domMap = {
     AudioHw: 'devAudioLogHw',
@@ -2453,7 +2457,9 @@ function toggleDevMetricGroup(groupKey) {
     VerManifest: 'devVerLogManifest',
     VerDownload: 'devVerLogDownload',
     VerPlugin: 'devVerLogPlugin',
-    VerLogs: 'devVerLogHistory'
+    VerLogs: 'devVerLogHistory',
+    AdStatus: 'devAdLogStatus',
+    AdLogs: 'devAdLogHistory'
   };
 
   siblingKeys.forEach(k => {
@@ -7866,6 +7872,26 @@ function render(now) {
           const verLogsEl = document.getElementById('devVerLogHistory');
           if (verLogsEl) {
             verLogsEl.textContent = d.logs.length ? d.logs.join('\n') : 'No logs yet';
+          }
+        }
+
+        if (window.AdDiagnostics) {
+          const a = window.AdDiagnostics;
+
+          const adStatusEl = document.getElementById('devAdLogStatus');
+          if (adStatusEl) {
+            adStatusEl.textContent =
+              `Native : ${a.isNative ? 'YES' : 'NO'}\n` +
+              `Plugin : ${a.pluginAvailable ? 'AVAILABLE' : 'NOT FOUND'}\n` +
+              `Init   : ${a.initialized ? 'OK' : 'NO'}\n` +
+              `Ready  : ${a.videoReady ? 'YES' : 'NO'}\n` +
+              `LastEv : ${a.lastEvent}\n` +
+              `Error  : ${a.lastError}`;
+          }
+
+          const adLogsEl = document.getElementById('devAdLogHistory');
+          if (adLogsEl) {
+            adLogsEl.textContent = a.logs.length ? a.logs.join('\n') : 'No events yet';
           }
         }
       }

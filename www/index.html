@@ -598,7 +598,38 @@
           <button type="button" class="dev-btn" onclick="window.AppUpdater && window.AppUpdater.forceApplyNow()" style="flex:1; font-size:9px; padding:4px 2px;">APPLY NOW</button>
         </div>
       </div>
+			<!-- ================= 2 УРОВЕНЬ: ADS ================= -->
+    <div class="dev-spawner-sub" style="margin-top:4px;">
+      <div class="dev-sub-title" onclick="toggleDevSubSection('Ads')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none; padding:3px 2px;">
+        <span>▸ ADS</span>
+        <span id="devSubArrowAds">▾</span>
+      </div>
+      <div id="devSubBodyAds" class="hidden" style="margin-top:4px; display:flex; flex-direction:column; gap:3px;">
+
+        <!-- 3 уровень: Состояние плагина и предзагрузки -->
+        <div style="border-top:1px solid rgba(0,229,255,0.15); padding-top:3px;">
+          <div onclick="toggleDevMetricGroup('AdStatus')" style="cursor:pointer; display:flex; justify-content:space-between; font-size:10px; color:#8ef3ff; user-select:none;">
+            <span>• Plugin & Status</span><span id="devMetricArrowAdStatus">▴</span>
+          </div>
+          <pre id="devAdLogStatus" class="dev-audio-log" style="font-size:10px; line-height:1.35; margin:3px 0 0 0; white-space:pre-wrap; overflow-wrap:anywhere;">Init...</pre>
+        </div>
+
+        <!-- 3 уровень: История логов и событий -->
+        <div style="border-top:1px solid rgba(0,229,255,0.15); padding-top:3px;">
+          <div onclick="toggleDevMetricGroup('AdLogs')" style="cursor:pointer; display:flex; justify-content:space-between; font-size:10px; color:#94a3b8; user-select:none;">
+            <span>• Events & Errors</span><span id="devMetricArrowAdLogs">▾</span>
+          </div>
+          <pre id="devAdLogHistory" class="dev-audio-log hidden" style="font-size:9px; line-height:1.3; margin:3px 0 0 0; max-height:85px; overflow-y:auto; white-space:pre-wrap; overflow-wrap:anywhere;">No events yet</pre>
+        </div>
+
+        <div class="dev-actions-row" style="display:flex; gap:4px; margin-top:4px;">
+          <button type="button" class="dev-btn" onclick="devPreloadRewardAd()" style="flex:1; font-size:9px; padding:4px 2px;">PRELOAD</button>
+          <button type="button" class="dev-btn" onclick="devShowRewardAd()" style="flex:1; font-size:9px; padding:4px 2px;">SHOW AD</button>
+        </div>
+      </div>
     </div>
+	
+	</div>
 
   </div>
 </div>
