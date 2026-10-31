@@ -2197,51 +2197,63 @@ function calculateLevelStarsAndReward(lvl, currentHp, startingHp) {
 
 // [ENG.BL]
 async function showAdPlaceholder(onRewarded, onNotRewarded) {
-  // 1. Проверяем, запущено ли приложение на нативном устройстве и доступен ли AdMob
-  const isNative = window.Capacitor && window.Capacitor.isNativePlatform();
+  const isNative = typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform();
   const AdMob = window.Capacitor?.Plugins?.AdMob;
 
-  if (isNative && isAdMobInitialized && AdMob) {
-    let rewarded = false;
-
-    // Слушатель успешного просмотра
-    const rewardListener = await AdMob.addListener('onRewarded', () => {
-      rewarded = true;
-    });
-
-    // Слушатель закрытия экрана рекламы
-    const dismissListener = await AdMob.addListener('onRewardVideoAdDismissed', () => {
-      rewardListener.remove();
-      dismissListener.remove();
-      preloadRewardedAd(); // Готовим следующий ролик заранее
-
-      if (rewarded) {
-        if (onRewarded) onRewarded();
-      } else {
-        if (onNotRewarded) onNotRewarded();
-      }
-    });
+  if (isNative && AdMob) {
+    let userEarnedReward = false;
+    let rewardListener = null;
+    let dismissListener = null;
+    let failedListener = null;
 
     try {
-      if (!isAdMobVideoReady) {
-        await AdMob.prepareRewardVideoAd({
-          adId: ADMOB_REWARDED_TEST_ID,
-          isTesting: true
-        });
+      // 1. Если SDK ещё не инициализирован, инициализируем
+      if (!isAdMobInitialized) {
+        await AdMob.initialize({ initializeForTesting: true });
+        isAdMobInitialized = true;
       }
-      isAdMobVideoReady = false;
+
+      // 2. Вешаем слушатели событий
+      rewardListener = await AdMob.addListener('onRewarded', () => {
+        userEarnedReward = true;
+      });
+
+      dismissListener = await AdMob.addListener('onRewardVideoAdDismissed', () => {
+        if (rewardListener) rewardListener.remove();
+        if (dismissListener) dismissListener.remove();
+        if (failedListener) failedListener.remove();
+        
+        preloadRewardedAd(); // Готовим следующий ролик
+
+        if (userEarnedReward) {
+          if (onRewarded) onRewarded();
+        } else {
+          if (onNotRewarded) onNotRewarded();
+        }
+      });
+
+      failedListener = await AdMob.addListener('onRewardVideoAdFailedToLoad', (err) => {
+        console.warn('Reward ad failed to load:', err);
+      });
+
+      // 3. Подготавливаем и показываем ролик
+      await AdMob.prepareRewardVideoAd({
+        adId: ADMOB_REWARDED_TEST_ID,
+        isTesting: true
+      });
+
       await AdMob.showRewardVideoAd();
-      return; // Успешно ушли в нативный показ ролика
+      return; // Успешно показали рекламу
     } catch (e) {
-      console.warn('AdMob show failed, falling back to simulation modal:', e);
-      rewardListener.remove();
-      dismissListener.remove();
-      preloadRewardedAd();
-      // При ошибке загрузки нативного видео открываем симуляцию
+      console.warn('AdMob execution error:', e);
+      if (rewardListener) rewardListener.remove();
+      if (dismissListener) dismissListener.remove();
+      if (failedListener) failedListener.remove();
+      // При сбое переходим к диалогу симуляции ниже
     }
   }
 
-  // 2. Фоллбэк: работа в веб-браузере (DevGate / localhost) или при отсутствии сети
+  // Фоллбэк для веб-версии / симулятора
   const adOverlay = document.getElementById('adSimOverlay');
   const yesBtn = document.getElementById('adSimYesBtn');
   const noBtn = document.getElementById('adSimNoBtn');
