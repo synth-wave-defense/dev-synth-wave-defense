@@ -3278,7 +3278,7 @@ function updatePaletteSelectDropdown(selectId) {
     item.innerHTML = `
       <span class="pal-opt-dot" style="background:${pal.c1}; box-shadow: 0 0 6px ${pal.c1};"></span>
       <span class="pal-opt-name">${pal.name}</span>
-      ${!isUnlocked ? `<span class="pal-opt-lock">${CUSTOM_LOCK_SVG}</span>` : (isSelected ? `<span class="pal-opt-check">●</span>` : '')}
+      ${!isUnlocked ? `<span class="pal-opt-lock">${CUSTOM_LOCK_SVG}</span>` : ''}
     `;
 
     // [UI.EB]
@@ -4899,13 +4899,15 @@ function renderDailyLoginModal() {
 
   const trackEl = document.getElementById('dailyStreakTrack');
   if (trackEl) {
-    const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
-    const doneCol = isHyperion ? '#3b82f6' : '#00e5ff';
-    const doneBg = isHyperion ? '#081638' : '#041a22';
-    const actCol = isHyperion ? '#ffb700' : '#d946ef';
-    const actBg = isHyperion ? '#331804' : '#2d083d';
-    const day7FutCol = isHyperion ? '#ff6b00' : '#ff2fd0';
-    const day7FutBg = isHyperion ? '#291002' : '#1f0833';
+    const th = getTheme();
+    const c1Rgb = th.rgb1 ? th.rgb1.cssRgb : '0, 229, 255';
+    const c2Rgb = th.rgb2 ? th.rgb2.cssRgb : '217, 70, 239';
+    const doneCol = th.c1;
+    const doneBg = `rgba(${c1Rgb}, 0.22)`;
+    const actCol = th.c2;
+    const actBg = `rgba(${c2Rgb}, 0.25)`;
+    const day7FutCol = th.c3;
+    const day7FutBg = `rgba(${th.rgb3 ? th.rgb3.cssRgb : '240, 95, 159'}, 0.2)`;
 
     const activeStreakDay = isClaimedToday ? (loginStreakDay === 1 ? 7 : loginStreakDay - 1) : loginStreakDay;
     let trackNodesHtml = '';
@@ -4992,7 +4994,8 @@ function renderDailyLoginModal() {
 
       let statusBadge = '';
       if (isClaimed) {
-        statusBadge = `<div class="daily-check-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>`;
+        const th = getTheme();
+        statusBadge = `<div class="daily-check-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${th.c1}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>`;
       }
 
       card.innerHTML = `
@@ -5023,7 +5026,8 @@ function renderDailyLoginModal() {
 
       let bottomBadge = '';
       if (isClaimed) {
-        bottomBadge = `<div class="daily-check-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>`;
+        const th = getTheme();
+        bottomBadge = `<div class="daily-check-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${th.c1}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>`;
       }
 
       card.innerHTML = `
@@ -5055,7 +5059,8 @@ function renderDailyLoginModal() {
 
       let bottomBadge = '';
       if (isClaimed) {
-        bottomBadge = `<div class="daily-check-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>`;
+        const th = getTheme();
+        bottomBadge = `<div class="daily-check-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${th.c1}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>`;
       }
 
       card.innerHTML = `
@@ -6678,13 +6683,13 @@ const th = getTheme();
   const makeGrad = (lighten) => {
     const g = c.createLinearGradient(B.x - 20, 0, C.x + 20, 0);
     if (lighten) {
-      g.addColorStop(0.00, th.c3Light);
-      g.addColorStop(0.48, th.c2Light);
-      g.addColorStop(1.00, th.c1Light);
+      g.addColorStop(0.00, th.c1Light);
+      g.addColorStop(0.52, th.c2Light);
+      g.addColorStop(1.00, th.c3Light);
     } else {
-      g.addColorStop(0.00, th.c3);
-      g.addColorStop(0.48, th.c2);
-      g.addColorStop(1.00, th.c1);
+      g.addColorStop(0.00, th.c1);
+      g.addColorStop(0.52, th.c2);
+      g.addColorStop(1.00, th.c3);
     }
     return g;
   };
@@ -6694,19 +6699,21 @@ const th = getTheme();
   c.globalCompositeOperation = 'lighter';
 
   const cornerR = halfW * 0.42;
+  // Левый угол B — циановое свечение (c1)
   const bGlow = c.createRadialGradient(B.x, B.y, 0, B.x, B.y, cornerR);
-  bGlow.addColorStop(0.0, `rgba(${c3Rgb}, 0.24)`);
-  bGlow.addColorStop(0.4, `rgba(${c2Rgb}, 0.10)`);
-  bGlow.addColorStop(1.0, `rgba(${c2Rgb}, 0)`);
+  bGlow.addColorStop(0.0, `rgba(${c1Rgb}, 0.24)`);
+  bGlow.addColorStop(0.4, `rgba(${c1Rgb}, 0.10)`);
+  bGlow.addColorStop(1.0, `rgba(${c1Rgb}, 0)`);
   c.fillStyle = bGlow;
   c.beginPath();
   c.arc(B.x, B.y, cornerR, 0, Math.PI * 2);
   c.fill();
 
+  // Правый угол C — фиолетово-розовое свечение (c2/c3)
   const cGlow = c.createRadialGradient(C.x, C.y, 0, C.x, C.y, cornerR);
-  cGlow.addColorStop(0.0, `rgba(${c1Rgb}, 0.24)`);
-  cGlow.addColorStop(0.4, `rgba(${c1Rgb}, 0.10)`);
-  cGlow.addColorStop(1.0, `rgba(${c1Rgb}, 0)`);
+  cGlow.addColorStop(0.0, `rgba(${c3Rgb}, 0.24)`);
+  cGlow.addColorStop(0.4, `rgba(${c2Rgb}, 0.10)`);
+  cGlow.addColorStop(1.0, `rgba(${c2Rgb}, 0)`);
   c.fillStyle = cGlow;
   c.beginPath();
   c.arc(C.x, C.y, cornerR, 0, Math.PI * 2);
@@ -6862,13 +6869,13 @@ function drawSynthWaveHorizonBeam(w, horizonY, time) {
 
   //  Primary neon beam core stroke.
   const hBeamGrad = ctx.createLinearGradient(0, 0, w, 0);
-  hBeamGrad.addColorStop(0.00, `rgba(${c3Rgb}, 0.05)`);
-  hBeamGrad.addColorStop(0.16, th.c3);
-  hBeamGrad.addColorStop(0.42, th.c2);
-  hBeamGrad.addColorStop(0.50, '#ffffff');
-  hBeamGrad.addColorStop(0.58, th.c1);
-  hBeamGrad.addColorStop(0.84, th.c1Light);
-  hBeamGrad.addColorStop(1.00, `rgba(${c1Rgb}, 0.05)`);
+  hBeamGrad.addColorStop(0.00, `rgba(${c1Rgb}, 0.05)`);
+hBeamGrad.addColorStop(0.16, th.c1Light);
+hBeamGrad.addColorStop(0.42, th.c1);
+hBeamGrad.addColorStop(0.50, '#ffffff');
+hBeamGrad.addColorStop(0.58, th.c2);
+hBeamGrad.addColorStop(0.84, th.c3);
+hBeamGrad.addColorStop(1.00, `rgba(${c3Rgb}, 0.05)`);
 
   ctx.globalCompositeOperation = 'source-over';
   ctx.strokeStyle = hBeamGrad;
@@ -6958,6 +6965,7 @@ function drawSynthWavePerspectiveScene(now) {
     const bottomX = vpX + (i + 0.5) * targetBottomCellWidth;
     const topX = vpX + (i + 0.5) * (targetBottomCellWidth * 0.32);
     ctx.strokeStyle = (i < 0) ? `rgba(${c2Rgb}, 0.34)` : `rgba(${c1Rgb}, 0.34)`;
+	ctx.strokeStyle = (i < 0) ? `rgba(${c1Rgb}, 0.34)` : `rgba(${c2Rgb}, 0.34)`;
     ctx.beginPath();
     ctx.moveTo(topX, horizonY);
     ctx.lineTo(bottomX, h);
@@ -7006,14 +7014,21 @@ function drawSynthWavePerspectiveScene(now) {
   ctx.stroke();
   ctx.restore();
 
-  const gridOffset = (time * 0.42) % 1;
+  const speed = 0.42;
+  const cycle = (time * speed) % 1;
+  const baseWave = Math.floor(time * speed);
+
   for (let j = 0; j < horizCount; j++) {
-    const progress = (j + gridOffset) / horizCount;
+    const progress = (j + cycle) / horizCount;
     const currentY = horizonY + Math.pow(progress, 1.95) * floorH;
     const alpha = Math.min(0.42, 0.08 + progress * 0.35);
-    ctx.strokeStyle = (j % 2 === 0)
+
+    // Чередование фиксируется строго за волной движения
+    const lineId = (baseWave - j) % 2;
+    ctx.strokeStyle = (lineId === 0)
       ? `rgba(${c1Rgb}, ${alpha})`
       : `rgba(${c2Rgb}, ${alpha})`;
+
     ctx.lineWidth = 1.2;
     ctx.beginPath();
     ctx.moveTo(0, currentY);
