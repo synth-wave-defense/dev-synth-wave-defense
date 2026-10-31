@@ -683,7 +683,7 @@ html, body {
 
 .loadout-tower-btn {
   background: #0f1322;
-  border: 1.5px solid #202b4a;
+  border: 1px solid rgba(0, 229, 255, 0.22);
   border-radius: 12px;
   cursor: pointer;
   display: flex;
@@ -720,10 +720,11 @@ html, body {
 }
 
 .loadout-tower-btn.selected {
-  border-color: #f59e0b;
-  box-shadow: 0 0 14px rgba(245, 158, 11, 0.45);
-  background: #171308;
+  border: 1.5px solid #ff9100;
+  box-shadow: 0 0 14px rgba(255, 145, 0, 0.4), inset 0 0 8px rgba(255, 145, 0, 0.18);
+  background: linear-gradient(180deg, rgba(255, 145, 0, 0.16) 0%, rgba(20, 14, 10, 0.92) 100%);
 }
+
 .loadout-tower-btn.blocked {
   opacity: 0.38;
   filter: grayscale(0.6);
@@ -2049,6 +2050,8 @@ html, body {
   height: 100%;
   width: 0%;
   background: linear-gradient(90deg, #00e5ff, #d946ef);
+  background-size: 170px 100%;
+  background-repeat: no-repeat;
   box-shadow: 0 0 8px #00e5ff;
   border-radius: 3px;
   transition: width 0.3s ease;
@@ -2181,7 +2184,7 @@ html, body {
   height: 18px;
   border-radius: 9px;
   background: rgba(10, 14, 26, 0.9);
-  border: 1px solid rgba(140, 200, 255, 0.25);
+  border: 1px solid rgba(0, 229, 255, 0.22);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -2195,6 +2198,8 @@ html, body {
   bottom: 0;
   width: 0%;
   background: linear-gradient(90deg, var(--neon-primary, #00e5ff), #d946ef);
+  background-size: 400px 100%;
+  background-repeat: no-repeat;
   box-shadow: 0 0 12px var(--neon-primary, #00e5ff);
   transition: width 0.3s ease;
 }
@@ -2654,7 +2659,7 @@ html, body {
 .mode-rules-banner.normal-rules,
 .mode-rules-banner.hardcore-rules,
 .mode-rules-banner.endless-rules {
-  color: #94a3b8;
+  color: #8ea3c4;
 }
 
 .endless-dashboard-view {
@@ -2764,6 +2769,8 @@ html, body {
   top: 1px;
   height: calc(100% - 2px);
   background: linear-gradient(90deg, #818cf8 0%, #d946ef 50%, #f43f5e 100%);
+  background-size: 350px 100%;
+  background-repeat: no-repeat;
   border-radius: 3.5px;
   transition: width 0.3s ease;
 }
@@ -3245,7 +3252,7 @@ html, body {
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 2.5px;
-  color: #5d6a85;
+  color: #8ea3c4;
   text-transform: uppercase;
   padding: 4px 4px 0;
 }
@@ -3408,13 +3415,14 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  background: #10162a;
-  border: 1.5px solid #232c4a;
+  background: rgba(8, 12, 24, 0.65);
+  border: 1px solid rgba(0, 229, 255, 0.22);
   border-radius: 16px;
   padding: 20px;
   width: 90%;
   max-width: 320px;
 }
+
 .setting-row {
   display: flex;
   align-items: center;
@@ -3762,6 +3770,37 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   flex: 0 0 46px !important;
   width: 46px !important;
   min-width: 46px !important;
+  height: 100% !important;
+  border-radius: 18px !important;
+  background: rgba(8, 12, 24, 0.65) !important;
+  border: 1.5px solid rgba(240, 95, 159, 0.45) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0 !important;
+  color: #f28eae;
+  box-sizing: border-box;
+}
+
+.btn-close-inspect:active,
+.btn-close-inspect.btn-pushed {
+  transform: scale(0.92) translateY(2px) !important;
+  background: rgba(240, 95, 159, 0.35) !important;
+  border-color: #f05f9f !important;
+  box-shadow: 0 0 20px rgba(240, 95, 159, 0.6) !important;
+}
+
+.btn-close-inspect svg {
+  width: 18px;
+  height: 18px;
+  stroke: #f28eae;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  transition: stroke 0.2s ease;
 }
 
 .btn-close-inspect:active,
@@ -4351,11 +4390,11 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   vertical-align: middle;
 }
 .loadout-widget-count.is-full {
-  background: rgba(245, 158, 11, 0.16);
-  border-color: rgba(245, 158, 11, 0.6);
-  color: #f59e0b;
+  background: rgba(0, 229, 255, 0.22);
+  border-color: #00e5ff;
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.35);
 }
-
 .loadout-widget-right {
   display: flex;
   align-items: center;
@@ -4424,7 +4463,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   gap: 8px !important;
   border-radius: 12px !important;
   background: #0f1322 !important;
-  border: 1.5px solid #202b4a !important;
+  border: 1px solid rgba(0, 229, 255, 0.22) !important;
   cursor: pointer !important;
   transition: transform 0.06s ease-out, background 0.06s ease-out, border-color 0.06s ease-out, box-shadow 0.06s ease-out !important;
 }
@@ -4437,9 +4476,9 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 }
 
 .loadout-grid .loadout-tower-btn.selected {
-  border-color: #f59e0b !important;
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.4) !important;
-  background: #171308 !important;
+  border: 1.5px solid #ff9100 !important;
+  box-shadow: 0 0 14px rgba(255, 145, 0, 0.4), inset 0 0 8px rgba(255, 145, 0, 0.18) !important;
+  background: linear-gradient(180deg, rgba(255, 145, 0, 0.16) 0%, rgba(20, 14, 10, 0.92) 100%) !important;
 }
 
 .loadout-grid .loadout-tower-btn .tower-btn-icon {
@@ -4484,12 +4523,24 @@ label,
   outline: none !important;
 }
 
-/* Modal and Daily Login Styles */
 #dailyLoginModal,
-#gameCompletionModal {
+#gameCompletionModal,
+#giveUpConfirmModal,
+#adSimOverlay {
   justify-content: center !important;
   align-items: center !important;
   overflow: hidden !important;
+}
+
+.modal-popup-card {
+  background: linear-gradient(180deg, rgba(13, 21, 40, 0.97) 0%, rgba(7, 10, 20, 0.99) 100%) !important;
+  border: 1.5px solid #00e5ff !important;
+  box-shadow: 0 0 28px rgba(0, 229, 255, 0.25), inset 0 0 20px rgba(0, 229, 255, 0.08) !important;
+  border-radius: 22px !important;
+  padding: 24px 20px !important;
+  width: 92% !important;
+  max-width: 320px !important;
+  margin: auto !important;
 }
 
 .daily-modal-card {
@@ -4538,10 +4589,10 @@ label,
 }
 
 .daily-modal-close-btn {
-  background: #0b1528;
-  border: 1.2px solid #1e293b;
+  background: rgba(8, 12, 24, 0.65);
+  border: 1px solid rgba(0, 229, 255, 0.35);
   border-radius: 9px;
-  color: #64748b;
+  color: #8ef3ff;
   font-size: 20px;
   line-height: 1;
   cursor: pointer;
@@ -4550,10 +4601,17 @@ label,
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  transition: transform 0.08s ease-out, border-color 0.15s ease, box-shadow 0.15s ease;
   position: absolute;
   right: 0;
   top: 0;
+}
+
+.daily-modal-close-btn:active {
+  transform: scale(0.88) translateY(1px) !important;
+  color: #ffffff;
+  border-color: #00e5ff;
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.6);
 }
 
 .daily-streak-track {
@@ -4596,8 +4654,8 @@ label,
 }
 
 .daily-card.claimed {
-  background: linear-gradient(180deg, rgba(9, 19, 34, 0.65) 0%, rgba(6, 11, 20, 0.65) 100%);
-  border: 1.2px solid #1e293b;
+  background: rgba(8, 12, 24, 0.4);
+  border: 1px solid rgba(140, 200, 255, 0.08);
   opacity: 0.8;
 }
 
@@ -4639,7 +4697,7 @@ label,
 }
 
 .daily-card.claimed .daily-card-num {
-  color: #64748b;
+  color: #55637d;
 }
 
 .daily-card.active .daily-card-num {
@@ -4940,21 +4998,21 @@ label,
 /* Сама карточка товара — горизонтальный флекс-ряд */
 .shop-card {
   border-radius: 18px;
-  background: rgba(10, 14, 28, 0.75);
-  border: 1.2px solid rgba(0, 229, 255, 0.28);
+  background: rgba(8, 12, 24, 0.65);
+  border: 1px solid rgba(0, 229, 255, 0.22);
   padding: 11px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45), 0 0 10px rgba(0, 229, 255, 0.06);
   box-sizing: border-box;
   transition: all 0.2s ease;
 }
 
 .shop-card-prism {
   background: linear-gradient(135deg, rgba(24, 10, 36, 0.75), rgba(12, 5, 20, 0.8));
-  border: 1.2px solid rgba(217, 70, 239, 0.35);
+  border: 1px solid rgba(217, 70, 239, 0.35);
 }
 
 .shop-card-left {
@@ -4971,7 +5029,7 @@ label,
   height: 40px;
   border-radius: 50%;
   background: #0b1020;
-  border: 1px solid rgba(140, 200, 255, 0.25);
+  border: 1px solid rgba(0, 229, 255, 0.22);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5102,8 +5160,8 @@ label,
 }
 
 .exchange-cost-val.cost-red {
-  color: #f04878 !important;
-  text-shadow: 0 0 6px rgba(240, 72, 120, 0.6);
+  color: #f05f9f !important;
+  text-shadow: 0 0 6px rgba(240, 95, 159, 0.6);
 }
 
 /* [CSS113] Баннер режима выбора уровней */
@@ -5132,15 +5190,15 @@ label,
 /* [CSS114] Стили строки и окаймления Daily Gift */
 .daily-gift-card {
   border-radius: 18px;
-  background: rgba(10, 14, 28, 0.75);
-  border: 1.2px solid rgba(0, 229, 255, 0.28);
+  background: rgba(8, 12, 24, 0.65);
+  border: 1px solid rgba(0, 229, 255, 0.22);
   padding: 11px 14px;
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
   justify-content: space-between !important;
   gap: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45), 0 0 10px rgba(0, 229, 255, 0.06);
   box-sizing: border-box;
 }
 

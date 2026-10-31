@@ -86,6 +86,8 @@
         width: 0%;
         height: 100%;
         background: linear-gradient(90deg, #00e5ff 0%, #a855f7 70%, #f05f9f 100%);
+        background-size: 240px 100%;
+        background-repeat: no-repeat;
         border-radius: 4px;
         box-shadow: 0 0 10px #00e5ff, 0 0 16px rgba(240, 95, 159, 0.6);
         transition: width 0.18s ease-out;
@@ -1195,11 +1197,11 @@
 </div>
 
 <div class="overlay-screen result-screen hidden" id="giveUpConfirmModal" style="z-index: 10000;">
-  <div class="result-stack" style="background: rgba(10, 14, 28, 0.95); border: 1px solid rgba(0, 229, 255, 0.3); border-radius: 16px; padding: 24px; max-width: 320px;">
-    <div class="result-heading seq-in" style="margin-bottom: 12px;">
+  <div class="result-stack modal-popup-card">
+    <div class="result-heading seq-in" style="margin-bottom: 8px;">
       <div class="result-title" style="font-size: 24px;">Are you sure?</div>
     </div>
-    <div class="result-subline" style="text-align: center; margin-bottom: 16px; color: #94a3b8;">
+    <div class="result-subline" style="text-align: center; margin-bottom: 12px; color: #8ea3c4;">
       Progress in battle will be lost.
     </div>
 
@@ -1449,7 +1451,7 @@
 </div>
 
 <div class="overlay-screen result-screen hidden" id="adSimOverlay" style="z-index: 10010;">
-  <div class="result-stack" style="background: rgba(10, 14, 28, 0.96); border: 1px solid rgba(0, 229, 255, 0.35); border-radius: 16px; padding: 24px; max-width: 320px; text-align: center;">
+  <div class="result-stack modal-popup-card" style="text-align: center;">
     <div class="result-heading seq-in" style="margin-bottom: 12px;">
       <div class="result-title" style="font-size: 24px;">Success?</div>
     </div>

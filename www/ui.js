@@ -4531,8 +4531,8 @@ if (giftTitle) {
     synthBtn.disabled = false; // Разрешаем клик для тоста
     synthBtn.className = `shop-item-btn shop-btn-buy shop-btn-exchange${hasEnoughDiamonds ? '' : ' dimmed'}`;
     synthBtn.innerHTML = `
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${hasEnoughDiamonds ? '#00e5ff' : '#f04878'}" stroke-width="2.2" stroke-linejoin="round" style="flex:none;">
-        <polygon points="6 3 18 3 22 9 12 22 2 9" fill="${hasEnoughDiamonds ? 'rgba(0,229,255,.25)' : 'rgba(240,72,120,.25)'}"/>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${hasEnoughDiamonds ? '#00e5ff' : '#f05f9f'}" stroke-width="2.2" stroke-linejoin="round" style="flex:none;">
+        <polygon points="6 3 18 3 22 9 12 22 2 9" fill="${hasEnoughDiamonds ? 'rgba(0,229,255,.25)' : 'rgba(240,95,159,.25)'}"/>
         <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
       </svg>
       <span id="synthPrismCostVal" class="${hasEnoughDiamonds ? 'exchange-cost-val' : 'exchange-cost-val cost-red'}">20</span>
@@ -4556,8 +4556,8 @@ if (giftTitle) {
       deconstructBtn.disabled = !hasEnoughPrisms;
       deconstructBtn.className = `shop-item-btn shop-btn-buy shop-btn-prism shop-btn-exchange${hasEnoughPrisms ? '' : ' dimmed'}`;
       deconstructBtn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${hasEnoughPrisms ? '#d946ef' : '#f04878'}" stroke-width="2.2" stroke-linejoin="round" style="flex:none; filter:drop-shadow(0 0 4px ${hasEnoughPrisms ? 'rgba(217,70,239,0.5)' : 'rgba(240,72,120,0.5)'});">
-          <polygon points="12 2 21 12 12 22 3 12" fill="${hasEnoughPrisms ? 'rgba(217,70,239,.3)' : 'rgba(240,72,120,.25)'}"/>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${hasEnoughPrisms ? '#d946ef' : '#f05f9f'}" stroke-width="2.2" stroke-linejoin="round" style="flex:none; filter:drop-shadow(0 0 4px ${hasEnoughPrisms ? 'rgba(217,70,239,0.5)' : 'rgba(240,95,159,0.5)'});">
+          <polygon points="12 2 21 12 12 22 3 12" fill="${hasEnoughPrisms ? 'rgba(217,70,239,.3)' : 'rgba(240,95,159,.25)'}"/>
           <polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/>
         </svg>
         <span id="deconstructPrismCostVal" class="${hasEnoughPrisms ? 'exchange-cost-val' : 'exchange-cost-val cost-red'}">1</span>
