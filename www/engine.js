@@ -51,6 +51,40 @@ function triggerCameraShake(dur = 0.5, intensity = 15) {
   cameraShakeIntensity = intensity;
 }
 
+// [ENG.AA] Конфигурация AdMob (Тестовый Unit ID для Rewarded Video)
+const ADMOB_REWARDED_TEST_ID = 'ca-app-pub-3940256099942544/5224354917';
+let isAdMobInitialized = false;
+let isAdMobVideoReady = false;
+
+async function initAdMobBridge() {
+  if (!window.Capacitor || !window.Capacitor.isPluginAvailable('AdMob')) return;
+  try {
+    const { AdMob } = window.Capacitor.Plugins;
+    await AdMob.initialize({
+      initializeForTesting: true
+    });
+    isAdMobInitialized = true;
+    preloadRewardedAd();
+  } catch (err) {
+    console.warn('AdMob init failed:', err);
+  }
+}
+
+async function preloadRewardedAd() {
+  if (!isAdMobInitialized || !window.Capacitor?.Plugins?.AdMob) return;
+  try {
+    const { AdMob } = window.Capacitor.Plugins;
+    await AdMob.prepareRewardVideoAd({
+      adId: ADMOB_REWARDED_TEST_ID,
+      isTesting: true
+    });
+    isAdMobVideoReady = true;
+  } catch (err) {
+    console.warn('AdMob preload failed:', err);
+    isAdMobVideoReady = false;
+  }
+}
+
 // [ENG.B]
 function hasClearedLevelBefore(lvl) {
   return maxUnlockedLevel > lvl;
@@ -2162,7 +2196,52 @@ function calculateLevelStarsAndReward(lvl, currentHp, startingHp) {
 }
 
 // [ENG.BL]
-function showAdPlaceholder(onRewarded, onNotRewarded) {
+async function showAdPlaceholder(onRewarded, onNotRewarded) {
+  // 1. Проверяем, запущено ли приложение на нативном устройстве и доступен ли AdMob
+  const isNative = window.Capacitor && window.Capacitor.isNativePlatform();
+  const AdMob = window.Capacitor?.Plugins?.AdMob;
+
+  if (isNative && isAdMobInitialized && AdMob) {
+    let rewarded = false;
+
+    // Слушатель успешного просмотра
+    const rewardListener = await AdMob.addListener('onRewarded', () => {
+      rewarded = true;
+    });
+
+    // Слушатель закрытия экрана рекламы
+    const dismissListener = await AdMob.addListener('onRewardVideoAdDismissed', () => {
+      rewardListener.remove();
+      dismissListener.remove();
+      preloadRewardedAd(); // Готовим следующий ролик заранее
+
+      if (rewarded) {
+        if (onRewarded) onRewarded();
+      } else {
+        if (onNotRewarded) onNotRewarded();
+      }
+    });
+
+    try {
+      if (!isAdMobVideoReady) {
+        await AdMob.prepareRewardVideoAd({
+          adId: ADMOB_REWARDED_TEST_ID,
+          isTesting: true
+        });
+      }
+      isAdMobVideoReady = false;
+      await AdMob.showRewardVideoAd();
+      return; // Успешно ушли в нативный показ ролика
+    } catch (e) {
+      console.warn('AdMob show failed, falling back to simulation modal:', e);
+      rewardListener.remove();
+      dismissListener.remove();
+      preloadRewardedAd();
+      // При ошибке загрузки нативного видео открываем симуляцию
+    }
+  }
+
+  // 2. Фоллбэк: работа в веб-браузере (DevGate / localhost) или при отсутствии сети
   const adOverlay = document.getElementById('adSimOverlay');
   const yesBtn = document.getElementById('adSimYesBtn');
   const noBtn = document.getElementById('adSimNoBtn');
@@ -2174,7 +2253,6 @@ function showAdPlaceholder(onRewarded, onNotRewarded) {
 
   adOverlay.classList.remove('hidden');
 
-  // [ENG.BM]
   const cleanup = () => {
     adOverlay.classList.add('hidden');
     if (yesBtn) yesBtn.onclick = null;
@@ -2182,7 +2260,6 @@ function showAdPlaceholder(onRewarded, onNotRewarded) {
   };
 
   if (yesBtn) {
-    // [ENG.BN]
     yesBtn.onclick = () => {
       cleanup();
       if (onRewarded) onRewarded();
@@ -2190,7 +2267,6 @@ function showAdPlaceholder(onRewarded, onNotRewarded) {
   }
 
   if (noBtn) {
-    // [ENG.BO]
     noBtn.onclick = () => {
       cleanup();
       if (onNotRewarded) onNotRewarded();

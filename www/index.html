@@ -1729,6 +1729,11 @@ loadGame().then(() => {
   updatePrismUI();
   showStartScreen();
 
+  // Инициализируем AdMob и предзагружаем первое тестовое видеоролик
+  if (typeof initAdMobBridge === 'function') {
+    initAdMobBridge();
+  }
+
   window.__gameBooted = true;
   safeTrack('app_launch', {});
 
