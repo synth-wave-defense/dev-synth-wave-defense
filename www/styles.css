@@ -34,7 +34,7 @@ html, body {
   position: fixed;
   top: 0;
   left: 0;
-  background: #03050d; /* Было #06070d — из-за этого на Скрине 2 снизу была видна темно-серая полоса! */
+  background: #03050d;
   color: #f1f5f9;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
@@ -47,7 +47,7 @@ html, body {
   height: 100%;
   z-index: 1;
   display: block;
-  background: #03050d; /* Тоже выравниваем в #03050d */
+  background: #03050d;
 }
 
 .ui-layer {
@@ -57,7 +57,7 @@ html, body {
   width: 100%;
   height: 100vh;
   height: 100dvh;
-  z-index: 10; /* ВОЗВРАЩАЕМ ИСХОДНЫЙ 10 (было 505) */
+  z-index: 10;
   pointer-events: none;
   display: flex;
   flex-direction: column;
@@ -83,7 +83,7 @@ html, body {
   min-height: 52px;
   padding: 0 8px 0 12px;
   border-radius: 26px;
-  border: 1px solid rgba(0, 229, 255, 0.22); /* Единый цвет рамки с инспектором */
+  border: 1px solid rgba(0, 229, 255, 0.22);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55), 0 0 12px rgba(0, 229, 255, 0.08);
   pointer-events: auto;
   gap: 6px;
@@ -422,7 +422,7 @@ html, body {
   background: rgba(12, 16, 29, 0.94);
   padding: 9px 16px 9px 10px;
   border-radius: 14px;
-  border: 1.5px solid #00e5ff;
+  border: 1.5px solid var(--neon-primary, #00e5ff);
   z-index: 82;
   pointer-events: none;
   backdrop-filter: blur(8px);
@@ -464,7 +464,7 @@ html, body {
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 1.5px;
-  color: #00e5ff;
+  color: var(--neon-primary, #00e5ff);
   text-transform: uppercase;
 }
 .new-tower-name {
@@ -485,13 +485,12 @@ html, body {
 /* [CSS103] Bottom controls panel and build toolbar */
 .controls-wrapper {
   position: relative;
-  /* z-index ПОЛНОСТЬЮ УДАЛЕН */
   height: 96px;
   border-radius: 18px;
   overflow: hidden;
   background: rgba(10, 13, 26, 0.94);
   backdrop-filter: blur(14px);
-  border: 1px solid rgba(0, 229, 255, 0.22); /* Рамка в тон инспектора */
+  border: 1px solid rgba(0, 229, 255, 0.22);
   box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.75), 0 0 14px rgba(0, 229, 255, 0.08);
   pointer-events: auto;
   padding: 6px 8px;
@@ -535,7 +534,7 @@ html, body {
 }
 .cancel-zone-overlay.hovered {
   background: rgba(45, 14, 34, 0.98);
-  border-color: rgba(240, 95, 159, 0.95);
+  border: 2px dashed rgba(240, 95, 159, 0.95);
   box-shadow: inset 0 0 30px rgba(240, 95, 159, 0.4);
 }
 .cancel-zone-text {
@@ -558,18 +557,17 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between; /* Равномерное вертикальное распределение */
-  padding: 6px 2px 5px 2px; /* Оптимальные отступы от краев кнопки */
+  justify-content: space-between;
+  padding: 6px 2px 5px 2px;
   transition: all 0.2s;
   position: relative;
   box-sizing: border-box;
 }
 
-/* 1. Название башни наверху (размер и параметры точно как в инспекторе) */
 .tower-btn .tower-btn-name,
 .tower-btn .tower-btn-title {
   font-family: 'Montserrat', sans-serif;
-  font-size: 11px; /* Точно как .selected-title */
+  font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.5px;
   color: #ffffff;
@@ -578,7 +576,6 @@ html, body {
   margin: 0;
 }
 
-/* 2. Иконка башни по центру (без внешнего кольца, крупный силуэт) */
 .tower-btn .tower-btn-icon-wrap,
 .tower-btn .tower-btn-icon {
   width: 38px;
@@ -602,7 +599,6 @@ html, body {
   filter: drop-shadow(0 0 6px currentColor);
 }
 
-/* 3. Стоимость внизу */
 .tower-btn .tower-btn-cost-row,
 .tower-btn .cost {
   display: inline-flex;
@@ -628,18 +624,9 @@ html, body {
 .tower-btn.btn-pushed:not(.disabled):not(:disabled) {
   cursor: grabbing;
   transform: scale(0.88) translateY(2px) !important;
-  border-color: #00e5ff !important;
-  box-shadow: 0 0 20px rgba(0, 229, 255, 0.6), inset 0 0 8px rgba(0, 229, 255, 0.3) !important;
+  border-color: var(--neon-primary, #00e5ff) !important;
+  box-shadow: 0 0 20px var(--neon-glow, rgba(0, 229, 255, 0.6)), inset 0 0 8px rgba(0, 229, 255, 0.3) !important;
 }
-/* подсветка башен по наведению по ховеру
-.tower-btn[data-type="gun"]:hover:not(:disabled):not(.disabled) { border-color: #00e5ff; box-shadow: 0 0 14px rgba(0, 229, 255, 0.35); }
-.tower-btn[data-type="laser"]:hover:not(:disabled):not(.disabled) { border-color: #f05f9f; box-shadow: 0 0 14px rgba(240, 95, 159, 0.35); }
-.tower-btn[data-type="mortar"]:hover:not(:disabled):not(.disabled) { border-color: #ff9100; box-shadow: 0 0 14px rgba(255, 145, 0, 0.35); }
-.tower-btn[data-type="tesla"]:hover:not(:disabled):not(.disabled) { border-color: #00ffcc; box-shadow: 0 0 14px rgba(0, 255, 204, 0.35); }
-.tower-btn[data-type="stasis"]:hover:not(:disabled):not(.disabled) { border-color: #38bdf8; box-shadow: 0 0 14px rgba(56, 189, 248, 0.35); }
-.tower-btn[data-type="melter"]:hover:not(:disabled):not(.disabled) { border-color: #e85268; box-shadow: 0 0 14px rgba(232, 82, 104, 0.35); }
-.tower-btn[data-type="railgun"]:hover:not(:disabled):not(.disabled) { border-color: #a275df; box-shadow: 0 0 14px rgba(162, 117, 223, 0.35); }
-*/
 
 .tower-btn:disabled,
 .tower-btn.disabled {
@@ -966,7 +953,7 @@ html, body {
   justify-content: center;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
-  color: #00e5ff;
+  color: var(--neon-primary, #00e5ff);
   padding: 0;
   touch-action: manipulation;
 }
@@ -974,8 +961,8 @@ html, body {
 .spd-btn:active:not(.disabled):not(:disabled),
 .spd-btn.btn-pushed:not(.disabled):not(:disabled) {
   transform: scale(0.88) translateY(1px) !important;
-  border-color: #00e5ff !important;
-  box-shadow: 0 0 14px rgba(0, 229, 255, 0.5) !important;
+  border-color: var(--neon-primary, #00e5ff) !important;
+  box-shadow: 0 0 14px var(--neon-glow, rgba(0, 229, 255, 0.5)) !important;
 }
 
 .spd-btn.disabled,
@@ -999,7 +986,7 @@ html, body {
   background:
     radial-gradient(60% 60% at 50% 50%, rgba(0, 229, 255, 0.16), rgba(0, 229, 255, 0.02)),
     rgba(10, 14, 26, 0.9);
-  border: 1.5px solid #00e5ff;
+  border: 1.5px solid var(--neon-primary, #00e5ff);
   box-shadow: 0 0 20px rgba(0, 229, 255, 0.3), inset 0 0 14px rgba(0, 229, 255, 0.08);
   display: flex;
   flex-direction: column;
@@ -1047,7 +1034,7 @@ html, body {
   font-size: 10px;
   letter-spacing: 0.3px;
   color: #ffffff;
-  text-shadow: 0 0 12px rgba(0, 229, 255, 0.8);
+  text-shadow: 0 0 12px var(--neon-glow, rgba(0, 229, 255, 0.8));
   pointer-events: none;
 }
 
@@ -1066,7 +1053,7 @@ html, body {
 .drum-hint svg {
   width: 6px;
   height: 6px;
-  color: #00e5ff;
+  color: var(--neon-primary, #00e5ff);
 }
 
 .hint-up {
@@ -1092,7 +1079,6 @@ html, body {
   margin-top: 1px;
 }
 
-/* Tooltip popup shown on the left of the upper right widget */
 .drag-tip {
   position: absolute;
   right: 100%;
@@ -1101,7 +1087,7 @@ html, body {
   transform: translateY(-50%);
   white-space: nowrap;
   background: rgba(10, 13, 26, 0.95);
-  border: 1.5px solid #00e5ff;
+  border: 1.5px solid var(--neon-primary, #00e5ff);
   border-radius: 8px;
   padding: 4px 6px;
   font-size: 9px;
@@ -1130,7 +1116,7 @@ html, body {
   top: 50%;
   transform: translateY(-50%);
   border: 6px solid transparent;
-  border-left-color: #00e5ff;
+  border-left-color: var(--neon-primary, #00e5ff);
 }
 
 /* [CSS105] Post-match result screens (victory and defeat, pause, settings) */
@@ -1164,19 +1150,15 @@ html, body {
   gap: 10px;
   width: 100%;
   max-width: 100%;
-  /* margin: auto 0 центрирует контент по вертикали, если он меньше экрана */
   margin: auto 0;
-  /* padding гарантирует, что контент не спрячется под Top HUD при скролле */
   padding: max(85px, calc(env(safe-area-inset-top) + 70px)) 16px max(40px, calc(env(safe-area-inset-bottom) + 20px)) 16px;
   overflow: visible !important;
   box-sizing: border-box !important;
 }
-/* Запрещаем flexbox сплющивать аккордеоны и кнопки при раскрытии */
 .result-stack > * {
   flex-shrink: 0 !important;
 }
 
-/* Перебиваем глобальный * { touch-action: none }, чтобы свайп пальцем работал по любому дочернему элементу */
 .result-screen,
 .result-screen *,
 .levels-bg,
@@ -1239,7 +1221,7 @@ html, body {
   font-size: 13px;
   font-weight: 800;
   letter-spacing: 4px;
-  color: #00e5ff;
+  color: var(--neon-primary, #00e5ff);
   text-transform: uppercase;
 }
 .result-title {
@@ -1249,7 +1231,7 @@ html, body {
   letter-spacing: 2px;
   color: #ffffff;
   text-transform: uppercase;
-  text-shadow: 0 0 12px rgba(0, 229, 255, 0.9), 0 0 24px rgba(0, 229, 255, 0.6);
+  text-shadow: 0 0 12px var(--neon-glow, rgba(0, 229, 255, 0.9)), 0 0 24px rgba(0, 229, 255, 0.6);
   text-align: center;
 }
 .result-screen.is-fail .result-kicker { color: #f28eae; }
@@ -1289,9 +1271,9 @@ html, body {
 .result-btn:active:not(:disabled):not(.no-press-feedback):not(.btn-locked),
 .result-btn.btn-pushed:not(:disabled):not(.no-press-feedback):not(.btn-locked) {
   transform: scale(0.92) translateY(2px) !important;
-  border-color: #00e5ff !important;
+  border-color: var(--neon-primary, #00e5ff) !important;
   color: #ffffff !important;
-  box-shadow: 0 0 24px rgba(0, 229, 255, 0.6), inset 0 0 10px rgba(0, 229, 255, 0.25) !important;
+  box-shadow: 0 0 24px var(--neon-glow, rgba(0, 229, 255, 0.6)), inset 0 0 10px rgba(0, 229, 255, 0.25) !important;
   background: rgba(14, 22, 44, 0.85) !important;
 }
 .result-btn.no-press-feedback,
@@ -1306,20 +1288,20 @@ html, body {
 }
 .result-btn-primary {
   background: linear-gradient(180deg, rgba(0, 229, 255, 0.18) 0%, rgba(0, 74, 96, 0.12) 100%);
-  border: 1.8px solid #00e5ff;
+  border: 1.8px solid var(--neon-primary, #00e5ff);
   box-shadow: 0 0 16px rgba(0, 229, 255, 0.35);
   color: #ffffff;
   font-weight: 900;
 }
 .result-btn-primary svg {
   flex: none;
-  filter: drop-shadow(0 0 5px rgba(0, 229, 255, 0.85));
+  filter: drop-shadow(0 0 5px var(--neon-glow, rgba(0, 229, 255, 0.85)));
 }
 
 .victory-claim-btn {
   padding: 14px 24px;
   background: linear-gradient(135deg, rgba(0, 229, 255, 0.4) 0%, rgba(168, 85, 247, 0.4) 50%, rgba(240, 95, 159, 0.4) 100%);
-  border: 1.8px solid #00e5ff;
+  border: 1.8px solid var(--neon-primary, #00e5ff);
   box-shadow: 0 0 24px rgba(0, 229, 255, 0.45);
   color: #ffffff;
   font-weight: 900;
@@ -1371,19 +1353,16 @@ html, body {
   height: 100%;
 }
 
-/* Фоновая полупрозрачная бирюзовая дорожка */
 .revive-timer-svg circle:first-child,
 .revive-timer-track {
   stroke: rgba(0, 229, 255, 0.2);
 }
 
-/* Бирюзовый анимированный круг */
 .revive-timer-progress {
-  stroke: #00e5ff;
-  filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.85));
+  stroke: var(--neon-primary, #00e5ff);
+  filter: drop-shadow(0 0 8px var(--neon-glow, rgba(0, 229, 255, 0.85)));
 }
 
-/* Цифра с бирюзовым неоновым свечением */
 .revive-timer-number {
   position: relative;
   z-index: 2;
@@ -1391,10 +1370,9 @@ html, body {
   font-size: 28px;
   font-weight: 900;
   color: #ffffff;
-  text-shadow: 0 0 12px rgba(0, 229, 255, 0.8);
+  text-shadow: 0 0 12px var(--neon-glow, rgba(0, 229, 255, 0.8));
 }
 
-/* Полностью скрываем паразитный текст, который накладывался на кнопку */
 .revive-timer-label {
   display: none !important;
 }
@@ -1575,7 +1553,7 @@ html, body {
   40%  { opacity: 1; transform: scale(1.5); }
   100% { opacity: 0; transform: scale(2); }
 }
-/* Вариант 1.1: Скруглённый планшет со статусной плашкой-бейджем */
+
 .result-reward-chip {
   position: relative;
   display: flex;
@@ -1597,7 +1575,6 @@ html, body {
   overflow: visible !important;
 }
 
-/* Статусный бейдж жестко привязан к верхнему краю рамки */
 .result-reward-chip .reward-label {
   position: absolute !important;
   top: -9px !important;
@@ -1617,7 +1594,6 @@ html, body {
   z-index: 2;
 }
 
-/* Линия-разделитель под статусом */
 .result-reward-chip::after {
   content: '';
   width: 80%;
@@ -1626,7 +1602,6 @@ html, body {
   margin-bottom: 2px;
 }
 
-/* Принудительный горизонтальный ряд для наград (чтобы не ломались в столбик) */
 .result-reward-chip > div,
 .result-reward-chip .reward-row-content {
   display: flex !important;
@@ -1637,7 +1612,6 @@ html, body {
   white-space: nowrap !important;
 }
 
-/* Разделитель между ресурсами в строке */
 .result-reward-chip .reward-sep {
   color: rgba(255, 255, 255, 0.3);
   font-weight: 300;
@@ -1645,7 +1619,6 @@ html, body {
   user-select: none;
 }
 
-/* Цифра и ресурсы */
 .result-reward-chip .reward-amount {
   font-family: 'Montserrat', sans-serif;
   font-size: 24px;
@@ -1673,7 +1646,7 @@ html, body {
 }
 .result-skip-btn:active,
 .result-skip-btn.btn-pushed {
-  color: #00e5ff !important;
+  color: var(--neon-primary, #00e5ff) !important;
   transform: scale(0.92) translateY(1px) !important;
 }
 
@@ -1729,7 +1702,7 @@ html, body {
   animation: glitchSlipA 2.6s steps(1, end) 0.55s 2 both;
 }
 .result-screen.is-fail .result-title::after {
-  color: #00e5ff;
+  color: var(--neon-primary, #00e5ff);
   text-shadow: none;
   clip-path: inset(62% 0 14% 0);
   animation: glitchSlipB 2.6s steps(1, end) 0.55s 2 both;
@@ -1812,9 +1785,9 @@ html, body {
   font-size: 36px;
   font-weight: 900;
   letter-spacing: 6px;
-  color: #00e5ff;
+  color: var(--neon-primary, #00e5ff);
   text-transform: uppercase;
-  text-shadow: 0 0 20px #00e5ff, 0 0 35px rgba(0, 229, 255, 0.6);
+  text-shadow: 0 0 20px var(--neon-primary, #00e5ff), 0 0 35px rgba(0, 229, 255, 0.6);
   text-align: center;
 }
 .menu-title.red-glow {
@@ -1823,7 +1796,6 @@ html, body {
 }
 
 #defeatScreen {
-  /* Убраны жесткие отступы, теперь экран использует общую центровку .result-stack */
   gap: 16px;
 }
 
@@ -1846,16 +1818,16 @@ html, body {
 }
 .menu-btn:hover:not(:disabled):not(.no-press-feedback) {
   background: #1a223d;
-  border-color: #00e5ff;
-  color: #00e5ff;
+  border-color: var(--neon-primary, #00e5ff);
+  color: var(--neon-primary, #00e5ff);
   box-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
   transform: translateY(-2px);
 }
 .menu-btn:active:not(:disabled):not(.no-press-feedback),
 .menu-btn.btn-pushed:not(:disabled):not(.no-press-feedback) {
   transform: scale(0.92) translateY(2px) !important;
-  border-color: #00e5ff !important;
-  color: #00e5ff !important;
+  border-color: var(--neon-primary, #00e5ff) !important;
+  color: var(--neon-primary, #00e5ff) !important;
   box-shadow: 0 0 24px rgba(0, 229, 255, 0.6), inset 0 0 10px rgba(0, 229, 255, 0.3) !important;
 }
 .menu-btn:disabled, .menu-btn.disabled {
@@ -1909,7 +1881,7 @@ html, body {
   letter-spacing: 3px;
   color: #ffffff;
   text-transform: uppercase;
-  text-shadow: 0 0 22px rgba(0, 229, 255, 0.85), 0 2px 14px rgba(2, 3, 8, 0.95);
+  text-shadow: 0 0 22px var(--neon-glow, rgba(0, 229, 255, 0.85)), 0 2px 14px rgba(2, 3, 8, 0.95);
 }
 
 .start-screen-buttons-zone {
@@ -1934,9 +1906,9 @@ html, body {
   box-shadow: 0 0 30px rgba(0, 229, 255, 0.5);
   color: #ffffff;
   font-family: 'Montserrat', sans-serif;
-  font-size: 15px; /* Точно как в RESUME */
+  font-size: 15px;
   font-weight: 900;
-  letter-spacing: 0.14em; /* Точно как в RESUME */
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   cursor: pointer;
   transition: transform 0.06s ease-out, background 0.06s ease-out, box-shadow 0.06s ease-out;
@@ -1954,7 +1926,7 @@ html, body {
   background: linear-gradient(rgba(0, 229, 255, 0.55), rgba(0, 229, 255, 0.2)), rgba(10, 18, 36, 0.98) !important;
 }
 .menu-btn-primary-capsule span {
-  text-shadow: 0 0 14px #00e5ff;
+  text-shadow: 0 0 14px var(--neon-primary, #00e5ff);
 }
 
 .menu-btn-glass-capsule {
@@ -1963,7 +1935,7 @@ html, body {
   border-radius: 26px;
   background: rgba(8, 12, 24, 0.55);
   backdrop-filter: blur(14px);
-  border: 1px solid rgba(0, 229, 255, 0.22); /* Бордер как в Top HUD */
+  border: 1px solid rgba(0, 229, 255, 0.22);
   color: #dff9ff;
   font-family: 'Montserrat', sans-serif;
   font-size: 14px;
@@ -1984,7 +1956,7 @@ html, body {
   height: 52px;
   background: rgba(8, 12, 24, 0.75);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 229, 255, 0.22); /* Бордер как в Top HUD */
+  border: 1px solid rgba(0, 229, 255, 0.22);
   border-radius: 18px;
   display: flex;
   align-items: center;
@@ -1999,8 +1971,8 @@ html, body {
 
 .synth-pass-widget:active {
   transform: scale(0.92) translateY(2px) !important;
-  border-color: #00e5ff !important;
-  box-shadow: 0 0 24px rgba(0, 229, 255, 0.5) !important;
+  border-color: var(--neon-primary, #00e5ff) !important;
+  box-shadow: 0 0 24px var(--neon-glow, rgba(0, 229, 255, 0.5)) !important;
 }
 
 .synth-pass-icon {
@@ -2010,7 +1982,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #00e5ff;
+  color: var(--neon-primary, #00e5ff);
 }
 
 .synth-pass-center {
@@ -2033,7 +2005,7 @@ html, body {
 }
 
 .synth-pass-tier-text {
-  color: #00e5ff;
+  color: var(--neon-primary, #00e5ff);
   font-size: 10px;
   font-weight: 900;
 }
@@ -2049,10 +2021,10 @@ html, body {
 .synth-pass-bar-fill {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, #00e5ff, #d946ef);
+  background: linear-gradient(90deg, var(--neon-primary, #00e5ff), #d946ef);
   background-size: 170px 100%;
   background-repeat: no-repeat;
-  box-shadow: 0 0 8px #00e5ff;
+  box-shadow: 0 0 8px var(--neon-primary, #00e5ff);
   border-radius: 3px;
   transition: width 0.3s ease;
 }
@@ -2068,9 +2040,9 @@ html, body {
 .menu-btn-glass-capsule:active:not(:disabled):not(.no-press-feedback),
 .menu-btn-glass-capsule.btn-pushed:not(:disabled):not(.no-press-feedback) {
   transform: scale(0.92) translateY(2px) !important;
-  border-color: #00e5ff !important;
+  border-color: var(--neon-primary, #00e5ff) !important;
   color: #ffffff !important;
-  box-shadow: 0 0 24px rgba(0, 229, 255, 0.6), inset 0 0 10px rgba(0, 229, 255, 0.25) !important;
+  box-shadow: 0 0 24px var(--neon-glow, rgba(0, 229, 255, 0.6)), inset 0 0 10px rgba(0, 229, 255, 0.25) !important;
   background: rgba(14, 22, 44, 0.85) !important;
 }
 
@@ -2151,10 +2123,10 @@ html, body {
   display: flex;
   align-items: center;
   gap: 4px;
-  flex: none; /* Запрещаем сжатие и растяжение по вертикали */
+  flex: none;
   justify-content: flex-end;
-  max-width: 65%; /* Чуть больше места для длинных названий */
-  overflow: hidden; /* Скрываем то, что не влезло */
+  max-width: 65%;
+  overflow: hidden;
 }
 
 .bp-palette-label {
@@ -2174,7 +2146,7 @@ html, body {
   white-space: nowrap;
   margin: 0;
   padding: 0;
-  height: 20px; /* Жестко ограничиваем высоту выпадающего списка */
+  height: 20px;
   line-height: 20px;
 }
 
@@ -2336,9 +2308,9 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;        /* Разрешаем перенос целых блоков на новую строку */
+  flex-wrap: wrap;
   text-align: center;
-  gap: 4px 6px;           /* Отступы между строками и элементами */
+  gap: 4px 6px;
   line-height: 1.35;
 }
 
@@ -2361,7 +2333,7 @@ html, body {
 
 .bp-cell-btn.ad-btn {
   background: linear-gradient(135deg, rgba(0, 229, 255, 0.4) 0%, rgba(168, 85, 247, 0.4) 50%, rgba(240, 95, 159, 0.4) 100%);
-  border: 1px solid #00e5ff;
+  border: 1px solid var(--neon-primary, #00e5ff);
   color: #ffffff;
   box-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
 }
@@ -2403,7 +2375,7 @@ html, body {
 #reviveBtn,
 .revive-btn {
   background: linear-gradient(135deg, rgba(0, 229, 255, 0.4) 0%, rgba(168, 85, 247, 0.4) 50%, rgba(240, 95, 159, 0.4) 100%) !important;
-  border: 1.8px solid #00e5ff !important;
+  border: 1.8px solid var(--neon-primary, #00e5ff) !important;
   box-shadow: 0 0 24px rgba(0, 229, 255, 0.45) !important;
   color: #ffffff !important;
 }
@@ -2473,7 +2445,7 @@ html, body {
   color: #ffffff;
   min-width: 126px;
   text-align: center;
-  text-shadow: 0 0 16px rgba(0, 229, 255, 0.6);
+  text-shadow: 0 0 16px var(--neon-glow, rgba(0, 229, 255, 0.6));
   margin-bottom: 4px;
   text-transform: uppercase;
 }
@@ -2534,8 +2506,8 @@ html, body {
 }
 
 .mode-3way-tab.tab-normal:not(.locked):not(:disabled) .tab-icon {
-  color: #00e5ff !important;
-  fill: #00e5ff !important;
+  color: var(--neon-primary, #00e5ff) !important;
+  fill: var(--neon-primary, #00e5ff) !important;
 }
 
 .mode-3way-tab.tab-endless:not(.locked):not(:disabled) .tab-icon {
@@ -2579,7 +2551,7 @@ html, body {
 
 .mode-3way-tab.tab-normal.active {
   background: linear-gradient(180deg, rgba(0, 229, 255, 0.3) 0%, rgba(0, 102, 136, 0.15) 100%);
-  border-color: #00e5ff !important;
+  border-color: var(--neon-primary, #00e5ff) !important;
   color: #ffffff !important;
   box-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
 }
@@ -2615,13 +2587,13 @@ html, body {
   letter-spacing: 0.5px;
 }
 .chapter-swipe-hint .swipe-arrow {
-  color: #00e5ff;
+  color: var(--neon-primary, #00e5ff);
   opacity: 0.9;
 }
 
 .swipe-arrow {
   font-size: 9px;
-  color: #00e5ff;
+  color: var(--neon-primary, #00e5ff);
   opacity: 0.85;
 }
 
@@ -2818,7 +2790,7 @@ html, body {
   border-radius: 20px !important;
   padding: 12px 12px;
   width: 88% !important;
-  max-width: 320px !important; /* Расширяем с 290px до 320px */
+  max-width: 320px !important;
   cursor: pointer;
   box-shadow: 0 0 16px rgba(168, 85, 247, 0.35), inset 0 0 10px rgba(217, 70, 239, 0.2) !important;
   color: #ffffff !important;
@@ -2854,16 +2826,16 @@ html, body {
 }
 
 .battle-btn-status {
-  flex: 1.15; /* Чуть больший приоритет по ширине для правой половины с длинным текстом */
+  flex: 1.15;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   font-family: 'Montserrat', sans-serif;
-  font-size: 11px; /* 11px вместо 12px для идеальной посадки */
+  font-size: 11px;
   font-weight: 900;
-  letter-spacing: 0.4px; /* Компактный межбуквенный интервал */
-  white-space: nowrap !important; /* Жестко запрещаем перенос на вторую строчку */
+  letter-spacing: 0.4px;
+  white-space: nowrap !important;
   gap: 4px;
 }
 
@@ -3029,8 +3001,8 @@ html, body {
 .part-nav-btn.btn-pushed:not(:disabled) {
   transform: scale(0.88) translateY(1px) !important;
   background: rgba(0, 229, 255, 0.35) !important;
-  border-color: #00e5ff !important;
-  box-shadow: 0 0 20px rgba(0, 229, 255, 0.7) !important;
+  border-color: var(--neon-primary, #00e5ff) !important;
+  box-shadow: 0 0 20px var(--neon-glow, rgba(0, 229, 255, 0.7)) !important;
 }
 .part-nav-btn:disabled {
   opacity: 0.3;
@@ -3044,7 +3016,7 @@ html, body {
   color: #ffffff;
   min-width: 126px;
   text-align: center;
-  text-shadow: 0 0 16px rgba(0, 229, 255, 0.6);
+  text-shadow: 0 0 16px var(--neon-glow, rgba(0, 229, 255, 0.6));
 }
 
 .levels-content-zone,
@@ -3126,12 +3098,12 @@ html, body {
 .level-card-btn:active:not(:disabled):not(.locked),
 .level-card-btn.btn-pushed:not(:disabled):not(.locked) {
   transform: scale(0.88) translateY(2px) !important;
-  border-color: #00e5ff !important;
-  box-shadow: 0 0 22px rgba(0, 229, 255, 0.75), inset 0 0 8px rgba(0, 229, 255, 0.3) !important;
+  border-color: var(--neon-primary, #00e5ff) !important;
+  box-shadow: 0 0 22px var(--neon-glow, rgba(0, 229, 255, 0.75)), inset 0 0 8px rgba(0, 229, 255, 0.3) !important;
 }
 .level-card-btn.current {
   background: linear-gradient(rgba(0, 229, 255, 0.3), rgba(0, 229, 255, 0.06)), rgba(8, 12, 24, 0.92);
-  border: 1px solid #00e5ff;
+  border: 1px solid var(--neon-primary, #00e5ff);
   box-shadow: 0 0 26px rgba(0, 229, 255, 0.45);
 }
 .level-card-btn.locked {
@@ -3276,7 +3248,7 @@ html, body {
 .upgrade-row-card {
   border-radius: 18px;
   background: rgba(8, 12, 24, 0.6);
-  border: 1px solid rgba(0, 229, 255, 0.22); /* Единый неоновый цвет рамки */
+  border: 1px solid rgba(0, 229, 255, 0.22);
   box-shadow: 0 0 10px rgba(0, 229, 255, 0.06);
   padding: 10px 13px;
   display: flex;
@@ -3347,7 +3319,7 @@ html, body {
   padding: 8px 12px;
   border-radius: 20px;
   background: linear-gradient(rgba(0, 229, 255, 0.28), rgba(0, 229, 255, 0.06)), rgba(8, 12, 24, 0.92);
-  border: 1px solid #00e5ff;
+  border: 1px solid var(--neon-primary, #00e5ff);
   display: flex;
   align-items: center;
   gap: 5px;
@@ -3370,7 +3342,7 @@ html, body {
 .upgrade-row-buy:active:not(.locked-buy):not(.max-buy),
 .upgrade-row-buy.btn-pushed:not(.locked-buy):not(.max-buy) {
   transform: scale(0.90) translateY(1px) !important;
-  box-shadow: 0 0 18px rgba(0, 229, 255, 0.6) !important;
+  box-shadow: 0 0 18px var(--neon-glow, rgba(0, 229, 255, 0.6)) !important;
 }
 .upgrade-row-buy.locked-buy,
 .upgrade-row-buy.max-buy {
@@ -3480,7 +3452,7 @@ html, body {
   border-radius: 50%;
   transition: 0.2s;
 }
-input:checked + .slider { background-color: #00e5ff; }
+input:checked + .slider { background-color: var(--neon-primary, #00e5ff); }
 input:checked + .slider:before { transform: translateX(20px); background-color: #020e16; }
 
 .setting-row-slider {
@@ -3520,8 +3492,8 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   height: 15px;
   border-radius: 50%;
   background: #020e16;
-  border: 2.5px solid #00e5ff;
-  box-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
+  border: 2.5px solid var(--neon-primary, #00e5ff);
+  box-shadow: 0 0 8px var(--neon-glow, rgba(0, 229, 255, 0.6));
   cursor: pointer;
 }
 .vol-range::-moz-range-thumb {
@@ -3529,8 +3501,8 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   height: 15px;
   border-radius: 50%;
   background: #020e16;
-  border: 2.5px solid #00e5ff;
-  box-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
+  border: 2.5px solid var(--neon-primary, #00e5ff);
+  box-shadow: 0 0 8px var(--neon-glow, rgba(0, 229, 255, 0.6));
   cursor: pointer;
 }
 .vol-range.is-muted::-webkit-slider-thumb {
@@ -3558,9 +3530,9 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between; /* Разносим верх, центр и низ на равные расстояния */
-  height: 100%; /* Занимает всю полезную высоту панели инспектора */
-  padding: 4px 0 3px 0; /* Чтобы заголовок и бар не прилипали к бордерам панели */
+  justify-content: space-between;
+  height: 100%;
+  padding: 4px 0 3px 0;
   min-width: 0;
   flex: none;
   box-sizing: border-box;
@@ -3590,7 +3562,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   height: 28px;
   border-radius: 50%;
   background: rgba(11, 16, 32, 0.9);
-  border: 1.5px solid #00e5ff;
+  border: 1.5px solid var(--neon-primary, #00e5ff);
   box-shadow: 0 0 10px rgba(0, 229, 255, 0.35);
   display: flex;
   align-items: center;
@@ -3646,8 +3618,8 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   transition: background 0.2s ease;
 }
 .level-bar-seg.active {
-  background: #00e5ff;
-  box-shadow: 0 0 5px rgba(0, 229, 255, 0.6);
+  background: var(--neon-primary, #00e5ff);
+  box-shadow: 0 0 5px var(--neon-glow, rgba(0, 229, 255, 0.6));
 }
 
 /* [CSS107.01] Tower upgrade and sell confirm action buttons */
@@ -3657,7 +3629,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   height: 100%;
   border-radius: 18px;
   background: linear-gradient(rgba(0, 229, 255, 0.3), rgba(0, 229, 255, 0.06)), rgba(8, 12, 24, 0.92);
-  border: 1.5px solid #00e5ff;
+  border: 1.5px solid var(--neon-primary, #00e5ff);
   box-shadow: 0 0 22px rgba(0, 229, 255, 0.35);
   display: flex;
   flex-direction: column;
@@ -3672,7 +3644,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 .btn-upgrade:active:not(:disabled),
 .btn-upgrade.btn-pushed:not(:disabled) {
   transform: scale(0.92) translateY(2px) !important;
-  box-shadow: 0 0 32px rgba(0, 229, 255, 0.85), inset 0 0 10px rgba(0, 229, 255, 0.3) !important;
+  box-shadow: 0 0 32px var(--neon-glow, rgba(0, 229, 255, 0.85)), inset 0 0 10px rgba(0, 229, 255, 0.3) !important;
 }
 .btn-upgrade:disabled {
   opacity: 0.4;
@@ -3767,9 +3739,9 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 }
 
 .btn-close-inspect {
-  flex: 0 0 46px !important;
-  width: 46px !important;
-  min-width: 46px !important;
+  flex: 0 0 42px !important;
+  width: 42px !important;
+  min-width: 42px !important;
   height: 100% !important;
   border-radius: 18px !important;
   background: rgba(8, 12, 24, 0.65) !important;
@@ -3803,23 +3775,6 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   transition: stroke 0.2s ease;
 }
 
-.btn-close-inspect:active,
-.btn-close-inspect.btn-pushed {
-  transform: scale(0.92) translateY(2px) !important;
-  background: rgba(240, 95, 159, 0.35) !important;
-  border-color: #f05f9f !important;
-  box-shadow: 0 0 20px rgba(240, 95, 159, 0.6) !important;
-}
-
-.btn-close-inspect svg {
-  width: 18px;
-  height: 18px;
-  stroke: #f28eae;
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  transition: stroke 0.2s ease;
-}
-
 /* [CSS108] Interactive tutorial overlay spotlight and target indicators */
 .tutorial-layer {
   position: fixed;
@@ -3830,7 +3785,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 .tutorial-spotlight {
   position: absolute;
   border-radius: 18px;
-  border: 2px solid #00e5ff;
+  border: 2px solid var(--neon-primary, #00e5ff);
   box-shadow:
     0 0 0 2000px rgba(4, 6, 14, 0.72),
     0 0 18px 3px rgba(0, 229, 255, 0.5);
@@ -3849,7 +3804,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   margin-top: 0px;
   pointer-events: none;
   z-index: 502;
-  filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.9));
+  filter: drop-shadow(0 0 8px var(--neon-glow, rgba(0, 229, 255, 0.9)));
   will-change: transform, opacity, left, top;
 }
 
@@ -3890,7 +3845,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   height: 22px;
   margin-left: -11px;
   margin-top: -11px;
-  border: 2px solid #00e5ff;
+  border: 2px solid var(--neon-primary, #00e5ff);
   border-radius: 50%;
   opacity: 0;
   animation: tutorialTapRing 1.5s ease-out infinite;
@@ -3908,7 +3863,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   width: max-content;
   max-width: 220px;
   background: rgba(10, 13, 26, 0.95);
-  border: 1.5px solid #00e5ff;
+  border: 1.5px solid var(--neon-primary, #00e5ff);
   border-radius: 12px;
   box-shadow: 0 0 16px rgba(0, 229, 255, 0.35), 0 4px 18px rgba(0, 0, 0, 0.5);
   padding: 9px 14px;
@@ -3924,15 +3879,12 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   right: max(max(14px, env(safe-area-inset-right)), calc(50vw - 480px + 14px));
   top: max(82px, calc(env(safe-area-inset-top) + 72px));
   bottom: auto;
-  z-index: 515 !important; /* Гарантированно бьет все слои */
+  z-index: 515 !important;
   pointer-events: auto;
-  
-  /* Делаем кнопку яркой и контрастной */
   background: rgba(14, 20, 36, 0.95);
   border: 1.5px solid rgba(0, 229, 255, 0.6);
   box-shadow: 0 0 12px rgba(0, 229, 255, 0.25);
   color: #ffffff;
-  
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.5px;
@@ -3945,18 +3897,17 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 .tutorial-skip-btn:active,
 .tutorial-skip-btn.btn-pushed {
   background: rgba(0, 229, 255, 0.25) !important;
-  border-color: #00e5ff !important;
+  border-color: var(--neon-primary, #00e5ff) !important;
   color: #ffffff !important;
   box-shadow: 0 0 16px rgba(0, 229, 255, 0.6) !important;
   transform: scale(0.92) translateY(1px) !important;
 }
 
-/* Яркий дубликат крестика, который рисуется ПОВЕРХ тени туториала */
 .tutorial-close-btn-highlight {
   position: absolute;
   border-radius: 18px;
   background: rgba(14, 20, 36, 0.98);
-  border: 2px solid #00e5ff;
+  border: 2px solid var(--neon-primary, #00e5ff);
   box-shadow: 0 0 16px rgba(0, 229, 255, 0.85);
   display: flex;
   align-items: center;
@@ -3969,18 +3920,17 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 .tutorial-close-btn-highlight svg {
   width: 18px;
   height: 18px;
-  stroke: #00e5ff;
+  stroke: var(--neon-primary, #00e5ff);
   stroke-width: 2.5;
   stroke-linecap: round;
-  filter: drop-shadow(0 0 6px #00e5ff);
+  filter: drop-shadow(0 0 6px var(--neon-primary, #00e5ff));
 }
 
-/* Синеватая неоновая рамка под цвет игрового поля с тёмным фоном внутри (блокирует клик по башне) */
 .tutorial-tower-block {
   position: absolute;
   border-radius: 12px;
   background: rgba(4, 6, 14, 0.78);
-  border: 2px solid #00e5ff;
+  border: 2px solid var(--neon-primary, #00e5ff);
   box-shadow: 0 0 12px rgba(0, 229, 255, 0.45), inset 0 0 14px rgba(4, 6, 14, 0.85);
   pointer-events: auto;
   cursor: not-allowed;
@@ -4174,15 +4124,15 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 
 .result-btn-pill:active {
   transform: scale(0.92) translateY(2px) !important;
-  border-color: #00e5ff !important;
+  border-color: var(--neon-primary, #00e5ff) !important;
   color: #ffffff !important;
-  box-shadow: 0 0 24px rgba(0, 229, 255, 0.6), inset 0 0 10px rgba(0, 229, 255, 0.25) !important;
+  box-shadow: 0 0 24px var(--neon-glow, rgba(0, 229, 255, 0.6)), inset 0 0 10px rgba(0, 229, 255, 0.25) !important;
   background: rgba(14, 22, 44, 0.85) !important;
 }
 
 .result-btn-resume {
   background: linear-gradient(180deg, rgba(0, 229, 255, 0.18) 0%, rgba(0, 74, 96, 0.12) 100%);
-  border: 1.8px solid #00e5ff;
+  border: 1.8px solid var(--neon-primary, #00e5ff);
   color: #ffffff;
   font-weight: 900;
   box-shadow: 0 0 16px rgba(0, 229, 255, 0.35);
@@ -4253,7 +4203,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 
 #defeatScreen.endless-result-active #endlessDoubleBtn {
   background: linear-gradient(135deg, rgba(0, 229, 255, 0.4) 0%, rgba(168, 85, 247, 0.4) 50%, rgba(240, 95, 159, 0.4) 100%) !important;
-  border: 1.8px solid #00e5ff !important;
+  border: 1.8px solid var(--neon-primary, #00e5ff) !important;
   box-shadow: 0 0 24px rgba(0, 229, 255, 0.45) !important;
   color: #ffffff !important;
 }
@@ -4290,8 +4240,8 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   flex: none;
   width: 18px;
   height: 18px;
-  color: #00e5ff;
-  filter: drop-shadow(0 0 5px rgba(0, 229, 255, 0.85));
+  color: var(--neon-primary, #00e5ff);
+  filter: drop-shadow(0 0 5px var(--neon-glow, rgba(0, 229, 255, 0.85)));
 }
 
 .retry-reload-icon {
@@ -4391,7 +4341,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 }
 .loadout-widget-count.is-full {
   background: rgba(0, 229, 255, 0.22);
-  border-color: #00e5ff;
+  border-color: var(--neon-primary, #00e5ff);
   color: #ffffff;
   box-shadow: 0 0 8px rgba(0, 229, 255, 0.35);
 }
@@ -4471,7 +4421,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 .loadout-grid .loadout-tower-btn:active:not(.blocked),
 .loadout-grid .loadout-tower-btn.btn-pushed:not(.blocked) {
   transform: scale(0.92) translateY(1px) !important;
-  border-color: #00e5ff !important;
+  border-color: var(--neon-primary, #00e5ff) !important;
   box-shadow: 0 0 16px rgba(0, 229, 255, 0.5) !important;
 }
 
@@ -4534,7 +4484,7 @@ label,
 
 .modal-popup-card {
   background: linear-gradient(180deg, rgba(13, 21, 40, 0.97) 0%, rgba(7, 10, 20, 0.99) 100%) !important;
-  border: 1.5px solid #00e5ff !important;
+  border: 1.5px solid var(--neon-primary, #00e5ff) !important;
   box-shadow: 0 0 28px rgba(0, 229, 255, 0.25), inset 0 0 20px rgba(0, 229, 255, 0.08) !important;
   border-radius: 22px !important;
   padding: 24px 20px !important;
@@ -4610,7 +4560,7 @@ label,
 .daily-modal-close-btn:active {
   transform: scale(0.88) translateY(1px) !important;
   color: #ffffff;
-  border-color: #00e5ff;
+  border-color: var(--neon-primary, #00e5ff);
   box-shadow: 0 0 16px rgba(0, 229, 255, 0.6);
 }
 
@@ -4896,7 +4846,7 @@ label,
 
 .daily-claim-normal:active:not(:disabled) {
   transform: scale(0.92) translateY(2px) !important;
-  border-color: #00e5ff !important;
+  border-color: var(--neon-primary, #00e5ff) !important;
   color: #ffffff !important;
   box-shadow: 0 0 24px rgba(0, 229, 255, 0.6), inset 0 0 10px rgba(0, 229, 255, 0.25) !important;
 }
@@ -4905,7 +4855,7 @@ label,
   flex: 1.6;
   color: #ffffff;
   background: linear-gradient(135deg, rgba(0, 229, 255, 0.4) 0%, rgba(168, 85, 247, 0.4) 50%, rgba(240, 95, 159, 0.4) 100%);
-  border: 1.8px solid #00e5ff;
+  border: 1.8px solid var(--neon-primary, #00e5ff);
   box-shadow: 0 0 24px rgba(0, 229, 255, 0.45);
 }
 
@@ -4995,7 +4945,6 @@ label,
   padding-left: 2px;
 }
 
-/* Сама карточка товара — горизонтальный флекс-ряд */
 .shop-card {
   border-radius: 18px;
   background: rgba(8, 12, 24, 0.65);
@@ -5023,7 +4972,6 @@ label,
   flex: 1;
 }
 
-/* Круглая иконка слева */
 .shop-card-icon {
   width: 40px;
   height: 40px;
@@ -5051,7 +4999,6 @@ label,
   box-shadow: 0 0 12px rgba(217, 70, 239, 0.35);
 }
 
-/* Блок заголовка и подписи */
 .shop-card-info {
   display: flex;
   flex-direction: column;
@@ -5082,7 +5029,6 @@ label,
   font-weight: 700;
 }
 
-/* Кнопки действий справа */
 .shop-item-btn {
   flex: none;
   min-width: 82px;
@@ -5110,14 +5056,14 @@ label,
 
 .shop-btn-free {
   background: linear-gradient(180deg, rgba(0, 229, 255, 0.35) 0%, rgba(0, 150, 180, 0.2) 100%);
-  border: 1.4px solid #00e5ff;
+  border: 1.4px solid var(--neon-primary, #00e5ff);
   color: #ffffff;
   box-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
 }
 
 .shop-btn-ad {
   background: linear-gradient(135deg, rgba(0, 229, 255, 0.4) 0%, rgba(168, 85, 247, 0.4) 50%, rgba(240, 95, 159, 0.4) 100%);
-  border: 1.5px solid #00e5ff;
+  border: 1.5px solid var(--neon-primary, #00e5ff);
   color: #ffffff;
   box-shadow: 0 0 14px rgba(0, 229, 255, 0.4);
 }
@@ -5208,7 +5154,6 @@ label,
   flex-shrink: 0;
 }
 
-/* Компактный вид и перенос строк для заблокированных кнопок */
 .shop-item-btn.locked-buy {
   white-space: normal !important;
   line-height: 1.15 !important;
@@ -5223,19 +5168,16 @@ label,
   padding: 8px 4px 24px 4px !important;
 }
 
-/* Отделяем заголовки разделов от предыдущих карточек */
 #shopScreen .upgrades-row-group-label {
   margin-top: 14px !important;
   margin-bottom: 2px !important;
   padding-left: 4px;
 }
 
-/* Для самого первого заголовка (Daily Gifts) верхний отступ не увеличиваем */
 #shopScreen .upgrades-row-group-label:first-child {
   margin-top: 2px !important;
 }
 
-/* Увеличиваем вертикальный внутренний отступ самих карточек для лучшей читаемости */
 #shopScreen .shop-card {
   margin-bottom: 2px;
 }
@@ -5275,7 +5217,6 @@ label,
 
 .loader-title-zone {
   position: absolute;
-  /* Опускаем вниз ровно на padding меню (20px + safe-area-inset-top) */
   top: calc(max(20px, env(safe-area-inset-top)) + clamp(110px, 17vh, 150px));
   left: 50%;
   transform: translateX(-50%);
@@ -5330,7 +5271,7 @@ label,
 }
 
 .menu-btn-resume-capsule svg {
-  color: #ffffff; /* Белая иконка */
+  color: #ffffff;
   filter: drop-shadow(0 0 6px rgba(255, 145, 0, 0.9));
 }
 
@@ -5362,7 +5303,7 @@ label,
 }
 
 .upg-stat-next {
-  color: #00e5ff;
+  color: var(--neon-primary, #00e5ff);
   font-weight: 800;
   opacity: 0.9;
 }
@@ -5391,24 +5332,23 @@ label,
   align-items: flex-start !important;
   justify-content: center !important;
   gap: 2px !important;
-  padding: 2px 4px !important; /* Убраны раздутые отступы для освобождения места под кнопку */
-  background: transparent !important; /* Прозрачный фон */
-  border: none !important; /* Рамка полностью удалена */
+  padding: 2px 4px !important;
+  background: transparent !important;
+  border: none !important;
   box-shadow: none !important;
   height: 100% !important;
   flex: 0 0 auto !important;
   box-sizing: border-box !important;
 }
 
-/* Каждая отдельная строка: имя слева, цифра справа */
 .inspect-stat-item {
   display: flex !important;
-  flex-direction: row !important; /* Лейбл и значение в одну строку */
+  flex-direction: row !important;
   align-items: baseline !important;
   justify-content: space-between !important;
   width: 100% !important;
   gap: 5px !important;
-  min-width: 58px !important; /* Компактная ширина всей колонки */
+  min-width: 58px !important;
   flex: none !important;
 }
 
@@ -5432,11 +5372,6 @@ label,
   line-height: 1.1 !important;
   font-variant-numeric: tabular-nums !important;
   white-space: nowrap !important;
-}
-
-/* Также слегка уменьшаем пустую ширину кнопки закрытия (✕) для высвобождения места */
-.btn-close-inspect {
-  width: 42px !important; /* Освобождает дополнительные 10px под кнопки Upgrade и Sell */
 }
 
 /* [CSS116] Milestone & Achievement Unlock Modal Card + Live Tower Firing Demo */
@@ -5477,7 +5412,6 @@ label,
   margin: 2px 0;
 }
 
-/* --- Живая диорама стрельбы башни --- */
 .ms-firing-stage {
   position: relative;
   width: 100%;
@@ -5533,7 +5467,6 @@ label,
   justify-content: center;
 }
 
-/* Враги-мишени в диораме */
 .ms-demo-mob {
   width: 22px;
   height: 22px;
@@ -5600,7 +5533,6 @@ label,
   50% { transform: translateX(-5px); }
 }
 
-/* Анимации снарядов и лучей для каждого типа башни */
 .ms-fx-bullet.b1 { animation: msBulletFly 0.7s linear infinite; }
 .ms-fx-bullet.b2 { animation: msBulletFly 0.7s linear 0.35s infinite; }
 .ms-fx-impact { animation: msImpactRing 0.7s ease-out infinite; transform-origin: 186px 45px; }
@@ -5620,7 +5552,6 @@ label,
 .ms-fx-laser-glow {
   stroke-width: 4.5px;
   filter: drop-shadow(0 0 6px var(--stage-col, #f05f9f));
-  /* 3-секундный боевой цикл: 2.2с залп + 0.8с пауза */
   animation: msLaserCycle 3.0s ease-in-out infinite, msLaserThickPulse 0.16s ease-in-out infinite alternate;
 }
 
@@ -5630,7 +5561,6 @@ label,
   animation: msLaserCycle 3.0s ease-in-out infinite, msLaserCorePulse 0.12s ease-in-out infinite alternate;
 }
 
-/* Цикл работы: 2.2 секунды стрельба, затем пауза 0.8 секунды */
 @keyframes msLaserCycle {
   0%, 72% {
     opacity: 1;
@@ -5646,7 +5576,6 @@ label,
   }
 }
 
-/* Быстрая пульсация толщины неонового луча во время выстрела */
 @keyframes msLaserThickPulse {
   0% {
     stroke-width: 3.5px;
@@ -5658,7 +5587,6 @@ label,
   }
 }
 
-/* Вибрация белого сердечника */
 @keyframes msLaserCorePulse {
   0% {
     stroke-width: 1.4px;
@@ -5669,7 +5597,7 @@ label,
 }
 
 .ms-fx-mortar-shell {
-   offset-path: path('M 58 42 Q 122 -2 186 45');
+  offset-path: path('M 58 42 Q 122 -2 186 45');
   animation: msMortarArc 1.1s ease-in infinite;
 }
 .ms-fx-splash-ring {
@@ -5689,7 +5617,6 @@ label,
   100% { transform: scale(1.35); opacity: 0; }
 }
 
-/* --- Анимация цепной молнии Tesla --- */
 .ms-fx-zap {
   animation: msZapFlicker 0.55s steps(2, end) infinite;
 }
@@ -5724,7 +5651,6 @@ label,
   75%, 100% { opacity: 0; }
 }
 
-/* --- Голограмма для открытия режимов (Endless / Hardcore / Tech Tree) --- */
 .ms-feature-showcase {
   position: relative;
   width: 86px;
@@ -5759,7 +5685,6 @@ label,
   to { transform: rotate(360deg); }
 }
 
-/* --- Список коротких буллит-чипов --- */
 .milestone-body {
   width: 100%;
 }
@@ -5786,7 +5711,6 @@ label,
   animation: seqIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Встроенный выбор Loadout внутри модалки */
 .milestone-embed {
   width: 100%;
   margin-top: 2px;
@@ -5832,7 +5756,7 @@ label,
 /* --- Экран завершения кампании (Game Completion Modal) --- */
 .game-completion-card {
   background: linear-gradient(180deg, rgba(13, 21, 40, 0.97) 0%, rgba(7, 10, 20, 0.99) 100%);
-  border: 1.5px solid #00e5ff;
+  border: 1.5px solid var(--neon-primary, #00e5ff);
   box-shadow: 0 0 28px rgba(0, 229, 255, 0.3), inset 0 0 20px rgba(0, 229, 255, 0.08);
   border-radius: 22px;
   padding: 22px 18px 18px;
@@ -5858,7 +5782,7 @@ label,
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 2.5px;
-  color: #00e5ff;
+  color: var(--neon-primary, #00e5ff);
 }
 
 .completion-title {
@@ -5893,16 +5817,15 @@ label,
   height: 58px;
   border-radius: 50%;
   background: rgba(10, 15, 30, 0.95);
-  border: 1.5px solid #00e5ff;
+  border: 1.5px solid var(--neon-primary, #00e5ff);
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: drop-shadow(0 0 12px #00e5ff);
+  filter: drop-shadow(0 0 12px var(--neon-primary, #00e5ff));
 }
 
-/* Цветные левые полоски у чипов */
 .completion-chip-cyan {
-  border-left-color: #00e5ff !important;
+  border-left-color: var(--neon-primary, #00e5ff) !important;
 }
 
 .completion-chip-purple {
@@ -5922,14 +5845,370 @@ label,
   letter-spacing: 2px;
   border-radius: 24px;
   background: radial-gradient(circle at 50% 50%, rgba(0, 229, 255, 0.35), rgba(0, 229, 255, 0.1)) !important;
-  border: 1.6px solid #00e5ff !important;
+  border: 1.6px solid var(--neon-primary, #00e5ff) !important;
   box-shadow: 0 0 20px rgba(0, 229, 255, 0.45), inset 0 0 10px rgba(0, 229, 255, 0.2) !important;
   color: #ffffff !important;
-  text-shadow: 0 0 10px #00e5ff;
+  text-shadow: 0 0 10px var(--neon-primary, #00e5ff);
   transition: transform 0.1s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .completion-ok-btn:active {
   transform: scale(0.95) translateY(1px) !important;
   box-shadow: 0 0 32px rgba(0, 229, 255, 0.8), inset 0 0 16px rgba(0, 229, 255, 0.45) !important;
+}
+
+/* ============================================================================
+   [CSS117] HYPERION SUNBURST THEME OVERRIDES (data-theme="matrix_green")
+   Electric Cobalt Blue (#2563eb / #3b82f6) & Solar Orange-Gold (#ff6b00 / #ffb700)
+   ============================================================================ */
+
+/* 1. БАЗОВЫЙ ЦВЕТ ОБВОДКИ ВСЕХ КНОПОК И ЭЛЕМЕНТОВ UI -> СИНИЙ */
+body[data-theme="matrix_green"] .hud-top-bar,
+body[data-theme="matrix_green"] .upgrades-top-bar,
+body[data-theme="matrix_green"] .controls-wrapper,
+body[data-theme="matrix_green"] .menu-btn-glass-capsule,
+body[data-theme="matrix_green"] .result-btn:not(.result-btn-primary):not(.victory-claim-btn):not(.result-btn-grunt),
+body[data-theme="matrix_green"] .result-btn-pill:not(.result-btn-resume),
+body[data-theme="matrix_green"] .upgrade-row-card,
+body[data-theme="matrix_green"] .shop-card,
+body[data-theme="matrix_green"] .bp-header-card,
+body[data-theme="matrix_green"] .bp-tier-row,
+body[data-theme="matrix_green"] .bp-cell-free,
+body[data-theme="matrix_green"] .bp-btn-buy-tier,
+body[data-theme="matrix_green"] .bp-xp-bar-container,
+body[data-theme="matrix_green"] .settings-box,
+body[data-theme="matrix_green"] .mode-3way-switcher,
+body[data-theme="matrix_green"] .loadout-tower-btn:not(.selected) {
+  border-color: rgba(59, 130, 246, 0.38) !important;
+}
+
+body[data-theme="matrix_green"] .hud-top-bar,
+body[data-theme="matrix_green"] .upgrades-top-bar {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 16px rgba(37, 99, 235, 0.18);
+}
+
+body[data-theme="matrix_green"] .menu-btn-glass-capsule,
+body[data-theme="matrix_green"] .result-btn:not(.result-btn-primary):not(.victory-claim-btn):not(.result-btn-grunt),
+body[data-theme="matrix_green"] .result-btn-pill:not(.result-btn-resume):not(.result-btn-giveup),
+body[data-theme="matrix_green"] .bp-btn-buy-tier {
+  color: #dbeafe;
+}
+
+body[data-theme="matrix_green"] .menu-btn-glass-capsule:active:not(:disabled):not(.no-press-feedback),
+body[data-theme="matrix_green"] .result-btn:active:not(:disabled):not(.no-press-feedback):not(.btn-locked),
+body[data-theme="matrix_green"] .result-btn-pill:active:not(.result-btn-giveup) {
+  border-color: #3b82f6 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 24px rgba(59, 130, 246, 0.65), inset 0 0 10px rgba(59, 130, 246, 0.3) !important;
+  background: rgba(14, 26, 56, 0.88) !important;
+}
+
+body[data-theme="matrix_green"] .upgrades-top-label,
+body[data-theme="matrix_green"] .match-val-text,
+body[data-theme="matrix_green"] .setting-slider-val:not(.is-muted),
+body[data-theme="matrix_green"] .hud-select-dropdown {
+  color: #93c5fd;
+}
+
+body[data-theme="matrix_green"] .hud-gear-btn,
+body[data-theme="matrix_green"] .daily-bonus-quick-btn {
+  border-color: rgba(59, 130, 246, 0.52);
+  color: #60a5fa;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.22), inset 0 0 8px rgba(59, 130, 246, 0.08);
+}
+body[data-theme="matrix_green"] .hud-gear-svg,
+body[data-theme="matrix_green"] .daily-btn-svg {
+  filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.65));
+}
+
+body[data-theme="matrix_green"] .start-sub-title {
+  color: #93c5fd;
+}
+body[data-theme="matrix_green"] .start-main-title {
+  text-shadow: 0 0 24px rgba(255, 145, 0, 0.85), 0 2px 14px rgba(2, 3, 8, 0.95);
+}
+
+/* Главная кнопка PLAY в меню */
+body[data-theme="matrix_green"] .menu-btn-primary-capsule {
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.65) 0%, rgba(255, 107, 0, 0.72) 55%, rgba(255, 183, 0, 0.75) 100%), rgba(8, 12, 24, 0.92);
+  border: 1.4px solid #ff9100;
+  box-shadow: 0 0 28px rgba(255, 107, 0, 0.5), -6px 0 20px rgba(37, 99, 235, 0.35);
+}
+body[data-theme="matrix_green"] .menu-btn-primary-capsule span {
+  text-shadow: 0 0 14px rgba(255, 183, 0, 0.9);
+}
+body[data-theme="matrix_green"] .menu-btn-primary-capsule:active:not(:disabled) {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.8) 0%, rgba(255, 145, 0, 0.85) 55%, rgba(255, 200, 0, 0.9) 100%), rgba(10, 18, 36, 0.98) !important;
+  border-color: #ffb700 !important;
+  box-shadow: 0 0 40px rgba(255, 145, 0, 0.9), inset 0 0 15px rgba(255, 183, 0, 0.4) !important;
+}
+
+/* Виджет SYNTH PASS в главном меню */
+body[data-theme="matrix_green"] .synth-pass-widget {
+  border-color: rgba(59, 130, 246, 0.45);
+  box-shadow: 0 0 18px rgba(37, 99, 235, 0.22);
+}
+body[data-theme="matrix_green"] .synth-pass-icon {
+  color: #ff9100;
+  filter: drop-shadow(0 0 6px rgba(255, 145, 0, 0.6));
+}
+body[data-theme="matrix_green"] .synth-pass-tier-text {
+  color: #ffb700;
+}
+body[data-theme="matrix_green"] .synth-pass-bar-fill,
+body[data-theme="matrix_green"] .bp-xp-bar-fill {
+  background: linear-gradient(90deg, #2563eb 0%, #ff6b00 55%, #ffb700 100%);
+  box-shadow: 0 0 10px #ff9100;
+}
+
+/* 2. ЛУТБОКС ПРИ ПОБЕДЕ -> СИНЯЯ ОБВОДКА */
+body[data-theme="matrix_green"] #victoryRewardBox {
+  --chip-border: #3b82f6 !important;
+  --chip-label: #93c5fd !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 18px rgba(59, 130, 246, 0.4), inset 0 0 10px rgba(59, 130, 246, 0.12) !important;
+}
+body[data-theme="matrix_green"] #victoryRewardBox .reward-label {
+  border-color: #3b82f6 !important;
+  color: #93c5fd !important;
+}
+body[data-theme="matrix_green"] #victoryRewardBox .reward-amount {
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.65) !important;
+}
+
+/* 3. CLAIM X2 И ВСЕ РЕКЛАМНЫЕ КНОПКИ -> СИНЕ-ЖЕЛТЫЙ ГРАДИЕНТ */
+body[data-theme="matrix_green"] .victory-claim-btn,
+body[data-theme="matrix_green"] #reviveBtn,
+body[data-theme="matrix_green"] .revive-btn,
+body[data-theme="matrix_green"] #defeatScreen.endless-result-active #endlessDoubleBtn,
+body[data-theme="matrix_green"] .daily-claim-double,
+body[data-theme="matrix_green"] .shop-btn-ad,
+body[data-theme="matrix_green"] .bp-cell-btn.ad-btn {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.55) 0%, rgba(255, 107, 0, 0.52) 55%, rgba(255, 183, 0, 0.55) 100%) !important;
+  border-color: #ffb700 !important;
+  box-shadow: 0 0 24px rgba(255, 145, 0, 0.45), -4px 0 16px rgba(37, 99, 235, 0.35) !important;
+  color: #ffffff !important;
+}
+
+body[data-theme="matrix_green"] .victory-claim-btn:active:not(:disabled),
+body[data-theme="matrix_green"] #reviveBtn:active,
+body[data-theme="matrix_green"] .revive-btn:active,
+body[data-theme="matrix_green"] #defeatScreen.endless-result-active #endlessDoubleBtn:active,
+body[data-theme="matrix_green"] .daily-claim-double:active:not(:disabled),
+body[data-theme="matrix_green"] .shop-btn-ad:active:not(:disabled),
+body[data-theme="matrix_green"] .bp-cell-btn.ad-btn:active {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.72) 0%, rgba(255, 145, 0, 0.7) 55%, rgba(255, 205, 0, 0.75) 100%) !important;
+  border-color: #fde047 !important;
+  box-shadow: 0 0 32px rgba(255, 183, 0, 0.8) !important;
+}
+
+/* 4. DAILY BONUS MODAL -> СИНЕ-ЖЕЛТЫЕ ЦВЕТА */
+body[data-theme="matrix_green"] .daily-modal-card {
+  border-color: rgba(59, 130, 246, 0.65);
+  box-shadow: 0 0 26px rgba(37, 99, 235, 0.3), inset 0 0 18px rgba(59, 130, 246, 0.1);
+}
+body[data-theme="matrix_green"] .daily-modal-close-btn {
+  border-color: rgba(59, 130, 246, 0.45);
+  color: #93c5fd;
+}
+body[data-theme="matrix_green"] .daily-card {
+  border-color: rgba(59, 130, 246, 0.35);
+}
+body[data-theme="matrix_green"] .daily-card.day5-card {
+  border-color: rgba(255, 145, 0, 0.5);
+}
+body[data-theme="matrix_green"] .daily-dual-plus {
+  color: #ffb700;
+  text-shadow: 0 0 6px rgba(255, 183, 0, 0.6);
+}
+body[data-theme="matrix_green"] .daily-card.active {
+  background: linear-gradient(180deg, rgba(68, 32, 6, 0.88) 0%, rgba(28, 12, 3, 0.96) 100%);
+  border: 2.2px solid #ffb700;
+  box-shadow: 0 0 18px rgba(255, 183, 0, 0.5), inset 0 0 10px rgba(255, 145, 0, 0.22);
+}
+body[data-theme="matrix_green"] .daily-today-badge {
+  background: linear-gradient(90deg, #ff6b00, #ffb700);
+  color: #060913;
+  box-shadow: 0 0 10px rgba(255, 183, 0, 0.75);
+}
+body[data-theme="matrix_green"] .daily-check-pill {
+  background: #081838;
+  border-color: rgba(59, 130, 246, 0.7);
+}
+body[data-theme="matrix_green"] .daily-check-pill svg {
+  stroke: #60a5fa !important;
+}
+body[data-theme="matrix_green"] .daily-card.day7-card {
+  background-image: linear-gradient(#0d1424, #0d1424), linear-gradient(90deg, #2563eb 0%, #ff6b00 50%, #ffb700 100%);
+  box-shadow: 0 0 18px rgba(255, 145, 0, 0.28);
+}
+body[data-theme="matrix_green"] .day7-badge {
+  background: #361704;
+  border-color: #ff9100;
+  color: #fde68a;
+}
+body[data-theme="matrix_green"] .diamond-capsule {
+  background: #07152e;
+  border-color: rgba(59, 130, 246, 0.75);
+}
+body[data-theme="matrix_green"] .prism-capsule {
+  background: #2b1104;
+  border-color: #ff9100;
+  box-shadow: 0 0 10px rgba(255, 145, 0, 0.35);
+}
+body[data-theme="matrix_green"] .daily-claim-normal {
+  background: #0a152e;
+  border-color: rgba(59, 130, 246, 0.65);
+  color: #dbeafe;
+}
+
+/* 5.1. КНОПКИ БАШЕН В МЕНЮ ПОСТРОЙКИ ПО ТИПАМ БАШЕН (data-type) */
+/* Gun, Tesla, Stasis -> Синеватые */
+body[data-theme="matrix_green"] .tower-btn[data-type="gun"],
+body[data-theme="matrix_green"] .tower-btn[data-type="tesla"],
+body[data-theme="matrix_green"] .tower-btn[data-type="stasis"] {
+  background: rgba(10, 18, 40, 0.92) !important;
+  border-color: rgba(59, 130, 246, 0.55) !important;
+}
+/* Laser, Melter -> Оранжеватые (как было у Splash) */
+body[data-theme="matrix_green"] .tower-btn[data-type="laser"],
+body[data-theme="matrix_green"] .tower-btn[data-type="melter"] {
+  background: rgba(28, 12, 6, 0.92) !important;
+  border-color: rgba(255, 107, 0, 0.58) !important;
+}
+/* Splash (mortar), Railgun -> Желтоватые (как было у Tesla) */
+body[data-theme="matrix_green"] .tower-btn[data-type="mortar"],
+body[data-theme="matrix_green"] .tower-btn[data-type="railgun"] {
+  background: rgba(28, 18, 6, 0.92) !important;
+  border-color: rgba(255, 183, 0, 0.58) !important;
+}
+
+/* 6. АЛМАЗЫ (СИНИЕ) И ПРИЗМЫ (ОРАНЖЕВО-ЗОЛОТЫЕ) ВЕЗДЕ В UI */
+body[data-theme="matrix_green"] #hudDiamondBadge svg,
+body[data-theme="matrix_green"] .levels-top-diamonds svg,
+body[data-theme="matrix_green"] .shop-card-icon.diamond-glow svg,
+body[data-theme="matrix_green"] .upgrade-row-buy svg[stroke="#00e5ff"],
+body[data-theme="matrix_green"] .bp-btn-buy-tier svg,
+body[data-theme="matrix_green"] .bp-cell-title svg[stroke="#00e5ff"],
+body[data-theme="matrix_green"] .mode-rules-banner svg[stroke="#00e5ff"],
+body[data-theme="matrix_green"] .loot-pill.diamond-pill svg,
+body[data-theme="matrix_green"] #synthPrismBtn svg,
+body[data-theme="matrix_green"] #timeModT1Btn svg,
+body[data-theme="matrix_green"] #timeModT2Btn svg {
+  stroke: #3b82f6 !important;
+  filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.8)) !important;
+}
+body[data-theme="matrix_green"] #hudDiamondBadge svg polygon,
+body[data-theme="matrix_green"] .levels-top-diamonds svg polygon,
+body[data-theme="matrix_green"] .shop-card-icon.diamond-glow svg polygon,
+body[data-theme="matrix_green"] .upgrade-row-buy svg[stroke="#00e5ff"] polygon {
+  fill: rgba(59, 130, 246, 0.3) !important;
+}
+body[data-theme="matrix_green"] .shop-card-icon.diamond-glow {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.4) !important;
+}
+
+/* Призмы -> Солнечно-оранжевые (#ff6b00 / #ff9100) */
+body[data-theme="matrix_green"] #hudPrismBadge svg,
+body[data-theme="matrix_green"] .levels-top-prisms svg,
+body[data-theme="matrix_green"] .shop-card-icon.prism-glow svg,
+body[data-theme="matrix_green"] .upgrade-row-buy svg[stroke="#d946ef"],
+body[data-theme="matrix_green"] .bp-cell-title svg[stroke="#d946ef"],
+body[data-theme="matrix_green"] .mode-rules-banner svg[stroke="#d946ef"],
+body[data-theme="matrix_green"] .loot-pill.prism-pill svg,
+body[data-theme="matrix_green"] .highway-reward-badge svg,
+body[data-theme="matrix_green"] .level-card-overdrive-badge svg,
+body[data-theme="matrix_green"] #deconstructPrismBtn svg {
+  stroke: #ff6b00 !important;
+  filter: drop-shadow(0 0 6px rgba(255, 107, 0, 0.85)) !important;
+}
+body[data-theme="matrix_green"] #hudPrismBadge svg polygon,
+body[data-theme="matrix_green"] .levels-top-prisms svg polygon,
+body[data-theme="matrix_green"] .shop-card-icon.prism-glow svg polygon,
+body[data-theme="matrix_green"] .upgrade-row-buy svg[stroke="#d946ef"] polygon {
+  fill: rgba(255, 107, 0, 0.32) !important;
+}
+body[data-theme="matrix_green"] .shop-card-icon.prism-glow {
+  border-color: #ff6b00 !important;
+  box-shadow: 0 0 12px rgba(255, 107, 0, 0.4) !important;
+}
+body[data-theme="matrix_green"] .shop-card-prism {
+  background: linear-gradient(135deg, rgba(36, 16, 8, 0.78), rgba(18, 8, 4, 0.85));
+  border-color: rgba(255, 107, 0, 0.42);
+}
+body[data-theme="matrix_green"] .shop-card-sub.prism-sub {
+  color: #fdba74;
+}
+body[data-theme="matrix_green"] .shop-btn-prism {
+  background: rgba(38, 16, 8, 0.88);
+  border-color: rgba(255, 107, 0, 0.55);
+}
+
+/* 7. АККОРДЕОНЫ SETTINGS И LOADOUT -> СИНЕВАТЫЙ СТЕКЛЯННЫЙ ФОН, СИНИЕ ОБВОДКИ И ШРИФТ */
+body[data-theme="matrix_green"] .loadout-widget,
+body[data-theme="matrix_green"] .settings-collapsible-widget {
+  background: linear-gradient(180deg, rgba(10, 18, 40, 0.92) 0%, rgba(6, 11, 26, 0.96) 100%) !important;
+  border: 1.2px solid rgba(59, 130, 246, 0.38) !important;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5), inset 0 0 14px rgba(37, 99, 235, 0.08) !important;
+}
+body[data-theme="matrix_green"] .loadout-widget-label,
+body[data-theme="matrix_green"] .settings-collapsible-label,
+body[data-theme="matrix_green"] .loadout-widget-arrow,
+body[data-theme="matrix_green"] .settings-collapsible-arrow {
+  color: #60a5fa !important;
+}
+body[data-theme="matrix_green"] .loadout-widget-count {
+  background: rgba(59, 130, 246, 0.16);
+  border-color: rgba(59, 130, 246, 0.48);
+  color: #93c5fd;
+}
+body[data-theme="matrix_green"] .loadout-widget-count.is-full {
+  background: rgba(59, 130, 246, 0.28);
+  border-color: #3b82f6;
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+}
+body[data-theme="matrix_green"] .loadout-widget-expanded,
+body[data-theme="matrix_green"] .settings-collapsible-body {
+  border-top-color: rgba(59, 130, 246, 0.2);
+}
+
+/* 9. ЗВЕЗДА ПРИ ВЫИГРЫШЕ В ХАРДКОРЕ -> СИНЯЯ УДАРНАЯ ВОЛНА */
+body[data-theme="matrix_green"] .star-slot.overdrive-victory-badge.filled::before {
+  border-color: rgba(59, 130, 246, 0.95) !important;
+}
+
+/* Круглая кнопка волны GO в бою и инспектор */
+body[data-theme="matrix_green"] .action-btn {
+  box-shadow: 0 0 18px rgba(255, 107, 0, 0.35);
+}
+body[data-theme="matrix_green"] .wave-circle-wrap::before {
+  background: radial-gradient(circle at 50% 50%, rgba(255, 107, 0, 0.36), rgba(255, 107, 0, 0.08));
+  border-color: #ff6b00;
+  box-shadow: 0 0 28px rgba(255, 107, 0, 0.6);
+}
+body[data-theme="matrix_green"] .wave-circle-prog {
+  stroke: #ffb700;
+  filter: drop-shadow(0 0 5px #ff9100);
+}
+body[data-theme="matrix_green"] .wave-btn-label {
+  text-shadow: 0 0 14px #ff9100;
+}
+body[data-theme="matrix_green"] .btn-upgrade {
+  background: linear-gradient(rgba(255, 145, 0, 0.32), rgba(255, 107, 0, 0.08)), rgba(18, 12, 8, 0.94);
+  border-color: #ff9100;
+  box-shadow: 0 0 22px rgba(255, 145, 0, 0.35);
+}
+body[data-theme="matrix_green"] .level-card-btn {
+  border-color: rgba(59, 130, 246, 0.48);
+}
+body[data-theme="matrix_green"] .level-card-btn.current {
+  background: linear-gradient(rgba(255, 145, 0, 0.32), rgba(37, 99, 235, 0.12)), rgba(8, 12, 24, 0.92);
+  border-color: #ff9100;
+  box-shadow: 0 0 24px rgba(255, 145, 0, 0.45);
+}
+body[data-theme="matrix_green"] .upgrade-row-buy:not(.locked-buy):not(.max-buy) {
+  background: linear-gradient(rgba(255, 145, 0, 0.3), rgba(37, 99, 235, 0.12)), rgba(10, 14, 28, 0.94);
+  border-color: #ff9100;
 }

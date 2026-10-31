@@ -94,21 +94,29 @@ function updateOffscreenGrid() {
   
   const oCtx = offscreenGridCanvas.getContext('2d');
   oCtx.clearRect(0, 0, w, h);
+
+  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
   
   // [UI102.01] Static grid cell background rendering.
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       const cellVal = grid[r] ? grid[r][c] : 0;
-      oCtx.fillStyle = (cellVal === 1) ? 'rgba(16, 26, 52, 0.50)' : (cellVal === 3 ? 'rgba(0, 0, 0, 0.75)' : 'rgba(10, 14, 26, 0.35)');
-      oCtx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-      oCtx.strokeStyle = (cellVal === 1) ? 'rgba(35, 60, 110, 0.60)' : (cellVal === 3 ? 'rgba(0, 0, 0, 0.90)' : 'rgba(20, 32, 58, 0.40)');
+      if (isHyperion) {
+        oCtx.fillStyle = (cellVal === 1) ? 'rgba(12, 32, 85, 0.55)' : (cellVal === 3 ? 'rgba(0, 0, 0, 0.78)' : 'rgba(6, 12, 30, 0.42)');
+        oCtx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        oCtx.strokeStyle = (cellVal === 1) ? 'rgba(59, 130, 246, 0.72)' : (cellVal === 3 ? 'rgba(0, 0, 0, 0.90)' : 'rgba(30, 58, 138, 0.42)');
+      } else {
+        oCtx.fillStyle = (cellVal === 1) ? 'rgba(16, 26, 52, 0.50)' : (cellVal === 3 ? 'rgba(0, 0, 0, 0.75)' : 'rgba(10, 14, 26, 0.35)');
+        oCtx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        oCtx.strokeStyle = (cellVal === 1) ? 'rgba(35, 60, 110, 0.60)' : (cellVal === 3 ? 'rgba(0, 0, 0, 0.90)' : 'rgba(20, 32, 58, 0.40)');
+      }
       oCtx.lineWidth = 1;
       oCtx.strokeRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
     }
   }
 
   oCtx.save();
-  oCtx.strokeStyle = 'rgba(0, 229, 255, 0.22)';
+  oCtx.strokeStyle = isHyperion ? 'rgba(255, 145, 0, 0.32)' : 'rgba(0, 229, 255, 0.22)';
   oCtx.lineWidth = 1.5;
   
   // [UI102.02] Static track side rails rendering.
@@ -340,7 +348,6 @@ function hideIncomingAlert() {
 }
 
 // [UI108] Viewport canvas resize and camera coordinate transform system.
-// [UI108] Viewport canvas resize and camera coordinate transform system.
 function resizeCanvasAndCamera() {
   const vpWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
   const vpHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
@@ -391,8 +398,6 @@ function resizeCanvasAndCamera() {
   camX = (vpWidth / 2) - (FIELD_WIDTH * camZoom / 2);
 
   // 4. Позиционируем по вертикали:
-  // Если карта меньше доступной высоты — размещаем её аккуратно чуть выше середины доступной зоны,
-  // НО строго гарантируем, что верхний край camY никогда не будет выше низа худа (topSafeLimit)
   if (viewFieldH <= usableHeight) {
     const desiredCenterY = topSafeLimit + (usableHeight * 0.38);
     camY = Math.max(topSafeLimit, desiredCenterY - (viewFieldH / 2));
@@ -440,15 +445,11 @@ function clampCamera() {
   const EXTRA_PAN_UP = (TILE_SIZE * 2) * camZoom;
 
   if (viewFieldH <= usableHeight) {
-    // Дефолтная точка привязки по центру/верху
     const defaultY = Math.max(topSafeLimit, (topSafeLimit + (usableHeight * 0.38)) - (viewFieldH / 2));
-    // Разрешаем игроку свайпом поднять карту на 2 клетки выше дефолтного положения,
-    // но не опускать ниже исходной безопасной позиции
     const minY = defaultY - EXTRA_PAN_UP;
     const maxY = defaultY;
     camY = Math.max(minY, Math.min(maxY, camY));
   } else {
-    // Для высоких/длинных карт сдвигаем нижний лимит ещё на 2 клетки вверх
     const minY = (screenH - BOTTOM_RESERVE) - viewFieldH - EXTRA_PAN_UP;
     const maxY = topSafeLimit;
     camY = Math.max(minY, Math.min(maxY, camY));
@@ -485,12 +486,11 @@ window.addEventListener('load', resizeCanvasAndCamera);
 
 // [UI109] Lock default touch behaviors on active canvas and UI overlays.
 document.addEventListener('touchmove', (e) => {
-  // Разрешаем вертикальный скролл пальцем во всех открытых виджетах, списках и панелях
   const isScrollableOverlay = e.target.closest && e.target.closest(
     '.result-stack, .upgrades-row-list, .settings-box, .settings-collapsible-body, .settings-collapsible-widget, .loadout-widget, .loadout-widget-expanded, .loadout-grid, .levels-bg, .bp-tier-list, .shop-list-body'
   );
   if (isScrollableOverlay) {
-    return; // Не глушим тач — даем браузеру свободно прокручивать элемент
+    return;
   }
   if (gameState === 'PLAYING' && e.cancelable) {
     e.preventDefault();
@@ -505,16 +505,6 @@ function initTutorialForLevel(lvl) {
   tutorialTargetTower = null;
   tutorialDestCell = null;
   hideTutorialUI();
-
-function animateTutorialTapGesture(now) {
-  const pointer = document.getElementById('tutorialPointer');
-  if (!pointer || pointer.classList.contains('hidden')) return;
-  // Ритмичный тап точно по диагональной оси указательного пальца
-  const cycle = (now % 1000) / 1000;
-  const tap = Math.sin(cycle * Math.PI * 2);
-  const offset = tap > 0 ? tap * 5 : 0;
-  pointer.style.transform = `translate(${offset * 0.7}px, ${offset * 0.7}px) scale(${1 - offset * 0.015})`;
-}
 
   if (lvl === 1 && !tutorialSeen.l1 && !hasClearedLevelBefore(1)) {
     tutorialActive = true;
@@ -726,7 +716,6 @@ function applyTutorialHighlight(rect, text, mode) {
     const dropRing = document.getElementById('tutorialDropRing');
     if (dropRing) dropRing.classList.add('hidden');
 
-    // Показываем палец в центре целевой кнопки/башни
     const pointer = document.getElementById('tutorialPointer');
     if (pointer) {
       pointer.style.left = cx + 'px';
@@ -793,25 +782,22 @@ function positionTutorialCloseStep() {
     };
   }
 
-// 3. Яркий визуальный клон крестика поверх затемнения
+  // 3. Яркий визуальный клон крестика поверх затемнения
   const closeBtn = document.getElementById('inspectCloseBtn');
   const closeHighlight = document.getElementById('tutorialCloseBtnHighlight');
   if (closeBtn && closeHighlight) {
     const r = closeBtn.getBoundingClientRect();
-    // Ставим клон строго в координаты оригинальной кнопки
     closeHighlight.style.left = r.left + 'px';
     closeHighlight.style.top = r.top + 'px';
     closeHighlight.style.width = r.width + 'px';
     closeHighlight.style.height = r.height + 'px';
-    // Копируем SVG иконку внутрь, чтобы она засветилась циановым
     closeHighlight.innerHTML = closeBtn.innerHTML;
     closeHighlight.classList.remove('hidden');
   }
 
-// 4. Позиция надписи и пальца: опускаем ниже дороги (в зеленую область под башней)
+  // 4. Позиция надписи и пальца
   let targetX, targetY;
   if (selectedTower) {
-    // Сдвигаем на 1.1 клетки вправо и на 1.85 клетки вниз от центра башни
     const targetCellScreen = worldToScreen((selectedTower.c + 1.1) * TILE_SIZE, (selectedTower.r + 1.85) * TILE_SIZE);
     targetX = targetCellScreen.x;
     targetY = targetCellScreen.y;
@@ -820,13 +806,11 @@ function positionTutorialCloseStep() {
     targetY = topLeft.y + fieldHeight * 0.76;
   }
 
-  // Ограничиваем координаты границами внутреннего поля
   const maxSafeX = (bottomRight.x - pad) - 80;
   const maxSafeY = (bottomRight.y - pad) - 35;
   targetX = Math.min(targetX, maxSafeX);
   targetY = Math.min(targetY, maxSafeY);
 
-  // Облачко подсказки размещаем над пальцем
   const bubble = document.getElementById('tutorialBubble');
   const bubbleText = document.getElementById('tutorialBubbleText');
   if (bubbleText) bubbleText.textContent = 'Tap here or ✕ to close';
@@ -836,7 +820,6 @@ function positionTutorialCloseStep() {
     bubble.classList.remove('hidden');
   }
 
-  // Пульсирующие круги под пальцем
   const tapPulse = document.getElementById('tutorialTapPulse');
   if (tapPulse) {
     tapPulse.style.left = targetX + 'px';
@@ -844,7 +827,6 @@ function positionTutorialCloseStep() {
     tapPulse.classList.remove('hidden');
   }
 
-  // Палец, который указывает в эту зону
   const pointer = document.getElementById('tutorialPointer');
   if (pointer) {
     pointer.style.left = targetX + 'px';
@@ -860,7 +842,6 @@ function positionTutorialCloseStep() {
 function animateTutorialTapGesture(now) {
   const pointer = document.getElementById('tutorialPointer');
   if (!pointer || pointer.classList.contains('hidden')) return;
-  // Ритмичное нажатие пальцем по диагонали (вниз-вправо и возврат)
   const cycle = (now % 1000) / 1000;
   const tap = Math.sin(cycle * Math.PI * 2);
   const offset = tap > 0 ? tap * 6 : 0;
@@ -872,14 +853,12 @@ function updateTutorialOverlay(now) {
   const skipBtn = document.getElementById('tutorialSkipBtn');
   if (!layer) return;
   
-  // Если туториал выключен, включена пауза или нет активных шагов — прячем всё
   if (!tutorialActive || gameState !== 'PLAYING' || tutorialStep < 0) {
     layer.classList.add('hidden');
-    if (skipBtn && tutorialActive) skipBtn.classList.add('hidden'); // Прячем кнопку при паузе
+    if (skipBtn && tutorialActive) skipBtn.classList.add('hidden');
     return;
   }
   
-  // Если мы в игре и туториал активен — показываем слой и кнопку
   layer.classList.remove('hidden');
   if (skipBtn && tutorialActive) skipBtn.classList.remove('hidden');
 
@@ -932,20 +911,17 @@ function positionTutorialDrag(now) {
   const srcCx = srcRect.left + srcRect.width / 2;
   const srcCy = srcRect.top + srcRect.height / 2;
 
-  const period = 2000; // Цикл 2 секунды
+  const period = 2000;
   const t = (now % period) / period;
   let px, py, opacity, scale;
 
   if (t < 0.20) {
-    // 1. Появление на иконке башни и нажатие (тап)
     px = srcCx;
     py = srcCy;
     const appearProg = Math.min(1, t / 0.12);
     opacity = appearProg;
-    // Легкий прижим при "захвате"
     scale = 1.0 - Math.sin(appearProg * Math.PI * 0.5) * 0.08;
   } else if (t < 0.70) {
-    // 2. Плавный перенос к клетке на поле с плавной кривой скорости
     const moveT = (t - 0.20) / 0.50;
     const eased = moveT < 0.5 
       ? 2 * moveT * moveT 
@@ -955,13 +931,11 @@ function positionTutorialDrag(now) {
     opacity = 1.0;
     scale = 0.92;
   } else if (t < 0.85) {
-    // 3. Отпускание башни на клетке
     px = destScreen.x;
     py = destScreen.y;
     opacity = 1.0;
     scale = 1.0;
   } else {
-    // 4. Мягкое плавное растворение перед повтором
     px = destScreen.x;
     py = destScreen.y;
     opacity = Math.max(0, 1.0 - (t - 0.85) / 0.15);
@@ -1023,18 +997,14 @@ function syncTopHudVisibility() {
   const levelWaveBadge = document.getElementById('levelWaveSplitBadge');
   const hudRightGroup = document.getElementById('hudRightGroup');
 
-  // В активном бою (PLAYING) скрываем Алмазы и Призмы; в меню, паузе и на экранах итогов — показываем
   if (diamondBadge) diamondBadge.classList.toggle('hidden', isActiveBattle);
   if (prismBadge) prismBadge.classList.toggle('hidden', isActiveBattle);
 
-  // В активном бою (PLAYING) показываем Золото, Жизни, Уровень и Волну; везде вне боя (включая паузу) — скрываем
   if (econHpBadge) econHpBadge.classList.toggle('hidden', !isActiveBattle);
   if (levelWaveBadge) levelWaveBadge.classList.toggle('hidden', !isActiveBattle);
 
-  // Правая группа с кнопкой Settings видна всегда
   if (hudRightGroup) hudRightGroup.classList.remove('hidden');
 
-  // Синхронизируем виджет управления скоростью (он сам скроется, если мы не в бою)
   if (typeof updateHudSpeedWidget === 'function') updateHudSpeedWidget();
 }
 window.syncTopHudVisibility = syncTopHudVisibility;
@@ -1331,7 +1301,6 @@ function getUpgradeStatSummary(key, currentLvl) {
   const curEff = typeof getUpgradeEffectiveLevel === 'function' ? getUpgradeEffectiveLevel(key) : currentLvl;
   const isMaxed = currentLvl >= 15 && typeof isScalingBranch === 'function' && !isScalingBranch(key);
 
-  // Считаем эффективный уровень для следующего шага
   const nextEff = (function() {
     const nextLvl = currentLvl + 1;
     if (nextLvl <= 10) return nextLvl;
@@ -1342,7 +1311,6 @@ function getUpgradeStatSummary(key, currentLvl) {
   })();
   const deltaEff = Math.max(0, nextEff - curEff);
 
-  // 1. Базовые ветки (HP и Bounty / Gold)
   if (key === 'base_hp') {
     const curHp = 10 + Math.round(curEff);
     if (isMaxed) return `<span class="upg-stat-cur">${curHp} HP</span> <span class="upg-stat-next">MAX</span>`;
@@ -1356,12 +1324,10 @@ function getUpgradeStatSummary(key, currentLvl) {
     return `<span class="upg-stat-cur">+${curGold}%</span> <span class="upg-stat-next">+${stepGold}%</span>`;
   }
 
-  // 2. Ветки башен
   const towerType = key.replace('_power', '');
   const conf = (typeof TOWER_CONFIGS !== 'undefined') ? TOWER_CONFIGS[towerType] : null;
   if (!conf) return '';
 
-  // Расчет Range с учетом правила 1% после 10/10
   const curRangeBonus = (typeof getUpgradeRangeBonus === 'function')
     ? getUpgradeRangeBonus(towerType, curEff)
     : (curEff <= 10 ? curEff * (conf.powerRange || 0) : 10 * (conf.powerRange || 0) + (curEff - 10) * 0.01);
@@ -1376,7 +1342,6 @@ function getUpgradeStatSummary(key, currentLvl) {
   const dStep = +(deltaEff * (conf.powerDmg || 0) * 100).toFixed(1);
   const rStep = +(deltaEff * (conf.powerRate || 0) * 100).toFixed(1);
 
-  // Специфика для Stasis (замедление + длительность + дальность)
   if (towerType === 'stasis') {
     const baseSlow = conf.slowFactor || 0.30;
     const baseDur = conf.slowDuration || 1.4;
@@ -1390,7 +1355,6 @@ function getUpgradeStatSummary(key, currentLvl) {
     return `<span class="upg-stat-cur">SLOW ${curSlow}% · DUR ${curDur}s · RNG ${curRng}</span> ${nextTag}`;
   }
 
-  // Боевые башни (DMG / DPS / SPD / RNG)
   const baseDmg = conf.damage || conf.dps || conf.baseDps || 0;
   const curDmg = +(baseDmg * (1 + curEff * (conf.powerDmg || 0))).toFixed(1);
 
@@ -1443,6 +1407,9 @@ function renderUpgradeTree() {
   enablePointerScroll(container);
   container.innerHTML = '';
 
+  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
+  const primaryAccent = isHyperion ? '#3b82f6' : '#00e5ff';
+
   const maxStep = devMode ? 10 : getMaxUpgradeStep();
   const isPhase2UnlockedGlobally = devMode || getLoadoutReferenceLevel() >= 31 || maxUnlockedLevel >= 31 || (typeof clearedLevels !== 'undefined' && clearedLevels.includes(30));
 
@@ -1453,7 +1420,7 @@ function renderUpgradeTree() {
       key: card.branches[0].key,
       label: card.title,
       iconHtml: TOWER_ICONS[towerType] || '',
-      color: (TOWER_CONFIGS[towerType] && TOWER_CONFIGS[towerType].color) || '#00e5ff',
+      color: (TOWER_CONFIGS[towerType] && TOWER_CONFIGS[towerType].color) || primaryAccent,
       isLockedCard,
       lockedLabel: isLockedCard ? `${card.title} (Lv.${getTowerUnlockLevel(towerType)})` : card.title
     };
@@ -1462,7 +1429,7 @@ function renderUpgradeTree() {
     key: br.key,
     label: br.name,
     iconHtml: BASE_BRANCH_ICONS[br.key] || '',
-    color: BASE_BRANCH_COLORS[br.key] || '#00e5ff',
+    color: BASE_BRANCH_COLORS[br.key] || primaryAccent,
     isLockedCard: false,
     lockedLabel: br.name
   }));
@@ -1495,7 +1462,6 @@ function renderUpgradeTree() {
           isSectorGated = true;
           lvlNeeded = 31;
         } else if (!areAllBranchesMaxPhase1()) {
-          // Кампания пройдена до 31+, ветка прокачана до 10/10, но другие ветки не добиты
           isAscGatedByBranches = true;
         }
       }
@@ -1517,14 +1483,12 @@ function renderUpgradeTree() {
     head.className = 'upgrade-row-head';
     const nameEl = document.createElement('span');
     nameEl.className = 'upgrade-row-name' + (row.isLockedCard ? ' locked-name' : '');
-    // Название башни чистое, без приписок в заголовке
     nameEl.textContent = row.label;
 
     const lvlEl = document.createElement('span');
     lvlEl.className = 'upgrade-row-level';
 
     if (row.isLockedCard) {
-      // Пункт 1: убираем надпись LOCKED справа вверху
       lvlEl.textContent = ''; 
     } else if (currentLvl < 10) {
       lvlEl.style.color = row.color;
@@ -1536,7 +1500,7 @@ function renderUpgradeTree() {
       lvlEl.style.color = '#d946ef';
       lvlEl.textContent = 'ASCENDED MAX';
     } else {
-      lvlEl.style.color = '#00e5ff';
+      lvlEl.style.color = isHyperion ? '#ffb700' : '#00e5ff';
       lvlEl.textContent = `SYNTH +${currentLvl - 15}`;
     }
 
@@ -1570,17 +1534,19 @@ function renderUpgradeTree() {
       const seg = document.createElement('div');
       seg.className = 'upgrade-row-seg';
       seg.style.flex = '1';
-      seg.style.background = 'linear-gradient(90deg, #00e5ff, #d946ef)';
-      seg.style.boxShadow = '0 0 10px rgba(217, 70, 239, 0.5)';
+      seg.style.background = isHyperion
+        ? 'linear-gradient(90deg, #3b82f6, #ff6b00, #ffb700)'
+        : 'linear-gradient(90deg, #00e5ff, #d946ef)';
+      seg.style.boxShadow = isHyperion
+        ? '0 0 10px rgba(255, 145, 0, 0.5)'
+        : '0 0 10px rgba(217, 70, 239, 0.5)';
       segs.appendChild(seg);
     }
     info.appendChild(segs);
 
-    // Строка с конкретными цифрами бонусов под полосками прогресса
     const statsLine = document.createElement('div');
     statsLine.className = 'upgrade-row-stats';
     if (row.isLockedCard) {
-      // Пункт 2: убираем текст "Complete Normal Level" — оставляем строку пустой
       statsLine.innerHTML = '';
     } else {
       statsLine.innerHTML = getUpgradeStatSummary(row.key, currentLvl);
@@ -1623,7 +1589,6 @@ function renderUpgradeTree() {
         if (typeof showHintToast === 'function') showHintToast(`Unlocks on Level ${lvlNeeded}`);
       };
     } else if (isAscGatedByBranches) {
-      // Кастомный замочек + надпись ASC в фирменном фиолетовом цвете вознесения
       buyBtn.classList.add('locked-buy');
       buyBtn.innerHTML = `${CUSTOM_LOCK_SVG}<span class="upgrade-row-buy-cost" style="color:#d946ef; font-size:11px; margin-left:3px; font-weight:900;">ASC</span>`;
       buyBtn.onclick = () => {
@@ -1808,15 +1773,13 @@ function updateModeSwitcherUI() {
 
   const campaignView = document.getElementById('levelsCampaignView');
   const endlessView = document.getElementById('endlessDashboardView');
-
-const swipeHint = document.getElementById('chapterSwipeHint');
+  const swipeHint = document.getElementById('chapterSwipeHint');
 
   if (currentLevelMode === 'endless') {
     if (campaignView) campaignView.classList.add('hidden');
     if (endlessView) {
         endlessView.classList.remove('hidden');
         if (swipeHint) {
-            // Переносим подсказку в Endless экран
             const endlessNav = document.querySelector('.endless-part-nav');
             if (endlessNav) endlessNav.after(swipeHint);
         }
@@ -1826,7 +1789,6 @@ const swipeHint = document.getElementById('chapterSwipeHint');
     if (campaignView) {
         campaignView.classList.remove('hidden');
         if (swipeHint) {
-            // Возвращаем подсказку в Normal/Hardcore экран
             const normalNav = document.querySelector('.level-part-navigator:not(.endless-part-nav)');
             if (normalNav) normalNav.after(swipeHint);
         }
@@ -1834,11 +1796,11 @@ const swipeHint = document.getElementById('chapterSwipeHint');
     if (endlessView) endlessView.classList.add('hidden');
   }
   
-// Динамическая смена арта (Hardcore / Endless / Normal) с ультра-мягким бесшовным градиентом
   const artDisplay = document.getElementById('modeArtDisplay');
+  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
+
   if (artDisplay) {
     if (currentLevelMode === 'overdrive') {
-      // 1. HARDCORE MODE: Faceted Gem Heart
       artDisplay.innerHTML = `
         <svg viewBox="0 0 240 100" class="mode-art-svg" fill="none" preserveAspectRatio="xMidYMid meet">
           <defs>
@@ -1885,7 +1847,6 @@ const swipeHint = document.getElementById('chapterSwipeHint');
         </svg>
       `;
     } else if (currentLevelMode === 'endless') {
-      // 2. ENDLESS MODE: Cyber Mobius Infinity Loop
       artDisplay.innerHTML = `
         <svg viewBox="0 0 240 100" class="mode-art-svg" fill="none" preserveAspectRatio="xMidYMid meet">
           <defs>
@@ -1924,7 +1885,8 @@ const swipeHint = document.getElementById('chapterSwipeHint');
         </svg>
       `;
     } else {
-      // 3. NORMAL MODE: Sliced Inverted Triangle
+      const normCol = isHyperion ? '#ff9100' : '#00e5ff';
+      const normTriCol = isHyperion ? '#ffb700' : '#00e5ff';
       artDisplay.innerHTML = `
         <svg viewBox="0 0 240 100" class="mode-art-svg" fill="none" preserveAspectRatio="xMidYMid meet">
           <defs>
@@ -1935,8 +1897,8 @@ const swipeHint = document.getElementById('chapterSwipeHint');
               <rect x="25" y="10" width="190" height="80" rx="16" fill="#ffffff" filter="url(#normArtBlur)" />
             </mask>
             <linearGradient id="normArtGridFade" x1="0" y1="62" x2="0" y2="100" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.2" />
-              <stop offset="100%" stop-color="#00e5ff" stop-opacity="0.85" />
+              <stop offset="0%" stop-color="${normCol}" stop-opacity="0.2" />
+              <stop offset="100%" stop-color="${normCol}" stop-opacity="0.85" />
             </linearGradient>
           </defs>
           <rect x="0" y="0" width="240" height="100" fill="#000000" mask="url(#normArtMask)" />
@@ -1952,8 +1914,8 @@ const swipeHint = document.getElementById('chapterSwipeHint');
             <line x1="58" y1="79" x2="182" y2="79" stroke-width="1" stroke-opacity="0.55" />
             <line x1="28" y1="90" x2="212" y2="90" stroke-width="1" stroke-opacity="0.75" />
           </g>
-          <line x1="20" y1="62" x2="220" y2="62" stroke="#00e5ff" stroke-width="1.2" stroke-opacity="0.45" />
-          <g stroke="#00e5ff">
+          <line x1="20" y1="62" x2="220" y2="62" stroke="${normCol}" stroke-width="1.2" stroke-opacity="0.45" />
+          <g stroke="${normTriCol}">
             <polygon points="120,56 80,10 160,10" stroke-width="1.6" stroke-linejoin="round" stroke-opacity="0.85" />
             <line x1="91" y1="23" x2="149" y2="23" stroke-width="1.1" stroke-opacity="0.5" />
             <line x1="98" y1="33" x2="142" y2="33" stroke-width="1.2" stroke-opacity="0.65" />
@@ -2034,12 +1996,11 @@ function renderEndlessDashboardUI() {
     nextBtn.disabled = currentLevelSection >= (typeof TOTAL_SECTIONS !== 'undefined' ? TOTAL_SECTIONS : 5) || !nextSecUnlocked;
   }
 
-if (ticketEl) {
+  if (ticketEl) {
     const status = (typeof getEndlessEntryStatus === 'function') ? getEndlessEntryStatus() : { type: 'free', text: 'FREE (1/1)' };
     const labelText = (status.text || status.label || '').toUpperCase();
 
     if (status.type === 'ad') {
-      // Фирменная крупная SVG-иконка рекламы из Revive
       const adIconSvg = `<svg width="15" height="12" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:5px; vertical-align:middle;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="currentColor"/></svg>`;
       ticketEl.innerHTML = `<span style="display:inline-flex; align-items:center; justify-content:center; white-space:nowrap;">${adIconSvg}${labelText}</span>`;
     } else if (status.type === 'diamonds') {
@@ -2051,7 +2012,6 @@ if (ticketEl) {
     }
   }
 
-  // Обновляем видимость подсказки свайпа в Endless
   const swipeHint = document.getElementById('chapterSwipeHint');
   if (swipeHint && typeof currentLevelMode !== 'undefined' && currentLevelMode === 'endless') {
     const canSwipe = (maxUnlockedLevel > 15 || devMode) && typeof TOTAL_SECTIONS !== 'undefined' && TOTAL_SECTIONS > 1;
@@ -2063,7 +2023,6 @@ function navEndlessLevel(dir) {
   const target = currentLevelSection + dir;
   if (target < 1 || (typeof TOTAL_SECTIONS !== 'undefined' && target > TOTAL_SECTIONS)) return;
   
-  // Проверяем, открыта ли следующая глава (сектор) у игрока
   const isTargetUnlocked = (typeof devMode !== 'undefined' && devMode) || maxUnlockedLevel > (target - 1) * LEVELS_PER_SECTION;
   if (!isTargetUnlocked) {
     if (typeof showHintToast === 'function') showHintToast('Chapter locked!');
@@ -2076,7 +2035,6 @@ function navEndlessLevel(dir) {
 }
 
 window.navEndlessLevel = navEndlessLevel;
-
 window.selectLevelMode = selectLevelMode;
 
 function confirmStartEndlessRun() {
@@ -2120,7 +2078,6 @@ function confirmStartEndlessRun() {
 }
 window.confirmStartEndlessRun = confirmStartEndlessRun;
 
-// Global Exports
 if (typeof getEndlessEntryStatus !== 'undefined') {
   window.getEndlessEntryStatus = getEndlessEntryStatus;
 }
@@ -2266,6 +2223,8 @@ function openDevMode() {
   
   updateDiamondUI();
   updatePrismUI();
+  updatePaletteSelectDropdown('settingPaletteSelect');
+  updatePaletteSelectDropdown('bpPaletteSelect');
 }
 
 function closeDevMode() {
@@ -2336,7 +2295,6 @@ function toggleDevPanelExpand() {
   }
 }
 
-// Управление раскрывашками 2-го и 3-го уровней (Game / Audio / Version)
 window.devSubExpanded = { Game: false, Audio: false, Version: false };
 window.devMetricExpanded = {
   AudioHw: false,
@@ -2348,7 +2306,6 @@ window.devMetricExpanded = {
   VerLogs: false
 };
 
-// 2-й уровень: открывает выбранный раздел и автоматически закрывает остальные два
 function toggleDevSubSection(name) {
   if (!window.devSubExpanded) window.devSubExpanded = {};
   const willOpen = !window.devSubExpanded[name];
@@ -2368,7 +2325,6 @@ function toggleDevSubSection(name) {
   }
 }
 
-// 3-й уровень: переключает подгруппы метрик по очереди (внутри Audio или внутри Version)
 function toggleDevMetricGroup(groupKey) {
   if (!window.devMetricExpanded) window.devMetricExpanded = {};
   const willOpen = !window.devMetricExpanded[groupKey];
@@ -2398,7 +2354,6 @@ function toggleDevMetricGroup(groupKey) {
   });
 }
 
-// Мост для кнопки SPAWN (чинит сломанный спаунер)
 function devSpawnCustomEnemies() {
   if (gameState !== 'PLAYING') {
     showHintToast('Start a level first to spawn enemies!');
@@ -2484,7 +2439,6 @@ function toggleDevMode(enabled) {
   else closeDevMode();
 }
 
-
 function refreshDevDropdowns() {
   ['devLevelSelect', 'devWaveSelect'].forEach(id => {
     const el = document.getElementById(id);
@@ -2548,7 +2502,6 @@ function devJumpToWave(targetWave) {
   startWave();
 }
 
-
 const DEV_SPEED_STEPS = [0.5, 0.75, 0.9, 1, 1.25, 1.5, 2, 4, 8];
 
 // [UI115] Time modulation speed levels and HUD controls.
@@ -2604,7 +2557,6 @@ function setGameSpeed(speed) {
   if (typeof gameTimeScale !== 'undefined') {
     gameTimeScale = speed;
   }
-  // [UI115.01] Synchronize speed dropdown selectors.
   const selects = document.querySelectorAll('.dev-speed-floating, .dev-speed-select, #speedContainer, .dev-bar select');
   selects.forEach(s => {
     s.value = String(speed);
@@ -2636,7 +2588,6 @@ function stepDevSpeed(direction) {
   if (!selects || selects.length === 0) return;
 
   const sel = selects[0];
-
   let curIndex = sel.selectedIndex;
 
   if (curIndex === -1 || isNaN(curIndex)) {
@@ -2797,7 +2748,7 @@ function updateStartChapterLabel(show, text) {
   if (el) el.classList.add('hidden');
 }
 
-// [UI117] Navigation screen display and menu visibility controllers.
+// [UI117] Navigation & screen visibility controllers.
 
 function updateDailyBonusBtnVisibility() {
   const btn = document.getElementById('dailyBonusQuickBtn');
@@ -2848,21 +2799,22 @@ function showStartScreen() {
   const waveBtn = document.getElementById('waveBtn');
   if (waveBtn) waveBtn.classList.add('hidden');
 
-  
-  
   const customSpawner = document.getElementById('devCustomSpawner');
   if (customSpawner) customSpawner.classList.add('hidden');
 
+  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
   const startSubTitle = document.querySelector('.start-sub-title');
   if (startSubTitle) {
     startSubTitle.style.textShadow = '0 0 14px rgba(2, 3, 8, 0.95), 0 2px 8px rgba(2, 3, 8, 0.95)';
   }
   const startMainTitle = document.querySelector('.start-main-title');
   if (startMainTitle) {
-    startMainTitle.style.textShadow = '0 0 24px rgba(0, 229, 255, 0.9), 0 0 12px rgba(2, 3, 8, 0.95), 0 3px 10px rgba(2, 3, 8, 0.95)';
+    startMainTitle.style.textShadow = isHyperion
+      ? '0 0 24px rgba(255, 145, 0, 0.85), 0 0 12px rgba(2, 3, 8, 0.95), 0 3px 10px rgba(2, 3, 8, 0.95)'
+      : '0 0 24px rgba(0, 229, 255, 0.9), 0 0 12px rgba(2, 3, 8, 0.95), 0 3px 10px rgba(2, 3, 8, 0.95)';
   }
 
-const l1 = MAP_CATALOG['L1'];
+  const l1 = MAP_CATALOG['L1'];
   if (l1) buildLevelGeometry(l1.path, l1.cols, l1.rows, l1.blocked);
   resizeCanvasAndCamera();
   gameState = 'START';
@@ -3012,7 +2964,10 @@ function showSettings(fromSource = 'start') {
     });
 
   const settingsSc = document.getElementById('settingsScreen');
-  if (settingsSc) settingsSc.classList.remove('hidden');
+  if (settingsSc) {
+    settingsSc.classList.remove('hidden');
+    settingsSc.classList.remove('screen-bg-only');
+  }
   const hudRightGroup = document.getElementById('hudRightGroup');
   if (hudRightGroup) hudRightGroup.classList.remove('hidden');
 
@@ -3023,12 +2978,11 @@ function showSettings(fromSource = 'start') {
   const loadoutAnchor = document.getElementById('loadoutAnchor-pause');
   const collapsibleWidget = document.getElementById('settingsCollapsible');
 
-if (fromSource === 'combat') {
+  if (fromSource === 'combat') {
     if (kickerEl) kickerEl.textContent = 'Game';
     if (titleEl) titleEl.textContent = 'Paused';
     if (combatActions) combatActions.classList.remove('hidden');
 
-    // Скрываем RETRY в паузе, если идет забег Endless
     const pauseRetryBtn = combatActions ? combatActions.querySelector('.result-btn-retry') : null;
     if (pauseRetryBtn) {
       pauseRetryBtn.classList.toggle('hidden', !!(typeof isEndlessMode !== 'undefined' && isEndlessMode));
@@ -3055,6 +3009,9 @@ if (fromSource === 'combat') {
   const dmgCheckbox = document.getElementById('settingShowDamage');
   if (dmgCheckbox) dmgCheckbox.checked = settings.showDamage !== false;
 
+  const perfCheckbox = document.getElementById('settingPerfMode');
+  if (perfCheckbox) perfCheckbox.checked = (perfMode === 'low');
+
   const vibCheckbox = document.getElementById('settingVibration');
   if (vibCheckbox) vibCheckbox.checked = settings.vibrationEnabled !== false;
 
@@ -3067,7 +3024,7 @@ if (fromSource === 'combat') {
   if (versionLabel) {
     const liveVersion = (window.OtaDiagnostics && window.OtaDiagnostics.localVersion && window.OtaDiagnostics.localVersion !== '—' && window.OtaDiagnostics.localVersion !== 'ERROR')
       ? window.OtaDiagnostics.localVersion
-      : '1.36.37';
+      : '1.36.38';
     versionLabel.textContent = `Version: ${liveVersion}`;
   }
   syncTopHudVisibility();
@@ -3111,7 +3068,8 @@ function updatePaletteSelectDropdown(selectId) {
 
   Object.keys(NEON_PALETTES).forEach(pId => {
     const pal = NEON_PALETTES[pId];
-    const isUnlocked = unlockedPalettes.includes(pId);
+    // В Dev Mode доступны абсолютно все темы!
+    const isUnlocked = (typeof devMode !== 'undefined' && devMode) || unlockedPalettes.includes(pId);
     const opt = document.createElement('option');
     opt.value = pId;
     if (isUnlocked) {
@@ -3253,7 +3211,6 @@ function renderBattlePassScreen() {
 
   updatePaletteSelectDropdown('bpPaletteSelect');
 
-  // Render 30 tier rows
   const listBody = document.getElementById('bpTierListBody');
   if (!listBody) return;
   enablePointerScroll(listBody);
@@ -3270,15 +3227,13 @@ function renderBattlePassScreen() {
     const row = document.createElement('div');
     row.className = `bp-tier-row${isCurrentTier ? ' current-tier' : ''}`;
 
-    // --- FREE CELL ---
     const freeCell = document.createElement('div');
     const isFreeClaimed = !!bpClaimedFree[t];
     freeCell.className = `bp-cell bp-cell-free${isFreeClaimed ? ' claimed' : ''}`;
 
-    // Умный парсер: удаляет скобки вокруг ресурсов и оборачивает их в неразрывные цветные блоки
     const formatRewardText = (str) => {
       if (!str) return '';
-      let s = str.replace(/\(\s*(\+?\s*\d+\s*[\u{1F52E}🔮\u{1F48E}💎])\s*\)/gu, '$1'); // убираем скобки
+      let s = str.replace(/\(\s*(\+?\s*\d+\s*[\u{1F52E}🔮\u{1F48E}💎])\s*\)/gu, '$1');
       s = s.replace(/(\+?\s*\d+)\s*[\u{1F52E}🔮]/gu, `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:2px; color:#f0abfc;">$1 ${prismIcon}</span>`);
       s = s.replace(/(\+?\s*\d+)\s*[\u{1F48E}💎]/gu, `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:2px; color:#8ef3ff;">$1 ${diamondIcon}</span>`);
       s = s.replace(/[\u{1F52E}🔮]/gu, prismIcon).replace(/[\u{1F48E}💎]/gu, diamondIcon);
@@ -3293,7 +3248,6 @@ function renderBattlePassScreen() {
     else if (fr.title) freeTitle = formatRewardText(fr.title);
 
     let freeBtnHtml = '';
-    // ... (код кнопок CLAIM остается без изменений) ...
     if (isFreeClaimed) {
       freeBtnHtml = `<button class="bp-cell-btn claimed-btn">CLAIMED</button>`;
     } else if (isUnlockedTier) {
@@ -3308,12 +3262,10 @@ function renderBattlePassScreen() {
 
     freeCell.innerHTML = `<span class="bp-cell-title">${freeTitle}</span>${freeBtnHtml}`;
 
-    // --- CENTER TIER NUMBER ---
     const numBox = document.createElement('div');
     numBox.className = 'bp-tier-num-box';
     numBox.innerHTML = `<span class="bp-tier-num">${t}</span><span class="bp-tier-status">${isUnlockedTier ? 'UNLOCKED' : 'LOCKED'}</span>`;
 
-    // --- PREMIUM CELL ---
     const premCell = document.createElement('div');
     const isPremClaimed = !!bpClaimedPrem[t];
     premCell.className = `bp-cell bp-cell-prem${isPremClaimed ? ' claimed' : ''}`;
@@ -3326,6 +3278,7 @@ function renderBattlePassScreen() {
       premTitle = formatRewardText(pr.title);
     }
 
+    let premBtnHtml = '';
     if (isPremClaimed) {
       premBtnHtml = `<button class="bp-cell-btn claimed-btn">CLAIMED</button>`;
     } else if (bpPremiumPurchased && isUnlockedTier) {
@@ -3525,7 +3478,7 @@ function closeSettings() {
     musicSetDucked(false);
     gameState = 'PLAYING';
     lastTime = performance.now();
-	resumeRampTimer = RESUME_RAMP_DURATION; // <-- Запуск плавного разгона игры
+    resumeRampTimer = RESUME_RAMP_DURATION;
   } else if (settingsPreviousSource === 'victory') {
     const scr = document.getElementById('victoryScreen');
     if (scr) scr.classList.remove('hidden');
@@ -3631,7 +3584,6 @@ function toggleSettingPerf(isChecked) {
     const levelsScreen = document.getElementById('levelsScreen');
     if (!levelsScreen || levelsScreen.classList.contains('hidden')) return;
 
-    // Игнорируем только стрелки пагинации, переключатель режимов и кнопку выхода
     if (e.target && e.target.closest && e.target.closest('.part-nav-btn, .mode-3way-tab, .levels-main-menu-btn, .hud-gear-btn')) {
       isPointerDown = false;
       return;
@@ -3977,7 +3929,6 @@ function hasMilestoneForLevel(clearedLevel) {
 }
 window.hasMilestoneForLevel = hasMilestoneForLevel;
 
-// Генератор живой мини-сцены: башня слева стреляет по врагу справа
 function buildTowerFiringDemoHtml(type) {
   const conf = TOWER_CONFIGS[type] || TOWER_CONFIGS.gun;
   const col = conf.color || '#00e5ff';
@@ -3996,7 +3947,6 @@ function buildTowerFiringDemoHtml(type) {
   } else if (type === 'laser') {
     fxSvg = `
       <svg class="ms-demo-fx-svg" viewBox="0 0 240 90" preserveAspectRatio="none">
-        <!-- Линия от самого острия дула (x1=60) до центра круга мишени (x2=204) -->
         <line class="ms-fx-laser-glow" x1="60" y1="45" x2="204" y2="45" stroke="${col}"/>
         <line class="ms-fx-laser-core" x1="60" y1="45" x2="204" y2="45" stroke="#ffffff"/>
       </svg>`;
@@ -4061,7 +4011,6 @@ function buildTowerFiringDemoHtml(type) {
     </div>`;
 }
 
-// Генератор анимированных бейджей для режимов и фич
 function buildFeatureVisualHtml(feature, color) {
   let iconSvg = '';
   if (feature === 'tech_tree') {
@@ -4087,10 +4036,9 @@ function buildMilestoneSteps(clearedLevel) {
   const steps = [];
   const nextLvl = clearedLevel + 1;
   const newTowers = getNewlyUnlockedTowers(nextLvl);
-  const upgradesUnlockLevel = getLoadoutStartLevel(); // 11
+  const upgradesUnlockLevel = getLoadoutStartLevel();
   const loadoutJustUnlocked = (nextLvl === upgradesUnlockLevel);
 
-  // 1. Закрытие Главы и открытие глобальных систем (10, 20, 30, 40)
   if (clearedLevel === 10) {
     steps.push({
       kicker: 'CHAPTER 1 CLEARED',
@@ -4141,7 +4089,6 @@ function buildMilestoneSteps(clearedLevel) {
     });
   }
 
-  // 2. Открытие Endless Arena после 15-го уровня
   if (clearedLevel === 15) {
     steps.push({
       kicker: 'NEW MODE UNLOCKED',
@@ -4156,7 +4103,6 @@ function buildMilestoneSteps(clearedLevel) {
     });
   }
 
-  // 3. Открытие любой новой башни (уровни 4, 7, 11, 21, 31, 41) с живой демонстрацией стрельбы
   newTowers.forEach(type => {
     const conf = TOWER_CONFIGS[type] || {};
     steps.push({
@@ -4168,7 +4114,6 @@ function buildMilestoneSteps(clearedLevel) {
     });
   });
 
-  // 4. Открытие выбора Loadout (после 10 уровня, когда башен стало больше 3)
   if (loadoutJustUnlocked) {
     steps.push({
       kicker: 'TACTICAL DECK',
@@ -4220,7 +4165,6 @@ function renderMilestoneStep() {
     titleEl.style.textShadow = `0 0 16px ${accentColor}99`;
   }
 
-  // Отрисовка визуальной сцены (стрельба башни или голограмма режима)
   const art = document.getElementById('milestoneArt');
   if (art) {
     if (step.visual && step.visual.kind === 'tower_demo') {
@@ -4235,7 +4179,6 @@ function renderMilestoneStep() {
     }
   }
 
-  // Отрисовка кратких буллитов-плюсов
   const bodyEl = document.getElementById('milestoneBody');
   if (bodyEl) {
     if (Array.isArray(step.bullets) && step.bullets.length > 0) {
@@ -4260,12 +4203,11 @@ function renderMilestoneStep() {
     const isLast = (milestoneIndex >= milestoneSteps.length - 1);
     const stepIndicator = milestoneSteps.length > 1 ? ` (${milestoneIndex + 1}/${milestoneSteps.length})` : '';
     okBtn.innerHTML = `<span>${isLast ? 'AWESOME' : 'NEXT'}${stepIndicator}</span>`;
-    // Сбрасываем инлайновые переопределения — кнопка управляется через CSS и переменную --ms-accent
     okBtn.style.borderColor = '';
     okBtn.style.boxShadow = '';
   }
 
-scr.querySelectorAll('.seq-in, .milestone-art').forEach(el => {
+  scr.querySelectorAll('.seq-in, .milestone-art').forEach(el => {
     el.style.animation = 'none';
     void el.offsetWidth;
     el.style.animation = '';
@@ -4485,7 +4427,7 @@ function renderShopScreen() {
   const giftSub = document.getElementById('dailyGiftSubText');
   const giftBtn = document.getElementById('dailyGiftClaimBtn');
 
-if (giftTitle) {
+  if (giftTitle) {
     if (dailyGiftsClaimedCount === 0) {
       giftTitle.innerHTML = `+10 ${getDailyDiamondSvg(14)}`;
     } else if (dailyGiftsClaimedCount === 1) {
@@ -4528,7 +4470,7 @@ if (giftTitle) {
   const synthBtn = document.getElementById('synthPrismBtn');
   if (synthBtn) {
     const hasEnoughDiamonds = diamonds >= 20;
-    synthBtn.disabled = false; // Разрешаем клик для тоста
+    synthBtn.disabled = false;
     synthBtn.className = `shop-item-btn shop-btn-buy shop-btn-exchange${hasEnoughDiamonds ? '' : ' dimmed'}`;
     synthBtn.innerHTML = `
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${hasEnoughDiamonds ? '#00e5ff' : '#f05f9f'}" stroke-width="2.2" stroke-linejoin="round" style="flex:none;">
@@ -4543,7 +4485,7 @@ if (giftTitle) {
   if (deconstructBtn) {
     const isUnlocked = (typeof devMode !== 'undefined' && devMode) || (typeof maxUnlockedLevel !== 'undefined' && maxUnlockedLevel >= 31) || (typeof clearedLevels !== 'undefined' && clearedLevels.includes(30));
     if (!isUnlocked) {
-      deconstructBtn.disabled = false; // Разрешаем клик для тоста
+      deconstructBtn.disabled = false;
       deconstructBtn.className = 'shop-item-btn shop-btn-buy locked-buy';
       deconstructBtn.innerHTML = `
         <svg width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="flex:none; margin-right:4px; opacity:0.7;">
@@ -4585,21 +4527,18 @@ if (giftTitle) {
       t2Btn.className = 'shop-item-btn shop-btn-claimed';
       t2Btn.innerHTML = '<span>OWNED</span>';
     } else if (timeModTier < 1) {
-      t2Btn.disabled = false; // Разрешаем клик, чтобы сработал тост "Unlock Tier 1 first!"
+      t2Btn.disabled = false;
       t2Btn.className = 'shop-item-btn shop-btn-buy locked-buy';
       const lockIconSvg = `
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none; opacity:0.8;">
-    <rect x="4" y="10" width="16" height="12" rx="3"></rect>
-    <path d="M7 10V6a5 5 0 0 1 10 0v4"></path>
-  </svg>
-`;
-
-t2Btn.innerHTML = `
-  ${lockIconSvg}
-  <span style="font-size:8.5px; font-weight:800; line-height:1.15; letter-spacing:0.4px; display:inline-block; text-align:center;">
-    TIER 1<br>REQUIRED
-  </span>
-`;
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none; opacity:0.8;">
+          <rect x="4" y="10" width="16" height="12" rx="3"></rect>
+          <path d="M7 10V6a5 5 0 0 1 10 0v4"></path>
+        </svg>`;
+      t2Btn.innerHTML = `
+        ${lockIconSvg}
+        <span style="font-size:8.5px; font-weight:800; line-height:1.15; letter-spacing:0.4px; display:inline-block; text-align:center;">
+          TIER 1<br>REQUIRED
+        </span>`;
     } else {
       t2Btn.disabled = false;
       t2Btn.className = 'shop-item-btn shop-btn-buy';
@@ -4628,14 +4567,12 @@ function checkDailyLoginState() {
 }
 
 function updateMenuBadges() {
-  // 1. Daily Bonus badge
   const dailyBadge = document.getElementById('dailyBonusBadgeDot') || document.getElementById('dailyCalendarBadge');
   if (dailyBadge) {
     const isClaimedToday = checkDailyLoginState();
     dailyBadge.classList.toggle('hidden', isClaimedToday);
   }
 
-  // 2. Synth Pass badge
   const bpBadge = document.getElementById('startBpBadgeDot');
   if (bpBadge) {
     let hasUnclaimed = false;
@@ -4649,7 +4586,6 @@ function updateMenuBadges() {
     bpBadge.classList.toggle('hidden', !hasUnclaimed);
   }
 
-  // 3. Gifts & Shop badge
   const shopBadge = document.getElementById('shopBadgeDot');
   if (shopBadge) {
     const hasUnclaimedGifts = (typeof dailyGiftsClaimedCount !== 'undefined') ? (dailyGiftsClaimedCount < 3) : false;
@@ -4658,11 +4594,17 @@ function updateMenuBadges() {
 }
 
 function getDailyDiamondSvg(size = 20, opacity = 1) {
-  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2" stroke-linejoin="round"${opacity < 1 ? ` style="opacity:${opacity};"` : ''}><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,0.28)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
+  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
+  const stroke = isHyperion ? '#3b82f6' : '#00e5ff';
+  const fill = isHyperion ? 'rgba(59,130,246,0.28)' : 'rgba(0,229,255,0.28)';
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"${opacity < 1 ? ` style="opacity:${opacity};"` : ''}><polygon points="6 3 18 3 22 9 12 22 2 9" fill="${fill}"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
 }
 
 function getDailyPrismSvg(size = 20, opacity = 1) {
-  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2" stroke-linejoin="round"${opacity < 1 ? ` style="opacity:${opacity};"` : ''}><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,0.35)"/><line x1="12" y1="2" x2="12" y2="22"/><polyline points="3 12 12 15 21 12" fill="none"/></svg>`;
+  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
+  const stroke = isHyperion ? '#ff6b00' : '#d946ef';
+  const fill = isHyperion ? 'rgba(255,107,0,0.35)' : 'rgba(217,70,239,0.35)';
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"${opacity < 1 ? ` style="opacity:${opacity};"` : ''}><polygon points="12 2 21 12 12 22 3 12" fill="${fill}"/><line x1="12" y1="2" x2="12" y2="22"/><polyline points="3 12 12 15 21 12" fill="none"/></svg>`;
 }
 
 function renderDailyLoginModal() {
@@ -4673,19 +4615,24 @@ function renderDailyLoginModal() {
   const isClaimedToday = checkDailyLoginState();
   const lastClaimedDay = isClaimedToday ? (loginStreakDay === 1 ? 7 : loginStreakDay - 1) : (loginStreakDay - 1);
 
-  // Render Streak Track Header Widget
   const trackEl = document.getElementById('dailyStreakTrack');
   if (trackEl) {
+    const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
+    const doneCol = isHyperion ? '#3b82f6' : '#00e5ff';
+    const doneBg = isHyperion ? '#081638' : '#041a22';
+    const actCol = isHyperion ? '#ffb700' : '#d946ef';
+    const actBg = isHyperion ? '#331804' : '#2d083d';
+    const day7FutCol = isHyperion ? '#ff6b00' : '#ff2fd0';
+    const day7FutBg = isHyperion ? '#291002' : '#1f0833';
+
     const activeStreakDay = isClaimedToday ? (loginStreakDay === 1 ? 7 : loginStreakDay - 1) : loginStreakDay;
     let trackNodesHtml = '';
 
-    // Background Track Line
     trackNodesHtml += `<line x1="18" y1="16" x2="262" y2="16" stroke="#1e293b" stroke-width="2.5"/>`;
 
-    // Progress line up to active streak day
     const activeX = 18 + (activeStreakDay - 1) * 40.66;
     if (activeX > 18) {
-      trackNodesHtml += `<line x1="18" y1="16" x2="${activeX}" y2="16" stroke="#00e5ff" stroke-width="2.5"/>`;
+      trackNodesHtml += `<line x1="18" y1="16" x2="${activeX}" y2="16" stroke="${doneCol}" stroke-width="2.5"/>`;
     }
 
     for (let d = 1; d <= 7; d++) {
@@ -4702,23 +4649,23 @@ function renderDailyLoginModal() {
 
       if (d < 7) {
         if (nodeClaimed) {
-          trackNodesHtml += `<circle cx="${cx}" cy="16" r="6" fill="#041a22" stroke="#00e5ff" stroke-width="1.8"/>`;
-          trackNodesHtml += `<path d="M ${cx - 2.5},16 L ${cx - 0.5},18 L ${cx + 3},14" fill="none" stroke="#00e5ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+          trackNodesHtml += `<circle cx="${cx}" cy="16" r="6" fill="${doneBg}" stroke="${doneCol}" stroke-width="1.8"/>`;
+          trackNodesHtml += `<path d="M ${cx - 2.5},16 L ${cx - 0.5},18 L ${cx + 3},14" fill="none" stroke="${doneCol}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`;
         } else if (nodeActive) {
-          trackNodesHtml += `<circle cx="${cx}" cy="16" r="8" fill="#2d083d" stroke="#d946ef" stroke-width="2.2"/>`;
+          trackNodesHtml += `<circle cx="${cx}" cy="16" r="8" fill="${actBg}" stroke="${actCol}" stroke-width="2.2"/>`;
           trackNodesHtml += `<circle cx="${cx}" cy="16" r="3" fill="#ffffff"/>`;
         } else {
           trackNodesHtml += `<circle cx="${cx}" cy="16" r="5" fill="#0b1324" stroke="#334155" stroke-width="1.5"/>`;
         }
       } else {
         if (nodeClaimed) {
-          trackNodesHtml += `<polygon points="${cx},9 ${cx+7},16 ${cx},23 ${cx-7},16" fill="#041a22" stroke="#00e5ff" stroke-width="1.8"/>`;
-          trackNodesHtml += `<path d="M ${cx - 2.5},16 L ${cx - 0.5},18 L ${cx + 3},14" fill="none" stroke="#00e5ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+          trackNodesHtml += `<polygon points="${cx},9 ${cx+7},16 ${cx},23 ${cx-7},16" fill="${doneBg}" stroke="${doneCol}" stroke-width="1.8"/>`;
+          trackNodesHtml += `<path d="M ${cx - 2.5},16 L ${cx - 0.5},18 L ${cx + 3},14" fill="none" stroke="${doneCol}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`;
         } else if (nodeActive) {
-          trackNodesHtml += `<polygon points="${cx},8 ${cx+8},16 ${cx},24 ${cx-8},16" fill="#2d083d" stroke="#d946ef" stroke-width="2.2"/>`;
+          trackNodesHtml += `<polygon points="${cx},8 ${cx+8},16 ${cx},24 ${cx-8},16" fill="${actBg}" stroke="${actCol}" stroke-width="2.2"/>`;
           trackNodesHtml += `<circle cx="${cx}" cy="16" r="3" fill="#ffffff"/>`;
         } else {
-          trackNodesHtml += `<polygon points="${cx},10 ${cx+6},16 ${cx},22 ${cx-6},16" fill="#1f0833" stroke="#ff2fd0" stroke-width="1.6"/>`;
+          trackNodesHtml += `<polygon points="${cx},10 ${cx+6},16 ${cx},22 ${cx-6},16" fill="${day7FutBg}" stroke="${day7FutCol}" stroke-width="1.6"/>`;
         }
       }
     }
@@ -4730,8 +4677,7 @@ function renderDailyLoginModal() {
       <div class="daily-streak-sub">DAY ${activeStreakDay} OF 7</div>
     `;
   }
-
-  // Render 7 Daily Reward Cards
+  
   DAILY_LOGIN_REWARDS.forEach(item => {
     const d = item.day;
     const isDay7 = (d === 7);
@@ -4949,31 +4895,27 @@ function renderVictoryStars(starsCount) {
   if (!row) return;
   row.innerHTML = '';
 
-if (isOverdriveMode) {
+  if (isOverdriveMode) {
+    const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
+    const starStroke = isHyperion ? '#3b82f6' : '#00e5ff';
+    const starGlow = isHyperion ? 'rgba(59, 130, 246, 0.95)' : 'rgba(0, 229, 255, 0.95)';
     const slot = document.createElement('span');
     slot.className = 'star-slot filled overdrive-victory-badge';
     setTimeout(() => sfx('star'), 160);
     slot.innerHTML = `
-      <svg width="96" height="76" viewBox="0 0 48 38" fill="none" style="filter: drop-shadow(0 0 16px rgba(0, 229, 255, 0.95)) drop-shadow(0 0 32px rgba(240, 95, 159, 0.65));">
-        <!-- Левая крошечная микро-звезда (полностью белая) -->
+      <svg width="96" height="76" viewBox="0 0 48 38" fill="none" style="filter: drop-shadow(0 0 16px ${starGlow}) drop-shadow(0 0 32px rgba(240, 95, 159, 0.65));">
         <g transform="translate(1.5, 19.5) scale(0.18)">
           <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" 
             fill="#ffffff" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" style="filter: drop-shadow(0 0 4px #ffffff);"/>
         </g>
-
-        <!-- Правая крошечная микро-звезда (полностью белая) -->
         <g transform="translate(42.5, 19.5) scale(0.18)">
           <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" 
             fill="#ffffff" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" style="filter: drop-shadow(0 0 4px #ffffff);"/>
         </g>
-
-        <!-- Главная звезда: центр Розовый (#f05f9f), окаймление Бирюзовое (#00e5ff) -->
         <g transform="translate(12, 4) scale(1.0)">
           <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" 
-            fill="#f05f9f" stroke="#00e5ff" stroke-width="1.6" stroke-linejoin="round"/>
+            fill="#f05f9f" stroke="${starStroke}" stroke-width="1.6" stroke-linejoin="round"/>
         </g>
-
-        <!-- 3-я микро-звезда по центру поверх основной звезды (полностью белая) -->
         <g transform="translate(21.8, 14.5) scale(0.18)">
           <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" 
             fill="#ffffff" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" style="filter: drop-shadow(0 0 6px #ffffff);"/>
@@ -5156,7 +5098,7 @@ function initBuildPanel() {
   const pool = getBuildPanelPool(currentLevel);
   const towerTypes = canonicalOrder.filter(t => pool.includes(t));
 
-towerTypes.forEach(type => {
+  towerTypes.forEach(type => {
     const conf = TOWER_CONFIGS[type];
     const btn = document.createElement('div');
     btn.className = 'tower-btn';
@@ -5245,7 +5187,6 @@ canvas.addEventListener('click', (e) => {
   const r = Math.floor(worldPos.y / TILE_SIZE);
   const clickedTower = towers.find(t => t.c === c && t.r === r);
 
-  // На шаге закрытия меню апгрейдов блокируем повторный клик по той же башне
   if (tutorialActive && tutorialLevel === 2 && tutorialStep === 2 && selectedTower) {
     if (clickedTower && clickedTower === selectedTower) {
       if (typeof showHintToast === 'function') showHintToast('Tap the empty field or ✕ to close');
@@ -5323,7 +5264,7 @@ function updateInspectUI() {
     lvlTextEl.textContent = `LVL ${t.level || 1}`;
   }
 
-for (let lvl = 1; lvl <= 3; lvl++) {
+  for (let lvl = 1; lvl <= 3; lvl++) {
     const seg = document.getElementById(`lvlBar${lvl}`);
     if (seg) {
       if (lvl <= t.level) {
@@ -5338,7 +5279,6 @@ for (let lvl = 1; lvl <= 3; lvl++) {
     }
   }
 
-// Обновление статов башни в инспекторе
   const statsBox = document.getElementById('inspectStatsBox');
   if (statsBox) {
     const curRng = Math.round(t.range);
@@ -5817,9 +5757,9 @@ function ridged(x, y, oct) {
 
 // [UI208] Cosmic nebula and baked starfield texture renderer.
 
-const NEBULA_DENSITY = 1.0;        // Overall nebula brightness and density (0.7 - 1.6).
+const NEBULA_DENSITY = 1.0;
 
-// [UI208.01] Nebula color clusters aligned with logo gradient (pink-purple left, cyan right, muted bottom).
+// [UI208.01] Nebula color clusters aligned with logo gradient.
 const NEBULA_CLUSTERS = [
   // Top-left cluster (pink-purple).
   { cx: 0.22, cy: 0.22, scale: 0.42, angle: 0.38, aspect: 0.64, intensity: 1.0,
@@ -5835,6 +5775,29 @@ const NEBULA_CLUSTERS = [
     base: [0.04, 0.32, 0.50], hot: [0.20, 0.85, 0.88] }
 ];
 
+// Hyperion Sunburst nebula clusters: Deep Cobalt Blue (left) & Solar Orange-Gold (right)
+const HYPERION_NEBULA_CLUSTERS = [
+  // Top-left cluster (Cobalt Blue).
+  { cx: 0.22, cy: 0.22, scale: 0.44, angle: 0.38, aspect: 0.66, intensity: 1.15,
+    base: [0.06, 0.24, 0.72], hot: [0.25, 0.58, 1.00] },
+  // Top-right cluster (Solar Orange / Gold).
+  { cx: 0.78, cy: 0.20, scale: 0.44, angle: -0.38, aspect: 0.66, intensity: 1.18,
+    base: [0.72, 0.26, 0.02], hot: [1.00, 0.68, 0.12] },
+  // Bottom-left cluster (Muted Cobalt).
+  { cx: 0.20, cy: 0.76, scale: 0.45, angle: -0.28, aspect: 0.70, intensity: 0.52,
+    base: [0.05, 0.18, 0.55], hot: [0.20, 0.48, 0.90] },
+  // Bottom-right cluster (Muted Amber/Orange).
+  { cx: 0.80, cy: 0.74, scale: 0.44, angle: 0.32, aspect: 0.70, intensity: 0.55,
+    base: [0.58, 0.20, 0.02], hot: [0.95, 0.55, 0.08] }
+];
+
+function getActiveNebulaClusters() {
+  if (typeof activePalette !== 'undefined' && activePalette === 'matrix_green') {
+    return HYPERION_NEBULA_CLUSTERS;
+  }
+  return NEBULA_CLUSTERS;
+}
+
 // Noise offsets for randomized nebula structure per session.
 const NEB_OFF = [Math.random() * 200, Math.random() * 200];
 
@@ -5842,13 +5805,11 @@ let nebulaCache = null;
 let nebulaCacheKey = '';
 
 // [UI209] Starfield parameters and sprite generation.
-// Static starfield is baked directly into the background texture once at boot, while a small subset twinkles dynamically.
 const BAKED_STAR_COUNT = 1620;
 const TWINKLE_STAR_COUNT = 160;
 const TWINKLE_STAR_COUNT_LOW = 65;
 const STAR_NEBULA_SHARE = 0.5;
 
-// Star temperature color tints (blue -> white -> yellow -> orange -> red).
 const STAR_TINTS = [
   { rgb: [155, 176, 255], w: 0.08 },
   { rgb: [202, 215, 255], w: 0.17 },
@@ -5858,7 +5819,6 @@ const STAR_TINTS = [
   { rgb: [255, 180, 130], w: 0.05 }
 ];
 
-// Star size and brightness classes (sigma in CSS pixels).
 const STAR_CLASSES = [
   { sigma: 0.50, halo: 0.00, spike: 0.00, len: 0,  alpha: [0.25, 0.55] },
   { sigma: 0.65, halo: 0.04, spike: 0.00, len: 0,  alpha: [0.40, 0.70] },
@@ -5880,10 +5840,11 @@ function pickTint() {
 }
 
 function pickNebulaStarPosition() {
+  const clusters = getActiveNebulaClusters();
   const idx = Math.random() < 0.75
     ? (Math.random() < 0.5 ? 0 : 1)
     : (Math.random() < 0.5 ? 2 : 3);
-  const cluster = NEBULA_CLUSTERS[idx] || NEBULA_CLUSTERS[0];
+  const cluster = clusters[idx] || clusters[0];
   const lx = randn() * 0.45 * cluster.scale;
   const ly = randn() * 0.45 * cluster.scale * cluster.aspect;
   const cs = Math.cos(cluster.angle), sn = Math.sin(cluster.angle);
@@ -5906,7 +5867,8 @@ function renderNebulaCache(w, h, dpr) {
   const img = c.createImageData(pw, ph);
   const d = img.data;
 
-  const cl = NEBULA_CLUSTERS.map(cluster => ({
+  const activeClusters = getActiveNebulaClusters();
+  const cl = activeClusters.map(cluster => ({
     c: cluster,
     cx: cluster.cx * w,
     cy: cluster.cy * h,
@@ -5920,7 +5882,6 @@ function renderNebulaCache(w, h, dpr) {
   const octMain = isLowPerf ? 4 : 5;
   const octRidge = isLowPerf ? 3 : 4;
 
-  // Прямой расчет 1:1 по пикселям экрана без даунскейла и размывающего апскейла
   for (let Y = 0; Y < ph; Y++) {
     const py = (Y + 0.5) / effectiveDpr;
     const t = py / h;
@@ -6007,7 +5968,6 @@ function renderNebulaCache(w, h, dpr) {
     }
   }
 
-  // Микро-звездная пыль
   const dustCount = Math.floor(pw * ph / 700);
   for (let i = 0; i < dustCount; i++) {
     const X = Math.floor(Math.random() * pw);
@@ -6021,7 +5981,6 @@ function renderNebulaCache(w, h, dpr) {
 
   c.putImageData(img, 0, 0);
 
-  // Впекание статических звезд строго в сетку 1:1
   const bakeRand = mulberry32(4242);
   c.save();
   c.globalCompositeOperation = 'lighter';
@@ -6032,7 +5991,7 @@ function renderNebulaCache(w, h, dpr) {
       const idx = bakeRand() < 0.75
         ? (bakeRand() < 0.5 ? 0 : 1)
         : (bakeRand() < 0.5 ? 2 : 3);
-      const cluster = NEBULA_CLUSTERS[idx] || NEBULA_CLUSTERS[0];
+      const cluster = activeClusters[idx] || activeClusters[0];
       const u1 = Math.max(1e-6, bakeRand()), u2 = bakeRand();
       const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
       const z1 = Math.sqrt(-2.0 * Math.log(u1)) * Math.sin(2.0 * Math.PI * u2);
@@ -6098,19 +6057,18 @@ let lastDimUpdateTime = typeof performance !== 'undefined' ? performance.now() :
 function drawCosmicNebulaBackground(w, h, customDim = null) {
   const dpr = getDpr();
   const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low') ? 'low' : 'high';
-  const key = Math.round(w) + 'x' + Math.round(h) + '@' + dpr + '_' + isLowPerf;
+  const palKey = typeof activePalette !== 'undefined' ? activePalette : 'default';
+  const key = Math.round(w) + 'x' + Math.round(h) + '@' + dpr + '_' + isLowPerf + '_' + palKey;
   if (!nebulaCache || nebulaCacheKey !== key) {
     nebulaCache = renderNebulaCache(w, h, dpr);
     nebulaCacheKey = key;
   }
   
-  // Отрисовка кэша туманности с отключением фильтрации
   ctx.save();
-  ctx.imageSmoothingEnabled = false; // Отключает замыливание пикселей при наложении
+  ctx.imageSmoothingEnabled = false;
   ctx.drawImage(nebulaCache, 0, 0, w, h);
   ctx.restore();
 
-  // Динамическое затемнение в бою отключено
   combatDimAlpha = 0;
 }
 
@@ -6145,17 +6103,16 @@ function warmUpNebulaAndHideLoader() {
 
       await stepWait(20, 100);
 
-      // 1. Генерируем текстуру космической туманности и звезд
       if (typeof canvas !== 'undefined' && canvas) {
         drawCosmicNebulaBackground(w, h);
       }
       await stepWait(50, 120);
 
-      // 2. Генерируем кэш неонового треугольника главного меню
       const horizonY = h * 0.44;
       if (typeof renderTriangleLogoCache === 'function') {
         const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low') ? 'low' : 'high';
-        const key = Math.round(w) + 'x' + Math.round(horizonY) + '@' + dpr + '_' + isLowPerf;
+        const palKey = typeof activePalette !== 'undefined' ? activePalette : 'default';
+        const key = Math.round(w) + 'x' + Math.round(horizonY) + '@' + dpr + '_' + isLowPerf + '_' + palKey;
         if (!triangleLogoCache || triangleLogoCacheKey !== key) {
           triangleLogoCache = renderTriangleLogoCache(w, horizonY, dpr);
           triangleLogoCacheKey = key;
@@ -6163,7 +6120,6 @@ function warmUpNebulaAndHideLoader() {
       }
       await stepWait(75, 100);
 
-      // 3. Декодируем музыку меню и звуки под ширмой загрузки
       if (typeof MusicManager !== 'undefined' && typeof MusicManager.warmUpMenuAudio === 'function') {
         await MusicManager.warmUpMenuAudio();
       }
@@ -6172,7 +6128,6 @@ function warmUpNebulaAndHideLoader() {
       }
       await stepWait(92, 100);
 
-      // 4. Отрисовываем сцену меню и прогреваем layout кнопок под лоадером
       if (typeof drawSynthWavePerspectiveScene === 'function') {
         drawSynthWavePerspectiveScene(performance.now());
       }
@@ -6187,18 +6142,15 @@ function warmUpNebulaAndHideLoader() {
     }
 
     if (loader) {
-      // 1. Фиксируем полосу на 100%
       if (barFill) {
         barFill.style.transition = 'none';
         barFill.style.setProperty('width', '100%', 'important');
       }
 
-      // 2. Заменяем текст LOADING... на READY
       if (loadingTextEl) {
         loadingTextEl.textContent = 'READY';
       }
 
-      // 3. Заголовок точно по координатам главного меню
       const titleBox = document.createElement('div');
       titleBox.className = 'loader-title-zone';
       titleBox.innerHTML = `
@@ -6207,7 +6159,6 @@ function warmUpNebulaAndHideLoader() {
       `;
       loader.appendChild(titleBox);
 
-      // 4. Кнопка GO
       const goBtn = document.createElement('button');
       goBtn.className = 'shop-item-btn shop-btn-free';
       goBtn.setAttribute('data-sfx', 'tap');
@@ -6244,8 +6195,6 @@ function warmUpNebulaAndHideLoader() {
 
 function createStar(randomizeLife = false, inNebula = false) {
   const maxLife = Math.random() * 16.0 + 10.0;
-
-  // Dynamic star instances with phase-offset twinkling.
   const u = Math.random();
   const cls = u < 0.25 ? 0 : u < 0.55 ? 1 : u < 0.82 ? 2 : u < 0.95 ? 3 : 4;
   const aR = STAR_CLASSES[cls].alpha;
@@ -6295,29 +6244,26 @@ function updateAndDrawStars(w, h, now) {
     const lifeProgress = star.life / star.maxLife;
     const fade = Math.min(1, Math.sin(lifeProgress * Math.PI) * 3);
 
-    // Звезды сияют на полную яркость и в меню, и в бою
     const twinkle = 0.55 + 0.45 * Math.sin(time * star.twinkleSpeed + star.twinklePhase);
     const alpha = star.baseAlpha * twinkle * fade;
     if (alpha <= 0.02) continue;
 
-    // Выравниваем координаты строго по физическим пикселям экрана (устраняет расфокус)
     const px = Math.round(star.x * w);
     const py = Math.round(star.y * h);
 
     ctx.globalAlpha = alpha;
 
-    // Градация цвета/яркости по классу звезды (от глубокого серого до чистого белого)
     let starBrightness;
     if (star.cls >= 4) {
-      starBrightness = '#ffffff'; // Максимально яркая звезда
+      starBrightness = '#ffffff';
     } else if (star.cls >= 3) {
-      starBrightness = '#e2e8f0'; // Яркая белая
+      starBrightness = '#e2e8f0';
     } else if (star.cls >= 2) {
-      starBrightness = '#cbd5e1'; // Светло-серая
+      starBrightness = '#cbd5e1';
     } else if (star.cls >= 1) {
-      starBrightness = '#94a3b8'; // Умеренно-серая
+      starBrightness = '#94a3b8';
     } else {
-      starBrightness = '#64748b'; // Далекая тусклая фоновая звезда
+      starBrightness = '#64748b';
     }
 
     ctx.fillStyle = starBrightness;
@@ -6332,6 +6278,7 @@ let triangleLogoCacheKey = '';
 function renderTriangleLogoCache(w, horizonY, dpr) {
   const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low');
   const effDpr = isLowPerf ? Math.min(1.25, dpr) : dpr;
+  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
 
   const pad = 70;
   const ch = Math.ceil(horizonY + pad);
@@ -6343,15 +6290,13 @@ function renderTriangleLogoCache(w, horizonY, dpr) {
 
   const cx = w * 0.5;
   const tipY = horizonY - 24;
-  // Опускаем верхнюю грань на 16px (1/3 высоты кнопки меню)
   const topY = Math.max(98, horizonY * 0.26);
   const halfW = Math.min(w * 0.35, (tipY - topY) * 0.65);
 
-  const A = { x: cx,         y: tipY };   // Bottom tip.
-  const B = { x: cx - halfW, y: topY };   // Top-left corner.
-  const C = { x: cx + halfW, y: topY };   // Top-right corner.
+  const A = { x: cx,         y: tipY };
+  const B = { x: cx - halfW, y: topY };
+  const C = { x: cx + halfW, y: topY };
 
-  // Inscribed circle radius for equidistant contour scaling.
   const sa = Math.hypot(B.x - C.x, B.y - C.y);
   const sb = Math.hypot(A.x - C.x, A.y - C.y);
   const sc = Math.hypot(A.x - B.x, A.y - B.y);
@@ -6371,17 +6316,29 @@ function renderTriangleLogoCache(w, horizonY, dpr) {
     c.closePath();
   };
 
-  // Horizontal gradient: pink-purple left to cyan right.
+  // Horizontal gradient: Hyperion Sunburst (Cobalt Blue left -> Solar Orange -> Gold right)
   const makeGrad = (lighten) => {
     const g = c.createLinearGradient(B.x - 20, 0, C.x + 20, 0);
-    if (lighten) {
-      g.addColorStop(0.00, '#ff8be8');
-      g.addColorStop(0.45, '#d9b8ff');
-      g.addColorStop(1.00, '#b8fff6');
+    if (isHyperion) {
+      if (lighten) {
+        g.addColorStop(0.00, '#93c5fd');
+        g.addColorStop(0.48, '#fdba74');
+        g.addColorStop(1.00, '#fef08a');
+      } else {
+        g.addColorStop(0.00, '#2563eb');
+        g.addColorStop(0.50, '#ff6b00');
+        g.addColorStop(1.00, '#ffb700');
+      }
     } else {
-      g.addColorStop(0.00, '#ff2fd0');
-      g.addColorStop(0.45, '#9a4dff');
-      g.addColorStop(1.00, '#00f0d8');
+      if (lighten) {
+        g.addColorStop(0.00, '#ff8be8');
+        g.addColorStop(0.45, '#d9b8ff');
+        g.addColorStop(1.00, '#b8fff6');
+      } else {
+        g.addColorStop(0.00, '#ff2fd0');
+        g.addColorStop(0.45, '#9a4dff');
+        g.addColorStop(1.00, '#00f0d8');
+      }
     }
     return g;
   };
@@ -6390,22 +6347,32 @@ function renderTriangleLogoCache(w, horizonY, dpr) {
   c.save();
   c.globalCompositeOperation = 'lighter';
 
-  // Top-left vertex haze.
   const cornerR = halfW * 0.42;
   const bGlow = c.createRadialGradient(B.x, B.y, 0, B.x, B.y, cornerR);
-  bGlow.addColorStop(0.0, 'rgba(255, 47, 208, 0.20)');
-  bGlow.addColorStop(0.4, 'rgba(154, 77, 255, 0.08)');
-  bGlow.addColorStop(1.0, 'rgba(154, 77, 255, 0)');
+  if (isHyperion) {
+    bGlow.addColorStop(0.0, 'rgba(37, 99, 235, 0.28)');
+    bGlow.addColorStop(0.4, 'rgba(59, 130, 246, 0.12)');
+    bGlow.addColorStop(1.0, 'rgba(59, 130, 246, 0)');
+  } else {
+    bGlow.addColorStop(0.0, 'rgba(255, 47, 208, 0.20)');
+    bGlow.addColorStop(0.4, 'rgba(154, 77, 255, 0.08)');
+    bGlow.addColorStop(1.0, 'rgba(154, 77, 255, 0)');
+  }
   c.fillStyle = bGlow;
   c.beginPath();
   c.arc(B.x, B.y, cornerR, 0, Math.PI * 2);
   c.fill();
 
-  // Top-right vertex haze.
   const cGlow = c.createRadialGradient(C.x, C.y, 0, C.x, C.y, cornerR);
-  cGlow.addColorStop(0.0, 'rgba(0, 240, 216, 0.20)');
-  cGlow.addColorStop(0.4, 'rgba(0, 210, 255, 0.08)');
-  cGlow.addColorStop(1.0, 'rgba(0, 210, 255, 0)');
+  if (isHyperion) {
+    cGlow.addColorStop(0.0, 'rgba(255, 183, 0, 0.28)');
+    cGlow.addColorStop(0.4, 'rgba(255, 107, 0, 0.12)');
+    cGlow.addColorStop(1.0, 'rgba(255, 107, 0, 0)');
+  } else {
+    cGlow.addColorStop(0.0, 'rgba(0, 240, 216, 0.20)');
+    cGlow.addColorStop(0.4, 'rgba(0, 210, 255, 0.08)');
+    cGlow.addColorStop(1.0, 'rgba(0, 210, 255, 0)');
+  }
   c.fillStyle = cGlow;
   c.beginPath();
   c.arc(C.x, C.y, cornerR, 0, Math.PI * 2);
@@ -6434,7 +6401,6 @@ function renderTriangleLogoCache(w, horizonY, dpr) {
     const glowGrad = makeGrad(false);
     const coreGrad = makeGrad(lighten);
 
-    // Outer soft halo falloff.
     c.globalCompositeOperation = 'lighter';
     c.strokeStyle = glowGrad;
     for (let i = 0; i < GLOW_FALLOFF.length; i++) {
@@ -6445,7 +6411,6 @@ function renderTriangleLogoCache(w, horizonY, dpr) {
       c.stroke();
     }
 
-    // Primary neon core tube.
     c.globalCompositeOperation = 'source-over';
     c.globalAlpha = 0.94;
     c.strokeStyle = coreGrad;
@@ -6453,7 +6418,6 @@ function renderTriangleLogoCache(w, horizonY, dpr) {
     triPath(offset);
     c.stroke();
 
-    // Incandescent white inner core.
     c.globalCompositeOperation = 'lighter';
     c.globalAlpha = 0.62 * strength;
     c.strokeStyle = '#ffffff';
@@ -6464,7 +6428,6 @@ function renderTriangleLogoCache(w, horizonY, dpr) {
     c.restore();
   };
 
-  // Render nested neon triangle contours into offscreen cache.
   neonTriSoft(-inR * 0.40, 4.2, false, 0.90);
   neonTriSoft(-14,         4.8, false, 0.95);
   neonTriSoft(0,           5.2, true,  1.15);
@@ -6475,14 +6438,14 @@ function renderTriangleLogoCache(w, horizonY, dpr) {
 function drawSynthWaveTriangleLogo5C(w, horizonY, time) {
   const dpr = getDpr();
   const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low') ? 'low' : 'high';
-  const key = Math.round(w) + 'x' + Math.round(horizonY) + '@' + dpr + '_' + isLowPerf;
+  const palKey = typeof activePalette !== 'undefined' ? activePalette : 'default';
+  const key = Math.round(w) + 'x' + Math.round(horizonY) + '@' + dpr + '_' + isLowPerf + '_' + palKey;
 
   if (!triangleLogoCache || triangleLogoCacheKey !== key) {
     triangleLogoCache = renderTriangleLogoCache(w, horizonY, dpr);
     triangleLogoCacheKey = key;
   }
 
-  // Subtle brightness pulsation with single draw call overhead.
   const flicker = 0.95 + 0.05 * Math.sin(time * 9.0) * Math.sin(time * 2.3 + 1.0);
   ctx.save();
   ctx.globalAlpha = flicker;
@@ -6494,6 +6457,7 @@ function drawSynthWaveTriangleLogo5C(w, horizonY, time) {
 function drawSynthWaveHorizonBeam(w, horizonY, time) {
   const cx = w * 0.5;
   const pulse = 0.95 + 0.05 * Math.sin(time * 3.2);
+  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
 
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
@@ -6501,46 +6465,72 @@ function drawSynthWaveHorizonBeam(w, horizonY, time) {
   // [UI213.01] Vertical exponential bloom gradient pass.
   const bloomR = 46;
   const vBloom = ctx.createLinearGradient(0, horizonY - bloomR, 0, horizonY + bloomR);
-  vBloom.addColorStop(0.00, 'rgba(140, 80, 255, 0)');
-  vBloom.addColorStop(0.22, `rgba(140, 80, 255, ${0.03 * pulse})`);
-  vBloom.addColorStop(0.36, `rgba(150, 100, 255, ${0.10 * pulse})`);
-  vBloom.addColorStop(0.45, `rgba(170, 180, 255, ${0.24 * pulse})`);
-  vBloom.addColorStop(0.50, `rgba(220, 245, 255, ${0.42 * pulse})`);
-  vBloom.addColorStop(0.55, `rgba(0, 229, 255, ${0.24 * pulse})`);
-  vBloom.addColorStop(0.64, `rgba(0, 229, 255, ${0.10 * pulse})`);
-  vBloom.addColorStop(0.78, `rgba(0, 229, 255, ${0.03 * pulse})`);
-  vBloom.addColorStop(1.00, 'rgba(0, 229, 255, 0)');
+  if (isHyperion) {
+    vBloom.addColorStop(0.00, 'rgba(37, 99, 235, 0)');
+    vBloom.addColorStop(0.22, `rgba(37, 99, 235, ${0.04 * pulse})`);
+    vBloom.addColorStop(0.36, `rgba(255, 107, 0, ${0.12 * pulse})`);
+    vBloom.addColorStop(0.45, `rgba(255, 165, 0, ${0.28 * pulse})`);
+    vBloom.addColorStop(0.50, `rgba(255, 245, 210, ${0.46 * pulse})`);
+    vBloom.addColorStop(0.55, `rgba(255, 145, 0, ${0.28 * pulse})`);
+    vBloom.addColorStop(0.64, `rgba(255, 107, 0, ${0.12 * pulse})`);
+    vBloom.addColorStop(0.78, `rgba(37, 99, 235, ${0.04 * pulse})`);
+    vBloom.addColorStop(1.00, 'rgba(37, 99, 235, 0)');
+  } else {
+    vBloom.addColorStop(0.00, 'rgba(140, 80, 255, 0)');
+    vBloom.addColorStop(0.22, `rgba(140, 80, 255, ${0.03 * pulse})`);
+    vBloom.addColorStop(0.36, `rgba(150, 100, 255, ${0.10 * pulse})`);
+    vBloom.addColorStop(0.45, `rgba(170, 180, 255, ${0.24 * pulse})`);
+    vBloom.addColorStop(0.50, `rgba(220, 245, 255, ${0.42 * pulse})`);
+    vBloom.addColorStop(0.55, `rgba(0, 229, 255, ${0.24 * pulse})`);
+    vBloom.addColorStop(0.64, `rgba(0, 229, 255, ${0.10 * pulse})`);
+    vBloom.addColorStop(0.78, `rgba(0, 229, 255, ${0.03 * pulse})`);
+    vBloom.addColorStop(1.00, 'rgba(0, 229, 255, 0)');
+  }
   ctx.fillStyle = vBloom;
   ctx.fillRect(0, horizonY - bloomR, w, bloomR * 2);
 
-  // [UI213.02] Lateral atmospheric glow cushions (pink-purple left, cyan right).
+  // [UI213.02] Lateral atmospheric glow cushions.
   const sideRx = w * 0.46;
   const sideRy = 26;
 
-  // Left pink-purple soft bloom.
+  // Left soft bloom.
   ctx.save();
   ctx.translate(w * 0.27, horizonY);
   ctx.scale(1, sideRy / sideRx);
   const leftGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, sideRx);
-  leftGlow.addColorStop(0.00, `rgba(255, 47, 208, ${0.38 * pulse})`);
-  leftGlow.addColorStop(0.35, `rgba(168, 85, 247, ${0.18 * pulse})`);
-  leftGlow.addColorStop(0.70, `rgba(140, 60, 220, ${0.05 * pulse})`);
-  leftGlow.addColorStop(1.00, 'rgba(140, 60, 220, 0)');
+  if (isHyperion) {
+    leftGlow.addColorStop(0.00, `rgba(37, 99, 235, ${0.42 * pulse})`);
+    leftGlow.addColorStop(0.35, `rgba(59, 130, 246, ${0.20 * pulse})`);
+    leftGlow.addColorStop(0.70, `rgba(29, 78, 216, ${0.06 * pulse})`);
+    leftGlow.addColorStop(1.00, 'rgba(29, 78, 216, 0)');
+  } else {
+    leftGlow.addColorStop(0.00, `rgba(255, 47, 208, ${0.38 * pulse})`);
+    leftGlow.addColorStop(0.35, `rgba(168, 85, 247, ${0.18 * pulse})`);
+    leftGlow.addColorStop(0.70, `rgba(140, 60, 220, ${0.05 * pulse})`);
+    leftGlow.addColorStop(1.00, 'rgba(140, 60, 220, 0)');
+  }
   ctx.fillStyle = leftGlow;
   ctx.beginPath();
   ctx.arc(0, 0, sideRx, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
-  // Right cyan soft bloom.
+  // Right soft bloom.
   ctx.save();
   ctx.translate(w * 0.73, horizonY);
   ctx.scale(1, sideRy / sideRx);
   const rightGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, sideRx);
-  rightGlow.addColorStop(0.00, `rgba(0, 240, 216, ${0.38 * pulse})`);
-  rightGlow.addColorStop(0.35, `rgba(0, 210, 255, ${0.18 * pulse})`);
-  rightGlow.addColorStop(0.70, `rgba(0, 160, 230, ${0.05 * pulse})`);
-  rightGlow.addColorStop(1.00, 'rgba(0, 160, 230, 0)');
+  if (isHyperion) {
+    rightGlow.addColorStop(0.00, `rgba(255, 145, 0, ${0.44 * pulse})`);
+    rightGlow.addColorStop(0.35, `rgba(255, 107, 0, ${0.22 * pulse})`);
+    rightGlow.addColorStop(0.70, `rgba(217, 119, 6, ${0.06 * pulse})`);
+    rightGlow.addColorStop(1.00, 'rgba(217, 119, 6, 0)');
+  } else {
+    rightGlow.addColorStop(0.00, `rgba(0, 240, 216, ${0.38 * pulse})`);
+    rightGlow.addColorStop(0.35, `rgba(0, 210, 255, ${0.18 * pulse})`);
+    rightGlow.addColorStop(0.70, `rgba(0, 160, 230, ${0.05 * pulse})`);
+    rightGlow.addColorStop(1.00, 'rgba(0, 160, 230, 0)');
+  }
   ctx.fillStyle = rightGlow;
   ctx.beginPath();
   ctx.arc(0, 0, sideRx, 0, Math.PI * 2);
@@ -6550,23 +6540,41 @@ function drawSynthWaveHorizonBeam(w, horizonY, time) {
   // [UI213.03] Tight horizontal beam glow.
   const tightR = 7;
   const tightBloom = ctx.createLinearGradient(0, horizonY - tightR, 0, horizonY + tightR);
-  tightBloom.addColorStop(0.00, 'rgba(255, 255, 255, 0)');
-  tightBloom.addColorStop(0.30, `rgba(200, 170, 255, ${0.28 * pulse})`);
-  tightBloom.addColorStop(0.50, `rgba(255, 255, 255, ${0.75 * pulse})`);
-  tightBloom.addColorStop(0.70, `rgba(120, 245, 255, ${0.28 * pulse})`);
-  tightBloom.addColorStop(1.00, 'rgba(255, 255, 255, 0)');
+  if (isHyperion) {
+    tightBloom.addColorStop(0.00, 'rgba(255, 255, 255, 0)');
+    tightBloom.addColorStop(0.30, `rgba(96, 165, 250, ${0.32 * pulse})`);
+    tightBloom.addColorStop(0.50, `rgba(255, 255, 255, ${0.82 * pulse})`);
+    tightBloom.addColorStop(0.70, `rgba(255, 183, 0, ${0.35 * pulse})`);
+    tightBloom.addColorStop(1.00, 'rgba(255, 255, 255, 0)');
+  } else {
+    tightBloom.addColorStop(0.00, 'rgba(255, 255, 255, 0)');
+    tightBloom.addColorStop(0.30, `rgba(200, 170, 255, ${0.28 * pulse})`);
+    tightBloom.addColorStop(0.50, `rgba(255, 255, 255, ${0.75 * pulse})`);
+    tightBloom.addColorStop(0.70, `rgba(120, 245, 255, ${0.28 * pulse})`);
+    tightBloom.addColorStop(1.00, 'rgba(255, 255, 255, 0)');
+  }
   ctx.fillStyle = tightBloom;
   ctx.fillRect(0, horizonY - tightR, w, tightR * 2);
 
   // [UI213.04] Primary neon beam core stroke.
   const hBeamGrad = ctx.createLinearGradient(0, 0, w, 0);
-  hBeamGrad.addColorStop(0.00, 'rgba(255, 47, 208, 0.05)');
-  hBeamGrad.addColorStop(0.16, '#ff2fd0');
-  hBeamGrad.addColorStop(0.42, '#a855f7');
-  hBeamGrad.addColorStop(0.50, '#ffffff');
-  hBeamGrad.addColorStop(0.58, '#00e5ff');
-  hBeamGrad.addColorStop(0.84, '#00f0d8');
-  hBeamGrad.addColorStop(1.00, 'rgba(0, 240, 216, 0.05)');
+  if (isHyperion) {
+    hBeamGrad.addColorStop(0.00, 'rgba(37, 99, 235, 0.05)');
+    hBeamGrad.addColorStop(0.16, '#2563eb');
+    hBeamGrad.addColorStop(0.42, '#ff6b00');
+    hBeamGrad.addColorStop(0.50, '#ffffff');
+    hBeamGrad.addColorStop(0.58, '#ff9100');
+    hBeamGrad.addColorStop(0.84, '#ffb700');
+    hBeamGrad.addColorStop(1.00, 'rgba(255, 183, 0, 0.05)');
+  } else {
+    hBeamGrad.addColorStop(0.00, 'rgba(255, 47, 208, 0.05)');
+    hBeamGrad.addColorStop(0.16, '#ff2fd0');
+    hBeamGrad.addColorStop(0.42, '#a855f7');
+    hBeamGrad.addColorStop(0.50, '#ffffff');
+    hBeamGrad.addColorStop(0.58, '#00e5ff');
+    hBeamGrad.addColorStop(0.84, '#00f0d8');
+    hBeamGrad.addColorStop(1.00, 'rgba(0, 240, 216, 0.05)');
+  }
 
   ctx.globalCompositeOperation = 'source-over';
   ctx.strokeStyle = hBeamGrad;
@@ -6580,9 +6588,9 @@ function drawSynthWaveHorizonBeam(w, horizonY, time) {
   // [UI213.05] Incandescent white beam center line.
   const coreGrad = ctx.createLinearGradient(0, 0, w, 0);
   coreGrad.addColorStop(0.00, 'rgba(255, 255, 255, 0)');
-  coreGrad.addColorStop(0.12, 'rgba(255, 230, 252, 0.80)');
+  coreGrad.addColorStop(0.12, isHyperion ? 'rgba(219, 234, 254, 0.85)' : 'rgba(255, 230, 252, 0.80)');
   coreGrad.addColorStop(0.50, 'rgba(255, 255, 255, 1)');
-  coreGrad.addColorStop(0.88, 'rgba(220, 255, 252, 0.80)');
+  coreGrad.addColorStop(0.88, isHyperion ? 'rgba(254, 243, 199, 0.85)' : 'rgba(220, 255, 252, 0.80)');
   coreGrad.addColorStop(1.00, 'rgba(255, 255, 255, 0)');
 
   ctx.globalCompositeOperation = 'lighter';
@@ -6601,10 +6609,17 @@ function drawSynthWaveHorizonBeam(w, horizonY, time) {
   ctx.translate(cx, horizonY);
   ctx.scale(1, flareH / flareW);
   const centerFlare = ctx.createRadialGradient(0, 0, 0, 0, 0, flareW);
-  centerFlare.addColorStop(0.00, `rgba(255, 255, 255, ${0.65 * pulse})`);
-  centerFlare.addColorStop(0.25, `rgba(215, 185, 255, ${0.30 * pulse})`);
-  centerFlare.addColorStop(0.60, `rgba(0, 229, 255, ${0.10 * pulse})`);
-  centerFlare.addColorStop(1.00, 'rgba(0, 229, 255, 0)');
+  if (isHyperion) {
+    centerFlare.addColorStop(0.00, `rgba(255, 235, 180, ${0.85 * pulse})`);
+    centerFlare.addColorStop(0.25, `rgba(255, 145, 0, ${0.55 * pulse})`);
+    centerFlare.addColorStop(0.60, `rgba(255, 107, 0, ${0.18 * pulse})`);
+    centerFlare.addColorStop(1.00, 'rgba(255, 107, 0, 0)');
+  } else {
+    centerFlare.addColorStop(0.00, `rgba(255, 255, 255, ${0.65 * pulse})`);
+    centerFlare.addColorStop(0.25, `rgba(215, 185, 255, ${0.30 * pulse})`);
+    centerFlare.addColorStop(0.60, `rgba(0, 229, 255, ${0.10 * pulse})`);
+    centerFlare.addColorStop(1.00, 'rgba(0, 229, 255, 0)');
+  }
   ctx.fillStyle = centerFlare;
   ctx.beginPath();
   ctx.arc(0, 0, flareW, 0, Math.PI * 2);
@@ -6623,6 +6638,7 @@ function drawSynthWavePerspectiveScene(now) {
   const horizonY = h * 0.44;
   const floorH = h - horizonY;
   const vpX = w * 0.5;
+  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
 
   drawCosmicNebulaBackground(w, h);
   updateAndDrawStars(w, h, now);
@@ -6631,9 +6647,15 @@ function drawSynthWavePerspectiveScene(now) {
 
   // Semi-transparent perspective plane background.
   const planeGrad = ctx.createLinearGradient(0, horizonY, 0, h);
-  planeGrad.addColorStop(0, 'rgba(16, 26, 52, 0.06)');
-  planeGrad.addColorStop(0.35, 'rgba(16, 26, 52, 0.18)');
-  planeGrad.addColorStop(1, 'rgba(12, 20, 42, 0.34)');
+  if (isHyperion) {
+    planeGrad.addColorStop(0, 'rgba(12, 24, 58, 0.08)');
+    planeGrad.addColorStop(0.35, 'rgba(10, 20, 48, 0.22)');
+    planeGrad.addColorStop(1, 'rgba(6, 12, 30, 0.38)');
+  } else {
+    planeGrad.addColorStop(0, 'rgba(16, 26, 52, 0.06)');
+    planeGrad.addColorStop(0.35, 'rgba(16, 26, 52, 0.18)');
+    planeGrad.addColorStop(1, 'rgba(12, 20, 42, 0.34)');
+  }
   ctx.fillStyle = planeGrad;
   ctx.fillRect(0, horizonY, w, floorH);
 
@@ -6641,7 +6663,7 @@ function drawSynthWavePerspectiveScene(now) {
   ctx.rect(0, horizonY, w, floorH);
   ctx.clip();
 
-  setGlow('#00e5ff', 5);
+  setGlow(isHyperion ? '#ff9100' : '#00e5ff', 5);
 
   const horizCount = 14;
   const bottomStep = Math.max(34, (floorH / horizCount) * 1.5);
@@ -6649,10 +6671,14 @@ function drawSynthWavePerspectiveScene(now) {
   const numLines = Math.ceil((w * 1.4) / targetBottomCellWidth);
 
   ctx.lineWidth = 1.0;
-  ctx.strokeStyle = 'rgba(125, 165, 255, 0.35)';
   for (let i = -numLines; i <= numLines; i++) {
     const bottomX = vpX + (i + 0.5) * targetBottomCellWidth;
     const topX = vpX + (i + 0.5) * (targetBottomCellWidth * 0.32);
+    if (isHyperion) {
+      ctx.strokeStyle = (i < 0) ? 'rgba(59, 130, 246, 0.38)' : 'rgba(255, 145, 0, 0.38)';
+    } else {
+      ctx.strokeStyle = 'rgba(125, 165, 255, 0.35)';
+    }
     ctx.beginPath();
     ctx.moveTo(topX, horizonY);
     ctx.lineTo(bottomX, h);
@@ -6662,7 +6688,7 @@ function drawSynthWavePerspectiveScene(now) {
   const roadTopHalfW = targetBottomCellWidth * 0.16;
   const roadBottomHalfW = targetBottomCellWidth * 0.50;
 
-  ctx.fillStyle = 'rgba(16, 26, 52, 0.22)';
+  ctx.fillStyle = isHyperion ? 'rgba(12, 22, 50, 0.28)' : 'rgba(16, 26, 52, 0.22)';
   ctx.beginPath();
   ctx.moveTo(vpX - roadTopHalfW, horizonY);
   ctx.lineTo(vpX + roadTopHalfW, horizonY);
@@ -6671,38 +6697,74 @@ function drawSynthWavePerspectiveScene(now) {
   ctx.closePath();
   ctx.fill();
 
-  ctx.strokeStyle = 'rgba(0, 229, 255, 0.20)';
   ctx.lineWidth = 2.6;
   ctx.setLineDash([]);
-  ctx.beginPath();
-  ctx.moveTo(vpX - roadTopHalfW, horizonY);
-  ctx.lineTo(vpX - roadBottomHalfW, h);
-  ctx.moveTo(vpX + roadTopHalfW, horizonY);
-  ctx.lineTo(vpX + roadBottomHalfW, h);
-  ctx.stroke();
+  if (isHyperion) {
+    ctx.strokeStyle = 'rgba(59, 130, 246, 0.32)';
+    ctx.beginPath();
+    ctx.moveTo(vpX - roadTopHalfW, horizonY);
+    ctx.lineTo(vpX - roadBottomHalfW, h);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(255, 145, 0, 0.32)';
+    ctx.beginPath();
+    ctx.moveTo(vpX + roadTopHalfW, horizonY);
+    ctx.lineTo(vpX + roadBottomHalfW, h);
+    ctx.stroke();
+  } else {
+    ctx.strokeStyle = 'rgba(0, 229, 255, 0.20)';
+    ctx.beginPath();
+    ctx.moveTo(vpX - roadTopHalfW, horizonY);
+    ctx.lineTo(vpX - roadBottomHalfW, h);
+    ctx.moveTo(vpX + roadTopHalfW, horizonY);
+    ctx.lineTo(vpX + roadBottomHalfW, h);
+    ctx.stroke();
+  }
 
   ctx.save();
-  ctx.strokeStyle = 'rgba(165, 243, 252, 0.88)';
-  setGlow('#00e5ff', 6);
   ctx.lineWidth = 1.8;
   // [UI200.01] Perspective track edge and grid ray rendering pass.
   ctx.setLineDash([12, 10]);
   ctx.lineDashOffset = (time * 36);
 
-  ctx.beginPath();
-  ctx.moveTo(vpX - roadTopHalfW, horizonY);
-  ctx.lineTo(vpX - roadBottomHalfW, h);
-  ctx.moveTo(vpX + roadTopHalfW, horizonY);
-  ctx.lineTo(vpX + roadBottomHalfW, h);
-  ctx.stroke();
+  if (isHyperion) {
+    setGlow('#3b82f6', 6);
+    ctx.strokeStyle = 'rgba(96, 165, 250, 0.92)';
+    ctx.beginPath();
+    ctx.moveTo(vpX - roadTopHalfW, horizonY);
+    ctx.lineTo(vpX - roadBottomHalfW, h);
+    ctx.stroke();
+
+    setGlow('#ff9100', 6);
+    ctx.strokeStyle = 'rgba(255, 183, 0, 0.92)';
+    ctx.beginPath();
+    ctx.moveTo(vpX + roadTopHalfW, horizonY);
+    ctx.lineTo(vpX + roadBottomHalfW, h);
+    ctx.stroke();
+  } else {
+    ctx.strokeStyle = 'rgba(165, 243, 252, 0.88)';
+    setGlow('#00e5ff', 6);
+    ctx.beginPath();
+    ctx.moveTo(vpX - roadTopHalfW, horizonY);
+    ctx.lineTo(vpX - roadBottomHalfW, h);
+    ctx.moveTo(vpX + roadTopHalfW, horizonY);
+    ctx.lineTo(vpX + roadBottomHalfW, h);
+    ctx.stroke();
+  }
   ctx.restore();
 
   const gridOffset = (time * 0.42) % 1;
   for (let j = 0; j < horizCount; j++) {
     const progress = (j + gridOffset) / horizCount;
     const currentY = horizonY + Math.pow(progress, 1.95) * floorH;
-    const alpha = Math.min(0.38, 0.08 + progress * 0.35);
-    ctx.strokeStyle = `rgba(125, 165, 255, ${alpha})`;
+    const alpha = Math.min(0.42, 0.08 + progress * 0.35);
+    if (isHyperion) {
+      ctx.strokeStyle = (j % 2 === 0)
+        ? `rgba(59, 130, 246, ${alpha})`
+        : `rgba(255, 145, 0, ${alpha})`;
+    } else {
+      ctx.strokeStyle = `rgba(125, 165, 255, ${alpha})`;
+    }
     ctx.lineWidth = 1.2;
     ctx.beginPath();
     ctx.moveTo(0, currentY);
@@ -6710,8 +6772,8 @@ function drawSynthWavePerspectiveScene(now) {
     ctx.stroke();
   }
 
-  const scoutColor = '#ff9100';
-  const scoutGlow = '#ffaa33';
+  const scoutColor = isHyperion ? '#ffb700' : '#ff9100';
+  const scoutGlow = isHyperion ? '#ff9100' : '#ffaa33';
   const mobCycleDuration = 13.5;
   const mobLinearProgress = (time % mobCycleDuration) / mobCycleDuration;
   const u = 1 - mobLinearProgress;
@@ -6728,7 +6790,7 @@ function drawSynthWavePerspectiveScene(now) {
   ctx.rotate(-Math.PI / 2);
 
   setGlow(scoutGlow, 8 * mobScale);
-  ctx.fillStyle = 'rgba(255, 170, 51, 0.32)';
+  ctx.fillStyle = isHyperion ? 'rgba(255, 183, 0, 0.35)' : 'rgba(255, 170, 51, 0.32)';
   ctx.strokeStyle = scoutColor;
   ctx.lineWidth = 1.8 * mobScale;
 
@@ -6740,6 +6802,13 @@ function drawSynthWavePerspectiveScene(now) {
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
+
+  if (isHyperion) {
+    ctx.fillStyle = '#60a5fa';
+    ctx.beginPath();
+    ctx.arc(0, 0, Math.max(1.5, 3.2 * mobScale), 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   ctx.restore();
 
@@ -6771,17 +6840,19 @@ function drawChevron(centerX, centerY, angle, size, color, glowColor) {
 
 function drawPathPortals() {
   if (!activePathTiles || activePathTiles.length < 2) return;
+  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
   const startTile = activePathTiles[0];
   const nextTile = activePathTiles[1];
   const spawnX = startTile.c * TILE_SIZE;
   const spawnY = startTile.r * TILE_SIZE;
   const spawnAngle = Math.atan2(nextTile.r - startTile.r, nextTile.c - startTile.c);
 
+  const spawnCol = isHyperion ? '#ff9100' : '#00f0ff';
   const spawnOffsets = [-14, 0, 14];
   spawnOffsets.forEach(off => {
     const px = spawnX + 35 + Math.cos(spawnAngle) * off;
     const py = spawnY + 35 + Math.sin(spawnAngle) * off;
-    drawChevron(px, py, spawnAngle, 13, '#00f0ff', '#00f0ff');
+    drawChevron(px, py, spawnAngle, 13, spawnCol, spawnCol);
   });
 
   const prevTile = activePathTiles[activePathTiles.length - 2];
@@ -6790,11 +6861,12 @@ function drawPathPortals() {
   const baseY = endTile.r * TILE_SIZE;
   const baseAngle = Math.atan2(endTile.r - prevTile.r, endTile.c - prevTile.c);
 
+  const baseCol = isHyperion ? '#ffb700' : '#f05f9f';
   const baseOffsets = [-14, 0, 14];
   baseOffsets.forEach(off => {
     const px = baseX + 35 + Math.cos(baseAngle) * off;
     const py = baseY + 35 + Math.sin(baseAngle) * off;
-    drawChevron(px, py, baseAngle, 13, '#f05f9f', '#f05f9f');
+    drawChevron(px, py, baseAngle, 13, baseCol, baseCol);
   });
 }
 
@@ -6824,12 +6896,13 @@ let battleStartedOnce = false;
 function drawPathRails(now) {
   if (!pathCells || pathCells.length <= 2) return;
   const totalCells = pathCells.length;
+  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
 
   ctx.save();
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
-  ctx.strokeStyle = 'rgba(0, 229, 255, 0.18)';
+  ctx.strokeStyle = isHyperion ? 'rgba(255, 145, 0, 0.25)' : 'rgba(0, 229, 255, 0.18)';
   ctx.lineWidth = 3.5;
   ctx.setLineDash([]);
   for (let i = 1; i < totalCells - 1; i++) {
@@ -6856,7 +6929,9 @@ function drawPathRails(now) {
   }
 
   if (battlePathAlpha > 0.005) {
-    ctx.strokeStyle = `rgba(165, 243, 252, ${0.90 * battlePathAlpha})`;
+    ctx.strokeStyle = isHyperion
+      ? `rgba(255, 195, 70, ${0.92 * battlePathAlpha})`
+      : `rgba(165, 243, 252, ${0.90 * battlePathAlpha})`;
     ctx.lineWidth = 1.8;
     ctx.setLineDash([12, 10]);
 
@@ -7049,6 +7124,7 @@ function drawTowerModel(type, angle, color, level = 1, glow = '#00e5ff', isDisab
 // [UI203] Enemy model vector graphics and health bar renderer.
 function drawEnemyModel(e, showHpBar = true) {
   if (!e || typeof e.x !== 'number' || typeof e.y !== 'number') return;
+  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
 
   ctx.save();
   ctx.translate(e.x, e.y);
@@ -7075,7 +7151,7 @@ function drawEnemyModel(e, showHpBar = true) {
     ctx.restore();
   }
 
-if (e.isEnraged) {
+  if (e.isEnraged) {
     ctx.save();
     const pulse = (Math.sin(performance.now() * 0.012) + 1) / 2;
     const rad = (e.radius || 12) * (1.22 + pulse * 0.16);
@@ -7199,7 +7275,6 @@ if (e.isEnraged) {
       setGlow(isBlinkerShielded ? 'transparent' : glowColor, isBlinkerShielded ? 0 : 8);
     }
 
-
     if (e.shape === 'circle' || !e.shape) {
       ctx.beginPath();
       ctx.arc(0, 0, rad, 0, Math.PI * 2);
@@ -7320,7 +7395,8 @@ if (e.isEnraged) {
 
     ctx.fillStyle = 'rgba(7, 10, 20, 0.9)';
     ctx.fillRect(-barW/2, barY, barW, barH);
-    ctx.fillStyle = e.isBoss ? (e.color || '#f05f9f') : (hpPct > 0.5 ? '#00e5ff' : '#ff9100');
+    const highHpColor = isHyperion ? '#ff6b00' : '#00e5ff';
+    ctx.fillStyle = e.isBoss ? (e.color || '#f05f9f') : (hpPct > 0.5 ? highHpColor : '#ffb700');
     ctx.fillRect(-barW/2, barY, barW * hpPct, barH);
   }
 
@@ -7360,8 +7436,9 @@ function drawJaggedLightning(x1, y1, x2, y3, color, alpha, progress = 1.0) {
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
-  ctx.strokeStyle = color || '#00ffcc';
-  setGlow('#00e5ff', 8);
+  const zapCol = color || '#00ffcc';
+  ctx.strokeStyle = zapCol;
+  setGlow(zapCol, 8);
   ctx.lineWidth = 4.5;
   ctx.beginPath();
   ctx.moveTo(points[0].x, points[0].y);
@@ -7371,7 +7448,7 @@ function drawJaggedLightning(x1, y1, x2, y3, color, alpha, progress = 1.0) {
   ctx.stroke();
 
   ctx.strokeStyle = '#ffffff';
-  setGlow('#00e5ff', 6);
+  setGlow(zapCol, 6);
   ctx.lineWidth = 1.8;
   ctx.beginPath();
   ctx.moveTo(points[0].x, points[0].y);
@@ -7382,7 +7459,7 @@ function drawJaggedLightning(x1, y1, x2, y3, color, alpha, progress = 1.0) {
 
   if (points.length >= 4) {
     ctx.lineWidth = 1.2;
-    ctx.strokeStyle = 'rgba(0, 255, 204, 0.85)';
+    ctx.strokeStyle = zapCol;
     const numForks = Math.min(3, Math.floor(points.length / 3));
     for (let f = 0; f < numForks; f++) {
       const idx = 1 + Math.floor(Math.random() * (points.length - 2));
@@ -7405,25 +7482,24 @@ function drawJaggedLightning(x1, y1, x2, y3, color, alpha, progress = 1.0) {
 }
 
 // [UI205] Master gameplay canvas graphics rendering pipeline.
-let reviveStartTime = 0; // Добавляем глобальную переменную для трекинга начала отсчета
+let reviveStartTime = 0;
 
 function render(now) {
   const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-  // Плавное обновление кольца таймера возрождения
   if (gameState === 'DEFEAT' && reviveTimerInterval) {
     const progressEl = document.getElementById('reviveTimerProgress');
     if (progressEl) {
       if (reviveStartTime === 0) reviveStartTime = now;
       const elapsed = (now - reviveStartTime) / 1000;
-      const fraction = Math.max(0, 1 - (elapsed / 3)); // От 1 до 0 за 3 секунды
+      const fraction = Math.max(0, 1 - (elapsed / 3));
       const totalDash = 276.46;
       progressEl.style.strokeDashoffset = (totalDash * (1 - fraction)).toFixed(2);
     }
   } else {
-    reviveStartTime = 0; // Сбрасываем, если мы вышли из окна ревайва
+    reviveStartTime = 0;
   }
 
   if (perfProfiler.accum.frames > 30) {
@@ -7522,7 +7598,7 @@ function render(now) {
               `Update?: ${d.updateNeeded}`;
           }
 
-		  const verDlEl = document.getElementById('devVerLogDownload');
+          const verDlEl = document.getElementById('devVerLogDownload');
           if (verDlEl) {
             verDlEl.textContent =
               `T1 Fetch: ${d.triageT1Fetch || '—'}\n` +
@@ -7560,12 +7636,10 @@ function render(now) {
   drawCosmicNebulaBackground(window.innerWidth, window.innerHeight);
   updateAndDrawStars(window.innerWidth, window.innerHeight, now);
 
-  // Атмосферная цветовая вуаль режима для фона боя
   if (typeof isEndlessMode !== 'undefined' && isEndlessMode) {
     ctx.save();
     const w = window.innerWidth;
     const h = window.innerHeight;
-    // Фиолетовый градиент для Endless Arena (в тон призмам #d946ef)
     const endlessTint = ctx.createRadialGradient(w * 0.5, h * 0.35, 10, w * 0.5, h * 0.45, Math.max(w, h) * 0.75);
     endlessTint.addColorStop(0, 'rgba(110, 15, 140, 0.28)');
     endlessTint.addColorStop(0.5, 'rgba(55, 8, 75, 0.18)');
@@ -7577,7 +7651,6 @@ function render(now) {
     ctx.save();
     const w = window.innerWidth;
     const h = window.innerHeight;
-    // Розовато-бордовый градиент для Hardcore (в тон жизням #f05f9f)
     const hardcoreTint = ctx.createRadialGradient(w * 0.5, h * 0.35, 10, w * 0.5, h * 0.45, Math.max(w, h) * 0.75);
     hardcoreTint.addColorStop(0, 'rgba(120, 10, 60, 0.26)');
     hardcoreTint.addColorStop(0.5, 'rgba(60, 5, 30, 0.16)');
@@ -7595,6 +7668,8 @@ function render(now) {
     shakeY = (Math.random() - 0.5) * cameraShakeIntensity;
   }
 
+  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
+
   ctx.save();
   ctx.translate(camX + shakeX, camY + shakeY);
   ctx.scale(camZoom, camZoom);
@@ -7610,8 +7685,8 @@ function render(now) {
   towers.forEach(t => {
     if (t.type === 'stasis') {
       ctx.save();
-      ctx.fillStyle = 'rgba(56, 189, 248, 0.07)';
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.22)';
+      ctx.fillStyle = isHyperion ? 'rgba(96, 165, 250, 0.08)' : 'rgba(56, 189, 248, 0.07)';
+      ctx.strokeStyle = isHyperion ? 'rgba(96, 165, 250, 0.28)' : 'rgba(56, 189, 248, 0.22)';
       ctx.lineWidth = 1.2;
       ctx.beginPath();
       ctx.arc(t.x, t.y, t.range, 0, Math.PI * 2);
@@ -7640,12 +7715,12 @@ function render(now) {
     ctx.save();
     ctx.beginPath();
     ctx.arc(selectedTower.x, selectedTower.y, selectedTower.range, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(0, 229, 255, 0.5)';
+    ctx.strokeStyle = isHyperion ? 'rgba(255, 183, 0, 0.55)' : 'rgba(0, 229, 255, 0.5)';
     ctx.lineWidth = 1.5;
     ctx.stroke();
-    ctx.fillStyle = 'rgba(0, 229, 255, 0.08)';
+    ctx.fillStyle = isHyperion ? 'rgba(255, 145, 0, 0.10)' : 'rgba(0, 229, 255, 0.08)';
     ctx.fillRect(selectedTower.c * TILE_SIZE, selectedTower.r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-    ctx.strokeStyle = 'rgba(0, 229, 255, 0.5)';
+    ctx.strokeStyle = isHyperion ? 'rgba(255, 183, 0, 0.55)' : 'rgba(0, 229, 255, 0.5)';
     ctx.strokeRect(selectedTower.c * TILE_SIZE, selectedTower.r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
     ctx.restore();
   }
@@ -7692,28 +7767,29 @@ function render(now) {
     if (t.type === 'laser' && t.target && t.isLockedOn && t.disabledTimer <= 0) {
       const muzzleX = t.x + Math.cos(t.angle) * 24;
       const muzzleY = t.y + Math.sin(t.angle) * 24;
+      const laserBeamCol = t.color || '#f05f9f';
       ctx.save();
-      setGlow('#f05f9f', 8);
+      setGlow(t.glow || laserBeamCol, 8);
       ctx.beginPath();
       ctx.moveTo(muzzleX, muzzleY);
       ctx.lineTo(t.target.x, t.target.y);
-      ctx.strokeStyle = '#f05f9f';
+      ctx.strokeStyle = laserBeamCol;
       ctx.lineWidth = 3.5 + Math.sin(Date.now() * 0.02) * 1.5;
       ctx.stroke();
       ctx.restore();
     }
 
-  // [UI205.01] Railgun laser beam visual pass.
     if (t.type === 'melter' && t.target && t.isLockedOn && t.disabledTimer <= 0 && t.melterCoolingTimer <= 0) {
       const muzzleX = t.x + Math.cos(t.angle) * 24;
       const muzzleY = t.y + Math.sin(t.angle) * 24;
       const beamW = 3.5;
+      const melterBeamCol = t.color || '#e85268';
       ctx.save();
-      setGlow('#e477a3', 8);
+      setGlow(t.glow || '#e477a3', 8);
       ctx.beginPath();
       ctx.moveTo(muzzleX, muzzleY);
       ctx.lineTo(t.target.x, t.target.y);
-      ctx.strokeStyle = '#e85268';
+      ctx.strokeStyle = melterBeamCol;
       ctx.lineWidth = beamW;
       ctx.stroke();
       ctx.restore();
@@ -7753,8 +7829,9 @@ function render(now) {
       ctx.ellipse(p.x, p.y, 5 * shadowScale, 2.6 * shadowScale, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.globalAlpha = 1;
-      ctx.fillStyle = '#ff9100';
-      setGlow('#ff9100', 8);
+      const shellCol = p.color || '#ff9100';
+      ctx.fillStyle = shellCol;
+      setGlow(shellCol, 8);
       ctx.beginPath();
       ctx.arc(p.x, p.y - heightOffset, 6, 0, Math.PI * 2);
       ctx.fill();
@@ -7789,7 +7866,7 @@ function render(now) {
       ctx.restore();
     } else {
       const prog = lb.travelTime ? Math.min(1.0, (lb.elapsed || 0) / lb.travelTime) : 1.0;
-      drawJaggedLightning(lb.x1, lb.y1, lb.x2, lb.y2, lb.color || '#00ffcc', alpha, prog);
+      drawJaggedLightning(lb.x1, lb.y1, lb.x2, lb.y2, lb.towerColor || lb.color || '#00ffcc', alpha, prog);
     }
   });
 
@@ -7837,7 +7914,6 @@ function render(now) {
   ctx.lineWidth = 1.0;
   for (let i = 0; i < particles.length; i++) {
     const pt = particles[i];
-  // [UI205.03] Particle pass 2: Glass shards and debris.
     if (!pt.isShard) continue;
 
     const rawProg = Math.max(0, Math.min(1, pt.life / pt.maxLife));
@@ -7904,7 +7980,6 @@ function render(now) {
   ctx.globalCompositeOperation = 'source-over';
   for (let i = 0; i < particles.length; i++) {
     const pt = particles[i];
-  // [UI205.05] Particle pass 4: Floating combat text.
     if (!pt.isText) continue;
 
     const rawProg = Math.max(0, Math.min(1, pt.life / pt.maxLife));
@@ -7931,17 +8006,22 @@ function render(now) {
     const canBuild = isValidCell && grid[r][c] === 0;
     const conf = TOWER_CONFIGS[draggingTower.type];
 
+    const validStroke = isHyperion ? '#ff9100' : '#00e5ff';
+    const validFill = isHyperion ? 'rgba(255, 145, 0, 0.22)' : 'rgba(0, 229, 255, 0.2)';
+
     if (isValidCell) {
-      ctx.fillStyle = canBuild ? 'rgba(0, 229, 255, 0.2)' : 'rgba(240, 95, 159, 0.3)';
+      ctx.fillStyle = canBuild ? validFill : 'rgba(240, 95, 159, 0.3)';
       ctx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-      ctx.strokeStyle = canBuild ? '#00e5ff' : '#f05f9f';
+      ctx.strokeStyle = canBuild ? validStroke : '#f05f9f';
       ctx.lineWidth = 2;
       ctx.strokeRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
     }
 
     ctx.beginPath();
     ctx.arc(draggingTower.worldX, draggingTower.worldY, conf.range, 0, Math.PI * 2);
-    ctx.strokeStyle = canBuild ? 'rgba(0, 229, 255, 0.45)' : 'rgba(240, 95, 159, 0.5)';
+    ctx.strokeStyle = canBuild
+      ? (isHyperion ? 'rgba(255, 183, 0, 0.5)' : 'rgba(0, 229, 255, 0.45)')
+      : 'rgba(240, 95, 159, 0.5)';
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
@@ -7952,7 +8032,7 @@ function render(now) {
     ctx.restore();
   }
 
-ctx.restore();
+  ctx.restore();
 
   updateTutorialOverlay(now);
 }
@@ -7985,7 +8065,6 @@ document.addEventListener('DOMContentLoaded', () => {
       window.Capacitor.Plugins.StatusBar.hide().catch(err => console.warn('StatusBar error:', err));
     }
     
-    // Блокируем нативное закрытие и передаем управление функции handleHardwareBack
     const App = window.Capacitor.Plugins.App;
     if (App && typeof App.addListener === 'function') {
       App.addListener('backButton', () => {

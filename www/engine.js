@@ -387,7 +387,7 @@ function generateEndlessWaveData(w) {
     else if (bossType === 'hive_empress') { bColor = '#00ffcc'; bShape = 'diamond'; bBaseSpeed = 36; }
     else if (bossType === 'chronos_warp') { bColor = '#3b82f6'; bShape = 'hexagon'; bBaseSpeed = 38; }
     else if (bossType === 'titan_core') { bColor = '#f97316'; bShape = 'octagon'; bBaseSpeed = 28; }
-    else if (bossType === 'emp_overlord') { bColor = '#38bdf8'; bShape = 'triangle_inverted'; bBaseSpeed = 28; }
+    else if (bossType === 'emp_overlord') { bColor = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green') ? '#2563eb' : '#38bdf8'; bShape = 'triangle_inverted'; bBaseSpeed = 28; }
 
     // База HP босса: на 10-й волне ~5800 HP (непроходимо с 0/10 Tech Tree), на 20-й волне Старший Босс еще мощнее
     const bossMultiplier = isMajorBoss ? 680 : 580;
@@ -767,41 +767,69 @@ function applyPaletteColors(paletteId) {
   activePalette = pId;
   const cfg = NEON_PALETTES[pId] || NEON_PALETTES['default'];
 
-  // Apply root CSS variables for visual skins
-  if (typeof document !== 'undefined' && document.documentElement) {
-    document.documentElement.style.setProperty('--neon-primary', cfg.primary);
-    document.documentElement.style.setProperty('--neon-secondary', cfg.secondary);
-    document.documentElement.style.setProperty('--neon-glow', cfg.glow);
+  if (typeof document !== 'undefined') {
+    if (document.documentElement) {
+      document.documentElement.style.setProperty('--neon-primary', cfg.primary);
+      document.documentElement.style.setProperty('--neon-secondary', cfg.secondary);
+      document.documentElement.style.setProperty('--neon-glow', cfg.glow);
+    }
+    if (document.body) {
+      document.body.setAttribute('data-theme', pId);
+    }
   }
 
-  // Synchronize tower laser/theme color definitions dynamically
   if (typeof TOWER_CONFIGS !== 'undefined' && TOWER_CONFIGS.gun) {
+    TOWER_CONFIGS.gun.color = '#00e5ff';     TOWER_CONFIGS.gun.glow = '#00e5ff';
+    TOWER_CONFIGS.laser.color = '#f05f9f';   TOWER_CONFIGS.laser.glow = '#f05f9f';
+    TOWER_CONFIGS.mortar.color = '#ff9100';  TOWER_CONFIGS.mortar.glow = '#ff9100';
+    TOWER_CONFIGS.tesla.color = '#00ffcc';   TOWER_CONFIGS.tesla.glow = '#00ffcc';
+    TOWER_CONFIGS.stasis.color = '#38bdf8';  TOWER_CONFIGS.stasis.glow = '#38bdf8';
+    TOWER_CONFIGS.melter.color = '#e85268';  TOWER_CONFIGS.melter.glow = '#e477a3';
+    TOWER_CONFIGS.railgun.color = '#a275df'; TOWER_CONFIGS.railgun.glow = '#b57fdd';
+
     if (pId === 'matrix_green') {
-      TOWER_CONFIGS.gun.color = '#00ff66';
-      TOWER_CONFIGS.gun.glow = '#00ff66';
-      TOWER_CONFIGS.laser.color = '#facc15';
-      TOWER_CONFIGS.laser.glow = '#facc15';
+      TOWER_CONFIGS.gun.color = '#3b82f6';     TOWER_CONFIGS.gun.glow = '#60a5fa';
+      TOWER_CONFIGS.stasis.color = '#60a5fa';  TOWER_CONFIGS.stasis.glow = '#93c5fd';
+      TOWER_CONFIGS.laser.color = '#ff6b00';   TOWER_CONFIGS.laser.glow = '#ff9100';
+      TOWER_CONFIGS.mortar.color = '#ffb700';  TOWER_CONFIGS.mortar.glow = '#ff9100';
+      TOWER_CONFIGS.tesla.color = '#38bdf8';   TOWER_CONFIGS.tesla.glow = '#3b82f6';
+      TOWER_CONFIGS.melter.color = '#ff5500';  TOWER_CONFIGS.melter.glow = '#ff9100';
+      TOWER_CONFIGS.railgun.color = '#f59e0b'; TOWER_CONFIGS.railgun.glow = '#fbbf24';
     } else if (pId === 'cyber_gold') {
-      TOWER_CONFIGS.gun.color = '#ffd700';
-      TOWER_CONFIGS.gun.glow = '#ffd700';
-      TOWER_CONFIGS.laser.color = '#9d4edd';
-      TOWER_CONFIGS.laser.glow = '#9d4edd';
+      TOWER_CONFIGS.gun.color = '#ffd700';     TOWER_CONFIGS.gun.glow = '#ffd700';
+      TOWER_CONFIGS.laser.color = '#9d4edd';   TOWER_CONFIGS.laser.glow = '#9d4edd';
     } else if (pId === 'blood_moon') {
-      TOWER_CONFIGS.gun.color = '#ff003c';
-      TOWER_CONFIGS.gun.glow = '#ff003c';
-      TOWER_CONFIGS.laser.color = '#ff8a00';
-      TOWER_CONFIGS.laser.glow = '#ff8a00';
+      TOWER_CONFIGS.gun.color = '#ff003c';     TOWER_CONFIGS.gun.glow = '#ff003c';
+      TOWER_CONFIGS.laser.color = '#ff8a00';   TOWER_CONFIGS.laser.glow = '#ff8a00';
+    }
+  }
+
+  if (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS.grunt) {
+    if (pId === 'matrix_green') {
+      ENEMY_CONFIGS.grunt.color = '#ff6b00';        ENEMY_CONFIGS.grunt.glow = '#ff9100';
+      ENEMY_CONFIGS.scout.color = '#ffb700';        ENEMY_CONFIGS.scout.glow = '#fde047';
+      ENEMY_CONFIGS.tank.color = '#2563eb';         ENEMY_CONFIGS.tank.glow = '#3b82f6';
+      ENEMY_CONFIGS.swarm.color = '#3b82f6';        ENEMY_CONFIGS.swarm.glow = '#60a5fa';
+      ENEMY_CONFIGS.blinker.color = '#60a5fa';      ENEMY_CONFIGS.blinker.glow = '#93c5fd';
+      ENEMY_CONFIGS.goliath.color = '#d97706';      ENEMY_CONFIGS.goliath.glow = '#f59e0b';
+      ENEMY_CONFIGS.emp_bomber.color = '#2563eb';   ENEMY_CONFIGS.emp_bomber.glow = '#f05f9f';
+      ENEMY_CONFIGS.emp_overlord.color = '#2563eb'; ENEMY_CONFIGS.emp_overlord.glow = '#f05f9f';
     } else {
-      TOWER_CONFIGS.gun.color = '#00e5ff';
-      TOWER_CONFIGS.gun.glow = '#00e5ff';
-      TOWER_CONFIGS.laser.color = '#f05f9f';
-      TOWER_CONFIGS.laser.glow = '#f05f9f';
+      ENEMY_CONFIGS.grunt.color = '#f05f9f';        ENEMY_CONFIGS.grunt.glow = '#f05f9f';
+      ENEMY_CONFIGS.scout.color = '#ff9100';        ENEMY_CONFIGS.scout.glow = '#ffaa33';
+      ENEMY_CONFIGS.tank.color = '#a06fdc';         ENEMY_CONFIGS.tank.glow = '#825cc2';
+      ENEMY_CONFIGS.swarm.color = '#00ffcc';        ENEMY_CONFIGS.swarm.glow = '#00ffcc';
+      ENEMY_CONFIGS.blinker.color = '#3b82f6';      ENEMY_CONFIGS.blinker.glow = '#60a5fa';
+      ENEMY_CONFIGS.goliath.color = '#8964c4';      ENEMY_CONFIGS.goliath.glow = '#7050a4';
+      ENEMY_CONFIGS.emp_bomber.color = '#38bdf8';   ENEMY_CONFIGS.emp_bomber.glow = '#f05f9f';
+      ENEMY_CONFIGS.emp_overlord.color = '#38bdf8'; ENEMY_CONFIGS.emp_overlord.glow = '#f05f9f';
     }
   }
 
   if (typeof TOWER_ICONS !== 'undefined' && typeof buildTowerIconSvg === 'function') {
-    TOWER_ICONS.gun = buildTowerIconSvg('gun');
-    TOWER_ICONS.laser = buildTowerIconSvg('laser');
+    Object.keys(TOWER_CONFIGS).forEach(k => {
+      TOWER_ICONS[k] = buildTowerIconSvg(k);
+    });
   }
   if (typeof towers !== 'undefined' && Array.isArray(towers)) {
     towers.forEach(t => {
@@ -811,11 +839,21 @@ function applyPaletteColors(paletteId) {
       }
     });
   }
+  if (typeof enemies !== 'undefined' && Array.isArray(enemies)) {
+    enemies.forEach(e => {
+      if (ENEMY_CONFIGS[e.type]) {
+        e.color = ENEMY_CONFIGS[e.type].color;
+        e.glow = ENEMY_CONFIGS[e.type].glow;
+      }
+    });
+  }
   if (typeof initBuildPanel === 'function' && typeof window.__gameBooted !== 'undefined' && window.__gameBooted) {
     initBuildPanel();
   }
+  if (typeof renderLoadoutWidgetBody === 'function' && typeof window.__gameBooted !== 'undefined' && window.__gameBooted) {
+    renderLoadoutWidgetBody();
+  }
 
-  // Force cache invalidation on canvas elements when palette is switched
   if (typeof nebulaCache !== 'undefined') nebulaCache = null;
   if (typeof nebulaCacheKey !== 'undefined') nebulaCacheKey = '';
   if (typeof triangleLogoCache !== 'undefined') triangleLogoCache = null;
@@ -2084,15 +2122,19 @@ function claimOverdriveBonusPrism() {
 
 function restoreNormalVictoryRewardBox() {
   const rewardBox = document.getElementById('victoryRewardBox');
+  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
+  const borderCol = isHyperion ? '#3b82f6' : '#00e5ff';
+  const labelCol = isHyperion ? '#93c5fd' : '#8ef3ff';
+  const dFill = isHyperion ? 'rgba(59,130,246,.28)' : 'rgba(0,229,255,.25)';
   if (rewardBox) {
-    rewardBox.style.setProperty('--chip-border', '#00e5ff');
-    rewardBox.style.setProperty('--chip-label', '#8ef3ff');
+    rewardBox.style.setProperty('--chip-border', borderCol);
+    rewardBox.style.setProperty('--chip-label', labelCol);
     rewardBox.innerHTML = `
       <span class="reward-label" id="victoryRewardBadgeType">DIAMONDS</span>
       <div style="display:flex; align-items:center; gap:6px;">
         <span class="reward-amount" id="victoryRewardVal">+2</span>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round">
-          <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${borderCol}" stroke-width="2.2" stroke-linejoin="round">
+          <polygon points="6 3 18 3 22 9 12 22 2 9" fill="${dFill}"/>
           <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
         </svg>
       </div>
@@ -2145,8 +2187,9 @@ function triggerVictory() {
 
     const badgeTypeEl = document.getElementById('victoryRewardBadgeType');
     if (badgeTypeEl) {
+      const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
       badgeTypeEl.textContent = rewardLabel === 'DIAMONDS' ? 'DIAMONDS' : rewardLabel;
-      badgeTypeEl.style.color = (rewardLabel === 'FIRST CLEAR BONUS' || rewardLabel === 'STAR UPGRADE BONUS') ? '#f59e0b' : '#8ef3ff';
+      badgeTypeEl.style.color = (rewardLabel === 'FIRST CLEAR BONUS' || rewardLabel === 'STAR UPGRADE BONUS') ? '#f59e0b' : (isHyperion ? '#93c5fd' : '#8ef3ff');
     }
 
     const rewardValEl = document.getElementById('victoryRewardVal');
@@ -3084,8 +3127,8 @@ function startWave() {
             bounty: grp.bounty,
             radius: finalRadius,
             shape: grp.shape || proto.shape,
-            color: grp.color || proto.color,
-            glow: grp.glow || proto.glow,
+            color: (typeof activePalette !== 'undefined' && activePalette === 'matrix_green') ? proto.color : (grp.color || proto.color),
+            glow: (typeof activePalette !== 'undefined' && activePalette === 'matrix_green') ? proto.glow : (grp.glow || proto.glow),
             interval: spawnInterval,
             laneOffset: laneOffset
           });
@@ -4345,7 +4388,7 @@ if (e.type === 'chronos_warp') {
           e.hp -= t.damage;
           checkEnemyEnrage(e);
           if (typeof createFloatingDamage === 'function') {
-            createFloatingDamage(e.x, e.y, t.damage, '#a275df');
+            createFloatingDamage(e.x, e.y, t.damage, t.color || '#a275df');
           }
           if (railShardCount < 4) {
             createDamageShards(e.x, e.y, e.color, t.damage, false);
@@ -4498,7 +4541,7 @@ for (let i = lightningBolts.length - 1; i >= 0; i--) {
       checkEnemyEnrage(lb.targetRef);
 
       if (typeof createFloatingDamage === 'function') {
-        createFloatingDamage(lb.targetRef.x, lb.targetRef.y, lb.damage, '#00ffcc');
+        createFloatingDamage(lb.targetRef.x, lb.targetRef.y, lb.damage, lb.towerColor || lb.color || '#00ffcc');
       }
 
       if (Math.random() < 0.5) {

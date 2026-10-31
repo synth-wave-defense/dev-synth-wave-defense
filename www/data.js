@@ -30,7 +30,7 @@ const BATTLE_PASS_TIERS = [
   { tier: 7,  freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'diamonds', amount: 40 } },
   { tier: 8,  freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'prisms', amount: 4 } },
   { tier: 9,  freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'diamonds', amount: 40 } },
-  { tier: 10, freeReward: { type: 'combo', paletteId: 'matrix_green', prisms: 3, title: 'Matrix Green + 3 \u{1F52E}' }, premReward: { type: 'prisms', amount: 6 } },
+  { tier: 10, freeReward: { type: 'combo', paletteId: 'matrix_green', prisms: 3, title: 'Hyperion Sunburst + 3 \u{1F52E}' }, premReward: { type: 'prisms', amount: 6 } },
   { tier: 11, freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'diamonds', amount: 45 } },
   { tier: 12, freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'prisms', amount: 5 } },
   { tier: 13, freeReward: { type: 'diamonds', amount: 25 }, premReward: { type: 'diamonds', amount: 45 } },
@@ -64,11 +64,11 @@ const NEON_PALETTES = {
   },
   matrix_green: {
     id: 'matrix_green',
-    name: 'Matrix Green',
-    primary: '#00ff66',
-    secondary: '#facc15',
-    glow: 'rgba(0, 255, 102, 0.85)',
-    bgGlow: 'rgba(250, 204, 21, 0.35)',
+    name: 'Hyperion Sunburst',
+    primary: '#3b82f6',
+    secondary: '#ff6b00',
+    glow: 'rgba(255, 145, 0, 0.85)',
+    bgGlow: 'rgba(59, 130, 246, 0.35)',
     unlockHint: 'Free Pass Tier 10'
   },
   cyber_gold: {
@@ -163,6 +163,9 @@ const TOWER_GLYPH_CORES = {
   2: [{ cx: 0, cy: -4.2, r: 3 }, { cx: 0, cy: 4.2, r: 3 }],
   3: [{ cx: -3.4, cy: -4.2, r: 3 }, { cx: -3.4, cy: 4.2, r: 3 }, { cx: 4.2, cy: 0, r: 3 }]
 };
+// Fix typo safety in cores:
+TOWER_GLYPH_CORES[3] = [{ cx: -3.4, cy: -4.2, r: 3 }, { cx: -3.4, cy: 4.2, r: 3 }, { cx: 4.2, cy: 0, r: 3 }];
+
 const TOWER_GLYPH_FLAKES = {
   1: [{ cx: 0, cy: 0, scale: 1.0, sw: 1.9 }],
   2: [{ cx: 0, cy: -4.5, scale: 0.95, sw: 2.0 }, { cx: 0, cy: 5, scale: 0.95, sw: 2.0 }],
@@ -359,19 +362,14 @@ function getUpgradeEffectiveLevel(key) {
     if (lvl === 15) return 15 * 1.10; // 16.5 (бонус 10% на ASC MAX)
     return lvl;
   }
-  // Для Base HP: гарантированно +1 HP за каждый SYNTH уровень
   if (key === 'base_hp') {
     return 16.5 + (lvl - 15);
   }
-  // SYNTH (уровни 16+): старт от 16.5, каждый следующий шаг меньше предыдущего на 5%
-  // 1-й шаг дает +1.0, 2-й: +0.95, 3-й: +0.95^2... Сумма = 20 * (1 - 0.95^(lvl - 15))
   const k = lvl - 15;
   const synthBonus = 20 * (1 - Math.pow(0.95, k));
   return 16.5 + synthBonus;
 }
 
-// Вспомогательная функция для расчета бонуса дальности (Range)
-// До 10 уровня: по базовому проценту башни. С 11 уровня (ASC и SYNTH): строго по +1%
 function getUpgradeRangeBonus(towerType, effLvl) {
   const conf = TOWER_CONFIGS[towerType];
   if (!conf || !conf.powerRange) return 0;
@@ -379,7 +377,7 @@ function getUpgradeRangeBonus(towerType, effLvl) {
     return effLvl * conf.powerRange;
   }
   const base10 = 10 * conf.powerRange;
-  const post10 = (effLvl - 10) * 0.01; // ровно 1% за каждый уровень выше 10
+  const post10 = (effLvl - 10) * 0.01;
   return base10 + post10;
 }
 
@@ -467,4 +465,3 @@ const MAP_CATALOG = {
   L49: { name: "Extended Complex", cols: 10, rows: 20, path: [{c: 4, r: 4}, {c: 4, r: 5}, {c: 5, r: 5}, {c: 5, r: 3}, {c: 3, r: 3}, {c: 3, r: 6}, {c: 6, r: 6}, {c: 6, r: 2}, {c: 2, r: 2}, {c: 2, r: 7}, {c: 6, r: 7}, {c: 6, r: 17}, {c: 2, r: 17}, {c: 2, r: 12}, {c: 5, r: 12}, {c: 5, r: 16}, {c: 3, r: 16}, {c: 3, r: 13}, {c: 4, r: 13}, {c: 4, r: 15}], blocked: [{c: 9, r: 19}, {c: 9, r: 18}, {c: 9, r: 17}, {c: 9, r: 16}, {c: 9, r: 15}, {c: 9, r: 14}, {c: 9, r: 13}, {c: 9, r: 12}, {c: 9, r: 7}, {c: 9, r: 5}, {c: 9, r: 4}, {c: 9, r: 3}, {c: 9, r: 2}, {c: 9, r: 1}, {c: 9, r: 0}, {c: 5, r: 11}, {c: 5, r: 10}, {c: 5, r: 9}, {c: 5, r: 8}, {c: 7, r: 8}, {c: 7, r: 9}, {c: 7, r: 11}, {c: 7, r: 10}, {c: 4, r: 8}, {c: 3, r: 8}, {c: 2, r: 8}, {c: 1, r: 8}, {c: 0, r: 8}, {c: 0, r: 11}, {c: 1, r: 11}, {c: 2, r: 11}, {c: 3, r: 11}, {c: 4, r: 11}, {c: 0, r: 0}, {c: 0, r: 19}] },
   L50: { name: "Final Apex", cols: 20, rows: 17, path: [{c: 0, r: 16}, {c: 0, r: 11}, {c: 6, r: 11}, {c: 6, r: 16}, {c: 1, r: 16}, {c: 1, r: 12}, {c: 5, r: 12}, {c: 5, r: 15}, {c: 2, r: 15}, {c: 2, r: 10}, {c: 19, r: 10}, {c: 19, r: 16}, {c: 14, r: 16}, {c: 14, r: 11}, {c: 18, r: 11}, {c: 18, r: 15}, {c: 15, r: 15}, {c: 15, r: 12}, {c: 17, r: 12}, {c: 17, r: 2}, {c: 14, r: 2}, {c: 14, r: 5}, {c: 18, r: 5}, {c: 18, r: 1}, {c: 13, r: 1}, {c: 13, r: 6}, {c: 19, r: 6}, {c: 19, r: 0}, {c: 0, r: 0}, {c: 0, r: 6}, {c: 6, r: 6}, {c: 6, r: 1}, {c: 1, r: 1}, {c: 1, r: 5}, {c: 5, r: 5}, {c: 5, r: 2}, {c: 2, r: 2}, {c: 2, r: 8}, {c: 10, r: 8}], blocked: [{c: 0, r: 10}, {c: 1, r: 10}, {c: 1, r: 9}, {c: 1, r: 8}, {c: 1, r: 7}, {c: 0, r: 7}, {c: 0, r: 8}, {c: 0, r: 9}, {c: 7, r: 16}, {c: 8, r: 16}, {c: 9, r: 16}, {c: 10, r: 16}, {c: 11, r: 16}, {c: 12, r: 16}, {c: 13, r: 16}, {c: 13, r: 15}, {c: 13, r: 14}, {c: 13, r: 13}, {c: 13, r: 12}, {c: 13, r: 11}, {c: 12, r: 11}, {c: 11, r: 11}, {c: 10, r: 11}, {c: 9, r: 11}, {c: 8, r: 11}, {c: 7, r: 11}, {c: 7, r: 12}, {c: 7, r: 13}, {c: 7, r: 14}, {c: 7, r: 15}, {c: 8, r: 15}, {c: 9, r: 15}, {c: 10, r: 15}, {c: 11, r: 15}, {c: 12, r: 15}, {c: 12, r: 14}, {c: 11, r: 14}, {c: 10, r: 14}, {c: 9, r: 14}, {c: 8, r: 14}, {c: 8, r: 13}, {c: 9, r: 13}, {c: 10, r: 13}, {c: 11, r: 13}, {c: 12, r: 12}, {c: 12, r: 13}, {c: 11, r: 12}, {c: 10, r: 12}, {c: 9, r: 12}, {c: 8, r: 12}, {c: 7, r: 1}, {c: 8, r: 1}, {c: 9, r: 1}, {c: 10, r: 1}, {c: 11, r: 1}, {c: 12, r: 1}, {c: 12, r: 2}, {c: 12, r: 3}, {c: 12, r: 4}, {c: 12, r: 5}, {c: 12, r: 6}, {c: 11, r: 6}, {c: 10, r: 6}, {c: 9, r: 6}, {c: 8, r: 6}, {c: 7, r: 6}, {c: 7, r: 5}, {c: 7, r: 4}, {c: 7, r: 3}, {c: 7, r: 2}, {c: 8, r: 2}, {c: 9, r: 2}, {c: 10, r: 2}, {c: 11, r: 2}, {c: 11, r: 3}, {c: 10, r: 3}, {c: 9, r: 3}, {c: 8, r: 3}, {c: 8, r: 4}, {c: 9, r: 4}, {c: 10, r: 4}, {c: 11, r: 4}, {c: 11, r: 5}, {c: 10, r: 5}, {c: 9, r: 5}, {c: 8, r: 5}, {c: 18, r: 9}, {c: 19, r: 9}, {c: 19, r: 8}, {c: 19, r: 7}, {c: 18, r: 7}, {c: 18, r: 8}, {c: 16, r: 9}, {c: 16, r: 8}, {c: 16, r: 7}, {c: 15, r: 7}, {c: 14, r: 7}, {c: 14, r: 8}, {c: 15, r: 8}, {c: 15, r: 9}, {c: 14, r: 9}, {c: 13, r: 9}, {c: 13, r: 8}, {c: 13, r: 7}, {c: 12, r: 7}, {c: 12, r: 8}, {c: 12, r: 9}, {c: 2, r: 9}, {c: 3, r: 7}, {c: 4, r: 7}, {c: 5, r: 7}, {c: 6, r: 7}, {c: 7, r: 7}, {c: 3, r: 9}, {c: 4, r: 9}, {c: 5, r: 9}, {c: 6, r: 9}, {c: 7, r: 9}, {c: 8, r: 9}, {c: 8, r: 7}] },
 };
-
