@@ -2296,12 +2296,18 @@ async function showAdPlaceholder(onRewarded, onNotRewarded) {
         if (typeof logAdEvent === 'function') logAdEvent('FailedToLoad: ' + errStr);
       });
 
-      if (typeof logAdEvent === 'function') logAdEvent('Preparing ad before show...');
-      await AdMob.prepareRewardVideoAd({
-        adId: ADMOB_REWARDED_TEST_ID,
-        isTesting: true
-      });
+      // Внутри showAdPlaceholder перед показом:
+      if (!isAdMobVideoReady) {
+        if (typeof logAdEvent === 'function') logAdEvent('Preparing ad before show...');
+        await AdMob.prepareRewardVideoAd({
+          adId: ADMOB_REWARDED_TEST_ID,
+          isTesting: true
+        });
+        isAdMobVideoReady = true;
+      }
 
+      isAdMobVideoReady = false;
+      if (window.AdDiagnostics) window.AdDiagnostics.videoReady = false;
       if (typeof logAdEvent === 'function') logAdEvent('Calling showRewardVideoAd...');
       await AdMob.showRewardVideoAd();
       return;
