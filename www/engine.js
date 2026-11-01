@@ -44,48 +44,13 @@ let newTowerBannerHideTimer = 0;
 let cameraShakeTimer = 0;
 let cameraShakeIntensity = 0;
 
-//  Camera Shake & Audio Integration Wrappers: FX triggers, volume control, and haptic feedback.
 // [ENG.A]
 function triggerCameraShake(dur = 0.5, intensity = 15) {
   cameraShakeTimer = dur;
   cameraShakeIntensity = intensity;
 }
 
-// [ENG.AA] Конфигурация AdMob (Тестовый Unit ID для Rewarded Video)
-const ADMOB_REWARDED_TEST_ID = 'ca-app-pub-3940256099942544/5224354917';
-let isAdMobInitialized = false;
-let isAdMobVideoReady = false;
-
-async function initAdMobBridge() {
-  if (!window.Capacitor || !window.Capacitor.isPluginAvailable('AdMob')) return;
-  try {
-    const { AdMob } = window.Capacitor.Plugins;
-    await AdMob.initialize({
-      initializeForTesting: true
-    });
-    isAdMobInitialized = true;
-    preloadRewardedAd();
-  } catch (err) {
-    console.warn('AdMob init failed:', err);
-  }
-}
-
-async function preloadRewardedAd() {
-  if (!isAdMobInitialized || !window.Capacitor?.Plugins?.AdMob) return;
-  try {
-    const { AdMob } = window.Capacitor.Plugins;
-    await AdMob.prepareRewardVideoAd({
-      adId: ADMOB_REWARDED_TEST_ID,
-      isTesting: true
-    });
-    isAdMobVideoReady = true;
-  } catch (err) {
-    console.warn('AdMob preload failed:', err);
-    isAdMobVideoReady = false;
-  }
-}
-
-// [ENG.AB] Диагностический объект AdMob для Dev-панели
+// Диагностический объект AdMob для Dev-панели
 window.AdDiagnostics = {
   pluginAvailable: false,
   isNative: false,
@@ -105,7 +70,7 @@ function logAdEvent(msg) {
   console.log('[AdMob]', line);
 }
 
-// Конфигурация AdMob (Тестовый Unit ID для Rewarded Video)
+// Конфигурация AdMob (Тестовый Unit ID для Rewarded Video) — ДОЛЖНА БЫТЬ ТОЛЬКО ОДИН РАЗ!
 const ADMOB_REWARDED_TEST_ID = 'ca-app-pub-3940256099942544/5224354917';
 let isAdMobInitialized = false;
 let isAdMobVideoReady = false;
@@ -161,7 +126,6 @@ async function preloadRewardedAd() {
   }
 }
 
-// Функции для ручного запуска из Dev-меню
 window.devPreloadRewardAd = function() {
   preloadRewardedAd();
 };
