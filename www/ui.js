@@ -15,7 +15,7 @@ function getTheme() {
     rgb4: { r: 255, g: 145, b: 0, cssRgb: '255, 145, 0', norm: [1, 0.569, 0] },
     rgb5: { r: 56, g: 189, b: 248, cssRgb: '56, 189, 248', norm: [0.22, 0.741, 0.973] }
   };
-}
+
 
 //  Thread Lag & Memory Monitor: High-frequency sampler tracking WebView thread freezes (>20ms).
 window._maxThreadLag = 0;
