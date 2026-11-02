@@ -52,22 +52,35 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
+private boolean isRollingBack = false;
+
     private void startWatchdogTimer() {
         cancelWatchdogTimer();
         watchdogRunnable = () -> {
             SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-            if ("PENDING".equals(prefs.getString(KEY_BOOT_STATUS, "SUCCESS"))) {
+            if ("PENDING".equals(prefs.getString(KEY_BOOT_STATUS, "SUCCESS")) && !isRollingBack) {
                 performSilentRollback(prefs, "Watchdog timeout");
             }
         };
-        watchdogHandler.postDelayed(watchdogRunnable, 5000);
+        watchdogHandler.postDelayed(watchdogRunnable, 8000);
     }
 
     private void performSilentRollback(SharedPreferences prefs, String reason) {
+        if (isRollingBack) return;
+        isRollingBack = true;
         cancelWatchdogTimer();
+
         String deadVer = prefs.getString(KEY_ACTIVE_VER, "");
         String prevPath = prefs.getString(KEY_PREV_PATH, null);
         String prevVer = prefs.getString(KEY_PREV_VER, "builtin");
+
+        // Защита от петли: если prevPath совпадает с битым activePath, сбрасываем на builtin APK
+        String curActivePath = prefs.getString(KEY_ACTIVE_PATH, null);
+        if (prevPath != null && prevPath.equals(curActivePath)) {
+            prevPath = null;
+            prevVer = "builtin";
+        }
+
         boolean canUsePrev = prevPath != null && new File(prevPath, "index.html").exists();
 
         SharedPreferences.Editor editor = prefs.edit();
@@ -87,20 +100,24 @@ public class MainActivity extends BridgeActivity {
             editor.putString(KEY_BOOT_LOG, reason + " -> Rolled back to builtin APK");
         }
         editor.putString(KEY_BOOT_STATUS, "ROLLED_BACK");
-        editor.apply();
+        editor.commit(); // синхронная запись перед перезагрузкой WebView
 
         final String targetPath = canUsePrev ? prevPath : null;
         runOnUiThread(() -> {
-            if (MainActivity.this.bridge != null) {
-                if (targetPath != null) {
-                    MainActivity.this.bridge.setServerBasePath(targetPath);
-                } else {
-                    MainActivity.this.bridge.setServerAssetPath("public");
+            try {
+                if (MainActivity.this.bridge != null) {
+                    if (targetPath != null) {
+                        MainActivity.this.bridge.setServerBasePath(targetPath);
+                    } else {
+                        MainActivity.this.bridge.setServerAssetPath("public");
+                    }
                 }
+            } finally {
+                watchdogHandler.postDelayed(() -> { isRollingBack = false; }, 2000);
             }
         });
     }
-
+	
     private void checkAndApplyStartupOta() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         StringBuilder bootLog = new StringBuilder();

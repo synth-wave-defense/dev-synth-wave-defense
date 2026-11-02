@@ -143,14 +143,11 @@
   var ERROR_LOG_KEY = 'sectorDefenseTD_crash_log';
   var reportedCount = 0;
   var reportedSignatures = {};
+  var bootFailureHandled = false;
 
-  function consumeManualDevApplyFlag() {
+  function isManualDevApply() {
     try {
-      var isManual = sessionStorage.getItem('ota_manual_apply') === '1';
-      if (isManual) {
-        sessionStorage.removeItem('ota_manual_apply');
-      }
-      return isManual;
+      return sessionStorage.getItem('ota_manual_apply') === '1';
     } catch (e) {
       return false;
     }
@@ -194,6 +191,10 @@
   }
 
   function handleFailure(message, source, lineno, colno, errorObj) {
+    // Если ошибка на старте УЖЕ обработана (например, SyntaxError в ui.js),
+    // игнорируем все каскадные ошибки (ReferenceError в loadGame и т.д.)
+    if (!window.__gameBooted && bootFailureHandled) return;
+
     if (reportedCount >= 8) return;
     var sig = String(message || '') + '@' + (lineno || 0);
     if (reportedSignatures[sig]) return;
@@ -216,19 +217,21 @@
       try { window.reportErrorToWebhook(info); } catch (e) { }
     }
 
-    // Если игра упала на этапе загрузки:
     if (!window.__gameBooted) {
-      // Если НЕ нажимали "Apply Now" в дев-тулах -> тихо и мгновенно грузим предыдущую успешную версию без показа ошибки
-      if (!consumeManualDevApplyFlag()) {
-        if (trySilentRollback()) return;
+      bootFailureHandled = true;
+      // Если нажали "Apply Now" в дев-тулах -> остаёмся на экране ошибки и НЕ откатываемся!
+      if (isManualDevApply()) {
+        showFallbackScreen();
+        return;
       }
-      // Если нажали "Apply Now" (или откат невозможен) -> показываем экран с ошибкой
+      // Если это обычный вход в игру -> делаем тихий откат
+      if (trySilentRollback()) return;
       showFallbackScreen();
       return;
     }
 
     var recovered = tryRecoverToMenu();
-    if (!recovered) showFallbackScreen(info);
+    if (!recovered) showFallbackScreen();
   }
 
   window.onerror = function (message, source, lineno, colno, errorObj) {
@@ -1765,11 +1768,6 @@ const devCheckboxEl = document.getElementById('devModeCheckbox');
 const initialDevState = devCheckboxEl ? devCheckboxEl.checked : false;
 
 loadGame().then(() => {
-  // Отключаем Watchdog ДО начала тяжелой генерации текстур
-  if (window.NativeOtaBridge && typeof window.NativeOtaBridge.markBootSuccessful === 'function') {
-    window.NativeOtaBridge.markBootSuccessful();
-  }
-
   applySfxVolume(settings.sfxVolume != null ? settings.sfxVolume : (settings.sfxEnabled === false ? 0 : 100), false);
   try {
     if (typeof SFX !== 'undefined' && SFX) {
