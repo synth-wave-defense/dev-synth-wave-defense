@@ -60,15 +60,18 @@
     try { return JSON.stringify(err); } catch (e) { return String(err); }
   }
 
+let lastBadOtaVersion = '';
+
   // [UPD.D]
-function refreshNativeBridgeStatus() {
+  function refreshNativeBridgeStatus() {
     if (window.NativeOtaBridge && typeof window.NativeOtaBridge.getStatusJson === 'function') {
       try {
         const st = JSON.parse(window.NativeOtaBridge.getStatusJson());
+        lastBadOtaVersion = st.badVersion || '';
         OtaDiagnostics.pluginAvailable = true;
         OtaDiagnostics.notifyReadyStatus = `Bridge OK (${st.bootStatus || 'OK'})`;
         OtaDiagnostics.activeBundleInfo = `act:${st.activeVersion} (prev:${st.prevVersion || 'builtin'}) | ${st.bootLog}`;
-        OtaDiagnostics.downloadedBundlesList = `pend:${st.pendingVersion} | srv:${st.currentServerPath}`;
+        OtaDiagnostics.downloadedBundlesList = `pend:${st.pendingVersion} | bad:${lastBadOtaVersion || 'none'}`;
         OtaDiagnostics.triageT4DirectUpd = `Boot: ${st.bootLog || 'ok'}`;
       } catch (e) {
         OtaDiagnostics.notifyReadyStatus = 'Bridge JSON Err';
@@ -166,7 +169,11 @@ function refreshNativeBridgeStatus() {
         const currentVersion = String(localManifest.version).trim();
         const targetVersion = String(remoteManifest.version).trim();
 
-        if (targetVersion && targetVersion !== currentVersion) {
+        if (targetVersion && targetVersion === lastBadOtaVersion) {
+          OtaDiagnostics.updateNeeded = `SKIPPED_BAD (${targetVersion})`;
+          OtaDiagnostics.step = 'BAD_VER_BLOCKED';
+          logOta(`Skipped broken version ${targetVersion}`);
+        } else if (targetVersion && targetVersion !== currentVersion) {
           OtaDiagnostics.updateNeeded = `YES (${currentVersion}->${targetVersion})`;
           await this.processBundleUpdate(remoteManifest);
         } else {
