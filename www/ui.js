@@ -140,7 +140,7 @@ function updateOffscreenGrid() {
   }
 
   oCtx.save();
-  oCtx.strokeStyle = `rgba(${c2Rgb}, 0.28)`;
+  oCtx.strokeStyle = `rgba(${c1Rgb}, 0.22)`;
   oCtx.lineWidth = 1.5;
 
   //  Static track side rails rendering.
@@ -154,10 +154,12 @@ function updateOffscreenGrid() {
           oCtx.stroke();
         });
       }
-      if (cell.turnPivot && cell.turnAngles && cell.turnRadii) {
-        cell.turnRadii.forEach(rad => {
+      if (cell.turnCurves) {
+        cell.turnCurves.forEach(tc => {
           oCtx.beginPath();
-          oCtx.arc(cell.turnPivot.x, cell.turnPivot.y, rad, cell.turnAngles.start, cell.turnAngles.end, cell.turnAngles.anticlockwise);
+          oCtx.moveTo(tc.startX, tc.startY);
+          oCtx.arcTo(tc.cornerX, tc.cornerY, tc.endX, tc.endY, tc.r);
+          oCtx.lineTo(tc.endX, tc.endY);
           oCtx.stroke();
         });
       }
@@ -6994,11 +6996,14 @@ function drawSynthWavePerspectiveScene(now) {
   ctx.lineTo(vpX + roadBottomHalfW, h);
   ctx.stroke();
 
+  const isDefaultTheme = (th.id === 'default');
+
   ctx.save();
   ctx.lineWidth = 1.8;
   ctx.setLineDash([12, 10]);
   ctx.lineDashOffset = (time * 36);
 
+  // Левый бегущий рельс
   setGlow(th.c1, 6);
   ctx.strokeStyle = th.c1Light;
   ctx.beginPath();
@@ -7006,8 +7011,9 @@ function drawSynthWavePerspectiveScene(now) {
   ctx.lineTo(vpX - roadBottomHalfW, h);
   ctx.stroke();
 
-  setGlow(th.c2, 6);
-  ctx.strokeStyle = th.c2Light;
+  // Правый бегущий рельс: в дефолтной теме тоже циановый (c1), в остальных — вторичный цвет (c2)
+  setGlow(isDefaultTheme ? th.c1 : th.c2, 6);
+  ctx.strokeStyle = isDefaultTheme ? th.c1Light : th.c2Light;
   ctx.beginPath();
   ctx.moveTo(vpX + roadTopHalfW, horizonY);
   ctx.lineTo(vpX + roadBottomHalfW, h);
@@ -7023,19 +7029,18 @@ function drawSynthWavePerspectiveScene(now) {
     const currentY = horizonY + Math.pow(progress, 1.95) * floorH;
     const alpha = Math.min(0.42, 0.08 + progress * 0.35);
 
-    // Чередование фиксируется строго за волной движения
+    // В дефолтной теме все горизонтальные полосы бирюзовые (c1Rgb), в остальных — чередуются
     const lineId = (baseWave - j) % 2;
-    ctx.strokeStyle = (lineId === 0)
+    ctx.strokeStyle = (isDefaultTheme || lineId === 0)
       ? `rgba(${c1Rgb}, ${alpha})`
       : `rgba(${c2Rgb}, ${alpha})`;
-
     ctx.lineWidth = 1.2;
     ctx.beginPath();
     ctx.moveTo(0, currentY);
     ctx.lineTo(w, currentY);
     ctx.stroke();
   }
-
+  
   const scoutColor = th.c4;
   const scoutGlow = th.c4Light;
   const mobCycleDuration = 13.5;
@@ -7134,13 +7139,14 @@ function renderCellRails(cell) {
     ctx.moveTo(cell.rails[1].x1, cell.rails[1].y1);
     ctx.lineTo(cell.rails[1].x2, cell.rails[1].y2);
     ctx.stroke();
-  } else if (cell.isTurn && cell.turnPivot) {
-    ctx.beginPath();
-    ctx.arc(cell.turnPivot.x, cell.turnPivot.y, cell.turnRadii[0], cell.turnAngles.start, cell.turnAngles.end, cell.turnAngles.anticlockwise);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(cell.turnPivot.x, cell.turnPivot.y, cell.turnRadii[1], cell.turnAngles.start, cell.turnAngles.end, cell.turnAngles.anticlockwise);
-    ctx.stroke();
+  } else if (cell.isTurn && cell.turnCurves) {
+    cell.turnCurves.forEach(tc => {
+      ctx.beginPath();
+      ctx.moveTo(tc.startX, tc.startY);
+      ctx.arcTo(tc.cornerX, tc.cornerY, tc.endX, tc.endY, tc.r);
+      ctx.lineTo(tc.endX, tc.endY);
+      ctx.stroke();
+    });
   }
 }
 
@@ -7155,14 +7161,13 @@ function drawPathRails(now) {
   const totalCells = pathCells.length;
   const th = getTheme();
   const c1Rgb = th.rgb1 ? th.rgb1.cssRgb : '0, 229, 255';
-  const c2Rgb = th.rgb2 ? th.rgb2.cssRgb : '217, 70, 239';
 
   ctx.save();
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
-  // Фоновые контуры рельсов под цвет темы (c2)
-  ctx.strokeStyle = `rgba(${c2Rgb}, 0.22)`;
+  // Приглушенная подложка рельсов того же основного цвета темы (c1)
+  ctx.strokeStyle = `rgba(${c1Rgb}, 0.18)`;
   ctx.lineWidth = 3.5;
   ctx.setLineDash([]);
   for (let i = 1; i < totalCells - 1; i++) {
@@ -7188,9 +7193,9 @@ function drawPathRails(now) {
     battlePathAlpha = 1.0;
   }
 
-  // Анимированные бегущие пунктирные рельсы под основной цвет темы (c1)
+  // Яркие бегущие пунктирные рельсы того же цвета (c1)
   if (battlePathAlpha > 0.005) {
-    ctx.strokeStyle = `rgba(${c1Rgb}, ${0.88 * battlePathAlpha})`;
+    ctx.strokeStyle = `rgba(${c1Rgb}, ${0.90 * battlePathAlpha})`;
     ctx.lineWidth = 1.8;
     ctx.setLineDash([12, 10]);
     ctx.lineDashOffset = -((curTime / 1000) * 36);
@@ -7202,7 +7207,6 @@ function drawPathRails(now) {
 
   ctx.restore();
 }
-
 
 //  Tower vector glyph sprite and model geometry renderer.
 // [UI.JN]

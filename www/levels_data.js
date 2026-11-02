@@ -14942,3 +14942,73 @@ if (typeof console !== "undefined") {
     levelsDataKeys: Object.keys(LEVELS_DATA).length
   });
 }
+
+//[LVLDT.DELAY_AFTER] Автоматический расчет delayAfter по прогрессии уровней (1-50)
+(function applyDynamicWaveDelays() {
+  if (typeof LEVELS_DATA === 'undefined' || typeof MAP_CATALOG === 'undefined') return;
+  const TILE = 70;
+  // Поставьте true, если нужно прибавлять еще и время выхода всей пачки из портала (числа как в таблице)
+  // Поставьте false, чтобы следующая волна выходила ровно когда последний моб дойдет до нужного % пути
+  const INCLUDE_SPAWN_TIME = false; 
+
+  for (let lvl = 1; lvl <= 50; lvl++) {
+    const lvlData = LEVELS_DATA[lvl];
+    if (!lvlData || !Array.isArray(lvlData.waves)) continue;
+    const mapCfg = MAP_CATALOG[lvlData.mapId];
+    if (!mapCfg || !Array.isArray(mapCfg.path)) continue;
+
+    // 1. Считаем полную длину пути карты в пикселях (100% пути)
+    let pathLenPx = 0;
+    for (let i = 0; i < mapCfg.path.length - 1; i++) {
+      const p1 = mapCfg.path[i], p2 = mapCfg.path[i + 1];
+      pathLenPx += (Math.abs(p2.c - p1.c) + Math.abs(p2.r - p1.r)) * TILE;
+    }
+
+    // 2. Определяем нужный процент пути и бонусные секунды по уровню
+    let pathPct = 1.0;
+    let extraSec = 0;
+    if (lvl <= 2)      { pathPct = 1.00; extraSec = 2.0; }
+    else if (lvl === 3){ pathPct = 1.00; extraSec = 1.0; }
+    else if (lvl <= 10){ pathPct = 1.00; extraSec = 0.0; }
+    else if (lvl <= 20){ pathPct = 0.80; extraSec = 0.0; }
+    else if (lvl <= 30){ pathPct = 0.70; extraSec = 0.0; }
+    else if (lvl <= 40){ pathPct = 0.50; extraSec = 0.0; }
+    else               { pathPct = 0.40; extraSec = 0.0; }
+
+    // 3. Проставляем delayAfter для каждой волны уровня
+    lvlData.waves.forEach((wObj) => {
+      if (!wObj.spawns || wObj.spawns.length === 0) return;
+
+      let spawnDuration = 0;
+      if (INCLUDE_SPAWN_TIME) {
+        const firstIsBoss = !!(wObj.spawns[0].isBoss || wObj.spawns[0].isMiniBoss);
+        spawnDuration = firstIsBoss ? 2.0 : 0.15;
+        wObj.spawns.forEach((grp, gIdx) => {
+          if (gIdx > 0 && (grp.isBoss || grp.isMiniBoss)) {
+            const clamped = Math.max(10, Math.min(50, lvl));
+            spawnDuration += grp.isBoss ? (2.5 + ((clamped - 10) / 40) * 2.5) : 2.0;
+          }
+          if (grp.type === 'swarm') {
+            const clumps = Math.max(1, grp.clumps || 3);
+            const cSize = (lvl === 11) ? 8 : 10;
+            const totalSwarm = clumps * cSize;
+            const intervalsCount = (gIdx === wObj.spawns.length - 1) ? (totalSwarm - 1) : totalSwarm;
+            for (let s = 1; s <= intervalsCount; s++) {
+              spawnDuration += (s < totalSwarm && s % cSize === 0) ? 3.2 : 0.03;
+            }
+          } else {
+            const cnt = grp.count || 1;
+            const intervalsCount = (gIdx === wObj.spawns.length - 1) ? (cnt - 1) : cnt;
+            spawnDuration += Math.max(0, intervalsCount) * (grp.interval || 0.8);
+          }
+        });
+      }
+
+      const lastGrp = wObj.spawns[wObj.spawns.length - 1];
+      const lastSpeed = lastGrp.speed || 55;
+      const walkTime = (pathLenPx * pathPct) / lastSpeed;
+
+      wObj.delayAfter = +(spawnDuration + walkTime + extraSec).toFixed(1);
+    });
+  }
+})();

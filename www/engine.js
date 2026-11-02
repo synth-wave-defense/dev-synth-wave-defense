@@ -900,6 +900,17 @@ function mixHexWithWhite(hex, whiteRatio = 0.45) {
   return '#' + [mr, mg, mb].map(x => x.toString(16).padStart(2, '0')).join('');
 }
 
+// [ENG.ACM]
+// Смешивание двух HEX-цветов для создания уникальных оттенков башен в кастомных темах
+function mixHexColors(hex1, hex2, ratio = 0.5) {
+  const cA = hexToRgbObj(hex1);
+  const cB = hexToRgbObj(hex2);
+  const r = Math.round(cA.r + (cB.r - cA.r) * ratio);
+  const g = Math.round(cA.g + (cB.g - cA.g) * ratio);
+  const b = Math.round(cA.b + (cB.b - cA.b) * ratio);
+  return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
 // [ENG.AD]
 function darkenNormRgb(normArr, factor = 0.42) {
   return [
@@ -984,15 +995,41 @@ function applyPaletteColors(paletteId) {
     }
   }
 
-  // Автоматическая привязка всех 7 башен к слотам c1..c5
+  // Индивидуальные цвета для всех 7 башен (в default — каноничные цвета со скрина 1, в других темах — сдвиг оттенков в RGB)
   if (typeof TOWER_CONFIGS !== 'undefined' && TOWER_CONFIGS.gun) {
-    TOWER_CONFIGS.gun.color     = c1; TOWER_CONFIGS.gun.glow     = c1Light;
-    TOWER_CONFIGS.stasis.color  = c5; TOWER_CONFIGS.stasis.glow  = c5Light;
-    TOWER_CONFIGS.tesla.color   = c5; TOWER_CONFIGS.tesla.glow   = c1;
-    TOWER_CONFIGS.laser.color   = c3; TOWER_CONFIGS.laser.glow   = c3Light;
-    TOWER_CONFIGS.melter.color  = c3; TOWER_CONFIGS.melter.glow  = c4;
-    TOWER_CONFIGS.mortar.color  = c4; TOWER_CONFIGS.mortar.glow  = c4Light;
-    TOWER_CONFIGS.railgun.color = c2; TOWER_CONFIGS.railgun.glow = c2Light;
+    if (pId === 'default') {
+      TOWER_CONFIGS.gun.color     = '#00e5ff'; TOWER_CONFIGS.gun.glow     = '#00e5ff';
+      TOWER_CONFIGS.laser.color   = '#f05f9f'; TOWER_CONFIGS.laser.glow   = '#f05f9f';
+      TOWER_CONFIGS.mortar.color  = '#ff9100'; TOWER_CONFIGS.mortar.glow  = '#ff9100';
+      TOWER_CONFIGS.tesla.color   = '#00ffcc'; TOWER_CONFIGS.tesla.glow   = '#00ffcc';
+      TOWER_CONFIGS.stasis.color  = '#38bdf8'; TOWER_CONFIGS.stasis.glow  = '#38bdf8';
+      TOWER_CONFIGS.melter.color  = '#e85268'; TOWER_CONFIGS.melter.glow  = '#e477a3';
+      TOWER_CONFIGS.railgun.color = '#a275df'; TOWER_CONFIGS.railgun.glow = '#b57fdd';
+    } else {
+      // В кастомных темах разводим башни по оттенкам, чтобы все 7 отличались друг от друга:
+      const teslaCol   = mixHexColors(c1, '#00ffcc', 0.45); // сдвиг от основного в мятно-изумрудный
+      const stasisCol  = mixHexColors(c5, '#38bdf8', 0.35); // холодный ледяной оттенок c5
+      const melterCol  = mixHexColors(c3, c4, 0.38);        // кораллово-алый между Laser (c3) и Splash (c4)
+      const railgunCol = mixHexColors(c2, '#a275df', 0.30); // благородный фиолетовый сдвиг от c2
+
+      TOWER_CONFIGS.gun.color     = c1;         TOWER_CONFIGS.gun.glow     = c1Light;
+      TOWER_CONFIGS.laser.color   = c3;         TOWER_CONFIGS.laser.glow   = c3Light;
+      TOWER_CONFIGS.mortar.color  = c4;         TOWER_CONFIGS.mortar.glow  = c4Light;
+      TOWER_CONFIGS.tesla.color   = teslaCol;   TOWER_CONFIGS.tesla.glow   = mixHexWithWhite(teslaCol, 0.35);
+      TOWER_CONFIGS.stasis.color  = stasisCol;  TOWER_CONFIGS.stasis.glow  = mixHexWithWhite(stasisCol, 0.40);
+      TOWER_CONFIGS.melter.color  = melterCol;  TOWER_CONFIGS.melter.glow  = mixHexWithWhite(melterCol, 0.35);
+      TOWER_CONFIGS.railgun.color = railgunCol; TOWER_CONFIGS.railgun.glow = mixHexWithWhite(railgunCol, 0.38);
+    }
+
+    // Записываем индивидуальные RGB-переменные каждой башни в CSS :root для кнопок постройки
+    if (typeof document !== 'undefined' && document.documentElement) {
+      const root = document.documentElement;
+      Object.keys(TOWER_CONFIGS).forEach(tKey => {
+        const tRgb = hexToRgbObj(TOWER_CONFIGS[tKey].color);
+        root.style.setProperty(`--tower-${tKey}`, TOWER_CONFIGS[tKey].color);
+        root.style.setProperty(`--tower-${tKey}-rgb`, tRgb.cssRgb);
+      });
+    }
   }
 
   // Автоматическая привязка всех мобов и боссов к слотам c1..c5
@@ -1606,15 +1643,26 @@ function buildLevelGeometry(pathNodes, colsCount, rowsCount, blockedCells) {
         { x1: cx - inDir.x * half + nx * D, y1: cy - inDir.y * half + ny * D, x2: cx + inDir.x * half + nx * D, y2: cy + inDir.y * half + ny * D }
       ];
     } else {
-      const pivotX = inDir.x === 0 ? cx + outDir.x * half : cx - inDir.x * half;
-      const pivotY = inDir.y === 0 ? cy + outDir.y * half : cy - inDir.y * half;
-      const entryX = cx - inDir.x * half;
-      const entryY = cy - inDir.y * half;
-      const exitX  = cx + outDir.x * half;
-      const exitY  = cy + outDir.y * half;
-      cell.turnPivot = { x: pivotX, y: pivotY };
-      cell.turnAngles = { start: Math.atan2(entryY - pivotY, entryX - pivotX), end: Math.atan2(exitY - pivotY, exitX - pivotX), anticlockwise: (inDir.x * outDir.y - inDir.y * outDir.x) < 0 };
-      cell.turnRadii = [half - D, half + D];
+      // Вектор внутрь поворота (outDir) и наружу поворота (-inDir)
+      const innerR = half - D; // 12px — внутренний угол
+      const outerR = 16;       // 16px — аккуратное малое скругление внешнего угла (вместо 58px)
+
+      const makeCornerCurve = (sideSign, rCorner) => {
+        // sideSign: +1 = внутренний рельс (смещение к outDir), -1 = внешний рельс (смещение к -outDir)
+        const startX = cx - inDir.x * half + outDir.x * (sideSign * D);
+        const startY = cy - inDir.y * half + outDir.y * (sideSign * D);
+        const endX   = cx + outDir.x * half - inDir.x * (sideSign * D);
+        const endY   = cy + outDir.y * half - inDir.y * (sideSign * D);
+        // Вершина угла пересечения двух прямых рельсов
+        const cornerX = cx - inDir.x * (sideSign * D) + outDir.x * (sideSign * D);
+        const cornerY = cy - inDir.y * (sideSign * D) + outDir.y * (sideSign * D);
+        return { startX, startY, cornerX, cornerY, endX, endY, r: rCorner };
+      };
+
+      cell.turnCurves = [
+        makeCornerCurve(1, innerR),
+        makeCornerCurve(-1, outerR)
+      ];
     }
   }
 

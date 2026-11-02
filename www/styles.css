@@ -6098,10 +6098,19 @@ label,
   box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.78), 0 0 16px rgba(var(--c1-rgb), 0.14);
 }
 
+/* В дефолтной схеме текст на кнопках чисто белый */
 .menu-btn-glass-capsule,
 .result-btn:not(.result-btn-primary):not(.victory-claim-btn):not(.result-btn-grunt),
 .result-btn-pill:not(.result-btn-resume):not(.result-btn-giveup),
 .bp-btn-buy-tier {
+  color: #ffffff;
+}
+
+/* В остальных цветовых схемах текст кнопок слегка тонируется под тему */
+body:not([data-theme="default"]) .menu-btn-glass-capsule,
+body:not([data-theme="default"]) .result-btn:not(.result-btn-primary):not(.victory-claim-btn):not(.result-btn-grunt),
+body:not([data-theme="default"]) .result-btn-pill:not(.result-btn-resume):not(.result-btn-giveup),
+body:not([data-theme="default"]) .bp-btn-buy-tier {
   color: var(--c1-light);
 }
 /* [STY.FM] */
@@ -6289,25 +6298,34 @@ label,
   color: var(--c1-light);
 }
 
-/* 6. КНОПКИ БАШЕН В МЕНЮ ПОСТРОЙКИ ПО СЛОТАМ (data-type) */
-/* Gun, Tesla, Stasis -> Слот 1/5 (--c1 / --c5) */
-.tower-btn[data-type="gun"],
-.tower-btn[data-type="tesla"],
+/* 6. ИНДИВИДУАЛЬНЫЕ ЦВЕТА РАМОК И ЛЕГКОЙ ЗАЛИВКИ КНОПОК ПОСТРОЙКИ БАШЕН */
+.tower-btn[data-type="gun"] {
+  background: linear-gradient(180deg, rgba(var(--tower-gun-rgb, 0, 229, 255), 0.06) 0%, rgba(15, 19, 34, 0.92) 100%) !important;
+  border-color: rgba(var(--tower-gun-rgb, 0, 229, 255), 0.34) !important;
+}
+.tower-btn[data-type="laser"] {
+  background: linear-gradient(180deg, rgba(var(--tower-laser-rgb, 240, 95, 159), 0.06) 0%, rgba(15, 19, 34, 0.92) 100%) !important;
+  border-color: rgba(var(--tower-laser-rgb, 240, 95, 159), 0.34) !important;
+}
+.tower-btn[data-type="mortar"] {
+  background: linear-gradient(180deg, rgba(var(--tower-mortar-rgb, 255, 145, 0), 0.06) 0%, rgba(15, 19, 34, 0.92) 100%)!important;
+  border-color: rgba(var(--tower-mortar-rgb, 255, 145, 0), 0.34) !important;
+}
+.tower-btn[data-type="tesla"] {
+  background: linear-gradient(180deg, rgba(var(--tower-tesla-rgb, 0, 255, 204), 0.06) 0%, rgba(15, 19, 34, 0.92) 100%) !important;
+  border-color: rgba(var(--tower-tesla-rgb, 0, 255, 204), 0.34) !important;
+}
 .tower-btn[data-type="stasis"] {
-  background: rgba(var(--c1-rgb), 0.08) !important;
-  border-color: rgba(var(--c1-rgb), 0.48) !important;
+  background: linear-gradient(180deg, rgba(var(--tower-stasis-rgb, 56, 189, 248), 0.06) 0%, rgba(15, 19, 34, 0.92) 100%) !important;
+  border-color: rgba(var(--tower-stasis-rgb, 56, 189, 248), 0.34) !important;
 }
-/* Laser, Melter -> Слот 2/3 (--c2 / --c3) */
-.tower-btn[data-type="laser"],
 .tower-btn[data-type="melter"] {
-  background: rgba(var(--c2-rgb), 0.09) !important;
-  border-color: rgba(var(--c2-rgb), 0.52) !important;
+  background: linear-gradient(180deg, rgba(var(--tower-melter-rgb, 232, 82, 104), 0.06) 0%, rgba(15, 19, 34, 0.92) 100%) !important;
+  border-color: rgba(var(--tower-melter-rgb, 232, 82, 104), 0.34) !important;
 }
-/* Splash (mortar), Railgun -> Слот 4 (--c4) */
-.tower-btn[data-type="mortar"],
 .tower-btn[data-type="railgun"] {
-  background: rgba(var(--c4-rgb), 0.09) !important;
-  border-color: rgba(var(--c4-rgb), 0.52) !important;
+  background: linear-gradient(180deg, rgba(var(--tower-railgun-rgb, 162, 117, 223), 0.06) 0%, rgba(15, 19, 34, 0.92) 100%) !important;
+  border-color: rgba(var(--tower-railgun-rgb, 162, 117, 223), 0.34) !important;
 }
 
 /* 7. ИКОНКИ АЛМАЗОВ (--c1) И ПРИЗМ (--c2) ВЕЗДЕ В UI */
