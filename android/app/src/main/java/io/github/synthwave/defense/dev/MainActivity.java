@@ -20,6 +20,8 @@ public class MainActivity extends BridgeActivity {
     private static final String PREFS_NAME = "SynthWaveNativeOtaPrefs";
     private static final String KEY_ACTIVE_PATH = "active_ota_path";
     private static final String KEY_ACTIVE_VER = "active_ota_version";
+    private static final String KEY_PREV_PATH = "prev_ota_path";
+    private static final String KEY_PREV_VER = "prev_ota_version";
     private static final String KEY_PENDING_PATH = "pending_ota_path";
     private static final String KEY_PENDING_VER = "pending_ota_version";
     private static final String KEY_APK_TIME = "last_apk_update_time";
@@ -27,7 +29,7 @@ public class MainActivity extends BridgeActivity {
     private static final String KEY_BOOT_STATUS = "ota_boot_status";
 
     private final Handler watchdogHandler = new Handler(Looper.getMainLooper());
-    private Runnable watchdogRunnable;
+    private Runnable watchdogRunnable = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -42,9 +44,62 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
+    private void cancelWatchdogTimer() {
+        if (watchdogRunnable != null) {
+            watchdogHandler.removeCallbacks(watchdogRunnable);
+            watchdogRunnable = null;
+        }
+    }
+
+    private void startWatchdogTimer() {
+        cancelWatchdogTimer();
+        watchdogRunnable = () -> {
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            if ("PENDING".equals(prefs.getString(KEY_BOOT_STATUS, "SUCCESS"))) {
+                performSilentRollback(prefs, "Watchdog timeout (syntax/boot error)");
+            }
+        };
+        // Даем 5 секунд на парсинг скриптов и вызов markBootSuccessful()
+        watchdogHandler.postDelayed(watchdogRunnable, 5000);
+    }
+
+    private void performSilentRollback(SharedPreferences prefs, String reason) {
+        cancelWatchdogTimer();
+        String prevPath = prefs.getString(KEY_PREV_PATH, null);
+        String prevVer = prefs.getString(KEY_PREV_VER, "builtin");
+        boolean canUsePrev = prevPath != null && new File(prevPath, "index.html").exists();
+
+        SharedPreferences.Editor editor = prefs.edit();
+        if (canUsePrev) {
+            editor.putString(KEY_ACTIVE_PATH, prevPath);
+            editor.putString(KEY_ACTIVE_VER, prevVer);
+            editor.putString(KEY_BOOT_LOG, reason + " -> Rolled back to v" + prevVer);
+        } else {
+            editor.remove(KEY_ACTIVE_PATH);
+            editor.remove(KEY_ACTIVE_VER);
+            editor.putString(KEY_BOOT_LOG, reason + " -> Rolled back to builtin APK");
+        }
+        editor.putString(KEY_BOOT_STATUS, "ROLLED_BACK");
+        editor.apply();
+
+        final String targetPath = canUsePrev ? prevPath : null;
+        runOnUiThread(() -> {
+            if (MainActivity.this.bridge != null && MainActivity.this.bridge.getWebView() != null) {
+                if (targetPath != null) {
+                    MainActivity.this.bridge.setServerBasePath(targetPath);
+                } else {
+                    MainActivity.this.bridge.setServerBasePath(null);
+                }
+                MainActivity.this.bridge.getWebView().loadUrl(MainActivity.this.bridge.getServerUrl());
+            }
+        });
+    }
+
     private void checkAndApplyStartupOta() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         StringBuilder bootLog = new StringBuilder();
+
+        // 1. Сброс OTA при установке свежего APK поверх старого
         long curApkTime = 0;
         try {
             PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
@@ -57,6 +112,8 @@ public class MainActivity extends BridgeActivity {
                 .putLong(KEY_APK_TIME, curApkTime)
                 .remove(KEY_ACTIVE_PATH)
                 .remove(KEY_ACTIVE_VER)
+                .remove(KEY_PREV_PATH)
+                .remove(KEY_PREV_VER)
                 .remove(KEY_PENDING_PATH)
                 .remove(KEY_PENDING_VER)
                 .putString(KEY_BOOT_STATUS, "SUCCESS")
@@ -65,77 +122,74 @@ public class MainActivity extends BridgeActivity {
             return;
         }
 
-        // Проверка сторожевого флага: если предыдущий запуск так и не сообщил об успехе (был SyntaxError или краш)
+        // 2. Если предыдущий запуск упал (остался в PENDING), сразу переключаемся на prevPath (предыдущую успешную версию)
         String bootStatus = prefs.getString(KEY_BOOT_STATUS, "SUCCESS");
         if ("PENDING".equals(bootStatus)) {
-            String deadVer = prefs.getString(KEY_ACTIVE_VER, "unknown");
-            prefs.edit()
-                .remove(KEY_ACTIVE_PATH)
-                .remove(KEY_ACTIVE_VER)
-                .putString(KEY_BOOT_STATUS, "ROLLED_BACK")
-                .putString(KEY_BOOT_LOG, "Auto-rollback from crashed v" + deadVer + " to builtin")
-                .apply();
-            bootLog.append("Rollback due to boot crash; ");
+            String prevPath = prefs.getString(KEY_PREV_PATH, null);
+            String prevVer = prefs.getString(KEY_PREV_VER, "builtin");
+            if (prevPath != null && new File(prevPath, "index.html").exists()) {
+                prefs.edit()
+                    .putString(KEY_ACTIVE_PATH, prevPath)
+                    .putString(KEY_ACTIVE_VER, prevVer)
+                    .putString(KEY_BOOT_STATUS, "ROLLED_BACK")
+                    .apply();
+                bootLog.append("Auto-rollback to v").append(prevVer).append("; ");
+            } else {
+                prefs.edit()
+                    .remove(KEY_ACTIVE_PATH)
+                    .remove(KEY_ACTIVE_VER)
+                    .putString(KEY_BOOT_STATUS, "ROLLED_BACK")
+                    .apply();
+                bootLog.append("Auto-rollback to builtin APK; ");
+            }
         }
 
-        // Применение ожидающего (staging) обновления
+        // 3. Продвижение ожидающей (pending) версии в активную при холодном старте
         String pendingPath = prefs.getString(KEY_PENDING_PATH, null);
         String pendingVer = prefs.getString(KEY_PENDING_VER, null);
         if (pendingPath != null) {
             File pIdx = new File(pendingPath, "index.html");
             if (pIdx.exists()) {
-                prefs.edit()
-                    .putString(KEY_ACTIVE_PATH, pendingPath)
-                    .putString(KEY_ACTIVE_VER, pendingVer != null ? pendingVer : "ota")
-                    .remove(KEY_PENDING_PATH)
-                    .remove(KEY_PENDING_VER)
-                    .apply();
-                bootLog.append("Promoted pending v").append(pendingVer).append("; ");
+                // Сохраняем текущую успешную версию как резервную (PREV) перед переключением!
+                String curActivePath = prefs.getString(KEY_ACTIVE_PATH, null);
+                String curActiveVer = prefs.getString(KEY_ACTIVE_VER, null);
+                SharedPreferences.Editor ed = prefs.edit();
+                if (curActivePath != null && new File(curActivePath, "index.html").exists() && "SUCCESS".equals(bootStatus)) {
+                    ed.putString(KEY_PREV_PATH, curActivePath);
+                    ed.putString(KEY_PREV_VER, curActiveVer != null ? curActiveVer : "ota");
+                }
+                ed.putString(KEY_ACTIVE_PATH, pendingPath)
+                  .putString(KEY_ACTIVE_VER, pendingVer != null ? pendingVer : "ota")
+                  .remove(KEY_PENDING_PATH)
+                  .remove(KEY_PENDING_VER)
+                  .putString(KEY_BOOT_STATUS, "PENDING")
+                  .apply();
+                bootLog.append("Promoted v").append(pendingVer).append("; ");
             } else {
-                bootLog.append("Pending index.html missing; ");
+                prefs.edit().remove(KEY_PENDING_PATH).remove(KEY_PENDING_VER).apply();
+                bootLog.append("Pending index missing; ");
             }
         }
 
+        // 4. Загрузка активной версии
         String activePath = prefs.getString(KEY_ACTIVE_PATH, null);
         String activeVer = prefs.getString(KEY_ACTIVE_VER, "builtin");
         if (activePath != null) {
             File indexFile = new File(activePath, "index.html");
             if (indexFile.exists() && this.bridge != null) {
-                // Ставим отметку ожидания проверки жизнеспособности бандла
-                prefs.edit().putString(KEY_BOOT_STATUS, "PENDING").apply();
                 this.bridge.setServerBasePath(activePath);
                 bootLog.append("Loaded OTA v").append(activeVer);
-
-                // Запускаем Watchdog: если через 6 секунд JS не вызовет markBootSuccessful, откатываемся
-                startWatchdogTimer();
+                // Если мы запускаем новую версию со статусом PENDING — включаем сторожевой таймер
+                if ("PENDING".equals(prefs.getString(KEY_BOOT_STATUS, "SUCCESS"))) {
+                    startWatchdogTimer();
+                }
             } else {
-                bootLog.append("Active index missing at ").append(activePath);
+                bootLog.append("Active index missing");
             }
         } else {
-            bootLog.append("Running builtin APK assets");
+            bootLog.append("Running builtin APK");
         }
         prefs.edit().putString(KEY_BOOT_LOG, bootLog.toString()).apply();
-    }
-
-    private void startWatchdogTimer() {
-        watchdogRunnable = () -> {
-            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-            if ("PENDING".equals(prefs.getString(KEY_BOOT_STATUS, "SUCCESS"))) {
-                // Движок так и не отозвался: сбрасываем бандл и перезагружаем WebView на чистый APK
-                prefs.edit()
-                    .remove(KEY_ACTIVE_PATH)
-                    .remove(KEY_ACTIVE_VER)
-                    .putString(KEY_BOOT_STATUS, "WATCHDOG_ROLLBACK")
-                    .putString(KEY_BOOT_LOG, "Watchdog triggered: JS failed to boot in 6s")
-                    .apply();
-
-                if (bridge != null && bridge.getWebView() != null) {
-                    bridge.setServerBasePath(null);
-                    bridge.getWebView().post(() -> bridge.getWebView().loadUrl(bridge.getServerUrl()));
-                }
-            }
-        };
-        watchdogHandler.postDelayed(watchdogRunnable, 6000);
     }
 
     public class NativeOtaBridge {
@@ -144,11 +198,29 @@ public class MainActivity extends BridgeActivity {
 
         @JavascriptInterface
         public void markBootSuccessful() {
-            if (watchdogRunnable != null) {
-                watchdogHandler.removeCallbacks(watchdogRunnable);
-            }
+            cancelWatchdogTimer();
             SharedPreferences prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-            prefs.edit().putString(KEY_BOOT_STATUS, "SUCCESS").apply();
+            String activePath = prefs.getString(KEY_ACTIVE_PATH, null);
+            String activeVer = prefs.getString(KEY_ACTIVE_VER, null);
+            SharedPreferences.Editor ed = prefs.edit();
+            ed.putString(KEY_BOOT_STATUS, "SUCCESS");
+            // Как только версия доказала свою работоспособность, она становится надежной точкой отката для будущих апдейтов
+            if (activePath != null) {
+                ed.putString(KEY_PREV_PATH, activePath);
+                ed.putString(KEY_PREV_VER, activeVer != null ? activeVer : "ota");
+            }
+            ed.apply();
+        }
+
+        @JavascriptInterface
+        public String rollbackToPreviousNow() {
+            try {
+                SharedPreferences prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+                performSilentRollback(prefs, "JS boot error");
+                return "OK_ROLLBACK";
+            } catch (Exception e) {
+                return "ERR_ROLLBACK:" + e.getMessage();
+            }
         }
 
         @JavascriptInterface
@@ -158,6 +230,7 @@ public class MainActivity extends BridgeActivity {
                 JSONObject obj = new JSONObject();
                 obj.put("activeVersion", prefs.getString(KEY_ACTIVE_VER, "builtin"));
                 obj.put("activePath", prefs.getString(KEY_ACTIVE_PATH, "builtin"));
+                obj.put("prevVersion", prefs.getString(KEY_PREV_VER, "builtin"));
                 obj.put("pendingVersion", prefs.getString(KEY_PENDING_VER, "none"));
                 obj.put("bootLog", prefs.getString(KEY_BOOT_LOG, "none"));
                 obj.put("bootStatus", prefs.getString(KEY_BOOT_STATUS, "SUCCESS"));
@@ -225,15 +298,20 @@ public class MainActivity extends BridgeActivity {
 
                 SharedPreferences prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
                 String activePath = prefs.getString(KEY_ACTIVE_PATH, null);
+                String prevPath = prefs.getString(KEY_PREV_PATH, null);
+
+                // Очищаем только старые ненужные папки, сохраняя и текущую активную, и резервную предыдущую!
                 File bundlesDir = new File(ctx.getFilesDir(), "ota_bundles");
                 if (bundlesDir.exists() && bundlesDir.isDirectory()) {
                     File[] files = bundlesDir.listFiles();
                     if (files != null) {
                         for (File f : files) {
                             if (f.isDirectory()) {
-                                boolean isDest = f.getAbsolutePath().equals(destDir.getAbsolutePath());
-                                boolean isActive = activePath != null && f.getAbsolutePath().equals(new File(activePath).getAbsolutePath());
-                                if (!isDest && !isActive) {
+                                String fPath = f.getAbsolutePath();
+                                boolean isDest = fPath.equals(destDir.getAbsolutePath());
+                                boolean isActive = activePath != null && fPath.equals(new File(activePath).getAbsolutePath());
+                                boolean isPrev = prevPath != null && fPath.equals(new File(prevPath).getAbsolutePath());
+                                if (!isDest && !isActive && !isPrev) {
                                     deleteRecursive(f);
                                 }
                             }
@@ -244,20 +322,25 @@ public class MainActivity extends BridgeActivity {
                 String finalPath = destDir.getAbsolutePath();
 
                 if (applyImmediately) {
-                    prefs.edit()
-                        .putString(KEY_ACTIVE_PATH, finalPath)
-                        .putString(KEY_ACTIVE_VER, version)
-                        .remove(KEY_PENDING_PATH)
-                        .remove(KEY_PENDING_VER)
-                        .putString(KEY_BOOT_STATUS, "PENDING")
-                        .putString(KEY_BOOT_LOG, "Applied immediately v" + version)
-                        .apply();
+                    String curVer = prefs.getString(KEY_ACTIVE_VER, null);
+                    SharedPreferences.Editor ed = prefs.edit();
+                    if (activePath != null && "SUCCESS".equals(prefs.getString(KEY_BOOT_STATUS, "SUCCESS"))) {
+                        ed.putString(KEY_PREV_PATH, activePath);
+                        ed.putString(KEY_PREV_VER, curVer != null ? curVer : "ota");
+                    }
+                    ed.putString(KEY_ACTIVE_PATH, finalPath)
+                      .putString(KEY_ACTIVE_VER, version)
+                      .remove(KEY_PENDING_PATH)
+                      .remove(KEY_PENDING_VER)
+                      .putString(KEY_BOOT_STATUS, "PENDING")
+                      .putString(KEY_BOOT_LOG, "Applied critical v" + version)
+                      .apply();
                     runOnUiThread(() -> {
                         if (MainActivity.this.bridge != null) {
                             MainActivity.this.bridge.setServerBasePath(finalPath);
+                            startWatchdogTimer();
                         }
                     });
-                    startWatchdogTimer();
                     return "OK_APPLIED:" + fileCount + "_files";
                 } else {
                     prefs.edit()
@@ -277,28 +360,40 @@ public class MainActivity extends BridgeActivity {
                 SharedPreferences prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
                 String pendingPath = prefs.getString(KEY_PENDING_PATH, null);
                 String pendingVer = prefs.getString(KEY_PENDING_VER, null);
+                String curActivePath = prefs.getString(KEY_ACTIVE_PATH, null);
+                String curActiveVer = prefs.getString(KEY_ACTIVE_VER, null);
+
                 if (pendingPath == null) {
-                    pendingPath = prefs.getString(KEY_ACTIVE_PATH, null);
-                    pendingVer = prefs.getString(KEY_ACTIVE_VER, null);
+                    pendingPath = curActivePath;
+                    pendingVer = curActiveVer;
                 }
                 if (pendingPath == null || !new File(pendingPath, "index.html").exists()) {
                     return "ERR: No staged bundle on disk";
                 }
+
                 final String pathToApply = pendingPath;
-                prefs.edit()
-                    .putString(KEY_ACTIVE_PATH, pathToApply)
-                    .putString(KEY_ACTIVE_VER, pendingVer != null ? pendingVer : "ota")
-                    .remove(KEY_PENDING_PATH)
-                    .remove(KEY_PENDING_VER)
-                    .putString(KEY_BOOT_STATUS, "PENDING")
-                    .putString(KEY_BOOT_LOG, "Force applied v" + pendingVer)
-                    .apply();
+                SharedPreferences.Editor ed = prefs.edit();
+                if (curActivePath != null && !curActivePath.equals(pathToApply) && "SUCCESS".equals(prefs.getString(KEY_BOOT_STATUS, "SUCCESS"))) {
+                    ed.putString(KEY_PREV_PATH, curActivePath);
+                    ed.putString(KEY_PREV_VER, curActiveVer != null ? curActiveVer : "ota");
+                }
+                ed.putString(KEY_ACTIVE_PATH, pathToApply)
+                  .putString(KEY_ACTIVE_VER, pendingVer != null ? pendingVer : "ota")
+                  .remove(KEY_PENDING_PATH)
+                  .remove(KEY_PENDING_VER)
+                  .putString(KEY_BOOT_STATUS, "PENDING")
+                  .putString(KEY_BOOT_LOG, "Manual Dev Apply v" + pendingVer)
+                  .apply();
+
+                // ВАЖНО: При ручном нажатии APPLY NOW из Dev Tools мы НЕ запускаем startWatchdogTimer(),
+                // чтобы разработчик мог увидеть экран с ошибкой, если новая версия сломана!
+                cancelWatchdogTimer();
+
                 runOnUiThread(() -> {
                     if (MainActivity.this.bridge != null) {
                         MainActivity.this.bridge.setServerBasePath(pathToApply);
                     }
                 });
-                startWatchdogTimer();
                 return "OK_APPLIED:v" + pendingVer;
             } catch (Exception e) {
                 return "ERR_APPLY:" + e.getMessage();

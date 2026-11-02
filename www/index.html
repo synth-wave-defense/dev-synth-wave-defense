@@ -128,13 +128,14 @@
 
 <!--  Crash Safety Net: Global error logging and fallback UI overlay for unhandled runtime errors. -->
 <!-- [HTM.F] -->
+<!-- [HTM103] Crash Safety Net: Global error logging and fallback UI overlay for unhandled runtime errors. -->
 <div id="crashFallbackScreen" style="display:none; position:fixed; inset:0; z-index:999999; background:#06070d; color:#f1f5f9; flex-direction:column; align-items:center; justify-content:center; text-align:center; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; padding:24px;">
   <div style="font-size:42px; margin-bottom:14px;">😵</div>
   <div style="font-size:20px; font-weight:800; margin-bottom:10px; color:#00e5ff;">Sorry, we'll fix it!</div>
-  <div style="font-size:14px; color:#94a3b8; max-width:320px; line-height:1.5; margin-bottom:22px;">
+  <div style="font-size:14px; color:#94a3b8; max-width:320px; line-height:1.5; margin-bottom:14px;">
     Something went wrong and the game couldn't continue. Please try closing and reopening the app.
   </div>
-  <!-- [HTM.G] -->
+  <pre id="crashErrorDetails" style="display:none; font-size:10px; color:#f05f9f; background:rgba(240,95,159,0.1); border:1px solid rgba(240,95,159,0.3); border-radius:8px; padding:8px; max-width:90vw; max-height:140px; overflow:auto; text-align:left; white-space:pre-wrap; margin-bottom:18px;"></pre>
   <button onclick="location.reload()" style="background:#00e5ff; color:#06070d; border:none; padding:13px 30px; border-radius:10px; font-weight:800; font-size:14px; cursor:pointer;">RELOAD</button>
 </div>
 <script>
@@ -143,6 +144,14 @@
   var ERROR_LOG_KEY = 'sectorDefenseTD_crash_log';
   var reportedCount = 0;
   var reportedSignatures = {};
+
+  function isManualDevApply() {
+    try {
+      return sessionStorage.getItem('ota_manual_apply') === '1';
+    } catch (e) {
+      return false;
+    }
+  }
 
   function logLocally(info) {
     try {
@@ -153,9 +162,28 @@
     } catch (e) { }
   }
 
-  function showFallbackScreen() {
+  function showFallbackScreen(info) {
     var el = document.getElementById('crashFallbackScreen');
     if (el) el.style.display = 'flex';
+    if (info) {
+      var detailsEl = document.getElementById('crashErrorDetails');
+      if (detailsEl) {
+        detailsEl.style.display = 'block';
+        detailsEl.textContent = info.message + '\n' + (info.source || '') + ':' + (info.lineno || 0);
+      }
+    }
+  }
+
+  function trySilentRollback() {
+    try {
+      if (window.NativeOtaBridge && typeof window.NativeOtaBridge.rollbackToPreviousNow === 'function') {
+        var res = window.NativeOtaBridge.rollbackToPreviousNow();
+        if (res && res.indexOf('OK_') === 0) {
+          return true;
+        }
+      }
+    } catch (e) { }
+    return false;
   }
 
   function tryRecoverToMenu() {
@@ -192,8 +220,19 @@
       try { window.reportErrorToWebhook(info); } catch (e) { }
     }
 
-    var recovered = window.__gameBooted ? tryRecoverToMenu() : false;
-    if (!recovered) showFallbackScreen();
+    // Если игра упала на этапе загрузки:
+    if (!window.__gameBooted) {
+      // Если НЕ нажимали "Apply Now" в дев-тулах -> тихо и мгновенно грузим предыдущую успешную версию без показа ошибки
+      if (!isManualDevApply()) {
+        if (trySilentRollback()) return;
+      }
+      // Если нажали "Apply Now" (или откат невозможен) -> показываем экран с ошибкой
+      showFallbackScreen(info);
+      return;
+    }
+
+    var recovered = tryRecoverToMenu();
+    if (!recovered) showFallbackScreen(info);
   }
 
   window.onerror = function (message, source, lineno, colno, errorObj) {
@@ -206,6 +245,7 @@
   });
 })();
 </script>
+
 <script src="telemetry.js"></script>
 <script src="sfx-manifest.js"></script>
 <script src="audio.js"></script>
@@ -1766,6 +1806,10 @@ loadGame().then(() => {
   }
 
   window.__gameBooted = true;
+  try { sessionStorage.removeItem('ota_manual_apply'); } catch (e) {}
+  if (window.NativeOtaBridge && typeof window.NativeOtaBridge.markBootSuccessful === 'function') {
+    try { window.NativeOtaBridge.markBootSuccessful(); } catch (e) {}
+  }
   safeTrack('app_launch', {});
 
   requestAnimationFrame(gameLoop);

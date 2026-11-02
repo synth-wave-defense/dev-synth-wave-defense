@@ -61,13 +61,13 @@
   }
 
   // [UPD.D]
-  function refreshNativeBridgeStatus() {
+function refreshNativeBridgeStatus() {
     if (window.NativeOtaBridge && typeof window.NativeOtaBridge.getStatusJson === 'function') {
       try {
         const st = JSON.parse(window.NativeOtaBridge.getStatusJson());
         OtaDiagnostics.pluginAvailable = true;
-        OtaDiagnostics.notifyReadyStatus = 'NativeBridge OK';
-        OtaDiagnostics.activeBundleInfo = `act:${st.activeVersion} | boot:${st.bootLog}`;
+        OtaDiagnostics.notifyReadyStatus = `Bridge OK (${st.bootStatus || 'OK'})`;
+        OtaDiagnostics.activeBundleInfo = `act:${st.activeVersion} (prev:${st.prevVersion || 'builtin'}) | ${st.bootLog}`;
         OtaDiagnostics.downloadedBundlesList = `pend:${st.pendingVersion} | srv:${st.currentServerPath}`;
         OtaDiagnostics.triageT4DirectUpd = `Boot: ${st.bootLog || 'ok'}`;
       } catch (e) {
@@ -257,14 +257,15 @@
 
     forceApplyNow: async function () {
       if (window.NativeOtaBridge && typeof window.NativeOtaBridge.applyPendingNow === 'function') {
+        try { sessionStorage.setItem('ota_manual_apply', '1'); } catch (e) {}
         const res = window.NativeOtaBridge.applyPendingNow();
         logOta('ApplyNow: ' + res);
         if (!res.startsWith('OK_')) {
+          try { sessionStorage.removeItem('ota_manual_apply'); } catch (e) {}
           OtaDiagnostics.lastError = res;
         } else {
-          // Принудительно перезагружаем WebView для старта с новой версии
-          // [UPD.F]
-          setTimeout(() => { window.location.reload(); }, 150);
+          // Перезагружаем страницу, чтобы новая версия прошла полный старт и показала ошибку, если она сломана
+          setTimeout(() => { window.location.reload(); }, 120);
         }
       } else {
         OtaDiagnostics.lastError = 'No NativeOtaBridge in APK';
