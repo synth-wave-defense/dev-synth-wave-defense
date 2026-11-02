@@ -4988,8 +4988,8 @@ label,
 .daily-claim-normal {
   flex: 1;
   background: #0c1629;
-  border: 1.3px solid rgba(0, 229, 255, 0.6);
-  color: #dff9ff;
+  border: 1.3px solid rgba(var(--c1-rgb), 0.6);
+  color: #ffffff;
 }
 
 .daily-claim-normal:active:not(:disabled) {
@@ -6295,7 +6295,7 @@ body:not([data-theme="default"]) .bp-btn-buy-tier {
 .daily-claim-normal {
   background: #0a152e;
   border-color: rgba(var(--c1-rgb), 0.62);
-  color: var(--c1-light);
+  color: #ffffff;
 }
 
 /* 6. ИНДИВИДУАЛЬНЫЕ ЦВЕТА РАМОК И ЛЕГКОЙ ЗАЛИВКИ КНОПОК ПОСТРОЙКИ БАШЕН */

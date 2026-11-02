@@ -15,7 +15,7 @@ function getTheme() {
     rgb4: { r: 255, g: 145, b: 0, cssRgb: '255, 145, 0', norm: [1, 0.569, 0] },
     rgb5: { r: 56, g: 189, b: 248, cssRgb: '56, 189, 248', norm: [0.22, 0.741, 0.973] }
   };
-
+}
 
 //  Thread Lag & Memory Monitor: High-frequency sampler tracking WebView thread freezes (>20ms).
 window._maxThreadLag = 0;
@@ -6962,12 +6962,14 @@ function drawSynthWavePerspectiveScene(now) {
   const targetBottomCellWidth = bottomStep * 1.1;
   const numLines = Math.ceil((w * 1.4) / targetBottomCellWidth);
 
+  const isDefaultTheme = (th.id === 'default');
+
+  // Продольные линии: строго один цвет темы (c1Rgb) для всех линий слева и справа
   ctx.lineWidth = 1.0;
+  ctx.strokeStyle = `rgba(${c1Rgb}, 0.34)`;
   for (let i = -numLines; i <= numLines; i++) {
     const bottomX = vpX + (i + 0.5) * targetBottomCellWidth;
     const topX = vpX + (i + 0.5) * (targetBottomCellWidth * 0.32);
-    ctx.strokeStyle = (i < 0) ? `rgba(${c2Rgb}, 0.34)` : `rgba(${c1Rgb}, 0.34)`;
-	ctx.strokeStyle = (i < 0) ? `rgba(${c1Rgb}, 0.34)` : `rgba(${c2Rgb}, 0.34)`;
     ctx.beginPath();
     ctx.moveTo(topX, horizonY);
     ctx.lineTo(bottomX, h);
@@ -6996,25 +6998,17 @@ function drawSynthWavePerspectiveScene(now) {
   ctx.lineTo(vpX + roadBottomHalfW, h);
   ctx.stroke();
 
-  const isDefaultTheme = (th.id === 'default');
-
   ctx.save();
   ctx.lineWidth = 1.8;
   ctx.setLineDash([12, 10]);
   ctx.lineDashOffset = (time * 36);
 
-  // Левый бегущий рельс
+  // Бегущие рельсы центральной дороги (оба рельса светятся цветом активной темы)
   setGlow(th.c1, 6);
   ctx.strokeStyle = th.c1Light;
   ctx.beginPath();
   ctx.moveTo(vpX - roadTopHalfW, horizonY);
   ctx.lineTo(vpX - roadBottomHalfW, h);
-  ctx.stroke();
-
-  // Правый бегущий рельс: в дефолтной теме тоже циановый (c1), в остальных — вторичный цвет (c2)
-  setGlow(isDefaultTheme ? th.c1 : th.c2, 6);
-  ctx.strokeStyle = isDefaultTheme ? th.c1Light : th.c2Light;
-  ctx.beginPath();
   ctx.moveTo(vpX + roadTopHalfW, horizonY);
   ctx.lineTo(vpX + roadBottomHalfW, h);
   ctx.stroke();
@@ -7029,7 +7023,6 @@ function drawSynthWavePerspectiveScene(now) {
     const currentY = horizonY + Math.pow(progress, 1.95) * floorH;
     const alpha = Math.min(0.42, 0.08 + progress * 0.35);
 
-    // В дефолтной теме все горизонтальные полосы бирюзовые (c1Rgb), в остальных — чередуются
     const lineId = (baseWave - j) % 2;
     ctx.strokeStyle = (isDefaultTheme || lineId === 0)
       ? `rgba(${c1Rgb}, ${alpha})`
