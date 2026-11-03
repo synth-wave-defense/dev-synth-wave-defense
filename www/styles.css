@@ -3371,11 +3371,12 @@ html, body {
 /* [STY.CN] */
 .upgrade-row-icon svg { width: 25px; height: 25px; }
 .upgrade-row-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important; /* <--- САМОЕ ГЛАВНОЕ: заставляет внутренние блоки растянуться на всю 100% ширину */
+  gap: 5px !important;
+  min-width: 0 !important;
 }
 .upgrade-row-head {
   display: flex;
@@ -5440,42 +5441,68 @@ label,
   border-color: var(--c4-light, #ffc166) !important;
   box-shadow: 0 0 34px rgba(var(--c4-rgb, 255, 145, 0), 0.85), inset 0 0 16px rgba(var(--c4-rgb, 255, 145, 0), 0.4) !important;
 }
-  transform: scale(0.92) translateY(2px) !important;
-  box-shadow: 0 0 32px rgba(255, 145, 0, 0.85), inset 0 0 14px rgba(255, 145, 0, 0.4) !important;
-}
-/* [STY.EP] */
 
+/* [STY.EP] */
 /* Строка бонусов характеристик в карточке Tech Tree */
 .upgrade-row-stats {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px;
-  margin-top: 3px;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 9px;
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: 0.2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: baseline !important;
+  flex-wrap: nowrap !important;
+  width: 100% !important;
+  margin-top: 3px !important;
+  font-family: 'Montserrat', sans-serif !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  box-sizing: border-box !important;
 }
 
+/* Левая часть: серые текущие статы */
 .upg-stat-cur {
-  color: #e2e8f0;
-  letter-spacing: 0.3px;
+  display: inline-flex !important;
+  align-items: baseline !important;
+  gap: 3px !important;
+  color: #cbd5e1 !important;
+  font-size: 8px !important;
+  font-weight: 800 !important;               /* Единый вес шрифта */
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
 }
 
+/* Лейблы DMG:, SPD:, RNG: — ровно 8px и 800 вес (не прыгают по высоте) */
+.upg-stat-cur .upg-lbl {
+  color: #8ea3c4 !important;
+  font-size: 8px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.3px !important;
+  line-height: 1 !important;
+}
+
+.upg-stat-cur .upg-sep {
+  color: rgba(255, 255, 255, 0.25) !important;
+  margin: 0 1px !important;
+  font-size: 8px !important;
+}
+
+/* Правая часть: голубые цифры строго у правого края под 0/10 */
 .upg-stat-next {
-  color: var(--neon-primary, #00e5ff);
-  font-weight: 800;
-  opacity: 0.9;
+  color: var(--neon-primary, #00e5ff) !important;
+  font-size: 8px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.3px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  margin-left: auto !important;              /* Выталкивает блок к правому краю контейнера */
+  text-align: right !important;
+  flex-shrink: 0 !important;
 }
 
 .upg-stat-locked {
-  color: #52617a;
-  font-style: italic;
+  color: #52617a !important;
+  font-style: italic !important;
+  font-size: 8px !important;
 }
 
 .upgrade-row-buy.locked-buy {

@@ -176,7 +176,8 @@ let settings = {
   vibrationEnabled: true,
   perfModeOverride: null,
   sfxEnabled: true, musicEnabled: true,
-  sfxVolume: 100, musicVolume: 70
+  sfxVolume: 100, musicVolume: 70,
+  lang: 'en'
 };
 
 // [ENG.F]
@@ -2249,7 +2250,7 @@ function handleHardwareBack() {
     } else {
       lastBackPressTime = now;
       if (typeof showHintToast === 'function') {
-        showHintToast('Tap Back one more time to close game');
+        showHintToast(typeof t === 'function' ? t('tap_back_exit') : 'Tap Back one more time to close game');
       }
     }
   }
@@ -2777,7 +2778,11 @@ function setReviveBtnLabel(seconds) {
   const numEl = document.getElementById('reviveTimerNumber');
   if (numEl) numEl.textContent = `${seconds}s`;
   const label = document.getElementById('reviveBtnLabel');
-  if (label) label.textContent = noAdsPurchased ? 'FREE REVIVE' : 'REVIVE';
+  if (label) {
+    label.textContent = noAdsPurchased
+      ? (typeof t === 'function' ? t('free_revive') : 'FREE REVIVE')
+      : (typeof t === 'function' ? t('revive') : 'REVIVE');
+  }
 }
 
 let defeatFlashTimeout = null;
@@ -2873,12 +2878,17 @@ function updateDefeatWaveLine() {
       saveGameSoon();
     }
 
-    if (kicker) kicker.textContent = 'ENDLESS ARENA';
+    if (kicker) kicker.textContent = typeof t === 'function' ? t('endless_arena') : 'ENDLESS ARENA';
     if (title) {
-      title.textContent = 'RUN COMPLETE';
-      title.setAttribute('data-text', 'RUN COMPLETE');
+      const runCompleteText = typeof t === 'function' ? t('run_complete') : 'RUN COMPLETE';
+      title.textContent = runCompleteText;
+      title.setAttribute('data-text', runCompleteText);
     }
-    if (el) el.textContent = `WAVE ${wave} REACHED (${clearedWaves} CLEARED)`;
+    if (el) {
+      el.textContent = typeof t === 'function'
+        ? t('wave_n_cleared', { n: wave, c: clearedWaves })
+        : `WAVE ${wave} REACHED (${clearedWaves} CLEARED)`;
+    }
 
     lastEndlessEarnedDiamonds = clearedWaves * 2;
     const basePrisms = Math.floor(clearedWaves / 10);
@@ -2906,11 +2916,13 @@ function updateDefeatWaveLine() {
 
     if (lootLine) {
       const diamondSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="filter: drop-shadow(0 0 5px rgba(0,229,255,0.7));"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
-      const prismSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="filter: drop-shadow(0 0 5px rgba(217,70,239,0.7));"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
+      const prismSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="filter: drop-shadow(0 0 5px rgba(217,70,239,0.7));"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="22" x2="12" y2="22"/></svg>`;
+
+      const rewardsLabel = typeof t === 'function' ? t('rewards') : 'REWARDS';
 
       lootLine.innerHTML = `
         <div class="result-reward-chip" style="--chip-border: #d946ef; --chip-label: #f5d0fe; margin: 10px auto 8px auto;">
-          <span class="reward-label">REWARDS</span>
+          <span class="reward-label">${rewardsLabel}</span>
           <div style="display:flex; align-items:center; gap:8px;">
             <span class="reward-amount">+${lastEndlessEarnedDiamonds}</span>
             ${diamondSvg}
@@ -2937,15 +2949,24 @@ function updateDefeatWaveLine() {
     }
   } else {
     if (defeatScreen) defeatScreen.classList.remove('endless-result-active');
-    if (kicker) kicker.textContent = isOverdriveMode ? 'HARDCORE' : 'LEVEL';
+    if (kicker) {
+      if (typeof t === 'function') {
+        kicker.textContent = isOverdriveMode ? t('hardcore') : t('level_kicker');
+      } else {
+        kicker.textContent = isOverdriveMode ? 'HARDCORE' : 'LEVEL';
+      }
+    }
     if (title) {
-      title.textContent = 'Failed';
-      title.setAttribute('data-text', 'Failed');
+      const failedText = typeof t === 'function' ? t('failed') : 'FAILED';
+      title.textContent = failedText;
+      title.setAttribute('data-text', failedText);
     }
     if (rewardsBox) rewardsBox.classList.add('hidden');
     if (el) {
       const maxW = (LEVELS_DATA[currentLevel] && LEVELS_DATA[currentLevel].totalWaves) || 1;
-      el.textContent = `WAVE ${Math.min(wave, maxW)} OF ${maxW} REACHED`;
+      el.textContent = typeof t === 'function'
+        ? t('wave_n_of_m', { n: Math.min(wave, maxW), m: maxW })
+        : `WAVE ${Math.min(wave, maxW)} OF ${maxW} REACHED`;
     }
   }
 }
@@ -2962,23 +2983,34 @@ function updateRevivePromptHeadings() {
 
   if (isEndlessMode) {
     if (defeatScreen) defeatScreen.classList.add('endless-result-active');
-    if (kicker) kicker.textContent = 'ENDLESS ARENA';
+    if (kicker) kicker.textContent = typeof t === 'function' ? t('endless_arena') : 'ENDLESS ARENA';
     if (el) {
       const clearedWaves = Math.max(0, wave - 1);
-      el.textContent = `WAVE ${wave} REACHED (${clearedWaves} CLEARED)`;
+      el.textContent = typeof t === 'function'
+        ? t('wave_n_cleared', { n: wave, c: clearedWaves })
+        : `WAVE ${wave} REACHED (${clearedWaves} CLEARED)`;
     }
   } else {
     if (defeatScreen) defeatScreen.classList.remove('endless-result-active');
-    if (kicker) kicker.textContent = isOverdriveMode ? 'HARDCORE' : 'LEVEL';
+    if (kicker) {
+      if (typeof t === 'function') {
+        kicker.textContent = isOverdriveMode ? t('hardcore') : t('level_kicker');
+      } else {
+        kicker.textContent = isOverdriveMode ? 'HARDCORE' : 'LEVEL';
+      }
+    }
     if (el) {
       const maxW = (LEVELS_DATA[currentLevel] && LEVELS_DATA[currentLevel].totalWaves) || 1;
-      el.textContent = `WAVE ${Math.min(wave, maxW)} OF ${maxW} REACHED`;
+      el.textContent = typeof t === 'function'
+        ? t('wave_n_of_m', { n: Math.min(wave, maxW), m: maxW })
+        : `WAVE ${Math.min(wave, maxW)} OF ${maxW} REACHED`;
     }
   }
 
   if (title) {
-    title.textContent = 'REVIVE?';
-    title.setAttribute('data-text', 'REVIVE?');
+    const revQ = typeof t === 'function' ? t('revive_q') : 'REVIVE?';
+    title.textContent = revQ;
+    title.setAttribute('data-text', revQ);
   }
 }
 
@@ -3004,7 +3036,7 @@ function triggerEmergencyRevivePrompt() {
   const upgBtn = document.getElementById('defeatUpgradesBtn');
   const levelsBtn = document.getElementById('defeatLevelsBtn');
   const shopBtn = document.getElementById('defeatShopBtn');
-
+  
   if (reviveBtn) {
     reviveBtn.classList.remove('hidden');
     const reviveIcon = getStandardAdIconSvg(noAdsPurchased);

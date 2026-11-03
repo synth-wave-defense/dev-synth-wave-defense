@@ -220,7 +220,8 @@ function getEnemyShapeSprite(shape, color, radius, glowColor) {
   sCtx.translate(cx, cy);
 
   //  Diffuse neon glow lighting pass.
-  const grad = sCtx.createRadialGradient(0, 0, 2, 0, 0, safeR * 2.2);
+  const outerR = Math.max(3, safeR * 2.2);
+const grad = sCtx.createRadialGradient(0, 0, Math.min(2, outerR - 1), 0, 0, outerR);
   grad.addColorStop(0, safeGlow + '66');
   grad.addColorStop(0.5, safeGlow + '20');
   grad.addColorStop(1, 'transparent');
@@ -360,10 +361,10 @@ function showIncomingAlert(type) {
   banner.className = 'incoming-alert-banner';
   if (type === 'boss') {
     banner.classList.add('boss');
-    textEl.textContent = '⚠️ BOSS INCOMING ⚠️';
+    textEl.textContent = t('boss_incoming');
   } else if (type === 'miniboss') {
     banner.classList.add('miniboss');
-    textEl.textContent = '⚡ MINI BOSS INCOMING ⚡';
+    textEl.textContent = t('miniboss_incoming');
   } else {
     return;
   }
@@ -872,7 +873,7 @@ function positionTutorialCloseStep() {
 
   const bubble = document.getElementById('tutorialBubble');
   const bubbleText = document.getElementById('tutorialBubbleText');
-  if (bubbleText) bubbleText.textContent = 'Tap here or ✕ to close';
+  if (bubbleText) bubbleText.textContent = typeof t === 'function' ? t('tut_close') : 'Tap here or ✕ to close';
   if (bubble) {
     bubble.style.left = targetX + 'px';
     bubble.style.top = (targetY - 52) + 'px';
@@ -933,13 +934,13 @@ function updateTutorialOverlay(now) {
   if (tutorialLevel === 1 && tutorialStep === 0) {
     positionTutorialDrag(now);
   } else if (tutorialLevel === 1 && tutorialStep === 1) {
-    positionTutorialTapOnElement(document.getElementById('waveBtn'), 'Tap GO to start the wave');
+    positionTutorialTapOnElement(document.getElementById('waveBtn'), typeof t === 'function' ? t('tut_tap_go') : 'Tap GO to start the wave');
     animateTutorialTapGesture(now);
   } else if (tutorialLevel === 2 && tutorialStep === 0 && tutorialTargetTower) {
-    positionTutorialTapAtWorld(tutorialTargetTower.x, tutorialTargetTower.y, 'Tap your tower');
+    positionTutorialTapAtWorld(tutorialTargetTower.x, tutorialTargetTower.y, typeof t === 'function' ? t('tut_tap_tower') : 'Tap your tower');
     animateTutorialTapGesture(now);
   } else if (tutorialLevel === 2 && tutorialStep === 1) {
-    positionTutorialTapOnElement(document.getElementById('inspectUpgradeBtn'), 'Upgrade it here');
+    positionTutorialTapOnElement(document.getElementById('inspectUpgradeBtn'), typeof t === 'function' ? t('tut_upgrade') : 'Upgrade it here');
     animateTutorialTapGesture(now);
   } else if (tutorialLevel === 2 && tutorialStep === 2) {
     positionTutorialCloseStep();
@@ -952,7 +953,8 @@ function positionTutorialDrag(now) {
   const srcEl = document.getElementById('btn-gun');
   if (!srcEl || !tutorialDestCell) return;
   const srcRect = srcEl.getBoundingClientRect();
-  applyTutorialHighlight({ x: srcRect.left, y: srcRect.top, w: srcRect.width, h: srcRect.height }, 'Drag a tower onto the field', 'drag');
+  const hintText = (typeof window.t === 'function') ? window.t('tut_drag_tower') : 'Drag a tower onto the field';
+  applyTutorialHighlight({ x: srcRect.left, y: srcRect.top, w: srcRect.width, h: srcRect.height }, hintText, 'drag');
 
   const destWorld = {
     x: tutorialDestCell.c * TILE_SIZE + TILE_SIZE / 2,
@@ -974,17 +976,17 @@ function positionTutorialDrag(now) {
   const srcCy = srcRect.top + srcRect.height / 2;
 
   const period = 2000;
-  const t = (now % period) / period;
+  const animT = (now % period) / period;
   let px, py, opacity, scale;
 
-  if (t < 0.20) {
+  if (animT < 0.20) {
     px = srcCx;
     py = srcCy;
-    const appearProg = Math.min(1, t / 0.12);
+    const appearProg = Math.min(1, animT / 0.12);
     opacity = appearProg;
     scale = 1.0 - Math.sin(appearProg * Math.PI * 0.5) * 0.08;
-  } else if (t < 0.70) {
-    const moveT = (t - 0.20) / 0.50;
+  } else if (animT < 0.70) {
+    const moveT = (animT - 0.20) / 0.50;
     const eased = moveT < 0.5 
       ? 2 * moveT * moveT 
       : 1 - Math.pow(-2 * moveT + 2, 2) / 2;
@@ -992,7 +994,7 @@ function positionTutorialDrag(now) {
     py = srcCy + (destScreen.y - srcCy) * eased;
     opacity = 1.0;
     scale = 0.92;
-  } else if (t < 0.85) {
+  } else if (animT < 0.85) {
     px = destScreen.x;
     py = destScreen.y;
     opacity = 1.0;
@@ -1000,7 +1002,7 @@ function positionTutorialDrag(now) {
   } else {
     px = destScreen.x;
     py = destScreen.y;
-    opacity = Math.max(0, 1.0 - (t - 0.85) / 0.15);
+    opacity = Math.max(0, 1.0 - (animT - 0.85) / 0.15);
     scale = 1.0;
   }
 
@@ -1404,15 +1406,15 @@ function getUpgradeStatSummary(key, currentLvl) {
 
   if (key === 'base_hp') {
     const curHp = 10 + Math.round(curEff);
-    if (isMaxed) return `<span class="upg-stat-cur">${curHp} HP</span> <span class="upg-stat-next">MAX</span>`;
-    return `<span class="upg-stat-cur">${curHp} HP</span> <span class="upg-stat-next">+1 HP</span>`;
+    const nextTag = isMaxed ? `<span class="upg-stat-next">MAX</span>` : `<span class="upg-stat-next">+1 HP</span>`;
+    return `<span class="upg-stat-cur"><span class="upg-lbl">HP:</span> ${curHp}</span>${nextTag}`;
   }
 
   if (key === 'base_gold') {
     const curGold = Math.round(curEff * 5);
     const stepGold = +(deltaEff * 5).toFixed(1);
-    if (isMaxed) return `<span class="upg-stat-cur">+${curGold}%</span> <span class="upg-stat-next">MAX</span>`;
-    return `<span class="upg-stat-cur">+${curGold}%</span> <span class="upg-stat-next">+${stepGold}%</span>`;
+    const nextTag = isMaxed ? `<span class="upg-stat-next">MAX</span>` : `<span class="upg-stat-next">+${stepGold}%</span>`;
+    return `<span class="upg-stat-cur"><span class="upg-lbl">GOLD:</span> +${curGold}%</span>${nextTag}`;
   }
 
   const towerType = key.replace('_power', '');
@@ -1428,22 +1430,20 @@ function getUpgradeStatSummary(key, currentLvl) {
     : (nextEff <= 10 ? nextEff * (conf.powerRange || 0) : 10 * (conf.powerRange || 0) + (nextEff - 10) * 0.01);
 
   const curRng = Math.round(conf.range * (1 + curRangeBonus));
-  const rngStep = +((nextRangeBonus - curRangeBonus) * 100).toFixed(1);
-
-  const dStep = +(deltaEff * (conf.powerDmg || 0) * 100).toFixed(1);
-  const rStep = +(deltaEff * (conf.powerRate || 0) * 100).toFixed(1);
+  const rngStep = Math.round((nextRangeBonus - curRangeBonus) * 100);
+  const dStep = Math.round(deltaEff * (conf.powerDmg || 0) * 100);
+  const rStep = Math.round(deltaEff * (conf.powerRate || 0) * 100);
 
   if (towerType === 'stasis') {
     const baseSlow = conf.slowFactor || 0.30;
     const baseDur = conf.slowDuration || 1.4;
     const curSlow = Math.min(90, Math.round(baseSlow * (1 + curEff * (conf.powerSlow || 0)) * 100));
-    const curDur = (baseDur * (1 + curEff * (conf.powerDuration || 0))).toFixed(2);
-
-    const sStep = +(deltaEff * (conf.powerSlow || 0) * 100).toFixed(1);
-    const durStep = +(deltaEff * (conf.powerDuration || 0) * 100).toFixed(1);
+    const curDur = +(baseDur * (1 + curEff * (conf.powerDuration || 0))).toFixed(1);
+    const sStep = Math.round(deltaEff * (conf.powerSlow || 0) * 100);
+    const durStep = Math.round(deltaEff * (conf.powerDuration || 0) * 100);
 
     const nextTag = isMaxed ? `<span class="upg-stat-next">MAX</span>` : `<span class="upg-stat-next">+${sStep}/${durStep}/${rngStep}%</span>`;
-    return `<span class="upg-stat-cur">SLOW ${curSlow}% · DUR ${curDur}s · RNG ${curRng}</span> ${nextTag}`;
+    return `<span class="upg-stat-cur"><span class="upg-lbl">SLOW:</span> ${curSlow}%<span class="upg-sep">·</span><span class="upg-lbl">DUR:</span> ${curDur}s<span class="upg-sep">·</span><span class="upg-lbl">RNG:</span> ${curRng}</span>${nextTag}`;
   }
 
   const baseDmg = conf.damage || conf.dps || conf.baseDps || 0;
@@ -1452,11 +1452,11 @@ function getUpgradeStatSummary(key, currentLvl) {
   if (conf.fireRate) {
     const curRate = +(conf.fireRate / (1 + curEff * (conf.powerRate || 0))).toFixed(2);
     const nextTag = isMaxed ? `<span class="upg-stat-next">MAX</span>` : `<span class="upg-stat-next">+${dStep}/${rStep}/${rngStep}%</span>`;
-    return `<span class="upg-stat-cur">DMG ${curDmg} · SPD ${curRate}s · RNG ${curRng}</span> ${nextTag}`;
+    return `<span class="upg-stat-cur"><span class="upg-lbl">DMG:</span> ${curDmg} <span class="upg-sep">·</span> <span class="upg-lbl">SPD:</span> ${curRate}s <span class="upg-sep">·</span> <span class="upg-lbl">RNG:</span> ${curRng}</span>${nextTag}`;
   }
 
   const nextTag = isMaxed ? `<span class="upg-stat-next">MAX</span>` : `<span class="upg-stat-next">+${dStep}/${rngStep}%</span>`;
-  return `<span class="upg-stat-cur">DPS ${curDmg} · RNG ${curRng}</span> ${nextTag}`;
+  return `<span class="upg-stat-cur"><span class="upg-lbl">DPS:</span> ${curDmg} <span class="upg-sep">·</span> <span class="upg-lbl">RNG:</span> ${curRng}</span>${nextTag}`;
 }
 
 // [UI.BU]
@@ -1734,9 +1734,9 @@ function renderUpgradeTree() {
     container.appendChild(card);
   };
 
-  addGroupLabel('Towers');
+  addGroupLabel(typeof t === 'function' ? t('towers_group') : 'Towers');
   towerRows.forEach(addRow);
-  addGroupLabel('Base');
+  addGroupLabel(typeof t === 'function' ? t('base_group') : 'Base');
   baseRows.forEach(addRow);
 }
 
@@ -2065,7 +2065,7 @@ function renderEndlessDashboardUI() {
   const bestWave = (typeof endlessBestWavesBySection !== 'undefined' && endlessBestWavesBySection[sec]) 
     ? endlessBestWavesBySection[sec] 
     : 0;
-  if (valEl) valEl.textContent = `BEST : WAVE ${bestWave}`;
+  if (valEl) valEl.textContent = typeof t === 'function' ? t('best_wave_n', { n: bestWave }) : `BEST : WAVE ${bestWave}`;
 
   const startWave = bestWave > 0 ? Math.floor(Math.max(0, bestWave - 1) / 10) * 10 + 1 : 1;
   const endWave = startWave + 9;
@@ -2088,7 +2088,7 @@ function renderEndlessDashboardUI() {
     `;
   }
 
-  if (mapEl) mapEl.textContent = `CHAPTER ${currentLevelSection}`;
+  if (mapEl) mapEl.textContent = typeof t === 'function' ? t('chapter_n', { n: currentLevelSection }) : `CHAPTER ${currentLevelSection}`;
 
   const prevBtn = document.getElementById('endlessNavPrev');
   const nextBtn = document.getElementById('endlessNavNext');
@@ -2211,7 +2211,7 @@ function renderLevelsGrid() {
       nextSecUnlocked = maxUnlockedLevel > currentLevelSection * LEVELS_PER_SECTION;
   }
 
-  if (partLabel) partLabel.textContent = `CHAPTER ${currentLevelSection}`;
+  if (partLabel) partLabel.textContent = typeof t === 'function' ? t('chapter_n', { n: currentLevelSection }) : `CHAPTER ${currentLevelSection}`;
 
   if (prevBtn) {
     const canGoPrev = currentLevelSection > 1;
@@ -2975,7 +2975,9 @@ function showStartScreen() {
     resumeBtn.classList.toggle('hidden', !hasSavedBattle);
   }
   if (playBtnText) {
-    playBtnText.textContent = hasSavedBattle ? 'PLAY NEW' : 'PLAY';
+    playBtnText.textContent = hasSavedBattle 
+      ? (typeof t === 'function' ? t('play_new') : 'PLAY NEW') 
+      : (typeof t === 'function' ? t('play') : 'PLAY');
   }
   updateBpProgressUI();
   updateMenuBadges();
@@ -3131,8 +3133,8 @@ function showSettings(fromSource = 'start') {
   const collapsibleWidget = document.getElementById('settingsCollapsible');
 
   if (fromSource === 'combat') {
-    if (kickerEl) kickerEl.textContent = 'Game';
-    if (titleEl) titleEl.textContent = 'Paused';
+    if (kickerEl) kickerEl.textContent = typeof t === 'function' ? t('game_kicker') : 'Game';
+    if (titleEl) titleEl.textContent = typeof t === 'function' ? t('paused_title') : 'Paused';
     if (combatActions) combatActions.classList.remove('hidden');
 
     const pauseRetryBtn = combatActions ? combatActions.querySelector('.result-btn-retry') : null;
@@ -3146,8 +3148,8 @@ function showSettings(fromSource = 'start') {
     showLoadoutWidgetIn('loadoutAnchor-pause');
     toggleSettingsAccordion(false);
   } else {
-    if (kickerEl) kickerEl.textContent = 'Game';
-    if (titleEl) titleEl.textContent = 'Settings';
+    if (kickerEl) kickerEl.textContent = typeof t === 'function' ? t('game_kicker') : 'Game';
+    if (titleEl) titleEl.textContent = typeof t === 'function' ? t('settings_title') : 'Settings';
     if (combatActions) combatActions.classList.add('hidden');
     if (backBtn) backBtn.classList.remove('hidden');
     if (loadoutAnchor) loadoutAnchor.classList.add('hidden');
@@ -3178,6 +3180,9 @@ function showSettings(fromSource = 'start') {
       ? window.OtaDiagnostics.localVersion
       : '1.36.38';
     versionLabel.textContent = `Version: ${liveVersion}`;
+  }
+  if (typeof populateLanguageDropdown === 'function') {
+    populateLanguageDropdown();
   }
   syncTopHudVisibility();
   updateDailyBonusBtnVisibility();
@@ -3417,22 +3422,22 @@ function renderBattlePassScreen() {
   const { tier, xpInTier, isMax } = getBpTierInfo(bpXp);
 
   const badgeText = document.getElementById('bpTierBadgeText');
-  if (badgeText) badgeText.textContent = `TIER ${tier} / 30`;
+  if (badgeText) badgeText.textContent = t('tier_n_of_m', { n: tier, m: 30 });
 
   const barFill = document.getElementById('bpXpBarFill');
   if (barFill) barFill.style.width = isMax ? '100%' : `${xpInTier}%`;
 
   const barText = document.getElementById('bpXpBarText');
-  if (barText) barText.textContent = isMax ? 'XP: MAX (3000/3000)' : `XP: ${xpInTier} / 100`;
+  if (barText) barText.textContent = isMax ? `XP: ${t('max')} (3000/3000)` : `XP: ${xpInTier} / 100`;
 
   const premBtn = document.getElementById('bpActivatePremBtn');
   if (premBtn) {
     if (bpPremiumPurchased) {
       premBtn.className = 'bp-action-btn bp-btn-premium owned';
-      premBtn.innerHTML = '<span>PREMIUM UNLOCKED</span>';
+      premBtn.innerHTML = `<span>${t('prem_unlocked')}</span>`;
     } else {
       premBtn.className = 'bp-action-btn bp-btn-premium';
-      premBtn.innerHTML = '<span>ACTIVATE PREMIUM ($2.99)</span>';
+      premBtn.innerHTML = `<span>${t('activate_prem')}</span>`;
     }
   }
 
@@ -3480,22 +3485,22 @@ function renderBattlePassScreen() {
 
     let freeBtnHtml = '';
     if (isFreeClaimed) {
-      freeBtnHtml = `<button class="bp-cell-btn claimed-btn">CLAIMED</button>`;
+      freeBtnHtml = `<button class="bp-cell-btn claimed-btn">${window.t('claimed')}</button>`;
     } else if (isUnlockedTier) {
       if (fr.type === 'ad_capsule' && !noAdsPurchased) {
-        freeBtnHtml = `<button class="bp-cell-btn ad-btn" onclick="claimBpFreeReward(${t})">CLAIM (AD)</button>`;
+        freeBtnHtml = `<button class="bp-cell-btn ad-btn" onclick="claimBpFreeReward(${t})">${window.t('watch_ad')}</button>`;
       } else {
-        freeBtnHtml = `<button class="bp-cell-btn claim-btn" onclick="claimBpFreeReward(${t})">CLAIM</button>`;
+        freeBtnHtml = `<button class="bp-cell-btn claim-btn" onclick="claimBpFreeReward(${t})">${window.t('claim')}</button>`;
       }
     } else {
-      freeBtnHtml = `<button class="bp-cell-btn locked-btn" onclick="claimBpFreeReward(${t})">LOCKED</button>`;
+      freeBtnHtml = `<button class="bp-cell-btn locked-btn" onclick="claimBpFreeReward(${t})">${window.t('locked')}</button>`;
     }
 
     freeCell.innerHTML = `<span class="bp-cell-title">${freeTitle}</span>${freeBtnHtml}`;
 
     const numBox = document.createElement('div');
     numBox.className = 'bp-tier-num-box';
-    numBox.innerHTML = `<span class="bp-tier-num">${t}</span><span class="bp-tier-status">${isUnlockedTier ? 'UNLOCKED' : 'LOCKED'}</span>`;
+    numBox.innerHTML = `<span class="bp-tier-num">${t}</span><span class="bp-tier-status">${isUnlockedTier ? window.t('unlocked') : window.t('locked')}</span>`;
 
     const premCell = document.createElement('div');
     const isPremClaimed = !!bpClaimedPrem[t];
@@ -3511,13 +3516,13 @@ function renderBattlePassScreen() {
 
     let premBtnHtml = '';
     if (isPremClaimed) {
-      premBtnHtml = `<button class="bp-cell-btn claimed-btn">CLAIMED</button>`;
+      premBtnHtml = `<button class="bp-cell-btn claimed-btn">${window.t('claimed')}</button>`;
     } else if (bpPremiumPurchased && isUnlockedTier) {
-      premBtnHtml = `<button class="bp-cell-btn claim-btn" onclick="claimBpPremReward(${t})">CLAIM</button>`;
+      premBtnHtml = `<button class="bp-cell-btn claim-btn" onclick="claimBpPremReward(${t})">${window.t('claim')}</button>`;
     } else if (!bpPremiumPurchased) {
       premBtnHtml = `<button class="bp-cell-btn locked-btn" onclick="claimBpPremReward(${t})">PREMIUM</button>`;
     } else {
-      premBtnHtml = `<button class="bp-cell-btn locked-btn" onclick="claimBpPremReward(${t})">LOCKED</button>`;
+      premBtnHtml = `<button class="bp-cell-btn locked-btn" onclick="claimBpPremReward(${t})">${window.t('locked')}</button>`;
     }
 
     premCell.innerHTML = `<span class="bp-cell-title">${premTitle}</span>${premBtnHtml}`;
@@ -4736,15 +4741,15 @@ function renderShopScreen() {
     if (dailyGiftsClaimedCount >= 3) {
       giftBtn.disabled = true;
       giftBtn.className = 'shop-item-btn shop-btn-claimed';
-      giftBtn.innerHTML = '<span>CLAIMED</span>';
+      giftBtn.innerHTML = `<span>${t('claimed')}</span>`;
     } else if (dailyGiftsClaimedCount === 0 || noAdsPurchased) {
       giftBtn.disabled = false;
       giftBtn.className = 'shop-item-btn shop-btn-free';
-      giftBtn.innerHTML = '<span>FREE</span>';
+      giftBtn.innerHTML = `<span>${t('free')}</span>`;
     } else {
       giftBtn.disabled = false;
       giftBtn.className = 'shop-item-btn shop-btn-ad';
-      giftBtn.innerHTML = '<svg width="16" height="13" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:4px;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="currentColor"/></svg><span>WATCH AD</span>';
+      giftBtn.innerHTML = `<svg width="16" height="13" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:4px;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="currentColor"/></svg><span>${t('watch_ad')}</span>`;
     }
   }
 
@@ -4793,7 +4798,7 @@ function renderShopScreen() {
     if (timeModTier >= 1) {
       t1Btn.disabled = true;
       t1Btn.className = 'shop-item-btn shop-btn-claimed';
-      t1Btn.innerHTML = '<span>OWNED</span>';
+      t1Btn.innerHTML = `<span>${typeof t === 'function' ? t('owned') : 'OWNED'}</span>`;
     } else {
       t1Btn.disabled = false;
       t1Btn.className = 'shop-item-btn shop-btn-buy';
@@ -4806,7 +4811,7 @@ function renderShopScreen() {
     if (timeModTier >= 2) {
       t2Btn.disabled = true;
       t2Btn.className = 'shop-item-btn shop-btn-claimed';
-      t2Btn.innerHTML = '<span>OWNED</span>';
+      t2Btn.innerHTML = `<span>${typeof t === 'function' ? t('owned') : 'OWNED'}</span>`;
     } else if (timeModTier < 1) {
       t2Btn.disabled = false;
       t2Btn.className = 'shop-item-btn shop-btn-buy locked-buy';
@@ -4832,7 +4837,7 @@ function renderShopScreen() {
     if (noAdsPurchased) {
       noAdsBtn.disabled = true;
       noAdsBtn.className = 'shop-item-btn shop-btn-claimed';
-      noAdsBtn.innerHTML = '<span>OWNED</span>';
+      noAdsBtn.innerHTML = `<span>${typeof t === 'function' ? t('owned') : 'OWNED'}</span>`;
     } else {
       noAdsBtn.disabled = false;
       noAdsBtn.className = 'shop-item-btn shop-btn-buy';
@@ -4960,7 +4965,7 @@ function renderDailyLoginModal() {
       <svg width="280" height="32" viewBox="0 0 280 32" style="display:block; margin:auto;">
         ${trackNodesHtml}
       </svg>
-      <div class="daily-streak-sub">DAY ${activeStreakDay} OF 7</div>
+      <div class="daily-streak-sub">${t('day_n_of_7', { n: activeStreakDay })}</div>
     `;
   }
   
@@ -5002,8 +5007,8 @@ function renderDailyLoginModal() {
 
       card.innerHTML = `
         <div class="day7-left">
-          <div class="day7-badge">GRAND BONUS</div>
-          <div class="day7-title">DAY 7</div>
+          <div class="day7-badge">${t('grand_bonus')}</div>
+          <div class="day7-title">${t('day_n', { n: 7 })}</div>
           ${statusBadge}
         </div>
         <div class="day7-right">
@@ -5023,7 +5028,7 @@ function renderDailyLoginModal() {
 
       let topBadge = '';
       if (isActive) {
-        topBadge = `<div class="daily-today-badge">TODAY</div>`;
+        topBadge = `<div class="daily-today-badge">${t('today')}</div>`;
       }
 
       let bottomBadge = '';
@@ -5034,7 +5039,7 @@ function renderDailyLoginModal() {
 
       card.innerHTML = `
         ${topBadge}
-        <span class="daily-card-num">DAY 5</span>
+        <span class="daily-card-num">${t('day_n', { n: 5 })}</span>
         <div class="daily-dual-wrap">
           <div class="daily-dual-side">
             ${getDailyDiamondSvg(16, iconOpacity)}
@@ -5053,7 +5058,7 @@ function renderDailyLoginModal() {
 
       let topBadge = '';
       if (isActive) {
-        topBadge = `<div class="daily-today-badge">TODAY</div>`;
+        topBadge = `<div class="daily-today-badge">${t('today')}</div>`;
       }
 
       let rewardIcon = item.prisms > 0 ? getDailyPrismSvg(22, iconOpacity) : getDailyDiamondSvg(22, iconOpacity);
@@ -5067,7 +5072,7 @@ function renderDailyLoginModal() {
 
       card.innerHTML = `
         ${topBadge}
-        <span class="daily-card-num">DAY ${d}</span>
+        <span class="daily-card-num">${t('day_n', { n: d })}</span>
         <div class="daily-card-icon-wrap">${rewardIcon}</div>
         <span class="daily-card-val">${rewardValText}</span>
         ${bottomBadge}
@@ -5085,7 +5090,7 @@ function renderDailyLoginModal() {
   if (isClaimedToday) {
     if (normalBtn) {
       normalBtn.disabled = true;
-      normalBtn.innerHTML = '<span>CLAIMED TODAY</span>';
+      normalBtn.innerHTML = `<span>${t('claimed_today')}</span>`;
     }
     if (doubleBtn) {
       doubleBtn.disabled = true;
@@ -5094,19 +5099,19 @@ function renderDailyLoginModal() {
   } else {
     if (normalBtn) {
       normalBtn.disabled = false;
-      normalBtn.innerHTML = '<span>CLAIM</span>';
+      normalBtn.innerHTML = `<span>${t('claim')}</span>`;
     }
     if (doubleBtn) {
       doubleBtn.disabled = false;
       doubleBtn.style.display = 'flex';
       if (noAdsPurchased) {
-        if (doubleLabel) doubleLabel.textContent = 'CLAIM x2 (FREE)';
+        if (doubleLabel) doubleLabel.textContent = t('claim_x2_free');
         if (adIcon) {
           adIcon.style.display = 'inline-block';
           adIcon.outerHTML = `<svg id="dailyDoubleAdIcon" width="18" height="15" viewBox="0 0 16 13" fill="none" stroke="currentColor" style="flex:none; margin-right:6px; vertical-align:middle;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke-width="1.6" opacity="0.85"/><polygon points="6,3.5 11,6.5 6,9.5" fill="currentColor" stroke="none" opacity="0.75"/><line x1="1.5" y1="12" x2="14.5" y2="1" stroke-width="1.8" stroke-linecap="round"/></svg>`;
         }
       } else {
-        if (doubleLabel) doubleLabel.textContent = 'CLAIM x2';
+        if (doubleLabel) doubleLabel.textContent = t('claim_x2');
         if (adIcon) {
           adIcon.style.display = 'inline-block';
           adIcon.outerHTML = `<svg id="dailyDoubleAdIcon" width="18" height="15" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:6px;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="currentColor"/></svg>`;
@@ -5637,16 +5642,18 @@ function updateInspectUI() {
   const sellValTextEl = document.getElementById('inspectSellValText');
   const sellTitleEl = document.getElementById('inspectSellTitle');
 
+  const _tr = (typeof window.t === 'function') ? window.t : ((k) => k.toUpperCase());
+
   if (!canUpgradeLevel) {
     upgBtn.disabled = true;
     if (upgValEl) upgValEl.textContent = '';
     if (upgIconEl) upgIconEl.style.display = 'none';
-    if (upgStatusEl) upgStatusEl.textContent = 'LOCKED';
+    if (upgStatusEl) upgStatusEl.textContent = _tr('locked');
   } else if (t.level >= 3) {
     upgBtn.disabled = true;
     if (upgValEl) upgValEl.textContent = '';
     if (upgIconEl) upgIconEl.style.display = 'none';
-    if (upgStatusEl) upgStatusEl.textContent = 'MAX';
+    if (upgStatusEl) upgStatusEl.textContent = _tr('max');
   } else {
     const canAfford = gold >= upgCost;
     upgBtn.disabled = !canAfford;
@@ -5655,7 +5662,7 @@ function updateInspectUI() {
       upgValEl.style.color = canAfford ? '#ffffff' : '#f05f9f';
     }
     if (upgIconEl) upgIconEl.style.display = 'inline-flex';
-    if (upgStatusEl) upgStatusEl.textContent = 'UPGRADE';
+    if (upgStatusEl) upgStatusEl.textContent = _tr('upgrade');
   }
 
   const refund = Math.floor(t.totalInvested * 0.7);
@@ -5663,12 +5670,24 @@ function updateInspectUI() {
   const sellIconEl = sellBtn ? sellBtn.querySelector('.cost-icon') : null;
   if (sellConfirmArmed) {
     if (sellBtn) sellBtn.classList.add('confirm-armed');
-    if (sellTitleEl) sellTitleEl.textContent = 'CONFIRM?';
+    if (sellTitleEl) sellTitleEl.textContent = _tr('confirm_q');
     if (sellValTextEl) sellValTextEl.textContent = `+${refund}`;
     if (sellIconEl) sellIconEl.style.display = 'none';
   } else {
     if (sellBtn) sellBtn.classList.remove('confirm-armed');
-    if (sellTitleEl) sellTitleEl.textContent = 'SELL';
+    if (sellTitleEl) sellTitleEl.textContent = _tr('sell');
+    if (sellValTextEl) sellValTextEl.textContent = `${refund}`;
+    if (sellIconEl) sellIconEl.style.display = '';
+  }
+  
+  if (sellConfirmArmed) {
+    if (sellBtn) sellBtn.classList.add('confirm-armed');
+    if (sellTitleEl) sellTitleEl.textContent = _tr('confirm_q');
+    if (sellValTextEl) sellValTextEl.textContent = `+${refund}`;
+    if (sellIconEl) sellIconEl.style.display = 'none';
+  } else {
+    if (sellBtn) sellBtn.classList.remove('confirm-armed');
+    if (sellTitleEl) sellTitleEl.textContent = _tr('sell');
     if (sellValTextEl) sellValTextEl.textContent = `${refund}`;
     if (sellIconEl) sellIconEl.style.display = '';
   }
@@ -6499,7 +6518,7 @@ function warmUpNebulaAndHideLoader() {
       }
 
       if (loadingTextEl) {
-        loadingTextEl.textContent = 'READY';
+        loadingTextEl.textContent = typeof t === 'function' ? t('ready') : 'READY';
       }
 
       const titleBox = document.createElement('div');
@@ -6524,7 +6543,7 @@ function warmUpNebulaAndHideLoader() {
       goBtn.style.fontSize = '14px';
       goBtn.style.opacity = '0';
       goBtn.style.animation = 'goBtnAppear 1s ease-out forwards, goBtnPulse 2s infinite ease-in-out 1s';
-      goBtn.innerHTML = '<span>GO</span>';
+      goBtn.innerHTML = `<span>${typeof t === 'function' ? t('go') : 'GO'}</span>`;
 
       // [UI.IW]
       goBtn.onclick = () => {
@@ -7513,9 +7532,10 @@ function drawEnemyModel(e, showHpBar = true) {
       }
     }
   } else {
-    const rad = e.radius || 16;
-    const glowColor = e.glow || renderColor;
-    const glowGrad = ctx.createRadialGradient(0, 0, 2, 0, 0, rad * 2.5);
+    const rad = Math.max(1, e.radius || 16);
+const glowColor = e.glow || renderColor;
+const outerR = Math.max(3, rad * 2.5);
+const glowGrad = ctx.createRadialGradient(0, 0, Math.min(2, outerR - 1), 0, 0, outerR);
     glowGrad.addColorStop(0, glowColor + (e.isBoss ? '88' : '66'));
     glowGrad.addColorStop(0.5, glowColor + (e.isBoss ? '30' : '20'));
     glowGrad.addColorStop(1, 'transparent');
@@ -7922,7 +7942,8 @@ function render(now) {
     ctx.save();
     const w = window.innerWidth;
     const h = window.innerHeight;
-    const endlessTint = ctx.createRadialGradient(w * 0.5, h * 0.35, 10, w * 0.5, h * 0.45, Math.max(w, h) * 0.75);
+    const maxDim = Math.max(100, Math.max(w, h) * 0.75);
+    const endlessTint = ctx.createRadialGradient(w * 0.5, h * 0.35, 10, w * 0.5, h * 0.45, maxDim);
     endlessTint.addColorStop(0, 'rgba(110, 15, 140, 0.28)');
     endlessTint.addColorStop(0.5, 'rgba(55, 8, 75, 0.18)');
     endlessTint.addColorStop(1, 'rgba(4, 5, 14, 0.05)');
@@ -7933,7 +7954,7 @@ function render(now) {
     ctx.save();
     const w = window.innerWidth;
     const h = window.innerHeight;
-    const hardcoreTint = ctx.createRadialGradient(w * 0.5, h * 0.35, 10, w * 0.5, h * 0.45, Math.max(w, h) * 0.75);
+    const hardcoreTint = ctx.createRadialGradient(w * 0.5, h * 0.35, 10, w * 0.5, h * 0.45, maxDim);
     hardcoreTint.addColorStop(0, 'rgba(120, 10, 60, 0.26)');
     hardcoreTint.addColorStop(0.5, 'rgba(60, 5, 30, 0.16)');
     hardcoreTint.addColorStop(1, 'rgba(4, 5, 14, 0.05)');
