@@ -1724,32 +1724,32 @@ function handleNodeClick(key, stepIndex) {
 
   if (currentVal >= 15 && !isScalingBranch(key)) {
     sfx('denied');
-    showHintToast('Branch is ASCENDED MAX (Lvl 15)');
+    showHintToast(typeof t === 'function' ? t('branch_ascended_max') : 'Branch is ASCENDED MAX (Lvl 15)');
     return;
   }
 
   const maxStep = getMaxUpgradeStep();
   const isPhase2UnlockedGlobally = getLoadoutReferenceLevel() >= 31 || maxUnlockedLevel >= 31 || (typeof clearedLevels !== 'undefined' && clearedLevels.includes(30));
 
-if (targetStep <= 10) {
+  if (targetStep <= 10) {
     if (targetStep > maxStep) {
       let lvlNeeded = 11;
       if (targetStep > 8) lvlNeeded = 31;
       else if (targetStep > 6) lvlNeeded = 21;
       sfx('denied');
-      showHintToast(`Unlocks on Level ${lvlNeeded}`);
+      showHintToast(typeof t === 'function' ? t('unlocks_on_level_n', { n: lvlNeeded }) : `Unlocks on Level ${lvlNeeded}`);
       return;
     }
   } else {
     if (!isPhase2UnlockedGlobally) {
       sfx('denied');
-      showHintToast('Unlocks on Level 31');
+      showHintToast(typeof t === 'function' ? t('unlocks_on_level_n', { n: 31 }) : 'Unlocks on Level 31');
       return;
     }
     // Проверка для входа в ASC: все ветки должны быть 10/10
     if (!areAllBranchesMaxPhase1()) {
       sfx('denied');
-      showHintToast('Upgrade all branches to 10/10 first to unlock ASC');
+      showHintToast(typeof t === 'function' ? t('upgrade_all_branches_10') : 'Upgrade all branches to 10/10 first to unlock ASC');
       return;
     }
   }
@@ -1766,15 +1766,14 @@ if (targetStep <= 10) {
     renderUpgradeTree();
     saveGameSoon();
     safeTrack('upgrade_purchased', { key, step: targetStep });
-    // Пункт 6: Toast о покупке убран — изменение сразу видно в строке характеристик под полосками
   } else {
     sfx('denied');
     if (diamonds < costD && prisms < costP) {
-      showHintToast('Not enough Diamonds & Prisms!');
+      showHintToast(typeof t === 'function' ? t('not_enough_diamonds_prisms') : 'Not enough Diamonds & Prisms!');
     } else if (diamonds < costD) {
-      showHintToast('Not enough Diamonds!');
+      showHintToast(typeof t === 'function' ? t('not_enough_diamonds') : 'Not enough Diamonds!');
     } else {
-      showHintToast('Not enough Prisms!');
+      showHintToast(typeof t === 'function' ? t('not_enough_prisms') : 'Not enough Prisms!');
     }
   }
 }
@@ -2085,7 +2084,7 @@ function resetLevelState() {
   const btn = document.getElementById('waveBtn');
   const btnText = document.getElementById('waveBtnText');
   if (btn) btn.disabled = false;
-  if (btnText) btnText.textContent = 'Go';
+  if (btnText) btnText.textContent = (typeof t === 'function' ? t('go') : 'Go');
   updateWaveCircle(0);
   updateUI();
   if (devMode) refreshDevDropdowns();
@@ -2276,12 +2275,16 @@ function calculateLevelStarsAndReward(lvl, currentHp, startingHp) {
 
   const prevBestStars = levelStars[lvl] || 0;
   let rewardDiamonds = 0;
+  let rewardKey = 'farm_reward';
   let rewardLabel = 'FARM REWARD';
 
   if (!isOverdriveMode && earnedStars > prevBestStars) {
     const deltaStars = earnedStars - prevBestStars;
     rewardDiamonds = deltaStars * 2;
-    rewardLabel = (prevBestStars === 0) ? 'FIRST CLEAR BONUS' : 'STAR UPGRADE BONUS';
+    rewardKey = (prevBestStars === 0) ? 'first_clear_bonus' : 'star_upgrade_bonus';
+    rewardLabel = (prevBestStars === 0) 
+      ? (typeof t === 'function' ? t('first_clear_bonus') : 'FIRST CLEAR BONUS') 
+      : (typeof t === 'function' ? t('star_upgrade_bonus') : 'STAR UPGRADE BONUS');
     levelStars[lvl] = earnedStars;
     if (!clearedLevels.includes(lvl)) {
       clearedLevels.push(lvl);
@@ -2290,10 +2293,11 @@ function calculateLevelStarsAndReward(lvl, currentHp, startingHp) {
     if (lvl <= 20) rewardDiamonds = 1;
     else if (lvl <= 40) rewardDiamonds = 2;
     else rewardDiamonds = 3;
-    rewardLabel = 'FARM REWARD';
+    rewardKey = 'farm_reward';
+    rewardLabel = (typeof t === 'function' ? t('farm_reward') : 'FARM REWARD');
   }
 
-  return { stars: earnedStars, reward: rewardDiamonds, rewardLabel: rewardLabel };
+  return { stars: earnedStars, reward: rewardDiamonds, rewardLabel, rewardKey };
 }
 
 // [ENG.BL]
@@ -2345,7 +2349,6 @@ async function showAdPlaceholder(onRewarded, onNotRewarded) {
         if (typeof logAdEvent === 'function') logAdEvent('FailedToLoad: ' + errStr);
       });
 
-      // Внутри showAdPlaceholder перед показом:
       if (!isAdMobVideoReady) {
         if (typeof logAdEvent === 'function') logAdEvent('Preparing ad before show...');
         await AdMob.prepareRewardVideoAd({
@@ -2428,7 +2431,8 @@ function claimX2Reward() {
     updateDiamondUI();
     if (claimBtn) {
       claimBtn.disabled = true;
-      claimBtn.innerHTML = `<span style="display:inline-flex; align-items:center; gap:4px;">CLAIMED x2 (+${lastVictoryDiamondsReward} <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="currentColor" fill-opacity="0.25"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>)</span>`;
+      const claimedLabel = typeof t === 'function' ? t('claimed_x2') : 'CLAIMED x2';
+      claimBtn.innerHTML = `<span style="display:inline-flex; align-items:center; gap:4px;">${claimedLabel} (+${lastVictoryDiamondsReward} <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="currentColor" fill-opacity="0.25"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>)</span>`;
     }
     sfx('reward');
     saveGame();
@@ -2457,9 +2461,10 @@ function claimOverdriveBonusPrism() {
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 3px;">
           <polygon points="12 2 21 12 12 22 3 12" fill="currentColor" fill-opacity="0.25"/>
           <polyline points="3 12 12 15 21 12"/>
-          <line x1="12" y1="2" x2="12" y2="22"/>
+          <line x1="12" y1="22" x2="12" y2="22"/>
         </svg>`;
-      claimBtn.innerHTML = `<span style="display:inline-flex; align-items:center;">CLAIMED +1 ${prismSvg}</span>`;
+      const claimedPlus1Label = typeof t === 'function' ? t('claimed_plus_1') : 'CLAIMED +1';
+      claimBtn.innerHTML = `<span style="display:inline-flex; align-items:center;">${claimedPlus1Label} ${prismSvg}</span>`;
     }
     sfx('reward');
     saveGame();
@@ -2479,11 +2484,12 @@ function restoreNormalVictoryRewardBox() {
   const borderCol = isHyperion ? '#3b82f6' : '#00e5ff';
   const labelCol = isHyperion ? '#93c5fd' : '#8ef3ff';
   const dFill = isHyperion ? 'rgba(59,130,246,.28)' : 'rgba(0,229,255,.25)';
+  const diamondsLabel = typeof t === 'function' ? t('diamonds_upper') : 'DIAMONDS';
   if (rewardBox) {
     rewardBox.style.setProperty('--chip-border', borderCol);
     rewardBox.style.setProperty('--chip-label', labelCol);
     rewardBox.innerHTML = `
-      <span class="reward-label" id="victoryRewardBadgeType">DIAMONDS</span>
+      <span class="reward-label" id="victoryRewardBadgeType">${diamondsLabel}</span>
       <div style="display:flex; align-items:center; gap:6px;">
         <span class="reward-amount" id="victoryRewardVal">+2</span>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${borderCol}" stroke-width="2.2" stroke-linejoin="round">
@@ -2528,7 +2534,7 @@ function triggerVictory() {
   music('win');
   sfx('victory');
   vibrate('medium');
-  const { stars, reward, rewardLabel } = calculateLevelStarsAndReward(currentLevel, baseHp, matchStartBaseHp);
+  const { stars, reward, rewardLabel, rewardKey } = calculateLevelStarsAndReward(currentLevel, baseHp, matchStartBaseHp);
   lastVictoryDiamondsReward = reward;
   hasClaimedX2ThisLevel = false;
 
@@ -2543,8 +2549,8 @@ function triggerVictory() {
     const badgeTypeEl = document.getElementById('victoryRewardBadgeType');
     if (badgeTypeEl) {
       const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
-      badgeTypeEl.textContent = rewardLabel === 'DIAMONDS' ? 'DIAMONDS' : rewardLabel;
-      badgeTypeEl.style.color = (rewardLabel === 'FIRST CLEAR BONUS' || rewardLabel === 'STAR UPGRADE BONUS') ? '#f59e0b' : (isHyperion ? '#93c5fd' : '#8ef3ff');
+      badgeTypeEl.textContent = rewardLabel;
+      badgeTypeEl.style.color = (rewardKey === 'first_clear_bonus' || rewardKey === 'star_upgrade_bonus') ? '#f59e0b' : (isHyperion ? '#93c5fd' : '#8ef3ff');
     }
 
     const rewardValEl = document.getElementById('victoryRewardVal');
@@ -2555,27 +2561,28 @@ function triggerVictory() {
       claimBtn.disabled = false;
       claimBtn.classList.remove('hidden');
       const activeIcon = getStandardAdIconSvg(noAdsPurchased);
-      claimBtn.innerHTML = `${activeIcon}<span>CLAIM x2</span>`;
+      const claimX2Label = typeof t === 'function' ? t('claim_x2') : 'CLAIM x2';
+      claimBtn.innerHTML = `${activeIcon}<span>${claimX2Label}</span>`;
       claimBtn.onclick = claimX2Reward;
     }
   } else {
     const isFirstOverdriveClear = !overdriveClearedLevels[currentLevel];
     let gainedPrisms = 0;
     let gainedDiamonds = 0;
-    let odRewardLabel = 'HARDCORE FARM';
+    let odRewardLabel = typeof t === 'function' ? t('hardcore_farm') : 'HARDCORE FARM';
 
     if (isFirstOverdriveClear) {
       const isBossLvl = (currentLevel % LEVELS_PER_SECTION === 0);
       gainedPrisms = isBossLvl ? 5 : 3;
       gainedDiamonds = isBossLvl ? 30 : 15;
-      odRewardLabel = 'HARDCORE CLEAR';
+      odRewardLabel = typeof t === 'function' ? t('hardcore_clear') : 'HARDCORE CLEAR';
       overdriveClearedLevels[currentLevel] = true;
     } else {
       if (currentLevel <= 20) gainedDiamonds = 3;
       else if (currentLevel <= 40) gainedDiamonds = 4;
       else gainedDiamonds = 5;
       gainedPrisms = 0;
-      odRewardLabel = 'HARDCORE FARM';
+      odRewardLabel = typeof t === 'function' ? t('hardcore_farm') : 'HARDCORE FARM';
     }
 
     diamonds += gainedDiamonds;
@@ -2592,7 +2599,7 @@ function triggerVictory() {
       rewardBox.style.setProperty('--chip-label', '#ffd1f4');
 
       const diamondSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="flex:none; filter: drop-shadow(0 0 5px rgba(0,229,255,0.7));"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
-      const prismSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="flex:none; filter: drop-shadow(0 0 5px rgba(217,70,239,0.7));"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
+      const prismSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="flex:none; filter: drop-shadow(0 0 5px rgba(217,70,239,0.7));"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="22" x2="12" y2="22"/></svg>`;
 
       if (gainedPrisms > 0) {
         rewardBox.innerHTML = `
@@ -2626,13 +2633,14 @@ function triggerVictory() {
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 4px;">
           <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.35)"/>
           <polyline points="3 12 12 15 21 12"/>
-          <line x1="12" y1="2" x2="12" y2="22"/>
+          <line x1="12" y1="22" x2="12" y2="22"/>
         </svg>`;
 
-      const prefix = noAdsPurchased ? 'FREE: ' : '';
+      const prefix = noAdsPurchased ? ((typeof t === 'function' ? t('free_prefix') : 'FREE: ') + ' ') : '';
+      const claimPlus1Label = typeof t === 'function' ? t('claim_plus_1') : 'CLAIM +1';
       claimBtn.innerHTML = `
         ${adSvg}
-        <span style="display:inline-flex; align-items:center;">${prefix}CLAIM +1 ${prismSvg}</span>
+        <span style="display:inline-flex; align-items:center;">${prefix}${claimPlus1Label} ${prismSvg}</span>
       `;
       claimBtn.onclick = claimOverdriveBonusPrism;
     }
@@ -2674,7 +2682,6 @@ function triggerVictory() {
   }
   clearActiveBattleSave();
 }
-
 // [ENG.BY]
 function playVictoryUnlockFx() {
   if (pendingUpgradeUnlockFx) {
@@ -2832,7 +2839,7 @@ function claimEndlessDoubleRewards() {
     if (doubleBtn) {
       doubleBtn.disabled = true;
       const diamondSvg = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="currentColor" fill-opacity="0.25"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
-      const prismSvg = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="currentColor" fill-opacity="0.25"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
+      const prismSvg = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="currentColor" fill-opacity="0.25"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="22" x2="12" y2="22"/></svg>`;
       
       let rewardText = `(+${lastEndlessEarnedDiamonds} ${diamondSvg}`;
       if (lastEndlessEarnedPrisms > 0) {
@@ -2840,7 +2847,8 @@ function claimEndlessDoubleRewards() {
       }
       rewardText += `)`;
 
-      doubleBtn.innerHTML = `<span style="display:inline-flex; align-items:center; gap:4px; font-size:11px; letter-spacing:0.5px;">CLAIMED x2 ${rewardText}</span>`;
+      const claimedLabel = typeof t === 'function' ? t('claimed_x2') : 'CLAIMED x2';
+      doubleBtn.innerHTML = `<span style="display:inline-flex; align-items:center; gap:4px; font-size:11px; letter-spacing:0.5px;">${claimedLabel} ${rewardText}</span>`;
     }
     sfx('reward');
     saveGame();
@@ -2939,9 +2947,10 @@ function updateDefeatWaveLine() {
         doubleBtn.classList.remove('hidden');
         doubleBtn.disabled = false;
         const endlessAdIcon = getStandardAdIconSvg(noAdsPurchased);
+        const claimX2Label = typeof t === 'function' ? t('claim_x2') : 'CLAIM x2';
         doubleBtn.innerHTML = `
           ${endlessAdIcon}
-          <span style="color:#ffffff; font-weight:800; letter-spacing:1px;">CLAIM x2</span>
+          <span style="color:#ffffff; font-weight:800; letter-spacing:1px;">${claimX2Label}</span>
         `;
       } else {
         doubleBtn.classList.add('hidden');
@@ -3040,9 +3049,12 @@ function triggerEmergencyRevivePrompt() {
   if (reviveBtn) {
     reviveBtn.classList.remove('hidden');
     const reviveIcon = getStandardAdIconSvg(noAdsPurchased);
+    const reviveText = noAdsPurchased 
+      ? (typeof t === 'function' ? t('free_revive') : 'FREE REVIVE') 
+      : (typeof t === 'function' ? t('revive') : 'REVIVE');
     reviveBtn.innerHTML = `
       ${reviveIcon}
-      <span id="reviveBtnLabel">${noAdsPurchased ? 'FREE REVIVE' : 'REVIVE'}</span>
+      <span id="reviveBtnLabel">${reviveText}</span>
     `;
     setReviveBtnLabel(reviveRemainingSeconds);
   }
@@ -3904,7 +3916,7 @@ window.forcePauseForBackground = forcePauseForBackground;
 function claimDailyGiftsPack() {
   checkDailyGiftReset();
   if (dailyGiftsClaimedCount >= 3) {
-    showHintToast('Daily limit reached (3/3)');
+    showHintToast(typeof t === 'function' ? t('daily_limit_reached') : 'Daily limit reached (3/3)');
     return;
   }
 
@@ -3915,14 +3927,14 @@ function claimDailyGiftsPack() {
     let msg = '';
     if (dailyGiftsClaimedCount === 0) {
       diamonds += 10;
-      msg = '+10 Diamonds claimed!';
+      msg = typeof t === 'function' ? t('diamonds_claimed', { n: 10 }) : '+10 Diamonds claimed!';
     } else if (dailyGiftsClaimedCount === 1) {
       diamonds += 15;
-      msg = '+15 Diamonds claimed!';
+      msg = typeof t === 'function' ? t('diamonds_claimed', { n: 15 }) : '+15 Diamonds claimed!';
     } else {
       diamonds += 20;
       prisms += 1;
-      msg = '+20 Diamonds & +1 Prism claimed!';
+      msg = typeof t === 'function' ? t('combo_claimed', { d: 20, p: 1 }) : '+20 Diamonds & +1 Prism claimed!';
     }
     dailyGiftsClaimedCount++;
     updateDiamondUI();
@@ -3944,7 +3956,7 @@ function claimDailyGiftsPack() {
 // [ENG.DM]
 function synthesizePrism() {
   if (diamonds < 20) {
-    showHintToast('Not enough Diamonds! (20 required)');
+    showHintToast(typeof t === 'function' ? t('not_enough_diamonds_cost', { cost: 20 }) : 'Not enough Diamonds! (20 required)');
     sfx('denied');
     return;
   }
@@ -3955,19 +3967,19 @@ function synthesizePrism() {
   saveGame();
   sfx('reward');
   if (typeof renderShopScreen === 'function') renderShopScreen();
-  showHintToast('+1 Prism synthesized!');
+  showHintToast(typeof t === 'function' ? t('prism_synthesized') : '+1 Prism synthesized!');
 }
 
 // [ENG.DN]
 function deconstructPrism() {
   const isUnlocked = (typeof devMode !== 'undefined' && devMode) || (typeof maxUnlockedLevel !== 'undefined' && maxUnlockedLevel >= 31) || (typeof clearedLevels !== 'undefined' && clearedLevels.includes(30));
   if (!isUnlocked) {
-    showHintToast('Locked! Requires Level 31');
+    showHintToast(typeof t === 'function' ? t('locked_requires_lvl_31') : 'Locked! Requires Level 31');
     sfx('denied');
     return;
   }
   if (prisms < 1) {
-    showHintToast('Not enough Prisms! (1 required)');
+    showHintToast(typeof t === 'function' ? t('not_enough_prisms_cost', { cost: 1 }) : 'Not enough Prisms! (1 required)');
     sfx('denied');
     return;
   }
@@ -3978,11 +3990,129 @@ function deconstructPrism() {
   saveGame();
   sfx('reward');
   if (typeof renderShopScreen === 'function') renderShopScreen();
-  showHintToast('+15 Diamonds deconstructed!');
+  showHintToast(typeof t === 'function' ? t('diamonds_deconstructed') : '+15 Diamonds deconstructed!');
 }
 
 // Заглушка покупок (симуляция Google Play Billing)
 // [ENG.DO]
+function buyShopIAP(productId) {
+  sfx('confirm');
+
+  // 1. Покупки за внутриигровые алмазы (срабатывают сразу, без попапа оплаты)
+  if (productId === 'time_mod_t1') {
+    if (timeModTier >= 1) {
+      showHintToast(typeof t === 'function' ? t('already_unlocked') : 'Already unlocked!');
+      return;
+    }
+    if (diamonds < 40) {
+      sfx('denied');
+      showHintToast(typeof t === 'function' ? t('not_enough_diamonds_cost', { cost: 40 }) : 'Not enough Diamonds! (40 required)');
+      return;
+    }
+    diamonds -= 40;
+    timeModTier = 1;
+    updateDiamondUI();
+    saveGame();
+    sfx('reward');
+    renderShopScreen();
+    showHintToast(typeof t === 'function' ? t('time_mod_t1_unlocked') : 'Time Control Tier 1 unlocked!');
+    return;
+  }
+
+  if (productId === 'time_mod_t2') {
+    if (timeModTier >= 2) {
+      showHintToast(typeof t === 'function' ? t('already_maxed') : 'Already maxed!');
+      return;
+    }
+    if (timeModTier < 1) {
+      sfx('denied');
+      showHintToast(typeof t === 'function' ? t('unlock_tier_1_first') : 'Unlock Tier 1 first!');
+      return;
+    }
+    if (diamonds < 50) {
+      sfx('denied');
+      showHintToast(typeof t === 'function' ? t('not_enough_diamonds_cost', { cost: 50 }) : 'Not enough Diamonds! (50 required)');
+      return;
+    }
+    diamonds -= 50;
+    timeModTier = 2;
+    updateDiamondUI();
+    saveGame();
+    sfx('reward');
+    renderShopScreen();
+    showHintToast(typeof t === 'function' ? t('time_mod_t2_unlocked') : 'Time Control Tier 2 unlocked!');
+    return;
+  }
+
+  // Проверка перед вызовом окна оплаты для No Ads
+  if (productId === 'no_ads' && noAdsPurchased) {
+    showHintToast(typeof t === 'function' ? t('already_purchased') : 'Already purchased!');
+    return;
+  }
+
+  // 2. Покупки за реальные деньги ($) — проходят через попап "Success?"
+  // [ENG.DP]
+  const executePurchase = () => {
+    if (productId === 'no_ads') {
+      noAdsPurchased = true;
+      saveGame();
+      sfx('reward');
+      renderShopScreen();
+      showHintToast(typeof t === 'function' ? t('no_voluntary_ads_unlocked') : 'No Voluntary Ads unlocked!');
+    } else if (productId === 'diamonds_75' || productId === 'diamonds_50') {
+      diamonds = (Number(diamonds) || 0) + 75;
+      updateDiamondUI();
+      saveGame();
+      sfx('reward');
+      renderShopScreen();
+      showHintToast(typeof t === 'function' ? t('diamonds_purchased', { n: 75 }) : '+75 Diamonds purchased!');
+    } else if (productId === 'diamonds_180' || productId === 'diamonds_100') {
+      diamonds = (Number(diamonds) || 0) + 180;
+      updateDiamondUI();
+      saveGame();
+      sfx('reward');
+      renderShopScreen();
+      showHintToast(typeof t === 'function' ? t('diamonds_purchased', { n: 180 }) : '+180 Diamonds purchased!');
+    } else if (productId === 'diamonds_800' || productId === 'diamonds_500') {
+      diamonds = (Number(diamonds) || 0) + 800;
+      updateDiamondUI();
+      saveGame();
+      sfx('reward');
+      renderShopScreen();
+      showHintToast(typeof t === 'function' ? t('diamonds_purchased', { n: 800 }) : '+800 Diamonds purchased!');
+    } else if (productId === 'prisms_12' || productId === 'prisms_10') {
+      prisms = (Number(prisms) || 0) + 12;
+      if (typeof updatePrismUI === 'function') updatePrismUI();
+      saveGame();
+      sfx('reward');
+      renderShopScreen();
+      showHintToast(typeof t === 'function' ? t('prisms_purchased', { n: 12 }) : '+12 Prisms purchased!');
+    } else if (productId === 'prisms_35' || productId === 'prisms_25') {
+      prisms = (Number(prisms) || 0) + 35;
+      if (typeof updatePrismUI === 'function') updatePrismUI();
+      saveGame();
+      sfx('reward');
+      renderShopScreen();
+      showHintToast(typeof t === 'function' ? t('prisms_purchased', { n: 35 }) : '+35 Prisms purchased!');
+    } else if (productId === 'prisms_100') {
+      prisms = (Number(prisms) || 0) + 100;
+      if (typeof updatePrismUI === 'function') updatePrismUI();
+      saveGame();
+      sfx('reward');
+      renderShopScreen();
+      showHintToast(typeof t === 'function' ? t('prisms_purchased', { n: 100 }) : '+100 Prisms purchased!');
+    }
+  };
+
+  if (typeof showAdPlaceholder === 'function') {
+    showAdPlaceholder(executePurchase, null);
+  } else {
+    executePurchase();
+  }
+}
+window.buyShopIAP = buyShopIAP;
+
+// [ENG.DQ]
 function buyShopIAP(productId) {
   sfx('confirm');
 
@@ -4039,7 +4169,7 @@ function buyShopIAP(productId) {
   }
 
   // 2. Покупки за реальные деньги ($) — проходят через попап "Success?"
-  // [ENG.DP]
+// [ENG.EAL]
   const executePurchase = () => {
     if (productId === 'no_ads') {
       noAdsPurchased = true;
@@ -4109,12 +4239,18 @@ function update(dt) {
     cameraShakeTimer -= dt;
     if (cameraShakeTimer < 0) cameraShakeTimer = 0;
   }
+
+  // Расчет плавной разморозки с защитой от NaN / деления на 0
   let thawMult = 1.0;
-  if (resumeThawTimer > 0) {
+  if (typeof resumeThawTimer !== 'undefined' && resumeThawTimer > 0) {
     resumeThawTimer = Math.max(0, resumeThawTimer - dt);
-    const thawProg = RESUME_THAW_DURATION > 0 ? (1.0 - resumeThawTimer / RESUME_THAW_DURATION) : 1.0;
-    thawMult = RESUME_START_SPEED_MULT + (1.0 - RESUME_START_SPEED_MULT) * thawProg;
+    const dur = (typeof RESUME_THAW_DURATION === 'number' && RESUME_THAW_DURATION > 0) ? RESUME_THAW_DURATION : 0.3;
+    const startMult = (typeof RESUME_START_SPEED_MULT === 'number') ? RESUME_START_SPEED_MULT : 0.2;
+    const thawProg = Math.min(1.0, Math.max(0, 1.0 - resumeThawTimer / dur));
+    thawMult = startMult + (1.0 - startMult) * thawProg;
   }
+  if (!isFinite(thawMult) || thawMult <= 0) thawMult = 1.0;
+
   const lvlConfig = LEVELS_DATA[currentLevel];
   const maxW = lvlConfig ? lvlConfig.totalWaves : 10;
   const btn = el('waveBtn');
@@ -4123,6 +4259,7 @@ function update(dt) {
   if (waveInProgress && spawnQueue.length > 0) waveSpawnElapsedTime += dt;
   updateWaveCircle(dt);
 
+  // [ENG.EA] Предупреждение о приближении босса
   if (bossAlertScheduled && !bossAlertShown && spawnQueue.length > 0) {
     let timeToBoss = spawnTimer;
     let foundBoss = false;
@@ -4156,6 +4293,9 @@ function update(dt) {
     }
   }
 
+  // [ENG.EB] Кнопка Go и таймер между волнами
+  const goLabel = (typeof t === 'function' ? t('go') : 'Go');
+
   if (waveTimerActive && autoWaveTimeRemaining > 0) {
     autoWaveTimeRemaining -= dt;
     if (autoWaveTimeRemaining <= 0) {
@@ -4170,10 +4310,11 @@ function update(dt) {
       }
     } else {
       if (btn) btn.disabled = false;
-      if (btnText) btnText.textContent = 'Go';
+      if (btnText) btnText.textContent = goLabel;
     }
   }
 
+  // Спавн мобов из очереди на карту
   if (spawnQueue.length > 0) {
     spawnTimer -= dt;
     while (spawnTimer <= 0 && spawnQueue.length > 0) {
@@ -4192,17 +4333,30 @@ function update(dt) {
         }
 
         const spawnedEnemy = {
-          x: spawnX, y: spawnY,
+          x: spawnX,
+          y: spawnY,
           laneOffset: eData.laneOffset || 0,
-          angle: 0, wpIndex: 1,
+          angle: 0,
+          wpIndex: 1,
           type: eData.type,
-          isBoss: eData.isBoss, isMiniBoss: eData.isMiniBoss,
-          shape: eData.shape, color: eData.color, glow: eData.glow,
-          hp: eData.hp, maxHp: eData.hp,
-          speed: eData.speed, baseSpeed: eData.speed,
-          bounty: eData.bounty, radius: eData.radius,
-          shieldTimer: 0, isShielded: false, warpTimer: 0,
-          dashTimer: 0, empTimer: 0, slowTimer: 0
+          isBoss: !!eData.isBoss,
+          isMiniBoss: !!eData.isMiniBoss,
+          shape: eData.shape,
+          color: eData.color,
+          glow: eData.glow,
+          hp: eData.hp,
+          maxHp: eData.hp,
+          speed: eData.speed,
+          baseSpeed: eData.speed,
+          bounty: eData.bounty,
+          radius: eData.radius,
+          shieldTimer: 0,
+          isShielded: false,
+          warpTimer: 0,
+          dashTimer: 0,
+          summonTimer: 0,
+          empTimer: 0,
+          slowTimer: 0
         };
 
         if (isOverdriveMode && !eData.isBoss && !eData.isMiniBoss) {
@@ -4218,7 +4372,7 @@ function update(dt) {
         enemies.push(spawnedEnemy);
       }
       spawnTimer += (eData.interval || 0.8);
-      
+
       if (spawnQueue.length === 0 && waveInProgress) {
         waveInProgress = false;
         if (isEndlessMode) {
@@ -4227,10 +4381,9 @@ function update(dt) {
           waveTimerActive = true;
           autoWaveTimeRemaining = 5.0;
           if (btn) btn.disabled = false;
-          if (btnText) btnText.textContent = 'Go';
+          if (btnText) btnText.textContent = goLabel;
         } else if (wave < maxW) {
           waveTimerActive = true;
-          
           let delay = 5.0;
           if (lvlConfig && lvlConfig.waves) {
             const currentWaveObj = lvlConfig.waves.find(w => w.wave === wave);
@@ -4241,42 +4394,35 @@ function update(dt) {
           autoWaveTimeRemaining = delay;
 
           if (btn) btn.disabled = false;
-          if (btnText) btnText.textContent = 'Go';
+          if (btnText) btnText.textContent = goLabel;
         }
-		saveActiveBattleSnapshot();
-        saveGameSoon();
       }
     }
   }
 
+  // Обновление состояния и перемещение врагов
   for (let i = enemies.length - 1; i >= 0; i--) {
     const e = enemies[i];
 
-    // Анимация ударной волны от базы (Revive)
+    // Анимация ударной волны базы при Revive
     if (e.revivePushAnim) {
       e.revivePushAnim.timer += dt;
       const prog = Math.min(1.0, e.revivePushAnim.timer / e.revivePushAnim.duration);
-      
-      // Формула ease-out cubic для резкого старта и плавного торможения
       const ease = 1 - Math.pow(1 - prog, 3);
       e.x = e.revivePushAnim.startX + (e.revivePushAnim.endX - e.revivePushAnim.startX) * ease;
       e.y = e.revivePushAnim.startY + (e.revivePushAnim.endY - e.revivePushAnim.startY) * ease;
-      
-      // Оставляем дымный след при отбрасывании
+
       if (Math.random() < 0.4 && typeof createImpactSmoke === 'function') {
         createImpactSmoke(e.x, e.y, 8);
       }
 
-      // Завершение анимации
       if (prog >= 1.0) {
         e.x = e.revivePushAnim.endX;
         e.y = e.revivePushAnim.endY;
         e.wpIndex = e.revivePushAnim.endWp;
         e.revivePushAnim = null;
       }
-      
-      // Пропускаем обычную логику движения и стрельбы по ним в этот кадр (по желанию можно убрать continue, тогда башни будут стрелять по летящим)
-      continue; 
+      continue;
     }
 
     if (e.type === 'blinker') {
@@ -4285,7 +4431,7 @@ function update(dt) {
       e.isShielded = e.shieldTimer < 1.0;
     }
 
-if (e.type === 'chronos_warp') {
+    if (e.type === 'chronos_warp') {
       e.shieldTimer = (e.shieldTimer || 0) + dt;
       if (e.shieldTimer >= 3.0) e.shieldTimer -= 3.0;
       e.isShielded = e.shieldTimer < 1.2;
@@ -4305,8 +4451,6 @@ if (e.type === 'chronos_warp') {
           e.x = e.dashAnim.startX;
           e.y = e.dashAnim.startY;
           e.dashLineMoving = false;
-
-          // Before jump: materializes particles around himself
           if (Math.random() < 0.8) {
             if (typeof createDamageShards === 'function') createDamageShards(e.x, e.y, '#f97316', 15, false);
             if (typeof createSparks === 'function') createSparks(e.x, e.y, '#fb923c', 3, '#f97316');
@@ -4321,8 +4465,6 @@ if (e.type === 'chronos_warp') {
             e.angle = Math.atan2(dy, dx);
           }
           e.dashLineMoving = true;
-
-          // During jump: throws particles around as he moves forward
           if (Math.random() < 0.7) {
             if (typeof createDamageShards === 'function') createDamageShards(e.x, e.y, '#f97316', 20, false);
             if (typeof createSparks === 'function') createSparks(e.x, e.y, '#fb923c', 4, '#f97316');
@@ -4341,12 +4483,10 @@ if (e.type === 'chronos_warp') {
           e.dashAnim = null;
           e.dashLineMoving = false;
           e.teleportFlashTimer = 0.25;
-
           if (typeof createShockwave === 'function') createShockwave(e.x, e.y, 65, '#fb923c');
           if (typeof createDamageShards === 'function') createDamageShards(e.x, e.y, '#f97316', 40, false);
           if (typeof createSparks === 'function') createSparks(e.x, e.y, '#fb923c', 10, '#f97316');
         }
-
         continue;
       }
 
@@ -4364,14 +4504,11 @@ if (e.type === 'chronos_warp') {
           if (typeof createDamageShards === 'function') createDamageShards(startX, startY, '#38bdf8', 25, true);
           if (typeof createSparks === 'function') createSparks(startX, startY, '#38bdf8', 12, '#ffffff');
         }
-
         if (typeof createShockwave === 'function') createShockwave(startX, startY, 50, '#f97316');
 
         let simX = e.x;
         let simY = e.y;
         let simWp = e.wpIndex;
-
-        // На 1-й арене Endless уменьшаем дальность прыжка в 2 раза (70px вместо 140px)
         const isEndlessArena1 = (typeof isEndlessMode !== 'undefined' && isEndlessMode) && 
                                 ((typeof currentLevelSection === 'undefined') || currentLevelSection === 1);
         let dashRemaining = isEndlessArena1 ? 70 : 140;
@@ -4399,7 +4536,6 @@ if (e.type === 'chronos_warp') {
           timer: 0,
           duration: 0.50
         };
-
         sfx('stasis');
       }
     }
@@ -4413,11 +4549,21 @@ if (e.type === 'chronos_warp') {
           enemies.push({
             x: e.x + (Math.random() - 0.5) * 16,
             y: e.y + (Math.random() - 0.5) * 16,
-            angle: e.angle, wpIndex: e.wpIndex,
-            type: 'swarm', isBoss: false, isMiniBoss: false,
-            shape: 'diamond', color: '#00ffcc', glow: '#00ffcc',
-            hp: 20, maxHp: 20, speed: 95, baseSpeed: 95,
-            bounty: 3, radius: 8, slowTimer: 0
+            angle: e.angle,
+            wpIndex: e.wpIndex,
+            type: 'swarm',
+            isBoss: false,
+            isMiniBoss: false,
+            shape: 'diamond',
+            color: '#00ffcc',
+            glow: '#00ffcc',
+            hp: 20,
+            maxHp: 20,
+            speed: 95,
+            baseSpeed: 95,
+            bounty: 3,
+            radius: 8,
+            slowTimer: 0
           });
         }
       }
@@ -4476,12 +4622,13 @@ if (e.type === 'chronos_warp') {
     e.angle = Math.atan2(dy, dx);
 
     if (dist <= step) {
-      e.x = targetX; e.y = targetY;
+      e.x = targetX;
+      e.y = targetY;
       e.wpIndex++;
       if (e.wpIndex >= WAYPOINTS.length) {
         const damageToBasePath = getBaseDamageFor(e);
         baseHp = Math.max(0, baseHp - damageToBasePath);
-		saveActiveBattleSnapshot();
+        saveActiveBattleSnapshot();
         saveGameSoon();
         sfx('baseHit');
         vibrate('warning');
@@ -4490,7 +4637,6 @@ if (e.type === 'chronos_warp') {
         updateUI();
         if (baseHp <= 0) {
           baseHp = 0;
-          // В Hardcore (isOverdriveMode) ревайва нет — сразу вызываем экран поражения
           if (!reviveUsedThisMatch && !isOverdriveMode) {
             triggerEmergencyRevivePrompt();
             return;
@@ -4506,6 +4652,7 @@ if (e.type === 'chronos_warp') {
     }
   }
 
+  // Обновление и стрельба башен
   towers.forEach(t => {
     if (t.disabledTimer > 0) {
       t.disabledTimer -= dt;
@@ -4516,7 +4663,7 @@ if (e.type === 'chronos_warp') {
     let target = null;
     const rangeSq = t.range * t.range;
     const isLockingTowerType = (typeof LOCKED_TARGET_TOWERS !== 'undefined' ? LOCKED_TARGET_TOWERS : ['laser', 'melter']).includes(t.type);
-    
+
     if (isLockingTowerType && t.target && enemies.includes(t.target) && t.target.hp > 0) {
       const dxL = t.target.x - t.x;
       const dyL = t.target.y - t.y;
@@ -4532,7 +4679,6 @@ if (e.type === 'chronos_warp') {
           const wp = WAYPOINTS[e.wpIndex];
           const wdx = wp.x - e.x;
           const wdy = wp.y - e.y;
-          // Вейпоинт-прогресс с приблизительным быстрым расстоянием Манхэттена/L1
           const progress = e.wpIndex * 1000 - (Math.abs(wdx) + Math.abs(wdy));
           if (progress > maxDistProgress) {
             maxDistProgress = progress;
@@ -4576,7 +4722,6 @@ if (e.type === 'chronos_warp') {
     if (t.type === 'laser') {
       const isFiring = target && isLockedOn && !target.isShielded && t.disabledTimer <= 0;
 
-      // Если цель сменилась или луч прервался, сбрасываем накопленный урон досрочно
       if ((!isFiring || t.accumTarget !== target) && t.accumDamage >= 1) {
         const flushX = t.accumTarget ? t.accumTarget.x : t.x;
         const flushY = t.accumTarget ? t.accumTarget.y : t.y;
@@ -4597,7 +4742,6 @@ if (e.type === 'chronos_warp') {
         t.accumDamage = (t.accumDamage || 0) + dDmg;
         t.accumTimer = (t.accumTimer || 0) + dt;
 
-        // Всплывающий урон каждую 1.0 секунду непрерывной стрельбы
         if (t.accumTimer >= 1.0) {
           if (typeof createFloatingDamage === 'function' && t.accumDamage >= 1) {
             createFloatingDamage(target.x, target.y, t.accumDamage, t.color || '#f05f9f');
@@ -4630,12 +4774,15 @@ if (e.type === 'chronos_warp') {
           type: 'mortar_shell',
           x: launchX,
           y: launchY,
-          targetX: target.x, targetY: target.y,
+          targetX: target.x,
+          targetY: target.y,
           targetRef: target,
           damage: t.damage,
           splash: TOWER_CONFIGS.mortar.splash * (1 + (t.level - 1) * 0.15),
-          duration: t.mortarTravelTime || MORTAR_BASE_TRAVEL_TIME || 1.0, elapsed: 0,
-          startX: launchX, startY: launchY,
+          duration: t.mortarTravelTime || MORTAR_BASE_TRAVEL_TIME || 1.0,
+          elapsed: 0,
+          startX: launchX,
+          startY: launchY,
           arcApex: Math.max(12, range * Math.tan(elevRad) / 4),
           color: t.color
         });
@@ -4717,7 +4864,6 @@ if (e.type === 'chronos_warp') {
       const rampCap = TOWER_CONFIGS.melter.rampCap || 40;
       const isFiring = target && isLockedOn && !target.isShielded && t.melterCoolingTimer <= 0 && t.disabledTimer <= 0;
 
-      // Если луч оборвался или цель изменилась, досрочно показываем накопленный урон
       if ((!isFiring || t.accumTarget !== target) && t.accumDamage >= 1) {
         const flushX = t.accumTarget ? t.accumTarget.x : t.x;
         const flushY = t.accumTarget ? t.accumTarget.y : t.y;
@@ -4753,7 +4899,6 @@ if (e.type === 'chronos_warp') {
           t.accumDamage = (t.accumDamage || 0) + dDmg;
           t.accumTimer = (t.accumTimer || 0) + dt;
 
-          // Всплывающий урон каждую 1.0 секунду
           if (t.accumTimer >= 1.0) {
             if (typeof createFloatingDamage === 'function' && t.accumDamage >= 1) {
               createFloatingDamage(target.x, target.y, t.accumDamage, t.color || '#e85268');
@@ -4771,7 +4916,6 @@ if (e.type === 'chronos_warp') {
         checkEnemyEnrage(target);
 
         if (t.melterFireTimer >= rampTime) {
-          // При перегреве сбрасываем остаток урона
           if (t.accumDamage >= 1 && typeof createFloatingDamage === 'function') {
             createFloatingDamage(target.x, target.y, t.accumDamage, t.color || '#e85268');
             t.accumDamage = 0;
@@ -4795,40 +4939,39 @@ if (e.type === 'chronos_warp') {
       if (target && isLockedOn && t.lastFire >= t.fireRate) {
         t.lastFire = 0;
         sfx('railgun');
-      
-      const beamLength = 3500;
-      const beamEndX = t.x + Math.cos(t.angle) * beamLength;
-      const beamEndY = t.y + Math.sin(t.angle) * beamLength;
-      
-      let railShardCount = 0;
 
-      for (let j = 0; j < enemies.length; j++) {
-        const e = enemies[j];
-        const vx = beamEndX - t.x;
-        const vy = beamEndY - t.y;
-        const wx = e.x - t.x;
-        const wy = e.y - t.y;
-        const c1 = wx * vx + wy * vy;
-        const c2 = vx * vx + vy * vy;
-        const param = c2 !== 0 ? Math.max(0, Math.min(1, c1 / c2)) : 0;
-        const projX = t.x + param * vx;
-        const projY = t.y + param * vy;
-        const distSq = (e.x - projX) * (e.x - projX) + (e.y - projY) * (e.y - projY);
-        const hitR = e.radius + 14;
+        const beamLength = 3500;
+        const beamEndX = t.x + Math.cos(t.angle) * beamLength;
+        const beamEndY = t.y + Math.sin(t.angle) * beamLength;
+        let railShardCount = 0;
 
-        if (distSq <= hitR * hitR && !e.isShielded) {
-          e.hp -= t.damage;
-          checkEnemyEnrage(e);
-          if (typeof createFloatingDamage === 'function') {
-            createFloatingDamage(e.x, e.y, t.damage, t.color || '#a275df');
-          }
-          if (railShardCount < 4) {
-            createDamageShards(e.x, e.y, e.color, t.damage, false);
-            if (typeof createImpactSmoke === 'function') createImpactSmoke(e.x, e.y, 12);
-            railShardCount++;
+        for (let j = 0; j < enemies.length; j++) {
+          const e = enemies[j];
+          const vx = beamEndX - t.x;
+          const vy = beamEndY - t.y;
+          const wx = e.x - t.x;
+          const wy = e.y - t.y;
+          const c1 = wx * vx + wy * vy;
+          const c2 = vx * vx + vy * vy;
+          const param = c2 !== 0 ? Math.max(0, Math.min(1, c1 / c2)) : 0;
+          const projX = t.x + param * vx;
+          const projY = t.y + param * vy;
+          const distSq = (e.x - projX) * (e.x - projX) + (e.y - projY) * (e.y - projY);
+          const hitR = e.radius + 14;
+
+          if (distSq <= hitR * hitR && !e.isShielded) {
+            e.hp -= t.damage;
+            checkEnemyEnrage(e);
+            if (typeof createFloatingDamage === 'function') {
+              createFloatingDamage(e.x, e.y, t.damage, t.color || '#a275df');
+            }
+            if (railShardCount < 4) {
+              createDamageShards(e.x, e.y, e.color, t.damage, false);
+              if (typeof createImpactSmoke === 'function') createImpactSmoke(e.x, e.y, 12);
+              railShardCount++;
+            }
           }
         }
-      }
 
         if (typeof createRailBeamFx === 'function') {
           createRailBeamFx(t.x, t.y, beamEndX, beamEndY, t.color || '#00e5ff');
@@ -4837,6 +4980,7 @@ if (e.type === 'chronos_warp') {
     }
   });
 
+  // Полет пуль и снарядов мортиры
   for (let i = projectiles.length - 1; i >= 0; i--) {
     const p = projectiles[i];
     if (p.type === 'bullet') {
@@ -4906,6 +5050,7 @@ if (e.type === 'chronos_warp') {
     }
   }
 
+  // Гибель врагов
   for (let i = enemies.length - 1; i >= 0; i--) {
     const e = enemies[i];
     if (e.hp <= 0) {
@@ -4931,10 +5076,7 @@ if (e.type === 'chronos_warp') {
 
       if (e.isBoss || e.isMiniBoss) {
         vibrate('heavy');
-		createShockwave(e.x, e.y, e.isBoss ? 80 : 50, e.color);
-      }
-
-      if (e.isBoss || e.isMiniBoss) {
+        createShockwave(e.x, e.y, e.isBoss ? 80 : 50, e.color);
         createExplosion(e.x, e.y, e.isBoss ? 45 : 22, e.color, e.glow || e.color, 'boss');
       }
 
@@ -4944,20 +5086,24 @@ if (e.type === 'chronos_warp') {
   }
   updateUI();
 
+  // Частицы
   for (let i = particles.length - 1; i >= 0; i--) {
     const pt = particles[i];
-    pt.x += pt.vx * dt; pt.y += pt.vy * dt;
+    pt.x += pt.vx * dt;
+    pt.y += pt.vy * dt;
     pt.life -= dt;
     if (pt.life <= 0) particles.splice(i, 1);
   }
 
+  // Ударные волны
   for (let i = shockwaves.length - 1; i >= 0; i--) {
     const sw = shockwaves[i];
     sw.elapsed += dt;
     if (sw.elapsed >= sw.duration) shockwaves.splice(i, 1);
   }
 
-for (let i = lightningBolts.length - 1; i >= 0; i--) {
+  // Разряды молний Tesla
+  for (let i = lightningBolts.length - 1; i >= 0; i--) {
     const lb = lightningBolts[i];
     if (lb.delay && lb.delay > 0) {
       lb.delay -= dt;
@@ -4966,9 +5112,8 @@ for (let i = lightningBolts.length - 1; i >= 0; i--) {
     lb.elapsed = (lb.elapsed || 0) + dt;
     lb.life -= dt;
 
-    // Урон наносится ровно 1 раз за жизнь молнии
     if (!lb.hasDealtDamage && !lb.targetRef.isShielded && enemies.includes(lb.targetRef)) {
-      lb.hasDealtDamage = true; // <-- блокируем повторный урон на следующих кадрах!
+      lb.hasDealtDamage = true;
       lb.targetRef.hp -= lb.damage;
       checkEnemyEnrage(lb.targetRef);
 
@@ -4988,6 +5133,7 @@ for (let i = lightningBolts.length - 1; i >= 0; i--) {
     if (lb.life <= 0) lightningBolts.splice(i, 1);
   }
 
+  // Проверка завершения матча (Победа)
   if (!isEndlessMode && wave >= maxW && spawnQueue.length === 0 && enemies.length === 0 && baseHp > 0 && gameState === 'PLAYING') {
     if (victoryDelayTimer <= 0) {
       victoryDelayTimer = 1.0;

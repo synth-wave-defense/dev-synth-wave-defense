@@ -221,7 +221,7 @@ function getEnemyShapeSprite(shape, color, radius, glowColor) {
 
   //  Diffuse neon glow lighting pass.
   const outerR = Math.max(3, safeR * 2.2);
-const grad = sCtx.createRadialGradient(0, 0, Math.min(2, outerR - 1), 0, 0, outerR);
+  const grad = sCtx.createRadialGradient(0, 0, Math.min(2, outerR - 1), 0, 0, outerR);
   grad.addColorStop(0, safeGlow + '66');
   grad.addColorStop(0.5, safeGlow + '20');
   grad.addColorStop(1, 'transparent');
@@ -405,13 +405,11 @@ function resizeCanvasAndCamera() {
     ? bottomEl.getBoundingClientRect().height
     : 110;
 
-  // 1. Рассчитываем реальный нижний край Top HUD с учетом safe-area и эстетического отступа (10px)
   const hudRect = (topHudEl && !topHudEl.classList.contains('hidden'))
     ? topHudEl.getBoundingClientRect()
     : null;
   const topSafeLimit = hudRect ? (hudRect.bottom + 10) : (topH + 10);
 
-  // 2. Снизу резервируем место под нижнюю панель и выступающую кнопку GO (~115px)
   const BOTTOM_RESERVE = Math.max(bottomH, 115);
   const usableHeight = Math.max(160, vpHeight - topSafeLimit - BOTTOM_RESERVE);
 
@@ -421,7 +419,6 @@ function resizeCanvasAndCamera() {
   const oldBaseZoom = baseZoom || 1.0;
   const zoomRatio = (camZoom && oldBaseZoom) ? (camZoom / oldBaseZoom) : 1.0;
 
-  // Рассчитываем zoom так, чтобы карта полностью помещалась между низом Top HUD и зоной кнопки GO
   baseZoom = Math.min(vpWidth / paddedWidth, usableHeight / paddedHeight);
   minZoom = baseZoom * 0.95;
   maxZoom = Math.max(2.2, baseZoom * 2.5);
@@ -430,10 +427,8 @@ function resizeCanvasAndCamera() {
 
   const viewFieldH = FIELD_HEIGHT * camZoom;
 
-  // 3. Выравниваем по горизонтали по центру экрана
   camX = (vpWidth / 2) - (FIELD_WIDTH * camZoom / 2);
 
-  // 4. Позиционируем по вертикали:
   if (viewFieldH <= usableHeight) {
     const desiredCenterY = topSafeLimit + (usableHeight * 0.38);
     camY = Math.max(topSafeLimit, desiredCenterY - (viewFieldH / 2));
@@ -478,7 +473,6 @@ function clampCamera() {
     camX = Math.max(screenW - viewFieldW, Math.min(0, camX));
   }
 
-  // Запас подъёма вверх: 2 клетки сетки с учётом текущего зума камеры
   const EXTRA_PAN_UP = (TILE_SIZE * 2) * camZoom;
 
   if (viewFieldH <= usableHeight) {
@@ -548,19 +542,30 @@ function initTutorialForLevel(lvl) {
   tutorialDestCell = null;
   hideTutorialUI();
 
+  // Гарантируем актуальный язык элементов перед запуском обучения
+  if (typeof applyStaticTranslations === 'function') {
+    applyStaticTranslations();
+  }
+
+  const showSkipButton = () => {
+    const skipBtn = document.getElementById('tutorialSkipBtn');
+    if (skipBtn) {
+      skipBtn.textContent = (typeof t === 'function') ? t('skip_tutorial') : 'Skip Tutorial';
+      skipBtn.classList.remove('hidden');
+    }
+  };
+
   if (lvl === 1 && !tutorialSeen.l1 && !hasClearedLevelBefore(1)) {
     tutorialActive = true;
     tutorialLevel = 1;
     tutorialStep = 0;
     tutorialDestCell = findTutorialBuildCell();
-    const skipBtn = document.getElementById('tutorialSkipBtn');
-    if (skipBtn) skipBtn.classList.remove('hidden');
+    showSkipButton();
   } else if (lvl === 2 && !tutorialSeen.l2 && !hasClearedLevelBefore(2)) {
     tutorialActive = true;
     tutorialLevel = 2;
     tutorialStep = -1;
-    const skipBtn = document.getElementById('tutorialSkipBtn');
-    if (skipBtn) skipBtn.classList.remove('hidden');
+    showSkipButton();
   }
 }
 
@@ -804,7 +809,6 @@ function positionTutorialCloseStep() {
   const fieldWidth = Math.max(0, (bottomRight.x - topLeft.x) - pad * 2);
   const fieldHeight = Math.max(0, (bottomRight.y - topLeft.y) - pad * 2);
 
-  // 1. Подсветка игрового поля
   const fieldEl = document.getElementById('tutorialFieldHighlight');
   if (fieldEl) {
     fieldEl.style.left = (topLeft.x + pad) + 'px';
@@ -823,7 +827,6 @@ function positionTutorialCloseStep() {
     spotlight.classList.remove('hidden');
   }
 
-  // 2. Синеватая рамка с затемнением поверх самой башни (запрет нажатия)
   const towerBlock = document.getElementById('tutorialTowerBlock');
   if (towerBlock && selectedTower) {
     const tScreen = worldToScreen(selectedTower.c * TILE_SIZE, selectedTower.r * TILE_SIZE);
@@ -837,12 +840,11 @@ function positionTutorialCloseStep() {
     towerBlock.onclick = (e) => {
       e.stopPropagation();
       if (typeof showHintToast === 'function') {
-        showHintToast('Tap the empty field or ✕ to close');
+        showHintToast(typeof t === 'function' ? t('tut_close_hint') : 'Tap the empty field or ✕ to close');
       }
     };
   }
 
-  // 3. Яркий визуальный клон крестика поверх затемнения
   const closeBtn = document.getElementById('inspectCloseBtn');
   const closeHighlight = document.getElementById('tutorialCloseBtnHighlight');
   if (closeBtn && closeHighlight) {
@@ -855,7 +857,6 @@ function positionTutorialCloseStep() {
     closeHighlight.classList.remove('hidden');
   }
 
-  // 4. Позиция надписи и пальца
   let targetX, targetY;
   if (selectedTower) {
     const targetCellScreen = worldToScreen((selectedTower.c + 1.1) * TILE_SIZE, (selectedTower.r + 1.85) * TILE_SIZE);
@@ -1404,17 +1405,28 @@ function getUpgradeStatSummary(key, currentLvl) {
   })();
   const deltaEff = Math.max(0, nextEff - curEff);
 
+  const _tr = (typeof window.t === 'function') ? window.t : ((k) => k.toUpperCase());
+  const maxLabel = _tr('max') || 'MAX';
+  const hpLabel = _tr('stat_hp') || 'HP:';
+  const goldLabel = _tr('stat_gold') || 'GOLD:';
+  const slowLabel = _tr('stat_slow') || 'SLOW:';
+  const durLabel = _tr('stat_dur') || 'DUR:';
+  const rngLabel = _tr('stat_rng') || 'RNG:';
+  const dmgLabel = _tr('stat_dmg') || 'DMG:';
+  const spdLabel = _tr('stat_spd') || 'SPD:';
+  const dpsLabel = _tr('stat_dps') || 'DPS:';
+
   if (key === 'base_hp') {
     const curHp = 10 + Math.round(curEff);
-    const nextTag = isMaxed ? `<span class="upg-stat-next">MAX</span>` : `<span class="upg-stat-next">+1 HP</span>`;
-    return `<span class="upg-stat-cur"><span class="upg-lbl">HP:</span> ${curHp}</span>${nextTag}`;
+    const nextTag = isMaxed ? `<span class="upg-stat-next">${maxLabel}</span>` : `<span class="upg-stat-next">+1 ${hpLabel.replace(':', '')}</span>`;
+    return `<span class="upg-stat-cur"><span class="upg-lbl">${hpLabel}</span> ${curHp}</span>${nextTag}`;
   }
 
   if (key === 'base_gold') {
     const curGold = Math.round(curEff * 5);
     const stepGold = +(deltaEff * 5).toFixed(1);
-    const nextTag = isMaxed ? `<span class="upg-stat-next">MAX</span>` : `<span class="upg-stat-next">+${stepGold}%</span>`;
-    return `<span class="upg-stat-cur"><span class="upg-lbl">GOLD:</span> +${curGold}%</span>${nextTag}`;
+    const nextTag = isMaxed ? `<span class="upg-stat-next">${maxLabel}</span>` : `<span class="upg-stat-next">+${stepGold}%</span>`;
+    return `<span class="upg-stat-cur"><span class="upg-lbl">${goldLabel}</span> +${curGold}%</span>${nextTag}`;
   }
 
   const towerType = key.replace('_power', '');
@@ -1442,8 +1454,8 @@ function getUpgradeStatSummary(key, currentLvl) {
     const sStep = Math.round(deltaEff * (conf.powerSlow || 0) * 100);
     const durStep = Math.round(deltaEff * (conf.powerDuration || 0) * 100);
 
-    const nextTag = isMaxed ? `<span class="upg-stat-next">MAX</span>` : `<span class="upg-stat-next">+${sStep}/${durStep}/${rngStep}%</span>`;
-    return `<span class="upg-stat-cur"><span class="upg-lbl">SLOW:</span> ${curSlow}%<span class="upg-sep">·</span><span class="upg-lbl">DUR:</span> ${curDur}s<span class="upg-sep">·</span><span class="upg-lbl">RNG:</span> ${curRng}</span>${nextTag}`;
+    const nextTag = isMaxed ? `<span class="upg-stat-next">${maxLabel}</span>` : `<span class="upg-stat-next">+${sStep}/${durStep}/${rngStep}%</span>`;
+    return `<span class="upg-stat-cur"><span class="upg-lbl">${slowLabel}</span> ${curSlow}%<span class="upg-sep">·</span><span class="upg-lbl">${durLabel}</span> ${curDur}s<span class="upg-sep">·</span><span class="upg-lbl">${rngLabel}</span> ${curRng}</span>${nextTag}`;
   }
 
   const baseDmg = conf.damage || conf.dps || conf.baseDps || 0;
@@ -1451,12 +1463,12 @@ function getUpgradeStatSummary(key, currentLvl) {
 
   if (conf.fireRate) {
     const curRate = +(conf.fireRate / (1 + curEff * (conf.powerRate || 0))).toFixed(2);
-    const nextTag = isMaxed ? `<span class="upg-stat-next">MAX</span>` : `<span class="upg-stat-next">+${dStep}/${rStep}/${rngStep}%</span>`;
-    return `<span class="upg-stat-cur"><span class="upg-lbl">DMG:</span> ${curDmg} <span class="upg-sep">·</span> <span class="upg-lbl">SPD:</span> ${curRate}s <span class="upg-sep">·</span> <span class="upg-lbl">RNG:</span> ${curRng}</span>${nextTag}`;
+    const nextTag = isMaxed ? `<span class="upg-stat-next">${maxLabel}</span>` : `<span class="upg-stat-next">+${dStep}/${rStep}/${rngStep}%</span>`;
+    return `<span class="upg-stat-cur"><span class="upg-lbl">${dmgLabel}</span> ${curDmg} <span class="upg-sep">·</span> <span class="upg-lbl">${spdLabel}</span> ${curRate}s <span class="upg-sep">·</span> <span class="upg-lbl">${rngLabel}</span> ${curRng}</span>${nextTag}`;
   }
 
-  const nextTag = isMaxed ? `<span class="upg-stat-next">MAX</span>` : `<span class="upg-stat-next">+${dStep}/${rngStep}%</span>`;
-  return `<span class="upg-stat-cur"><span class="upg-lbl">DPS:</span> ${curDmg} <span class="upg-sep">·</span> <span class="upg-lbl">RNG:</span> ${curRng}</span>${nextTag}`;
+  const nextTag = isMaxed ? `<span class="upg-stat-next">${maxLabel}</span>` : `<span class="upg-stat-next">+${dStep}/${rngStep}%</span>`;
+  return `<span class="upg-stat-cur"><span class="upg-lbl">${dpsLabel}</span> ${curDmg} <span class="upg-sep">·</span> <span class="upg-lbl">${rngLabel}</span> ${curRng}</span>${nextTag}`;
 }
 
 // [UI.BU]
@@ -1522,14 +1534,19 @@ function renderUpgradeTree() {
       lockedLabel: isLockedCard ? `${card.title} (Lv.${getTowerUnlockLevel(towerType)})` : card.title
     };
   });
-  const baseRows = (UPGRADE_BRANCH_SPECS.base[0].branches || []).map(br => ({
-    key: br.key,
-    label: br.name,
-    iconHtml: BASE_BRANCH_ICONS[br.key] || '',
-    color: BASE_BRANCH_COLORS[br.key] || primaryAccent,
-    isLockedCard: false,
-    lockedLabel: br.name
-  }));
+  const baseRows = (UPGRADE_BRANCH_SPECS.base[0].branches || []).map(br => {
+    const locName = br.key === 'base_hp'
+      ? (typeof t === 'function' ? t('base_hp') : br.name)
+      : (br.key === 'base_gold' ? (typeof t === 'function' ? t('bounty') : br.name) : br.name);
+    return {
+      key: br.key,
+      label: locName,
+      iconHtml: BASE_BRANCH_ICONS[br.key] || '',
+      color: BASE_BRANCH_COLORS[br.key] || primaryAccent,
+      isLockedCard: false,
+      lockedLabel: locName
+    };
+  });
 
   // [UI.BW]
   const addGroupLabel = (text) => {
@@ -1587,6 +1604,8 @@ function renderUpgradeTree() {
     const lvlEl = document.createElement('span');
     lvlEl.className = 'upgrade-row-level';
 
+    const _tr = (typeof window.t === 'function') ? window.t : ((k) => k);
+
     if (row.isLockedCard) {
       lvlEl.textContent = ''; 
     } else if (currentLvl < 10) {
@@ -1597,10 +1616,10 @@ function renderUpgradeTree() {
       lvlEl.textContent = `ASC ${currentLvl - 10}/5`;
     } else if (!isScalingBranch(row.key)) {
       lvlEl.style.color = '#d946ef';
-      lvlEl.textContent = 'ASCENDED MAX';
+      lvlEl.textContent = _tr('ascended_max') || 'ASCENDED MAX';
     } else {
       lvlEl.style.color = th.c1;
-      lvlEl.textContent = `SYNTH +${currentLvl - 15}`;
+      lvlEl.textContent = (typeof t === 'function') ? t('synth_plus_n', { n: currentLvl - 15 }) : `SYNTH +${currentLvl - 15}`;
     }
 
     head.appendChild(nameEl);
@@ -1668,15 +1687,19 @@ function renderUpgradeTree() {
       // [UI.BY]
       buyBtn.onclick = () => {
         if (typeof sfx === 'function') sfx('denied');
-        if (typeof showHintToast === 'function') showHintToast(`Unlocks on Level ${reqLvl}`);
+        if (typeof showHintToast === 'function') {
+          showHintToast(typeof t === 'function' ? t('unlocks_on_level_n', { n: reqLvl }) : `Unlocks on Level ${reqLvl}`);
+        }
       };
     } else if (currentLvl >= 15 && !isScalingBranch(row.key)) {
       buyBtn.classList.add('locked-buy', 'max-buy');
-      buyBtn.innerHTML = `<span class="upgrade-row-buy-cost" style="color:#d946ef; font-size:10px;">ASCENDED MAX</span>`;
+      buyBtn.innerHTML = `<span class="upgrade-row-buy-cost" style="color:#d946ef; font-size:10px;">${_tr('ascended_max') || 'ASCENDED MAX'}</span>`;
       // [UI.BZ]
       buyBtn.onclick = () => {
         if (typeof sfx === 'function') sfx('denied');
-        if (typeof showHintToast === 'function') showHintToast('Branch is ASCENDED MAX (Lvl 15)');
+        if (typeof showHintToast === 'function') {
+          showHintToast(typeof t === 'function' ? t('branch_ascended_max') : 'Branch is ASCENDED MAX (Lvl 15)');
+        }
       };
     } else if (isSectorGated) {
       buyBtn.classList.add('locked-buy');
@@ -1684,7 +1707,9 @@ function renderUpgradeTree() {
       // [UI.CA]
       buyBtn.onclick = () => {
         if (typeof sfx === 'function') sfx('denied');
-        if (typeof showHintToast === 'function') showHintToast(`Unlocks on Level ${lvlNeeded}`);
+        if (typeof showHintToast === 'function') {
+          showHintToast(typeof t === 'function' ? t('unlocks_on_level_n', { n: lvlNeeded }) : `Unlocks on Level ${lvlNeeded}`);
+        }
       };
     } else if (isAscGatedByBranches) {
       buyBtn.classList.add('locked-buy');
@@ -1692,7 +1717,9 @@ function renderUpgradeTree() {
       // [UI.CB]
       buyBtn.onclick = () => {
         if (typeof sfx === 'function') sfx('denied');
-        if (typeof showHintToast === 'function') showHintToast('Upgrade all branches to 10/10 first to unlock ASC');
+        if (typeof showHintToast === 'function') {
+          showHintToast(typeof t === 'function' ? t('upgrade_all_branches_10') : 'Upgrade all branches to 10/10 first to unlock ASC');
+        }
       };
     } else {
       const costs = getUpgradeCostForLevel(nextStep);
@@ -1759,7 +1786,13 @@ function navLevelSection(dir) {
       isTargetUnlocked = maxUnlockedLevel > (target - 1) * LEVELS_PER_SECTION;
   }
   
-  if (!isTargetUnlocked) return;
+  if (!isTargetUnlocked) {
+    if (typeof sfx === 'function') sfx('denied');
+    return;
+  }
+
+  // Воспроизводим звук перелистывания для обоих направлений
+  if (typeof sfx === 'function') sfx('slide');
 
   const grid = document.getElementById('levelsGrid');
   if (!grid) {
@@ -1801,13 +1834,17 @@ function selectLevelMode(mode) {
   if (mode === 'overdrive') {
     if (!isOverdriveUnlocked()) {
       if (typeof sfx === 'function') sfx('denied');
-      if (typeof showHintToast === 'function') showHintToast('Complete Normal Level 20 to unlock HARDCORE');
+      if (typeof showHintToast === 'function') {
+        showHintToast(typeof t === 'function' ? t('unlock_hardcore_hint') : 'Complete Normal Level 20 to unlock HARDCORE');
+      }
       return;
     }
   } else if (mode === 'endless') {
     if (!isEndlessUnlocked()) {
       if (typeof sfx === 'function') sfx('denied');
-      if (typeof showHintToast === 'function') showHintToast('Complete Normal Level 15 to unlock Endless Arena');
+      if (typeof showHintToast === 'function') {
+        showHintToast(typeof t === 'function' ? t('unlock_endless_hint') : 'Complete Normal Level 15 to unlock Endless Arena');
+      }
       return;
     }
   }
@@ -2035,16 +2072,19 @@ function updateModeSwitcherUI() {
     if (currentLevelMode === 'overdrive') {
       rulesBanner.className = 'mode-rules-banner hardcore-rules';
       const hpHeartSvg = `<span style="display:inline-flex; align-items:center; vertical-align:middle; filter:drop-shadow(0 0 5px rgba(240,95,159,0.8)); margin:0 2px;"><svg width="13" height="12" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#f05f9f"/></svg></span>`;
-      rulesBanner.innerHTML = `1 ${hpHeartSvg} BASE  —  1.2 SPEED & ENRAGED MOBS`;
+      const ruleText = (typeof t === 'function') ? t('rules_hardcore') : '1 {heart} BASE — 1.2 SPEED & ENRAGED MOBS';
+      rulesBanner.innerHTML = ruleText.replace('{heart}', hpHeartSvg);
     } else if (currentLevelMode === 'endless') {
       rulesBanner.className = 'mode-rules-banner endless-rules';
       const prismIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 1px 2px 2px;"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="22" x2="12" y2="22"/></svg>`;
       const diamondIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 1px 2px 1px;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
-      rulesBanner.innerHTML = `Infinite Loop • Earn ${prismIcon} Prisms & ${diamondIcon} Diamonds`;
+      const ruleText = (typeof t === 'function') ? t('rules_endless') : 'Infinite Loop • Earn {prism} Prisms & {diamond} Diamonds';
+      rulesBanner.innerHTML = ruleText.replace('{prism}', prismIcon).replace('{diamond}', diamondIcon);
     } else {
       rulesBanner.className = 'mode-rules-banner normal-rules';
       const diamondIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 1px 2px 1px;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
-      rulesBanner.innerHTML = `Standard TD Rules • Earn ${diamondIcon} Diamonds`;
+      const ruleText = (typeof t === 'function') ? t('rules_normal') : 'Standard TD Rules • Earn {diamond} Diamonds';
+      rulesBanner.innerHTML = ruleText.replace('{diamond}', diamondIcon);
     }
   }
 }
@@ -2103,7 +2143,11 @@ function renderEndlessDashboardUI() {
 
   if (ticketEl) {
     const status = (typeof getEndlessEntryStatus === 'function') ? getEndlessEntryStatus() : { type: 'free', text: 'FREE (1/1)' };
-    const labelText = (status.text || status.label || '').toUpperCase();
+    const labelText = status.type === 'free'
+      ? (typeof t === 'function' ? t('free_ticket', { cur: 1, max: 1 }) : 'FREE (1/1)')
+      : (status.type === 'ad'
+          ? (typeof t === 'function' ? t('watch_ad_ticket', { cur: 2, max: 2 }) : 'WATCH AD (2/2)')
+          : (status.text || status.label || '').toUpperCase());
 
     if (status.type === 'ad') {
       const adIconSvg = `<svg width="15" height="12" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:5px; vertical-align:middle;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="currentColor"/></svg>`;
@@ -2131,7 +2175,9 @@ function navEndlessLevel(dir) {
   
   const isTargetUnlocked = (typeof devMode !== 'undefined' && devMode) || maxUnlockedLevel > (target - 1) * LEVELS_PER_SECTION;
   if (!isTargetUnlocked) {
-    if (typeof showHintToast === 'function') showHintToast('Chapter locked!');
+    if (typeof showHintToast === 'function') {
+      showHintToast(typeof t === 'function' ? t('chapter_locked') : 'Chapter locked!');
+    }
     return;
   }
   
@@ -2140,18 +2186,19 @@ function navEndlessLevel(dir) {
   renderEndlessDashboardUI();
 }
 
-window.navEndlessLevel = navEndlessLevel;
-window.selectLevelMode = selectLevelMode;
-
 // [UI.CJ]
 function confirmStartEndlessRun() {
   if (!isEndlessUnlocked()) {
-    if (typeof showHintToast === 'function') showHintToast('Complete Normal Level 15 to unlock Endless Arena');
+    if (typeof showHintToast === 'function') {
+      showHintToast(typeof t === 'function' ? t('unlock_endless_hint') : 'Complete Normal Level 15 to unlock Endless Arena');
+    }
     return;
   }
 
   if (!selectedLoadout || selectedLoadout.length === 0) {
-    if (typeof showHintToast === 'function') showHintToast('Select at least 1 tower!');
+    if (typeof showHintToast === 'function') {
+      showHintToast(typeof t === 'function' ? t('select_at_least_1_tower') : 'Select at least 1 tower!');
+    }
     return;
   }
 
@@ -2174,7 +2221,9 @@ function confirmStartEndlessRun() {
     }
   } else if (status.type === 'diamonds') {
     if (diamonds < status.cost) {
-      if (typeof showHintToast === 'function') showHintToast(`Need ${status.cost} Diamonds for entry!`);
+      if (typeof showHintToast === 'function') {
+        showHintToast(typeof t === 'function' ? t('need_diamonds_for_entry', { cost: status.cost }) : `Need ${status.cost} Diamonds for entry!`);
+      }
       return;
     }
     diamonds -= status.cost;
@@ -2477,7 +2526,7 @@ function toggleDevMetricGroup(groupKey) {
 // [UI.CR]
 function devSpawnCustomEnemies() {
   if (gameState !== 'PLAYING') {
-    showHintToast('Start a level first to spawn enemies!');
+    showHintToast(typeof t === 'function' ? (t('start_level_first_to_spawn') || t('start_level_first')) : 'Start level first!');
     return;
   }
   if (typeof handleDevSpawnClick === 'function') {
@@ -2875,10 +2924,10 @@ function toggleLivePause() {
   const btn = document.getElementById('livePauseBtn');
   if (btn) {
     if (isLivePaused) {
-      btn.textContent = 'RESUME GAME';
+      btn.textContent = typeof t === 'function' ? t('resume') : 'RESUME GAME';
       btn.classList.add('paused');
     } else {
-      btn.textContent = 'PAUSE GAME';
+      btn.textContent = typeof t === 'function' ? t('paused_title') : 'PAUSE GAME';
       btn.classList.remove('paused');
     }
   }
@@ -3009,6 +3058,8 @@ function updateUpgradeButtonsLock() {
   const mainTechTreeIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><path d="M12 21 v-5 l-4 -3.5 v-4 m4 7.5 l4 -3.5 v-4 m-4 7.5 v-8" /><circle cx="12" cy="21" r="1.5" fill="currentColor" stroke="none" /><circle cx="8" cy="8.5" r="1.5" fill="currentColor" stroke="none" /><circle cx="16" cy="8.5" r="1.5" fill="currentColor" stroke="none" /><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none" /></svg>`;
   const resTechTreeIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:none; margin-right: 4px;"><path d="M12 21 v-5 l-4 -3.5 v-4 m4 7.5 l4 -3.5 v-4 m-4 7.5 v-8" /><circle cx="12" cy="21" r="1.5" fill="currentColor" stroke="none" /><circle cx="8" cy="8.5" r="1.5" fill="currentColor" stroke="none" /><circle cx="16" cy="8.5" r="1.5" fill="currentColor" stroke="none" /><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none" /></svg>`;
 
+  const techTreeLabel = (typeof t === 'function') ? t('tech_tree') : 'TECH TREE';
+
   ['mainUpgradesBtn', 'victoryUpgradesBtn', 'defeatUpgradesBtn'].forEach(id => {
     const btn = document.getElementById(id);
     if (!btn) return;
@@ -3017,7 +3068,7 @@ function updateUpgradeButtonsLock() {
     btn.classList.toggle('btn-locked', !isUpgradesUnlocked);
     const isMain = id === 'mainUpgradesBtn';
     const activeIcon = isMain ? mainTechTreeIcon : resTechTreeIcon;
-    btn.innerHTML = activeIcon + '<span>TECH TREE</span>';
+    btn.innerHTML = `${activeIcon}<span>${techTreeLabel}</span>`;
   });
 }
 
@@ -3179,7 +3230,7 @@ function showSettings(fromSource = 'start') {
     const liveVersion = (window.OtaDiagnostics && window.OtaDiagnostics.localVersion && window.OtaDiagnostics.localVersion !== '—' && window.OtaDiagnostics.localVersion !== 'ERROR')
       ? window.OtaDiagnostics.localVersion
       : '1.36.38';
-    versionLabel.textContent = `Version: ${liveVersion}`;
+    versionLabel.textContent = (typeof t === 'function') ? t('version_label', { v: liveVersion }) : `Version: ${liveVersion}`;
   }
   if (typeof populateLanguageDropdown === 'function') {
     populateLanguageDropdown();
@@ -3195,10 +3246,9 @@ let bpPreviousSource = 'start';
 function updateBpProgressUI() {
   const { tier, xpInTier, isMax, totalXp } = getBpTierInfo(bpXp);
 
-  // Update tier text and progress bar in main menu Synth Pass widget
   const tierText = document.getElementById('startBpTierText');
   if (tierText) {
-    tierText.textContent = `TIER ${tier}`;
+    tierText.textContent = (typeof t === 'function') ? t('tier_n', { n: tier }) : `TIER ${tier}`;
   }
 
   const startFill = document.getElementById('startBpProgressFill');
@@ -3209,7 +3259,6 @@ function updateBpProgressUI() {
 
   updateMenuBadges();
 
-  // Update BP Screen elements if open
   const bpScreen = document.getElementById('battlePassScreen');
   if (bpScreen && !bpScreen.classList.contains('hidden')) {
     renderBattlePassScreen();
@@ -3217,12 +3266,6 @@ function updateBpProgressUI() {
 }
 
 const VISIBLE_PALETTE_IDS = ['default', 'matrix_green', 'cyber_gold', 'blood_moon'];
-
-const PALETTE_UNLOCK_TOASTS = {
-  matrix_green: 'Unlocks for free at Synth Pass Tier 10!',
-  cyber_gold: 'Unlocks with Premium Synth Pass at Tier 1!',
-  blood_moon: 'Unlocks with Premium Synth Pass at Tier 30!'
-};
 
 // [UI.DY]
 function closeCustomPaletteMenus() {
@@ -3242,7 +3285,6 @@ function updatePaletteSelectDropdown(selectId) {
   const selectEl = document.getElementById(selectId);
   if (!selectEl || typeof NEON_PALETTES === 'undefined') return;
 
-  // Скрываем нативный <select> и строим рядом кастомный игровой дропдаун
   selectEl.style.display = 'none';
 
   let wrapper = selectEl.parentNode.querySelector(`.custom-palette-dropdown[data-for="${selectId}"]`);
@@ -3293,7 +3335,12 @@ function updatePaletteSelectDropdown(selectId) {
       e.stopPropagation();
       if (!isUnlocked) {
         if (typeof sfx === 'function') sfx('denied');
-        showHintToast(PALETTE_UNLOCK_TOASTS[pId] || `Locked: ${pal.unlockHint || 'Synth Pass'}`);
+        const lockMsg = (typeof t === 'function' && t(`pal_unlock_${pId}`)) 
+          ? t(`pal_unlock_${pId}`) 
+          : (pId === 'matrix_green' ? (typeof t === 'function' ? t('pal_unlock_t10_free') : 'Unlocks for free at Synth Pass Tier 10!')
+          : (pId === 'cyber_gold' ? (typeof t === 'function' ? t('pal_unlock_prem_t1') : 'Unlocks with Premium Synth Pass at Tier 1!')
+          : (typeof t === 'function' ? t('pal_unlock_prem_t30') : 'Unlocks with Premium Synth Pass at Tier 30!')));
+        showHintToast(lockMsg);
         return;
       }
       closeCustomPaletteMenus();
@@ -3308,7 +3355,7 @@ function updatePaletteSelectDropdown(selectId) {
     e.stopPropagation();
     if (isLockedInitial) {
       if (typeof sfx === 'function') sfx('denied');
-      showHintToast('Free Visual theme unlocks at Synth Pass Tier 10');
+      showHintToast(typeof t === 'function' ? t('free_theme_unlocks_t10') : 'Free Visual theme unlocks at Synth Pass Tier 10');
       return;
     }
     const wasHidden = menu.classList.contains('hidden');
@@ -3325,15 +3372,16 @@ function updatePaletteSelectDropdown(selectId) {
 }
 
 // [UI.ED]
-function handleBpThemeClick(e) {
-  // Обработка клика теперь полностью внутри кастомного триггера updatePaletteSelectDropdown
-}
+function handleBpThemeClick(e) {}
 
 // [UI.EE]
 function selectPalette(paletteId) {
   if (!unlockedPalettes.includes(paletteId) && !devMode) {
     sfx('denied');
-    showHintToast(PALETTE_UNLOCK_TOASTS[paletteId] || 'Visual theme locked in Synth Pass!');
+    const lockMsg = (typeof t === 'function' && t(`pal_unlock_${paletteId}`))
+      ? t(`pal_unlock_${paletteId}`)
+      : ((typeof t === 'function' && t('theme_locked_synth_pass')) ? t('theme_locked_synth_pass') : 'Synth Pass');
+    showHintToast(lockMsg);
     return;
   }
   if (!unlockedPalettes.includes(paletteId) && devMode) {
@@ -3344,7 +3392,9 @@ function selectPalette(paletteId) {
   saveGame();
   updatePaletteSelectDropdown('settingPaletteSelect');
   updatePaletteSelectDropdown('bpPaletteSelect');
-  showHintToast(`Visual: ${NEON_PALETTES[paletteId] ? NEON_PALETTES[paletteId].name : paletteId}`);
+  const palName = NEON_PALETTES[paletteId] ? NEON_PALETTES[paletteId].name : paletteId;
+  const prefix = typeof t === 'function' ? t('visual') : 'Visual';
+  showHintToast(`${prefix}: ${palName}`);
 }
 
 // [UI.EF]
@@ -3422,22 +3472,22 @@ function renderBattlePassScreen() {
   const { tier, xpInTier, isMax } = getBpTierInfo(bpXp);
 
   const badgeText = document.getElementById('bpTierBadgeText');
-  if (badgeText) badgeText.textContent = t('tier_n_of_m', { n: tier, m: 30 });
+  if (badgeText) badgeText.textContent = typeof t === 'function' ? t('tier_n_of_m', { n: tier, m: 30 }) : `TIER ${tier} / 30`;
 
   const barFill = document.getElementById('bpXpBarFill');
   if (barFill) barFill.style.width = isMax ? '100%' : `${xpInTier}%`;
 
   const barText = document.getElementById('bpXpBarText');
-  if (barText) barText.textContent = isMax ? `XP: ${t('max')} (3000/3000)` : `XP: ${xpInTier} / 100`;
+  if (barText) barText.textContent = isMax ? `XP: ${typeof t === 'function' ? t('max') : 'MAX'} (3000/3000)` : `XP: ${xpInTier} / 100`;
 
   const premBtn = document.getElementById('bpActivatePremBtn');
   if (premBtn) {
     if (bpPremiumPurchased) {
       premBtn.className = 'bp-action-btn bp-btn-premium owned';
-      premBtn.innerHTML = `<span>${t('prem_unlocked')}</span>`;
+      premBtn.innerHTML = `<span>${typeof t === 'function' ? t('prem_unlocked') : 'PREMIUM UNLOCKED'}</span>`;
     } else {
       premBtn.className = 'bp-action-btn bp-btn-premium';
-      premBtn.innerHTML = `<span>${t('activate_prem')}</span>`;
+      premBtn.innerHTML = `<span>${typeof t === 'function' ? t('activate_prem') : 'ACTIVATE PREMIUM ($2.99)'}</span>`;
     }
   }
 
@@ -3454,16 +3504,18 @@ function renderBattlePassScreen() {
   const diamondIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
   const prismIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
 
+  const _tr = (typeof window.t === 'function') ? window.t : ((k) => k.toUpperCase());
+
   BATTLE_PASS_TIERS.forEach(item => {
-    const t = item.tier;
-    const isUnlockedTier = tier >= t;
-    const isCurrentTier = tier === t;
+    const tNum = item.tier;
+    const isUnlockedTier = tier >= tNum;
+    const isCurrentTier = tier === tNum;
 
     const row = document.createElement('div');
     row.className = `bp-tier-row${isCurrentTier ? ' current-tier' : ''}`;
 
     const freeCell = document.createElement('div');
-    const isFreeClaimed = !!bpClaimedFree[t];
+    const isFreeClaimed = !!bpClaimedFree[tNum];
     freeCell.className = `bp-cell bp-cell-free${isFreeClaimed ? ' claimed' : ''}`;
 
     // [UI.EI]
@@ -3480,30 +3532,33 @@ function renderBattlePassScreen() {
     const fr = item.freeReward;
     if (fr.type === 'diamonds') freeTitle = `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:3px; color:#ffffff;">+${fr.amount} ${diamondIcon}</span>`;
     else if (fr.type === 'prisms') freeTitle = `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:3px; color:#ffffff;">+${fr.amount} ${prismIcon}</span>`;
-    else if (fr.type === 'ad_capsule') freeTitle = `Ad-Capsule <span style="white-space:nowrap; display:inline-flex; align-items:center; gap:2px; color:#ffffff;">+2 ${prismIcon}</span>`;
+    else if (fr.type === 'ad_capsule') {
+      const capTitle = (typeof t === 'function' && t('ad_capsule')) ? t('ad_capsule') : (_tr('ad_capsule') || 'Ad-Capsule');
+      freeTitle = `${capTitle} <span style="white-space:nowrap; display:inline-flex; align-items:center; gap:2px; color:#ffffff;">+2 ${prismIcon}</span>`;
+    }
     else if (fr.title) freeTitle = formatRewardText(fr.title);
 
     let freeBtnHtml = '';
     if (isFreeClaimed) {
-      freeBtnHtml = `<button class="bp-cell-btn claimed-btn">${window.t('claimed')}</button>`;
+      freeBtnHtml = `<button class="bp-cell-btn claimed-btn">${_tr('claimed')}</button>`;
     } else if (isUnlockedTier) {
       if (fr.type === 'ad_capsule' && !noAdsPurchased) {
-        freeBtnHtml = `<button class="bp-cell-btn ad-btn" onclick="claimBpFreeReward(${t})">${window.t('watch_ad')}</button>`;
+        freeBtnHtml = `<button class="bp-cell-btn ad-btn" onclick="claimBpFreeReward(${tNum})">${_tr('watch_ad')}</button>`;
       } else {
-        freeBtnHtml = `<button class="bp-cell-btn claim-btn" onclick="claimBpFreeReward(${t})">${window.t('claim')}</button>`;
+        freeBtnHtml = `<button class="bp-cell-btn claim-btn" onclick="claimBpFreeReward(${tNum})">${_tr('claim')}</button>`;
       }
     } else {
-      freeBtnHtml = `<button class="bp-cell-btn locked-btn" onclick="claimBpFreeReward(${t})">${window.t('locked')}</button>`;
+      freeBtnHtml = `<button class="bp-cell-btn locked-btn" onclick="claimBpFreeReward(${tNum})">${_tr('locked')}</button>`;
     }
 
     freeCell.innerHTML = `<span class="bp-cell-title">${freeTitle}</span>${freeBtnHtml}`;
 
     const numBox = document.createElement('div');
     numBox.className = 'bp-tier-num-box';
-    numBox.innerHTML = `<span class="bp-tier-num">${t}</span><span class="bp-tier-status">${isUnlockedTier ? window.t('unlocked') : window.t('locked')}</span>`;
+    numBox.innerHTML = `<span class="bp-tier-num">${tNum}</span><span class="bp-tier-status">${isUnlockedTier ? _tr('unlocked') : _tr('locked')}</span>`;
 
     const premCell = document.createElement('div');
-    const isPremClaimed = !!bpClaimedPrem[t];
+    const isPremClaimed = !!bpClaimedPrem[tNum];
     premCell.className = `bp-cell bp-cell-prem${isPremClaimed ? ' claimed' : ''}`;
 
     let premTitle = '';
@@ -3516,13 +3571,13 @@ function renderBattlePassScreen() {
 
     let premBtnHtml = '';
     if (isPremClaimed) {
-      premBtnHtml = `<button class="bp-cell-btn claimed-btn">${window.t('claimed')}</button>`;
+      premBtnHtml = `<button class="bp-cell-btn claimed-btn">${_tr('claimed')}</button>`;
     } else if (bpPremiumPurchased && isUnlockedTier) {
-      premBtnHtml = `<button class="bp-cell-btn claim-btn" onclick="claimBpPremReward(${t})">${window.t('claim')}</button>`;
+      premBtnHtml = `<button class="bp-cell-btn claim-btn" onclick="claimBpPremReward(${tNum})">${_tr('claim')}</button>`;
     } else if (!bpPremiumPurchased) {
-      premBtnHtml = `<button class="bp-cell-btn locked-btn" onclick="claimBpPremReward(${t})">PREMIUM</button>`;
+      premBtnHtml = `<button class="bp-cell-btn locked-btn" onclick="claimBpPremReward(${tNum})">PREMIUM</button>`;
     } else {
-      premBtnHtml = `<button class="bp-cell-btn locked-btn" onclick="claimBpPremReward(${t})">${window.t('locked')}</button>`;
+      premBtnHtml = `<button class="bp-cell-btn locked-btn" onclick="claimBpPremReward(${tNum})">${_tr('locked')}</button>`;
     }
 
     premCell.innerHTML = `<span class="bp-cell-title">${premTitle}</span>${premBtnHtml}`;
@@ -3536,31 +3591,31 @@ function renderBattlePassScreen() {
 }
 
 // [UI.EJ]
-function claimBpFreeReward(t) {
+function claimBpFreeReward(tNum) {
   const { tier } = getBpTierInfo(bpXp);
-  if (tier < t) {
-    showHintToast(`Reach Tier ${t} first!`);
+  if (tier < tNum) {
+    showHintToast(typeof t === 'function' ? t('reach_tier_first', { t: tNum }) : `Reach Tier ${tNum} first!`);
     return;
   }
-  if (bpClaimedFree[t]) return;
+  if (bpClaimedFree[tNum]) return;
 
-  const item = BATTLE_PASS_TIERS.find(i => i.tier === t);
+  const item = BATTLE_PASS_TIERS.find(i => i.tier === tNum);
   if (!item) return;
   const fr = item.freeReward;
 
   // [UI.EK]
   const executeClaim = () => {
-    bpClaimedFree[t] = true;
+    bpClaimedFree[tNum] = true;
     let toast = '';
     if (fr.type === 'diamonds') {
       diamonds += fr.amount;
-      toast = `+${fr.amount} Diamonds claimed!`;
+      toast = typeof t === 'function' ? t('diamonds_claimed', { n: fr.amount }) : `+${fr.amount} Diamonds claimed!`;
     } else if (fr.type === 'prisms') {
       prisms += fr.amount;
-      toast = `+${fr.amount} Prisms claimed!`;
+      toast = typeof t === 'function' ? t('prisms_claimed', { n: fr.amount }) : `+${fr.amount} Prisms claimed!`;
     } else if (fr.type === 'ad_capsule') {
       prisms += fr.prisms;
-      toast = `Ad-Capsule: +${fr.prisms} Prisms claimed!`;
+      toast = typeof t === 'function' ? t('ad_capsule_claimed', { n: fr.prisms }) : `Ad-Capsule: +${fr.prisms} Prisms claimed!`;
     } else if (fr.type === 'combo' || fr.paletteId || fr.type === 'palette') {
       if (fr.paletteId) {
         if (!unlockedPalettes.includes(fr.paletteId)) {
@@ -3592,39 +3647,39 @@ function claimBpFreeReward(t) {
 }
 
 // [UI.EL]
-function claimBpPremReward(t) {
+function claimBpPremReward(tNum) {
   if (!bpPremiumPurchased) {
-    showHintToast('Activate Premium Pass first!');
+    showHintToast(typeof t === 'function' ? t('activate_premium_first') : 'Activate Premium Pass first!');
     return;
   }
   const { tier } = getBpTierInfo(bpXp);
-  if (tier < t) {
-    showHintToast(`Reach Tier ${t} first!`);
+  if (tier < tNum) {
+    showHintToast(typeof t === 'function' ? t('reach_tier_first', { t: tNum }) : `Reach Tier ${tNum} first!`);
     return;
   }
-  if (bpClaimedPrem[t]) return;
+  if (bpClaimedPrem[tNum]) return;
 
-  const item = BATTLE_PASS_TIERS.find(i => i.tier === t);
+  const item = BATTLE_PASS_TIERS.find(i => i.tier === tNum);
   if (!item) return;
   const pr = item.premReward;
 
-  bpClaimedPrem[t] = true;
+  bpClaimedPrem[tNum] = true;
   let toast = '';
 
   if (pr.type === 'diamonds') {
     diamonds += pr.amount;
-    toast = `+${pr.amount} Diamonds claimed!`;
+    toast = typeof t === 'function' ? t('diamonds_claimed', { n: pr.amount }) : `+${pr.amount} Diamonds claimed!`;
   } else if (pr.type === 'prisms') {
     prisms += pr.amount;
-    toast = `+${pr.amount} Prisms claimed!`;
+    toast = typeof t === 'function' ? t('prisms_claimed', { n: pr.amount }) : `+${pr.amount} Prisms claimed!`;
   } else if (pr.type === 'palette') {
     if (!unlockedPalettes.includes(pr.paletteId)) {
       unlockedPalettes.push(pr.paletteId);
     }
     applyPaletteColors(pr.paletteId);
-    toast = `Unlocked Palette: ${NEON_PALETTES[pr.paletteId].name}!`;
+    toast = typeof t === 'function' ? t('unlocked_palette', { name: NEON_PALETTES[pr.paletteId].name }) : `Unlocked Palette: ${NEON_PALETTES[pr.paletteId].name}!`;
   } else if (pr.type === 'perk') {
-    toast = 'Unlocked Perk: Starting Reserve (+15% Gold)!';
+    toast = typeof t === 'function' ? t('perk_starting_reserve_unlocked') : 'Unlocked Perk: Starting Reserve (+15% Gold)!';
   } else if (pr.type === 'ultimate') {
     if (!unlockedPalettes.includes(pr.paletteId)) {
       unlockedPalettes.push(pr.paletteId);
@@ -3632,7 +3687,7 @@ function claimBpPremReward(t) {
     prisms += pr.prisms;
     diamonds += pr.diamonds;
     applyPaletteColors(pr.paletteId);
-    toast = 'ULTIMATE REWARD CLAIMED! Blood Moon + 25 Prisms + 150 Diamonds';
+    toast = typeof t === 'function' ? t('ultimate_bp_reward_claimed') : 'ULTIMATE REWARD CLAIMED! Blood Moon + 25 Prisms + 150 Diamonds';
   }
 
   updateDiamondUI();
@@ -3646,7 +3701,7 @@ function claimBpPremReward(t) {
 // [UI.EM]
 function buyBpPremiumIAP() {
   if (bpPremiumPurchased) {
-    showHintToast('Premium Pass already activated!');
+    showHintToast(typeof t === 'function' ? t('premium_already_activated') : 'Premium Pass already activated!');
     return;
   }
 
@@ -3659,7 +3714,7 @@ function buyBpPremiumIAP() {
     saveGame();
     sfx('victory');
     renderBattlePassScreen();
-    showHintToast('SYNTH PASS PREMIUM ACTIVATED!');
+    showHintToast(typeof t === 'function' ? t('synth_pass_premium_activated') : 'SYNTH PASS PREMIUM ACTIVATED!');
   };
 
   if (typeof showAdPlaceholder === 'function') {
@@ -3674,11 +3729,11 @@ window.buyBpPremiumIAP = buyBpPremiumIAP;
 function buyBpTierWithDiamonds() {
   const { tier } = getBpTierInfo(bpXp);
   if (tier >= 30 && bpXp >= 3000) {
-    showHintToast('Synth Pass already at Max Tier!');
+    showHintToast(typeof t === 'function' ? t('synth_pass_max_tier') : 'Synth Pass already at Max Tier!');
     return;
   }
   if (diamonds < 30) {
-    showHintToast('Not enough Diamonds! (30 required)');
+    showHintToast(typeof t === 'function' ? t('not_enough_diamonds_30') : 'Not enough Diamonds! (30 required)');
     return;
   }
   diamonds -= 30;
@@ -3686,7 +3741,7 @@ function buyBpTierWithDiamonds() {
   updateDiamondUI();
   sfx('confirm');
   renderBattlePassScreen();
-  showHintToast('+1 Tier purchased (+100 XP)!');
+  showHintToast(typeof t === 'function' ? t('tier_purchased_plus_100_xp') : '+1 Tier purchased (+100 XP)!');
 }
 
 // [UI.EP]
@@ -3785,7 +3840,8 @@ function applySfxVolume(pct, persist) {
   if (slider) slider.classList.toggle('is-muted', v === 0);
   const label = document.getElementById('sfxVolLabel');
   if (label) {
-    label.textContent = v === 0 ? 'OFF' : `${v}%`;
+    const offText = (typeof t === 'function') ? t('off') : 'OFF';
+    label.textContent = v === 0 ? offText : `${v}%`;
     label.classList.toggle('is-muted', v === 0);
   }
   if (persist) saveGameSoon();
@@ -3804,7 +3860,8 @@ function applyMusicVolume(pct, persist) {
   if (slider) slider.classList.toggle('is-muted', v === 0);
   const label = document.getElementById('musicVolLabel');
   if (label) {
-    label.textContent = v === 0 ? 'OFF' : `${v}%`;
+    const offText = (typeof t === 'function') ? t('off') : 'OFF';
+    label.textContent = v === 0 ? offText : `${v}%`;
     label.classList.toggle('is-muted', v === 0);
   }
   if (persist) saveGameSoon();
@@ -3839,7 +3896,8 @@ function toggleSettingPerf(isChecked) {
     const levelsScreen = document.getElementById('levelsScreen');
     if (!levelsScreen || levelsScreen.classList.contains('hidden')) return;
 
-    if (e.target && e.target.closest && e.target.closest('.part-nav-btn, .mode-3way-tab, .levels-main-menu-btn, .hud-gear-btn')) {
+    // Игнорируем только вкладки режимов и шестеренку, но не ломаем свайп над навигатором
+    if (e.target && e.target.closest && e.target.closest('.mode-3way-tab, .levels-main-menu-btn, .hud-gear-btn')) {
       isPointerDown = false;
       return;
     }
@@ -3920,10 +3978,13 @@ function toggleSettingPerf(isChecked) {
 
   // [UI.FE]
   function onClickCapture(e) {
-    if (isSwiping) {
+    if (isSwiping || swipeTriggered) {
       e.stopPropagation();
       e.preventDefault();
-      isSwiping = false;
+      setTimeout(() => {
+        isSwiping = false;
+        swipeTriggered = false;
+      }, 50);
     }
   }
 
@@ -3934,12 +3995,10 @@ function toggleSettingPerf(isChecked) {
       levelsScreen.addEventListener('touchstart', onPointerDown, { passive: true });
       levelsScreen.addEventListener('touchmove', onPointerMove, { passive: true });
       levelsScreen.addEventListener('touchend', onPointerUp, { passive: true });
-      // [UI.FG]
       levelsScreen.addEventListener('touchcancel', () => { isPointerDown = false; }, { passive: true });
       levelsScreen.addEventListener('mousedown', onPointerDown);
       levelsScreen.addEventListener('mousemove', onPointerMove);
       levelsScreen.addEventListener('mouseup', onPointerUp);
-      // [UI.FH]
       levelsScreen.addEventListener('mouseleave', () => { isPointerDown = false; });
       levelsScreen.addEventListener('click', onClickCapture, true);
     }
@@ -4181,7 +4240,7 @@ function toggleLoadoutWidgetTower(type) {
     selectedLoadout.splice(idx, 1);
   } else {
     if (selectedLoadout.length >= LOADOUT_SIZE) {
-      showHintToast(`Deselect a tower first (${LOADOUT_SIZE} max)`);
+      showHintToast(typeof t === 'function' ? t('deselect_tower_first', { max: LOADOUT_SIZE }) : `Deselect a tower first (${LOADOUT_SIZE} max)`);
       return;
     }
     selectedLoadout.push(type);
@@ -4314,90 +4373,104 @@ function buildMilestoneSteps(clearedLevel) {
   const newTowers = getNewlyUnlockedTowers(nextLvl);
   const upgradesUnlockLevel = getLoadoutStartLevel();
   const loadoutJustUnlocked = (nextLvl === upgradesUnlockLevel);
+  const _tr = (typeof window.t === 'function') ? window.t : ((k) => k);
 
   if (clearedLevel === 10) {
     steps.push({
-      kicker: 'CHAPTER 1 CLEARED',
-      title: 'TECH TREE',
+      kicker: _tr('ms_ch1_cleared') || 'CHAPTER 1 CLEARED',
+      title: _tr('tech_tree') || 'TECH TREE',
       color: '#00e5ff',
       visual: { kind: 'feature', feature: 'tech_tree' },
       bullets: [
-        '💎 Spend Diamonds on permanent upgrades',
-        '⚡ Boost Tower Damage, Speed & Range',
-        '🛡️ Increase starting Base HP & Gold Bounty'
+        _tr('ms_tt_bullet_1') || '💎 Spend Diamonds on permanent upgrades',
+        _tr('ms_tt_bullet_2') || '⚡ Boost Tower Damage, Speed & Range',
+        _tr('ms_tt_bullet_3') || '🛡️ Increase starting Base HP & Gold Bounty'
       ]
     });
   } else if (clearedLevel === 20) {
     steps.push({
-      kicker: 'NEW MODE UNLOCKED',
-      title: 'HARDCORE',
+      kicker: _tr('ms_new_mode_unlocked') || 'NEW MODE UNLOCKED',
+      title: _tr('hardcore') || 'HARDCORE',
       color: '#f05f9f',
       visual: { kind: 'feature', feature: 'hardcore' },
       bullets: [
-        '💔 1 Base HP — zero margin for error',
-        '🔥 1.2x faster & Enraged enemies',
-        '🔮 Earn rare Prisms & massive Diamond loot'
+        _tr('ms_hc_bullet_1') || '💔 1 Base HP — zero margin for error',
+        _tr('ms_hc_bullet_2') || '🔥 1.2x faster & Enraged enemies',
+        _tr('ms_hc_bullet_3') || '🔮 Earn rare Prisms & massive Diamond loot'
       ]
     });
   } else if (clearedLevel === 30) {
     steps.push({
-      kicker: 'CHAPTER 3 CLEARED',
-      title: 'ASCENSION',
+      kicker: _tr('ms_ch3_cleared') || 'CHAPTER 3 CLEARED',
+      title: _tr('ms_ascension') || 'ASCENSION',
       color: '#d946ef',
       visual: { kind: 'feature', feature: 'ascended' },
       bullets: [
-        '🔮 Ascended Tech Tree (Lv.11–15) unlocked',
-        '⚡ Unlock infinite SYNTH power scaling',
-        '🔄 Prism Deconstruction unlocked in Shop'
+        _tr('ms_asc_bullet_1') || '🔮 Ascended Tech Tree (Lv.11–15) unlocked',
+        _tr('ms_asc_bullet_2') || '⚡ Unlock infinite SYNTH power scaling',
+        _tr('ms_asc_bullet_3') || '🔄 Prism Deconstruction unlocked in Shop'
       ]
     });
   } else if (clearedLevel === 40) {
     steps.push({
-      kicker: 'CHAPTER 4 CLEARED',
-      title: 'FINAL CHAPTER',
+      kicker: _tr('ms_ch4_cleared') || 'CHAPTER 4 CLEARED',
+      title: _tr('ms_final_chapter') || 'FINAL CHAPTER',
       color: '#00e5ff',
       visual: { kind: 'feature', feature: 'sector' },
       bullets: [
-        '⚠️ Chapter 5: Apex Sector unlocked',
-        '⚡ EMP Bombers & Overlord Bosses ahead',
-        '🏆 Push through to the final Level 50'
+        _tr('ms_ch5_bullet_1') || '⚠️ Chapter 5: Apex Sector unlocked',
+        _tr('ms_ch5_bullet_2') || '⚡ EMP Bombers & Overlord Bosses ahead',
+        _tr('ms_ch5_bullet_3') || '🏆 Push through to the final Level 50'
       ]
     });
   }
 
   if (clearedLevel === 15) {
     steps.push({
-      kicker: 'NEW MODE UNLOCKED',
-      title: 'ENDLESS ARENA',
+      kicker: _tr('ms_new_mode_unlocked') || 'NEW MODE UNLOCKED',
+      title: _tr('endless') || 'ENDLESS ARENA',
       color: '#d946ef',
       visual: { kind: 'feature', feature: 'endless' },
       bullets: [
-        '♾️ Survive infinite escalating waves',
-        '💎 Earn +2 Diamonds for every wave cleared',
-        '🔮 +1 Prism every 10 waves & record bonuses'
+        _tr('ms_endless_bullet_1') || '♾️ Survive infinite escalating waves',
+        _tr('ms_endless_bullet_2') || '💎 Earn +2 Diamonds for every wave cleared',
+        _tr('ms_endless_bullet_3') || '🔮 +1 Prism every 10 waves & record bonuses'
       ]
     });
   }
 
   newTowers.forEach(type => {
     const conf = TOWER_CONFIGS[type] || {};
+    
+    // Получаем переведенные буллиты из словаря или фоллбэк
+    let locBlurbs = [];
+    if (typeof I18N_DICT !== 'undefined') {
+      const dict = I18N_DICT[currentLang] || I18N_DICT.en || {};
+      if (Array.isArray(dict[`tower_blurbs_${type}`])) {
+        locBlurbs = dict[`tower_blurbs_${type}`];
+      }
+    }
+    if (!locBlurbs || locBlurbs.length === 0) {
+      locBlurbs = Array.isArray(TOWER_UNLOCK_BLURBS[type]) ? TOWER_UNLOCK_BLURBS[type] : [];
+    }
+
     steps.push({
-      kicker: 'NEW TOWER UNLOCKED',
-      title: TOWER_NAMES[type] || type,
+      kicker: _tr('new_tower_unlocked') || 'NEW TOWER UNLOCKED',
+      title: (typeof TOWER_NAMES !== 'undefined' && TOWER_NAMES[type]) ? TOWER_NAMES[type] : type,
       color: conf.color || '#00e5ff',
       visual: { kind: 'tower_demo', type },
-      bullets: Array.isArray(TOWER_UNLOCK_BLURBS[type]) ? TOWER_UNLOCK_BLURBS[type] : []
+      bullets: locBlurbs
     });
   });
 
   if (loadoutJustUnlocked) {
     steps.push({
-      kicker: 'TACTICAL DECK',
-      title: '3-TOWER LOADOUT',
+      kicker: _tr('ms_tactical_deck') || 'TACTICAL DECK',
+      title: _tr('ms_loadout_title') || '3-TOWER LOADOUT',
       color: '#f59e0b',
       bullets: [
-        `🎯 Bring up to ${LOADOUT_SIZE} towers into each battle`,
-        '🔄 Swap your active deck before any level'
+        (typeof t === 'function') ? t('ms_loadout_bullet_1', { size: LOADOUT_SIZE }) : `🎯 Bring up to ${LOADOUT_SIZE} towers into each battle`,
+        _tr('ms_loadout_bullet_2') || '🔄 Swap your active deck before any level'
       ],
       embed: 'loadout'
     });
@@ -4435,7 +4508,7 @@ function renderMilestoneStep() {
   const kickerEl = document.getElementById('milestoneKicker');
   const titleEl = document.getElementById('milestoneTitle');
   if (kickerEl) {
-    kickerEl.textContent = step.kicker || 'UNLOCKED';
+    kickerEl.textContent = step.kicker || ((typeof t === 'function') ? t('unlocked') : 'UNLOCKED');
     kickerEl.style.color = accentColor;
   }
   if (titleEl) {
@@ -4480,7 +4553,10 @@ function renderMilestoneStep() {
   if (okBtn) {
     const isLast = (milestoneIndex >= milestoneSteps.length - 1);
     const stepIndicator = milestoneSteps.length > 1 ? ` (${milestoneIndex + 1}/${milestoneSteps.length})` : '';
-    okBtn.innerHTML = `<span>${isLast ? 'AWESOME' : 'NEXT'}${stepIndicator}</span>`;
+    const btnLabel = isLast 
+      ? ((typeof t === 'function') ? t('awesome') : 'AWESOME') 
+      : ((typeof t === 'function') ? t('next') : 'NEXT');
+    okBtn.innerHTML = `<span>${btnLabel}${stepIndicator}</span>`;
     okBtn.style.borderColor = '';
     okBtn.style.boxShadow = '';
   }
@@ -4523,7 +4599,11 @@ function renderMilestoneLoadoutGrid() {
     grid.appendChild(btn);
   });
   const hint = document.getElementById('milestoneEmbedHint');
-  if (hint) hint.textContent = `${selectedLoadout.length}/${LOADOUT_SIZE} selected \u2014 tap a selected tower to free a slot`;
+  if (hint) {
+    hint.textContent = (typeof t === 'function')
+      ? t('loadout_selected_hint', { cur: selectedLoadout.length, max: LOADOUT_SIZE })
+      : `${selectedLoadout.length}/${LOADOUT_SIZE} selected — tap a selected tower to free a slot`;
+  }
 }
 
 // [UI.GB]
@@ -4545,7 +4625,7 @@ function showUpgradesScreen(fromSource) {
   const unlockLevel = getLoadoutStartLevel();
   const isUpgradesUnlocked = devMode || getLoadoutReferenceLevel() >= unlockLevel;
   if (!isUpgradesUnlocked) {
-    showHintToast(`Will be available on Level ${unlockLevel}`);
+    showHintToast(typeof t === 'function' ? t('available_on_level_n', { n: unlockLevel }) : `Will be available on Level ${unlockLevel}`);
     return;
   }
 
@@ -4712,6 +4792,7 @@ function renderShopScreen() {
   const giftTitle = document.getElementById('dailyGiftTitleText');
   const giftSub = document.getElementById('dailyGiftSubText');
   const giftBtn = document.getElementById('dailyGiftClaimBtn');
+  const _tr = (typeof window.t === 'function') ? window.t : ((k) => k);
 
   if (giftTitle) {
     if (dailyGiftsClaimedCount === 0) {
@@ -4721,19 +4802,22 @@ function renderShopScreen() {
     } else if (dailyGiftsClaimedCount === 2) {
       giftTitle.innerHTML = `+20 ${getDailyDiamondSvg(14)} + 1 ${getDailyPrismSvg(14)}`;
     } else {
-      giftTitle.textContent = 'Daily Gifts Completed';
+      giftTitle.textContent = (typeof t === 'function') ? t('daily_gifts_completed') : 'Daily Gifts Completed';
     }
   }
 
   if (giftSub) {
     if (dailyGiftsClaimedCount === 0) {
-      giftSub.innerHTML = `Next pack: 10 ${getDailyDiamondSvg(12)} (1/3)`;
+      const txt = (typeof t === 'function') ? t('next_pack_diamonds', { n: 10, cur: 1, max: 3 }) : 'Next pack: 10 {dia} (1/3)';
+      giftSub.innerHTML = txt.replace('{dia}', getDailyDiamondSvg(12));
     } else if (dailyGiftsClaimedCount === 1) {
-      giftSub.innerHTML = `Next pack: 15 ${getDailyDiamondSvg(12)} (2/3)`;
+      const txt = (typeof t === 'function') ? t('next_pack_diamonds', { n: 15, cur: 2, max: 3 }) : 'Next pack: 15 {dia} (2/3)';
+      giftSub.innerHTML = txt.replace('{dia}', getDailyDiamondSvg(12));
     } else if (dailyGiftsClaimedCount === 2) {
-      giftSub.innerHTML = `Next pack: 20 ${getDailyDiamondSvg(12)} + 1 ${getDailyPrismSvg(12)}`;
+      const txt = (typeof t === 'function') ? t('next_pack_combo', { dia: 20, prism: 1 }) : 'Next pack: 20 {dia} + 1 {prism}';
+      giftSub.innerHTML = txt.replace('{dia}', getDailyDiamondSvg(12)).replace('{prism}', getDailyPrismSvg(12));
     } else {
-      giftSub.textContent = 'Claimed today: 3/3 packs';
+      giftSub.textContent = (typeof t === 'function') ? t('claimed_today_packs', { cur: 3, max: 3 }) : 'Claimed today: 3/3 packs';
     }
   }
 
@@ -4741,15 +4825,15 @@ function renderShopScreen() {
     if (dailyGiftsClaimedCount >= 3) {
       giftBtn.disabled = true;
       giftBtn.className = 'shop-item-btn shop-btn-claimed';
-      giftBtn.innerHTML = `<span>${t('claimed')}</span>`;
+      giftBtn.innerHTML = `<span>${_tr('claimed')}</span>`;
     } else if (dailyGiftsClaimedCount === 0 || noAdsPurchased) {
       giftBtn.disabled = false;
       giftBtn.className = 'shop-item-btn shop-btn-free';
-      giftBtn.innerHTML = `<span>${t('free')}</span>`;
+      giftBtn.innerHTML = `<span>${_tr('free')}</span>`;
     } else {
       giftBtn.disabled = false;
       giftBtn.className = 'shop-item-btn shop-btn-ad';
-      giftBtn.innerHTML = `<svg width="16" height="13" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:4px;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="currentColor"/></svg><span>${t('watch_ad')}</span>`;
+      giftBtn.innerHTML = `<svg width="16" height="13" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:4px;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="currentColor"/></svg><span>${_tr('watch_ad')}</span>`;
     }
   }
 
@@ -4798,7 +4882,7 @@ function renderShopScreen() {
     if (timeModTier >= 1) {
       t1Btn.disabled = true;
       t1Btn.className = 'shop-item-btn shop-btn-claimed';
-      t1Btn.innerHTML = `<span>${typeof t === 'function' ? t('owned') : 'OWNED'}</span>`;
+      t1Btn.innerHTML = `<span>${_tr('owned')}</span>`;
     } else {
       t1Btn.disabled = false;
       t1Btn.className = 'shop-item-btn shop-btn-buy';
@@ -4811,7 +4895,7 @@ function renderShopScreen() {
     if (timeModTier >= 2) {
       t2Btn.disabled = true;
       t2Btn.className = 'shop-item-btn shop-btn-claimed';
-      t2Btn.innerHTML = `<span>${typeof t === 'function' ? t('owned') : 'OWNED'}</span>`;
+      t2Btn.innerHTML = `<span>${_tr('owned')}</span>`;
     } else if (timeModTier < 1) {
       t2Btn.disabled = false;
       t2Btn.className = 'shop-item-btn shop-btn-buy locked-buy';
@@ -4820,10 +4904,11 @@ function renderShopScreen() {
           <rect x="4" y="10" width="16" height="12" rx="3"></rect>
           <path d="M7 10V6a5 5 0 0 1 10 0v4"></path>
         </svg>`;
+      const tier1ReqLabel = (typeof t === 'function') ? t('tier_1_required') : 'TIER 1<br>REQUIRED';
       t2Btn.innerHTML = `
         ${lockIconSvg}
         <span style="font-size:8.5px; font-weight:800; line-height:1.15; letter-spacing:0.4px; display:inline-block; text-align:center;">
-          TIER 1<br>REQUIRED
+          ${tier1ReqLabel}
         </span>`;
     } else {
       t2Btn.disabled = false;
@@ -4837,7 +4922,7 @@ function renderShopScreen() {
     if (noAdsPurchased) {
       noAdsBtn.disabled = true;
       noAdsBtn.className = 'shop-item-btn shop-btn-claimed';
-      noAdsBtn.innerHTML = `<span>${typeof t === 'function' ? t('owned') : 'OWNED'}</span>`;
+      noAdsBtn.innerHTML = `<span>${_tr('owned')}</span>`;
     } else {
       noAdsBtn.disabled = false;
       noAdsBtn.className = 'shop-item-btn shop-btn-buy';
@@ -5144,7 +5229,7 @@ function closeDailyLoginModal() {
 // [UI.GO]
 function claimDailyLoginReward(isDouble) {
   if (checkDailyLoginState()) {
-    showHintToast('Already claimed today!');
+    showHintToast(typeof t === 'function' ? t('already_claimed_today') : 'Already claimed today!');
     return;
   }
 
@@ -5171,10 +5256,14 @@ function claimDailyLoginReward(isDouble) {
     updateMenuBadges();
     renderDailyLoginModal();
 
-    let toastText = isDouble ? `x2 Bonus: ` : `Day ${claimedDay}: `;
+    let toastText = isDouble 
+      ? ((typeof t === 'function') ? t('x2_bonus_prefix') : 'x2 Bonus: ') 
+      : ((typeof t === 'function') ? t('day_n_prefix', { n: claimedDay }) : `Day ${claimedDay}: `);
     const parts = [];
-    if (addDiamonds > 0) parts.push(`+${addDiamonds} Diamonds`);
-    if (addPrisms > 0) parts.push(`+${addPrisms} Prisms`);
+    const diaWord = (typeof t === 'function' && t('diamonds_word')) ? t('diamonds_word') : ((typeof t === 'function' && t('diamonds_upper')) ? t('diamonds_upper').toLowerCase() : 'diamonds');
+    const prismWord = (typeof t === 'function' && t('prisms_word')) ? t('prisms_word') : 'prisms';
+    if (addDiamonds > 0) parts.push(`+${addDiamonds} ${diaWord}`);
+    if (addPrisms > 0) parts.push(`+${addPrisms} ${prismWord}`);
     toastText += parts.join(' ');
     showHintToast(toastText);
 
@@ -5435,7 +5524,8 @@ function initBuildPanel() {
     btn.addEventListener('mousedown', (e) => {
       if (gameState !== 'PLAYING') return;
       if (!isTowerActiveThisLevel(type)) {
-        showHintToast(`Will be available on Level ${getTowerUnlockLevel(type)}`);
+        const reqLvl = getTowerUnlockLevel(type);
+        showHintToast(typeof t === 'function' ? (t('unlocks_on_level_n', { n: reqLvl }) || t('available_on_level_n', { n: reqLvl })) : `Level ${reqLvl}`);
         return;
       }
       if (gold < TOWER_CONFIGS[type].cost || btn.classList.contains('disabled')) return;
@@ -5448,8 +5538,8 @@ function initBuildPanel() {
     btn.addEventListener('touchstart', (e) => {
       if (gameState !== 'PLAYING') return;
       if (!isTowerActiveThisLevel(type)) {
-        showHintToast(`Will be available on Level ${getTowerUnlockLevel(type)}`);
-        e.preventDefault();
+        const reqLvl = getTowerUnlockLevel(type);
+        showHintToast(typeof t === 'function' ? (t('unlocks_on_level_n', { n: reqLvl }) || t('available_on_level_n', { n: reqLvl })) : `Level ${reqLvl}`);
         return;
       }
       if (gold < TOWER_CONFIGS[type].cost || btn.classList.contains('disabled')) return;
@@ -5510,7 +5600,9 @@ canvas.addEventListener('click', (e) => {
 
   if (tutorialActive && tutorialLevel === 2 && tutorialStep === 2 && selectedTower) {
     if (clickedTower && clickedTower === selectedTower) {
-      if (typeof showHintToast === 'function') showHintToast('Tap the empty field or ✕ to close');
+      if (typeof showHintToast === 'function') {
+        showHintToast(typeof t === 'function' ? t('tut_close_hint') : 'Tap the empty field or ✕ to close');
+      }
       return;
     }
   }
@@ -5576,6 +5668,14 @@ function updateInspectUI() {
   const isL1FirstTime = (currentLevel === 1 && !isEndlessMode && !isOverdriveMode && !hasClearedLevelBefore(1) && !devMode);
   const canUpgradeLevel = !(lvlConfig && lvlConfig.canUpgrade === false && isL1FirstTime);
 
+  const _tr = (typeof window.t === 'function') ? window.t : ((k) => k.toUpperCase());
+  const slowLabel = _tr('stat_slow') || 'SLOW:';
+  const durLabel = _tr('stat_dur') || 'DUR:';
+  const rngLabel = _tr('stat_rng') || 'RNG:';
+  const dmgLabel = _tr('stat_dmg') || 'DMG:';
+  const spdLabel = _tr('stat_spd') || 'SPD:';
+  const dpsLabel = _tr('stat_dps') || 'DPS:';
+
   const iconBox = document.getElementById('inspectIconBox');
   if (iconBox) {
     iconBox.innerHTML = buildTowerIconSvg(t.type, t.level || 1, 18) || '';
@@ -5588,7 +5688,10 @@ function updateInspectUI() {
 
   const lvlTextEl = document.getElementById('inspectLvlText');
   if (lvlTextEl) {
-    lvlTextEl.textContent = `LVL ${t.level || 1}`;
+    const lvlPrefix = (typeof window.t === 'function' && window.t('lvl_short')) ? window.t('lvl_short') : 'LVL';
+    lvlTextEl.textContent = (typeof window.t === 'function' && window.t('level_n_short', { n: t.level || 1 })) 
+      ? window.t('level_n_short', { n: t.level || 1 }) 
+      : `${lvlPrefix} ${t.level || 1}`;
   }
 
   for (let lvl = 1; lvl <= 3; lvl++) {
@@ -5613,23 +5716,23 @@ function updateInspectUI() {
       const slowPct = Math.round((t.slowFactor !== undefined ? t.slowFactor : 0.3) * 100);
       const dur = ((t.slowDuration !== undefined ? t.slowDuration : 1.4)).toFixed(1);
       statsBox.innerHTML = `
-        <div class="inspect-stat-item"><span class="inspect-stat-lbl">SLOW:</span><span class="inspect-stat-val">${slowPct}%</span></div>
-        <div class="inspect-stat-item"><span class="inspect-stat-lbl">DUR:</span><span class="inspect-stat-val">${dur}s</span></div>
-        <div class="inspect-stat-item"><span class="inspect-stat-lbl">RNG:</span><span class="inspect-stat-val">${curRng}</span></div>
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">${slowLabel}</span><span class="inspect-stat-val">${slowPct}%</span></div>
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">${durLabel}</span><span class="inspect-stat-val">${dur}s</span></div>
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">${rngLabel}</span><span class="inspect-stat-val">${curRng}</span></div>
       `;
     } else if (t.fireRate) {
       const curDmg = +(t.damage || 0).toFixed(1);
       const curSpd = +(t.fireRate || 0).toFixed(2);
       statsBox.innerHTML = `
-        <div class="inspect-stat-item"><span class="inspect-stat-lbl">DMG:</span><span class="inspect-stat-val">${curDmg}</span></div>
-        <div class="inspect-stat-item"><span class="inspect-stat-lbl">SPD:</span><span class="inspect-stat-val">${curSpd}s</span></div>
-        <div class="inspect-stat-item"><span class="inspect-stat-lbl">RNG:</span><span class="inspect-stat-val">${curRng}</span></div>
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">${dmgLabel}</span><span class="inspect-stat-val">${curDmg}</span></div>
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">${spdLabel}</span><span class="inspect-stat-val">${curSpd}s</span></div>
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">${rngLabel}</span><span class="inspect-stat-val">${curRng}</span></div>
       `;
     } else {
       const curDmg = +(t.damage || 0).toFixed(1);
       statsBox.innerHTML = `
-        <div class="inspect-stat-item"><span class="inspect-stat-lbl">DPS:</span><span class="inspect-stat-val">${curDmg}</span></div>
-        <div class="inspect-stat-item"><span class="inspect-stat-lbl">RNG:</span><span class="inspect-stat-val">${curRng}</span></div>
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">${dpsLabel}</span><span class="inspect-stat-val">${curDmg}</span></div>
+        <div class="inspect-stat-item"><span class="inspect-stat-lbl">${rngLabel}</span><span class="inspect-stat-val">${curRng}</span></div>
       `;
     }
   }
@@ -5641,8 +5744,6 @@ function updateInspectUI() {
   const upgStatusEl = document.getElementById('inspectUpgradeStatus');
   const sellValTextEl = document.getElementById('inspectSellValText');
   const sellTitleEl = document.getElementById('inspectSellTitle');
-
-  const _tr = (typeof window.t === 'function') ? window.t : ((k) => k.toUpperCase());
 
   if (!canUpgradeLevel) {
     upgBtn.disabled = true;
@@ -5668,18 +5769,6 @@ function updateInspectUI() {
   const refund = Math.floor(t.totalInvested * 0.7);
   const sellBtn = document.getElementById('inspectSellBtn');
   const sellIconEl = sellBtn ? sellBtn.querySelector('.cost-icon') : null;
-  if (sellConfirmArmed) {
-    if (sellBtn) sellBtn.classList.add('confirm-armed');
-    if (sellTitleEl) sellTitleEl.textContent = _tr('confirm_q');
-    if (sellValTextEl) sellValTextEl.textContent = `+${refund}`;
-    if (sellIconEl) sellIconEl.style.display = 'none';
-  } else {
-    if (sellBtn) sellBtn.classList.remove('confirm-armed');
-    if (sellTitleEl) sellTitleEl.textContent = _tr('sell');
-    if (sellValTextEl) sellValTextEl.textContent = `${refund}`;
-    if (sellIconEl) sellIconEl.style.display = '';
-  }
-  
   if (sellConfirmArmed) {
     if (sellBtn) sellBtn.classList.add('confirm-armed');
     if (sellTitleEl) sellTitleEl.textContent = _tr('confirm_q');
@@ -6654,7 +6743,6 @@ let triangleLogoCacheKey = '';
 function renderTriangleLogoCache(w, horizonY, dpr) {
   const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low');
   const effDpr = isLowPerf ? Math.min(1.25, dpr) : dpr;
-  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
 
   const pad = 70;
   const ch = Math.ceil(horizonY + pad);
@@ -6694,8 +6782,7 @@ function renderTriangleLogoCache(w, horizonY, dpr) {
     c.closePath();
   };
 
-  // Horizontal gradient: Hyperion Sunburst (Cobalt Blue left -> Solar Orange -> Gold right)
-const th = getTheme();
+  const th = getTheme();
   const c1Rgb = th.rgb1 ? th.rgb1.cssRgb : '0, 229, 255';
   const c2Rgb = th.rgb2 ? th.rgb2.cssRgb : '217, 70, 239';
   const c3Rgb = th.rgb3 ? th.rgb3.cssRgb : '240, 95, 159';
@@ -6715,12 +6802,10 @@ const th = getTheme();
     return g;
   };
 
-  //  Soft atmospheric vertex glow pass.
   c.save();
   c.globalCompositeOperation = 'lighter';
 
   const cornerR = halfW * 0.42;
-  // Левый угол B — циановое свечение (c1)
   const bGlow = c.createRadialGradient(B.x, B.y, 0, B.x, B.y, cornerR);
   bGlow.addColorStop(0.0, `rgba(${c1Rgb}, 0.24)`);
   bGlow.addColorStop(0.4, `rgba(${c1Rgb}, 0.10)`);
@@ -6730,7 +6815,6 @@ const th = getTheme();
   c.arc(B.x, B.y, cornerR, 0, Math.PI * 2);
   c.fill();
 
-  // Правый угол C — фиолетово-розовое свечение (c2/c3)
   const cGlow = c.createRadialGradient(C.x, C.y, 0, C.x, C.y, cornerR);
   cGlow.addColorStop(0.0, `rgba(${c3Rgb}, 0.24)`);
   cGlow.addColorStop(0.4, `rgba(${c2Rgb}, 0.10)`);
@@ -6742,7 +6826,6 @@ const th = getTheme();
 
   c.restore();
 
-  //  Multi-layered Gaussian glow contour stroke renderer.
   const GLOW_FALLOFF = [
     { mult: 9.5, alpha: 0.012 },
     { mult: 7.8, alpha: 0.016 },
@@ -6830,7 +6913,6 @@ function drawSynthWaveHorizonBeam(w, horizonY, time) {
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
 
-  //  Vertical exponential bloom gradient pass.
   const bloomR = 46;
   const vBloom = ctx.createLinearGradient(0, horizonY - bloomR, 0, horizonY + bloomR);
   vBloom.addColorStop(0.00, `rgba(${c2Rgb}, 0)`);
@@ -6845,7 +6927,6 @@ function drawSynthWaveHorizonBeam(w, horizonY, time) {
   ctx.fillStyle = vBloom;
   ctx.fillRect(0, horizonY - bloomR, w, bloomR * 2);
 
-  //  Lateral atmospheric glow cushions.
   const sideRx = w * 0.46;
   const sideRy = 26;
 
@@ -6877,7 +6958,6 @@ function drawSynthWaveHorizonBeam(w, horizonY, time) {
   ctx.fill();
   ctx.restore();
 
-  //  Tight horizontal beam glow.
   const tightR = 7;
   const tightBloom = ctx.createLinearGradient(0, horizonY - tightR, 0, horizonY + tightR);
   tightBloom.addColorStop(0.00, 'rgba(255, 255, 255, 0)');
@@ -6888,15 +6968,14 @@ function drawSynthWaveHorizonBeam(w, horizonY, time) {
   ctx.fillStyle = tightBloom;
   ctx.fillRect(0, horizonY - tightR, w, tightR * 2);
 
-  //  Primary neon beam core stroke.
   const hBeamGrad = ctx.createLinearGradient(0, 0, w, 0);
   hBeamGrad.addColorStop(0.00, `rgba(${c1Rgb}, 0.05)`);
-hBeamGrad.addColorStop(0.16, th.c1Light);
-hBeamGrad.addColorStop(0.42, th.c1);
-hBeamGrad.addColorStop(0.50, '#ffffff');
-hBeamGrad.addColorStop(0.58, th.c2);
-hBeamGrad.addColorStop(0.84, th.c3);
-hBeamGrad.addColorStop(1.00, `rgba(${c3Rgb}, 0.05)`);
+  hBeamGrad.addColorStop(0.16, th.c1Light);
+  hBeamGrad.addColorStop(0.42, th.c1);
+  hBeamGrad.addColorStop(0.50, '#ffffff');
+  hBeamGrad.addColorStop(0.58, th.c2);
+  hBeamGrad.addColorStop(0.84, th.c3);
+  hBeamGrad.addColorStop(1.00, `rgba(${c3Rgb}, 0.05)`);
 
   ctx.globalCompositeOperation = 'source-over';
   ctx.strokeStyle = hBeamGrad;
@@ -6907,7 +6986,6 @@ hBeamGrad.addColorStop(1.00, `rgba(${c3Rgb}, 0.05)`);
   ctx.lineTo(w, horizonY);
   ctx.stroke();
 
-  //  Incandescent white beam center line.
   const coreGrad = ctx.createLinearGradient(0, 0, w, 0);
   coreGrad.addColorStop(0.00, 'rgba(255, 255, 255, 0)');
   coreGrad.addColorStop(0.12, 'rgba(255, 255, 255, 0.82)');
@@ -6924,7 +7002,6 @@ hBeamGrad.addColorStop(1.00, `rgba(${c3Rgb}, 0.05)`);
   ctx.lineTo(w, horizonY);
   ctx.stroke();
 
-  //  Anamorphic center flare under triangle vertex.
   const flareW = Math.min(w * 0.36, 220);
   const flareH = 18;
   ctx.save();
@@ -6983,7 +7060,6 @@ function drawSynthWavePerspectiveScene(now) {
 
   const isDefaultTheme = (th.id === 'default');
 
-  // Продольные линии: строго один цвет темы (c1Rgb) для всех линий слева и справа
   ctx.lineWidth = 1.0;
   ctx.strokeStyle = `rgba(${c1Rgb}, 0.34)`;
   for (let i = -numLines; i <= numLines; i++) {
@@ -7022,7 +7098,6 @@ function drawSynthWavePerspectiveScene(now) {
   ctx.setLineDash([12, 10]);
   ctx.lineDashOffset = (time * 36);
 
-  // Бегущие рельсы центральной дороги (оба рельса светятся цветом активной темы)
   setGlow(th.c1, 6);
   ctx.strokeStyle = th.c1Light;
   ctx.beginPath();
@@ -7089,6 +7164,7 @@ function drawSynthWavePerspectiveScene(now) {
   drawSynthWaveHorizonBeam(w, horizonY, time);
   drawSynthWaveTriangleLogo5C(w, horizonY, time);
 }
+
 // [UI.JJ]
 function drawChevron(centerX, centerY, angle, size, color, glowColor) {
   ctx.save();
@@ -7178,7 +7254,6 @@ function drawPathRails(now) {
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
-  // Приглушенная подложка рельсов того же основного цвета темы (c1)
   ctx.strokeStyle = `rgba(${c1Rgb}, 0.18)`;
   ctx.lineWidth = 3.5;
   ctx.setLineDash([]);
@@ -7205,7 +7280,6 @@ function drawPathRails(now) {
     battlePathAlpha = 1.0;
   }
 
-  // Яркие бегущие пунктирные рельсы того же цвета (c1)
   if (battlePathAlpha > 0.005) {
     ctx.strokeStyle = `rgba(${c1Rgb}, ${0.90 * battlePathAlpha})`;
     ctx.lineWidth = 1.8;
@@ -7533,9 +7607,9 @@ function drawEnemyModel(e, showHpBar = true) {
     }
   } else {
     const rad = Math.max(1, e.radius || 16);
-const glowColor = e.glow || renderColor;
-const outerR = Math.max(3, rad * 2.5);
-const glowGrad = ctx.createRadialGradient(0, 0, Math.min(2, outerR - 1), 0, 0, outerR);
+    const glowColor = e.glow || renderColor;
+    const outerR = Math.max(3, rad * 2.5);
+    const glowGrad = ctx.createRadialGradient(0, 0, Math.min(2, outerR - 1), 0, 0, outerR);
     glowGrad.addColorStop(0, glowColor + (e.isBoss ? '88' : '66'));
     glowGrad.addColorStop(0.5, glowColor + (e.isBoss ? '30' : '20'));
     glowGrad.addColorStop(1, 'transparent');
@@ -7664,7 +7738,6 @@ const glowGrad = ctx.createRadialGradient(0, 0, Math.min(2, outerR - 1), 0, 0, o
     ctx.restore();
   }
 
-  //  Enemy health bar status indicator pass.
   if (showHpBar && typeof settings !== 'undefined' && settings.showEnemyHp && (e.isBoss || e.isMiniBoss || (e.hp < e.maxHp))) {
     ctx.shadowBlur = 0;
     const rad = e.radius || 12;
@@ -7954,6 +8027,7 @@ function render(now) {
     ctx.save();
     const w = window.innerWidth;
     const h = window.innerHeight;
+    const maxDim = Math.max(100, Math.max(w, h) * 0.75);
     const hardcoreTint = ctx.createRadialGradient(w * 0.5, h * 0.35, 10, w * 0.5, h * 0.45, maxDim);
     hardcoreTint.addColorStop(0, 'rgba(120, 10, 60, 0.26)');
     hardcoreTint.addColorStop(0.5, 'rgba(60, 5, 30, 0.16)');
@@ -8189,7 +8263,6 @@ function render(now) {
 
   const _tFxStart = performance.now();
   
-  //  Particle pass 1: Concentric smoke and steam.
   ctx.globalCompositeOperation = 'source-over';
   const smokeSprite = typeof getSmokeSprite === 'function' ? getSmokeSprite() : null;
 
@@ -8242,7 +8315,6 @@ function render(now) {
     ctx.restore();
   }
 
-  //  Particle pass 3: Energy sparks and glow halos.
   ctx.globalCompositeOperation = 'lighter';
   for (let i = 0; i < particles.length; i++) {
     const pt = particles[i];
