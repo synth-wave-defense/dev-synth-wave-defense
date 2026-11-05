@@ -3934,7 +3934,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 @keyframes tutorialGlowPulse {
   0%, 100% { box-shadow: 0 0 0 2000px rgba(4, 6, 14, 0.72), 0 0 14px 2px rgba(0, 229, 255, 0.4); }
   50% { box-shadow: 0 0 0 2000px rgba(4, 6, 14, 0.72), 0 0 26px 6px rgba(0, 229, 255, 0.85); }
-
+}
 /* [STY.DB] */
 .tutorial-pointer {
   position: absolute;

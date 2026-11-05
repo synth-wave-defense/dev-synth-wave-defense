@@ -6679,8 +6679,6 @@ function warmUpNebulaAndHideLoader() {
   })();
 }
 
-//  Lightweight dynamic twinkling star overlay.
-
 // [UI.IY]
 function createStar(randomizeLife = false, inNebula = false) {
   const maxLife = Math.random() * 16.0 + 10.0;
