@@ -1,35 +1,38 @@
-//  Game configuration data: campaign constants, upgrade branch specifications, tower definitions, enemy parameters, map catalog, and level generator.
+// Game configuration data: campaign constants, upgrade branch specifications, tower definitions, enemy parameters, map catalog, and level generator.
 
 if (typeof console !== 'undefined') {
   console.log('[data.js] Loading game data...');
 }
 
-//  Campaign Constants & Meta Upgrade Branches: Defines campaign structure and purchasable tech tree branches for towers and base.
+// Campaign Constants & Meta Upgrade Branches: Defines campaign structure and purchasable tech tree branches for towers and base.
 const TOTAL_LEVELS = 50;
 const LEVELS_PER_SECTION = 10;
 const TOTAL_SECTIONS = 5;
 
+// Константа стоимости премиального пропуска в алмазах (Этап 2)
+const SYNTH_PASS_PREMIUM_COST = 300;
+
 const DAILY_LOGIN_REWARDS = [
   { day: 1, diamonds: 15, prisms: 0 },
   { day: 2, diamonds: 20, prisms: 0 },
-  { day: 3, diamonds: 0,  prisms: 3 },
+  { day: 3, diamonds: 0, prisms: 3 },
   { day: 4, diamonds: 30, prisms: 0 },
   { day: 5, diamonds: 40, prisms: 2 },
   { day: 6, diamonds: 50, prisms: 0 },
   { day: 7, diamonds: 50, prisms: 10 }
 ];
 
-//  Synth Pass Battle Pass Tiers & Neon Color Palettes Configuration: Reward tiers and palettes.
+// Synth Pass Battle Pass Tiers & Neon Color Palettes Configuration: Reward tiers and palettes.
 const BATTLE_PASS_TIERS = [
-  { tier: 1,  freeReward: { type: 'diamonds', amount: 10 }, premReward: { type: 'palette', paletteId: 'cyber_gold', title: 'Cyber Gold Palette' } },
-  { tier: 2,  freeReward: { type: 'diamonds', amount: 10 }, premReward: { type: 'diamonds', amount: 25 } },
-  { tier: 3,  freeReward: { type: 'diamonds', amount: 15 }, premReward: { type: 'diamonds', amount: 30 } },
-  { tier: 4,  freeReward: { type: 'diamonds', amount: 15 }, premReward: { type: 'prisms', amount: 3 } },
-  { tier: 5,  freeReward: { type: 'ad_capsule', prisms: 2, title: 'Ad-Capsule (+2 \u{1F52E})' }, premReward: { type: 'diamonds', amount: 35 } },
-  { tier: 6,  freeReward: { type: 'diamonds', amount: 15 }, premReward: { type: 'prisms', amount: 4 } },
-  { tier: 7,  freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'diamonds', amount: 40 } },
-  { tier: 8,  freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'prisms', amount: 4 } },
-  { tier: 9,  freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'diamonds', amount: 40 } },
+  { tier: 1, freeReward: { type: 'diamonds', amount: 10 }, premReward: { type: 'palette', paletteId: 'cyber_gold', title: 'Cyber Gold Palette' } },
+  { tier: 2, freeReward: { type: 'diamonds', amount: 10 }, premReward: { type: 'diamonds', amount: 25 } },
+  { tier: 3, freeReward: { type: 'diamonds', amount: 15 }, premReward: { type: 'diamonds', amount: 30 } },
+  { tier: 4, freeReward: { type: 'diamonds', amount: 15 }, premReward: { type: 'prisms', amount: 3 } },
+  { tier: 5, freeReward: { type: 'ad_capsule', prisms: 2, title: 'Ad-Capsule (+2 \u{1F52E})' }, premReward: { type: 'diamonds', amount: 35 } },
+  { tier: 6, freeReward: { type: 'diamonds', amount: 15 }, premReward: { type: 'prisms', amount: 4 } },
+  { tier: 7, freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'diamonds', amount: 40 } },
+  { tier: 8, freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'prisms', amount: 4 } },
+  { tier: 9, freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'diamonds', amount: 40 } },
   { tier: 10, freeReward: { type: 'combo', paletteId: 'matrix_green', prisms: 3, title: 'Hyperion Sunburst + 3 \u{1F52E}' }, premReward: { type: 'prisms', amount: 6 } },
   { tier: 11, freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'diamonds', amount: 45 } },
   { tier: 12, freeReward: { type: 'diamonds', amount: 20 }, premReward: { type: 'prisms', amount: 5 } },
@@ -53,10 +56,14 @@ const BATTLE_PASS_TIERS = [
   { tier: 30, freeReward: { type: 'prisms', amount: 10 }, premReward: { type: 'ultimate', paletteId: 'blood_moon', prisms: 25, diamonds: 150, title: 'Blood Moon + 25 \u{1F52E} + 150 \u{1F48E}' } }
 ];
 
+// Каталог неоновых палитр (Этап 3: добавлены флаги source, cost, currency, unlockedByDefault)
 const NEON_PALETTES = {
   default: {
     id: 'default',
     name: 'Cyan Sunset',
+    source: 'default',
+    cost: 0,
+    unlockedByDefault: true,
     c1: '#00e5ff', // Основной: UI, Алмазы, Gun, Правая туманность
     c2: '#d946ef', // Вторичный: Призмы, Танк, Railgun, Левая туманность
     c3: '#f05f9f', // Акцент/Враги: HP, Hardcore, Laser/Melter, Grunt
@@ -67,6 +74,9 @@ const NEON_PALETTES = {
   matrix_green: {
     id: 'matrix_green',
     name: 'Hyperion Sunburst',
+    source: 'synth_pass',
+    cost: 0,
+    unlockedByDefault: false,
     c1: '#3b82f6', // Синий кобальт
     c2: '#ff6b00', // Солнечно-оранжевый
     c3: '#ffb700', // Желто-золотой
@@ -78,6 +88,9 @@ const NEON_PALETTES = {
   cyber_gold: {
     id: 'cyber_gold',
     name: 'Cyber Gold',
+    source: 'synth_pass',
+    cost: 0,
+    unlockedByDefault: false,
     c1: '#ffd700', // Чистое золото
     c2: '#9d4edd', // Королевский фиолет
     c3: '#ff007f', // Неоновая фуксия
@@ -89,6 +102,9 @@ const NEON_PALETTES = {
   blood_moon: {
     id: 'blood_moon',
     name: 'Blood Moon',
+    source: 'synth_pass',
+    cost: 0,
+    unlockedByDefault: false,
     c1: '#ff003c', // Кроваво-алый
     c2: '#9d4edd', // Темно-фиолетовый
     c3: '#ff6b00', // Огненно-оранжевый
@@ -100,6 +116,10 @@ const NEON_PALETTES = {
   bio_venom: {
     id: 'bio_venom',
     name: 'Bio-Venom Matrix',
+    source: 'shop',
+    cost: 150,
+    currency: 'diamonds',
+    unlockedByDefault: false,
     c1: '#84cc16', // Кислотный лайм
     c2: '#a855f7', // Неоновый фиолет
     c3: '#d946ef', // Яркий пурпур
@@ -110,6 +130,10 @@ const NEON_PALETTES = {
   sakura_wave: {
     id: 'sakura_wave',
     name: 'Sakura Vaporwave',
+    source: 'shop',
+    cost: 200,
+    currency: 'diamonds',
+    unlockedByDefault: false,
     c1: '#00ffcc', // Мятная бирюза
     c2: '#38bdf8', // Ледяной голубой
     c3: '#ff4da6', // Розовая сакура
@@ -120,6 +144,10 @@ const NEON_PALETTES = {
   solar_inferno: {
     id: 'solar_inferno',
     name: 'Solar Inferno',
+    source: 'shop',
+    cost: 300,
+    currency: 'diamonds',
+    unlockedByDefault: false,
     c1: '#ffb700', // Янтарное золото
     c2: '#ff6b00', // Огненный оранж
     c3: '#ff2a00', // Лавовый красный
@@ -175,22 +203,22 @@ const TOWER_NAMES = {
   railgun: 'Railgun'
 };
 
-//  Tower Visual Geometry: Geometric rendering specs for tower turrets, barrels, and levels.
+// Tower Visual Geometry: Geometric rendering specs for tower turrets, barrels, and levels.
 const TOWER_GLYPH_DARK = '#0a0e1c';
 
 const TOWER_GLYPH_SPECS = {
-  gun:     { barrel: [ { t: 'rect', x: 9, y: -5, w: 15, h: 2.6, r: 1.3, f: 'c' },
-                       { t: 'rect', x: 9, y: 2.4, w: 15, h: 2.6, r: 1.3, f: 'c' } ] },
-  laser:   { barrel: [ { t: 'poly', pts: [9, -5.5, 25, -1.6, 25, 1.6, 9, 5.5], f: 'c' } ] },
-  mortar:  { elevationDeg: 55,
-             barrel: [ { t: 'rect', x: 9, y: -6, w: 14, h: 12, r: 3, f: 'c' } ],
-             muzzle: { atX: 23, rx: 3.0, ry: 5.2 } },
-  tesla:   { barrel: [ { t: 'rect', x: 9, y: -7.5, w: 19, h: 15, r: 3, f: 'd', s: 'c', sw: 1.6 },
-                       { t: 'bolt', cx: 18.5, rot: 90, scale: 0.62,
-                         pts: [2.5, -12, -6.5, 1.5, -0.5, 1.5, -3.5, 12, 7, -2.5, 1, -2.5], f: 'c' } ] },
-  stasis:  { barrel: [], flakes: true },
-  melter:  { barrel: [ { t: 'pline', pts: [9, -7, 22, 0, 9, 7], sw: 2.6 },
-                       { t: 'circle', cx: 24, cy: 0, r: 2.6, f: 'c' } ] },
+  gun: { barrel: [ { t: 'rect', x: 9, y: -5, w: 15, h: 2.6, r: 1.3, f: 'c' },
+                   { t: 'rect', x: 9, y: 2.4, w: 15, h: 2.6, r: 1.3, f: 'c' } ] },
+  laser: { barrel: [ { t: 'poly', pts: [9, -5.5, 25, -1.6, 25, 1.6, 9, 5.5], f: 'c' } ] },
+  mortar: { elevationDeg: 55,
+            barrel: [ { t: 'rect', x: 9, y: -6, w: 14, h: 12, r: 3, f: 'c' } ],
+            muzzle: { atX: 23, rx: 3.0, ry: 5.2 } },
+  tesla: { barrel: [ { t: 'rect', x: 9, y: -7.5, w: 19, h: 15, r: 3, f: 'd', s: 'c', sw: 1.6 },
+                     { t: 'bolt', cx: 18.5, rot: 90, scale: 0.62,
+                       pts: [2.5, -12, -6.5, 1.5, -0.5, 1.5, -3.5, 12, 7, -2.5, 1, -2.5], f: 'c' } ] },
+  stasis: { barrel: [], flakes: true },
+  melter: { barrel: [ { t: 'pline', pts: [9, -7, 22, 0, 9, 7], sw: 2.6 },
+                      { t: 'circle', cx: 24, cy: 0, r: 2.6, f: 'c' } ] },
   railgun: { barrel: [ { t: 'rect', x: 9, y: -2.2, w: 19, h: 4.4, f: 'c', s: 'd', sw: 1 },
                        { t: 'rect', x: 12, y: -6, w: 2.8, h: 12, r: 1, f: 'c', s: 'd', sw: 1 },
                        { t: 'rect', x: 18, y: -6, w: 2.8, h: 12, r: 1, f: 'c', s: 'd', sw: 1 } ] }
@@ -202,8 +230,6 @@ const TOWER_GLYPH_CORES = {
   2: [{ cx: 0, cy: -4.2, r: 3 }, { cx: 0, cy: 4.2, r: 3 }],
   3: [{ cx: -3.4, cy: -4.2, r: 3 }, { cx: -3.4, cy: 4.2, r: 3 }, { cx: 4.2, cy: 0, r: 3 }]
 };
-// Fix typo safety in cores:
-TOWER_GLYPH_CORES[3] = [{ cx: -3.4, cy: -4.2, r: 3 }, { cx: -3.4, cy: 4.2, r: 3 }, { cx: 4.2, cy: 0, r: 3 }];
 
 const TOWER_GLYPH_FLAKES = {
   1: [{ cx: 0, cy: 0, scale: 1.0, sw: 1.9 }],
@@ -212,7 +238,7 @@ const TOWER_GLYPH_FLAKES = {
       { cx: 5.5, cy: 0.5, scale: 0.85, sw: 2.24 }]
 };
 
-//  Tower SVG Generator: Generates standalone SVG strings for tower icons across UI surfaces.
+// Tower SVG Generator: Generates standalone SVG strings for tower icons across UI surfaces.
 // [DAT.B]
 function buildTowerIconSvg(type, level = 1, size = 28, angleDeg = 0) {
   const spec = TOWER_GLYPH_SPECS[type];
@@ -268,7 +294,7 @@ function buildTowerIconSvg(type, level = 1, size = 28, angleDeg = 0) {
   return out;
 }
 
-//  Tower Configurations: Base costs, range, attack metrics, upgrade multipliers, and milestone unlocked blurbs.
+// Tower Configurations: Base costs, range, attack metrics, upgrade multipliers, and milestone unlocked blurbs.
 const TOWER_CONFIGS = {
   gun: { cost: 50, range: 165, damage: 16, fireRate: 0.52, color: '#00e5ff', glow: '#00e5ff', type: 'projectile', costMultiplier: 1.3, damageMultiplier: 1.7, rateMultiplier: 0.8, rangeMultiplier: 1.1, powerDmg: 0.08, powerRate: 0.06, powerRange: 0.04 },
   laser: { cost: 70, range: 150, dps: 48, color: '#f05f9f', glow: '#f05f9f', type: 'beam', costMultiplier: 1.3, damageMultiplier: 1.85, rangeMultiplier: 1.1, powerDmg: 0.08, powerRate: 0.06, powerRange: 0.04 },
@@ -276,16 +302,16 @@ const TOWER_CONFIGS = {
   tesla: { cost: 75, range: 145, damage: 22, chainTargets: 3, jumpRadius: 90, fireRate: 0.85, color: '#00ffcc', glow: '#00ffcc', type: 'chain', costMultiplier: 1.3, damageMultiplier: 1.55, rateMultiplier: 0.85, rangeMultiplier: 1.1, powerDmg: 0.05, powerRate: 0.04, powerRange: 0.03 },
   stasis: { 
     cost: 65, 
-    range: 115,
+    range: 115, 
     damage: 0, 
-    fireRate: 1.6,
-    slowFactor: 0.30,
-    slowDuration: 1.4,
+    fireRate: 1.6, 
+    slowFactor: 0.30, 
+    slowDuration: 1.4, 
     color: '#38bdf8', glow: '#38bdf8', type: 'stasis', 
     costMultiplier: 1.3, 
     damageMultiplier: 1.0, 
-    rateMultiplier: 0.88,
-    rangeMultiplier: 1.15,
+    rateMultiplier: 0.88, 
+    rangeMultiplier: 1.15, 
     powerRange: 0.05, powerSlow: 0.04, powerDuration: 0.06 
   },
   melter: { 
@@ -294,7 +320,7 @@ const TOWER_CONFIGS = {
     baseDps: 10, 
     rampCap: 40, 
     rampTime: 4.0, 
-    cooldownTime: 4.0,
+    cooldownTime: 4.0, 
     color: '#e85268', glow: '#e477a3', type: 'melter', 
     costMultiplier: 1.35, 
     damageMultiplier: 1.55, 
@@ -354,7 +380,7 @@ const TOWER_UNLOCK_BLURBS = {
 
 const UPGRADE_STEP_COSTS = [6, 7, 8, 9, 10, 11, 12, 13, 15, 19];
 
-//  Tech Tree Upgrade Cost & Effective Level Calculators: Phase 1 (1-10), Phase 2 (11-15), Phase 3 (16+) spend and stat formulas.
+// Tech Tree Upgrade Cost & Effective Level Calculators: Phase 1 (1-10), Phase 2 (11-15), Phase 3 (16+) spend and stat formulas.
 // [DAT.C]
 function getUpgradeCostForLevel(nextLvl) {
   if (nextLvl <= 10) {
@@ -426,13 +452,13 @@ function getUpgradeRangeBonus(towerType, effLvl) {
   return base10 + post10;
 }
 
-//  Tower Target Lock-on Specs: Lock-on delay constants and targeted tower classification.
+// Tower Target Lock-on Specs: Lock-on delay constants and targeted tower classification.
 const LOCK_ON_DELAY_LIGHT = 0.1;
 const LOCK_ON_DELAY_HEAVY = 0.5;
 const LOCKED_TARGET_TOWERS = ['laser', 'melter'];
 const MORTAR_BASE_TRAVEL_TIME = 1.0;
 
-//  Enemy Configurations: Base stats, shapes, speeds, bounties, and swarm clump parameters.
+// Enemy Configurations: Base stats, shapes, speeds, bounties, and swarm clump parameters.
 const SWARM_CLUMP_SIZE = 10;
 const SWARM_CLUMP_SIZE_DEBUT = 8;
 const SWARM_DEBUT_LEVEL = 11;
@@ -447,7 +473,7 @@ const SWARM_BOUNTY_SCALE = 0.62;
 const ENEMY_CONFIGS = {
   grunt: { shape: 'circle', color: '#f05f9f', glow: '#f05f9f', size: 11, baseSpeed: 55, baseHp: 40, baseBounty: 7 },
   scout: { shape: 'triangle', color: '#ff9100', glow: '#ffaa33', size: 11, baseSpeed: 110, baseHp: 24, baseBounty: 6 },
-  tank:  { shape: 'square', color: '#a06fdc', glow: '#825cc2', size: 13, baseSpeed: 38, baseHp: 100, baseBounty: 12 },
+  tank: { shape: 'square', color: '#a06fdc', glow: '#825cc2', size: 13, baseSpeed: 38, baseHp: 100, baseBounty: 12 },
   swarm: { shape: 'diamond', color: '#00ffcc', glow: '#00ffcc', size: 8, baseSpeed: 170, baseHp: 16, baseBounty: 3 },
   blinker: { shape: 'hexagon', color: '#3b82f6', glow: '#60a5fa', size: 12, baseSpeed: 62, baseHp: 65, baseBounty: 8 },
   goliath: { shape: 'octagon', color: '#8964c4', glow: '#7050a4', size: 15, baseSpeed: 30, baseHp: 260, baseBounty: 18 },
@@ -458,7 +484,7 @@ const ENEMY_CONFIGS = {
   emp_overlord: { shape: 'triangle_inverted', color: '#38bdf8', glow: '#f05f9f', size: 17, baseSpeed: 30, baseHp: 7200, baseBounty: 140 }
 };
 
-//  Map Catalog: Grid dimensions, tile paths, and obstacle locations for campaign levels.
+// Map Catalog: Grid dimensions, tile paths, and obstacle locations for campaign levels.
 const MAP_CATALOG = {
   L1: { name: "Straight Path", cols: 5, rows: 7, path: [{c: 2, r: 0}, {c: 2, r: 6}] },
   L2: { name: "First Turn", cols: 6, rows: 6, path: [{c: 4, r: 1}, {c: 4, r: 4}, {c: 1, r: 4}] },
@@ -509,5 +535,5 @@ const MAP_CATALOG = {
   L47: { name: "Extended Wide", cols: 10, rows: 20, path: [{c: 5, r: 19}, {c: 5, r: 8}, {c: 4, r: 8}, {c: 4, r: 9}, {c: 3, r: 9}, {c: 3, r: 7}, {c: 2, r: 7}, {c: 2, r: 10}, {c: 4, r: 10}, {c: 4, r: 11}, {c: 1, r: 11}, {c: 1, r: 6}, {c: 4, r: 6}, {c: 4, r: 7}, {c: 5, r: 7}, {c: 5, r: 6}, {c: 8, r: 6}, {c: 8, r: 11}, {c: 6, r: 11}, {c: 6, r: 10}, {c: 7, r: 10}, {c: 7, r: 9}, {c: 6, r: 9}, {c: 6, r: 8}, {c: 7, r: 8}, {c: 7, r: 7}, {c: 6, r: 7}, {c: 6, r: 0}], blocked: [{c: 9, r: 19}, {c: 8, r: 19}, {c: 6, r: 19}, {c: 7, r: 19}, {c: 8, r: 18}, {c: 9, r: 18}, {c: 9, r: 17}, {c: 4, r: 19}, {c: 3, r: 19}, {c: 2, r: 19}, {c: 0, r: 19}, {c: 1, r: 19}, {c: 0, r: 18}, {c: 1, r: 18}, {c: 0, r: 17}, {c: 1, r: 17}, {c: 2, r: 18}, {c: 0, r: 16}, {c: 0, r: 15}, {c: 1, r: 16}, {c: 2, r: 17}, {c: 3, r: 18}, {c: 7, r: 18}, {c: 8, r: 17}, {c: 9, r: 16}, {c: 9, r: 15}, {c: 0, r: 14}, {c: 0, r: 12}, {c: 0, r: 13}, {c: 9, r: 12}, {c: 9, r: 14}, {c: 9, r: 13}, {c: 9, r: 4}, {c: 9, r: 3}, {c: 9, r: 2}, {c: 9, r: 1}, {c: 9, r: 0}, {c: 7, r: 0}, {c: 8, r: 0}, {c: 8, r: 1}, {c: 5, r: 0}, {c: 4, r: 0}, {c: 3, r: 0}, {c: 2, r: 0}, {c: 1, r: 0}, {c: 0, r: 0}, {c: 0, r: 1}, {c: 0, r: 2}, {c: 0, r: 3}, {c: 0, r: 4}, {c: 0, r: 5}, {c: 1, r: 1}, {c: 1, r: 2}, {c: 2, r: 1}, {c: 4, r: 1}, {c: 3, r: 1}, {c: 2, r: 2}, {c: 3, r: 2}, {c: 1, r: 3}, {c: 2, r: 3}, {c: 1, r: 4}, {c: 9, r: 5}, {c: 4, r: 12}, {c: 6, r: 12}, {c: 7, r: 5}, {c: 5, r: 5}, {c: 1, r: 15}, {c: 1, r: 14}, {c: 1, r: 13}, {c: 1, r: 12}] },
   L48: { name: "Extended Deep", cols: 10, rows: 20, path: [{c: 1, r: 16}, {c: 1, r: 13}, {c: 4, r: 13}, {c: 4, r: 17}, {c: 0, r: 17}, {c: 0, r: 12}, {c: 5, r: 12}, {c: 5, r: 18}, {c: 0, r: 18}, {c: 0, r: 19}, {c: 9, r: 19}, {c: 9, r: 18}, {c: 6, r: 18}, {c: 6, r: 12}, {c: 9, r: 12}, {c: 9, r: 17}, {c: 8, r: 17}, {c: 8, r: 0}, {c: 1, r: 0}, {c: 1, r: 10}, {c: 6, r: 10}, {c: 6, r: 2}, {c: 3, r: 2}, {c: 3, r: 8}, {c: 5, r: 8}, {c: 5, r: 7}, {c: 4, r: 7}, {c: 4, r: 6}, {c: 5, r: 6}, {c: 5, r: 5}, {c: 4, r: 5}], blocked: [{c: 2, r: 16}, {c: 3, r: 16}, {c: 7, r: 17}, {c: 7, r: 16}, {c: 9, r: 11}, {c: 9, r: 9}, {c: 9, r: 10}, {c: 9, r: 8}, {c: 9, r: 7}, {c: 9, r: 6}, {c: 9, r: 5}, {c: 9, r: 4}, {c: 9, r: 3}, {c: 9, r: 2}, {c: 9, r: 0}, {c: 9, r: 1}, {c: 0, r: 0}, {c: 0, r: 1}, {c: 0, r: 2}, {c: 0, r: 3}, {c: 0, r: 4}, {c: 0, r: 6}, {c: 0, r: 5}, {c: 0, r: 7}, {c: 0, r: 8}, {c: 0, r: 9}, {c: 0, r: 10}, {c: 0, r: 11}, {c: 5, r: 9}, {c: 4, r: 9}, {c: 2, r: 9}, {c: 3, r: 9}, {c: 2, r: 1}, {c: 7, r: 1}, {c: 7, r: 11}, {c: 7, r: 10}, {c: 1, r: 11}, {c: 2, r: 11}, {c: 6, r: 11}, {c: 5, r: 11}, {c: 4, r: 11}, {c: 3, r: 11}, {c: 7, r: 9}, {c: 6, r: 1}, {c: 5, r: 1}, {c: 4, r: 1}, {c: 3, r: 1}, {c: 2, r: 2}, {c: 7, r: 2}, {c: 7, r: 3}, {c: 2, r: 3}, {c: 2, r: 4}, {c: 7, r: 4}, {c: 7, r: 5}, {c: 2, r: 5}] },
   L49: { name: "Extended Complex", cols: 10, rows: 20, path: [{c: 4, r: 4}, {c: 4, r: 5}, {c: 5, r: 5}, {c: 5, r: 3}, {c: 3, r: 3}, {c: 3, r: 6}, {c: 6, r: 6}, {c: 6, r: 2}, {c: 2, r: 2}, {c: 2, r: 7}, {c: 6, r: 7}, {c: 6, r: 17}, {c: 2, r: 17}, {c: 2, r: 12}, {c: 5, r: 12}, {c: 5, r: 16}, {c: 3, r: 16}, {c: 3, r: 13}, {c: 4, r: 13}, {c: 4, r: 15}], blocked: [{c: 9, r: 19}, {c: 9, r: 18}, {c: 9, r: 17}, {c: 9, r: 16}, {c: 9, r: 15}, {c: 9, r: 14}, {c: 9, r: 13}, {c: 9, r: 12}, {c: 9, r: 7}, {c: 9, r: 5}, {c: 9, r: 4}, {c: 9, r: 3}, {c: 9, r: 2}, {c: 9, r: 1}, {c: 9, r: 0}, {c: 5, r: 11}, {c: 5, r: 10}, {c: 5, r: 9}, {c: 5, r: 8}, {c: 7, r: 8}, {c: 7, r: 9}, {c: 7, r: 11}, {c: 7, r: 10}, {c: 4, r: 8}, {c: 3, r: 8}, {c: 2, r: 8}, {c: 1, r: 8}, {c: 0, r: 8}, {c: 0, r: 11}, {c: 1, r: 11}, {c: 2, r: 11}, {c: 3, r: 11}, {c: 4, r: 11}, {c: 0, r: 0}, {c: 0, r: 19}] },
-  L50: { name: "Final Apex", cols: 20, rows: 17, path: [{c: 0, r: 16}, {c: 0, r: 11}, {c: 6, r: 11}, {c: 6, r: 16}, {c: 1, r: 16}, {c: 1, r: 12}, {c: 5, r: 12}, {c: 5, r: 15}, {c: 2, r: 15}, {c: 2, r: 10}, {c: 19, r: 10}, {c: 19, r: 16}, {c: 14, r: 16}, {c: 14, r: 11}, {c: 18, r: 11}, {c: 18, r: 15}, {c: 15, r: 15}, {c: 15, r: 12}, {c: 17, r: 12}, {c: 17, r: 2}, {c: 14, r: 2}, {c: 14, r: 5}, {c: 18, r: 5}, {c: 18, r: 1}, {c: 13, r: 1}, {c: 13, r: 6}, {c: 19, r: 6}, {c: 19, r: 0}, {c: 0, r: 0}, {c: 0, r: 6}, {c: 6, r: 6}, {c: 6, r: 1}, {c: 1, r: 1}, {c: 1, r: 5}, {c: 5, r: 5}, {c: 5, r: 2}, {c: 2, r: 2}, {c: 2, r: 8}, {c: 10, r: 8}], blocked: [{c: 0, r: 10}, {c: 1, r: 10}, {c: 1, r: 9}, {c: 1, r: 8}, {c: 1, r: 7}, {c: 0, r: 7}, {c: 0, r: 8}, {c: 0, r: 9}, {c: 7, r: 16}, {c: 8, r: 16}, {c: 9, r: 16}, {c: 10, r: 16}, {c: 11, r: 16}, {c: 12, r: 16}, {c: 13, r: 16}, {c: 13, r: 15}, {c: 13, r: 14}, {c: 13, r: 13}, {c: 13, r: 12}, {c: 13, r: 11}, {c: 12, r: 11}, {c: 11, r: 11}, {c: 10, r: 11}, {c: 9, r: 11}, {c: 8, r: 11}, {c: 7, r: 11}, {c: 7, r: 12}, {c: 7, r: 13}, {c: 7, r: 14}, {c: 7, r: 15}, {c: 8, r: 15}, {c: 9, r: 15}, {c: 10, r: 15}, {c: 11, r: 15}, {c: 12, r: 15}, {c: 12, r: 14}, {c: 11, r: 14}, {c: 10, r: 14}, {c: 9, r: 14}, {c: 8, r: 14}, {c: 8, r: 13}, {c: 9, r: 13}, {c: 10, r: 13}, {c: 11, r: 13}, {c: 12, r: 12}, {c: 12, r: 13}, {c: 11, r: 12}, {c: 10, r: 12}, {c: 9, r: 12}, {c: 8, r: 12}, {c: 7, r: 1}, {c: 8, r: 1}, {c: 9, r: 1}, {c: 10, r: 1}, {c: 11, r: 1}, {c: 12, r: 1}, {c: 12, r: 2}, {c: 12, r: 3}, {c: 12, r: 4}, {c: 12, r: 5}, {c: 12, r: 6}, {c: 11, r: 6}, {c: 10, r: 6}, {c: 9, r: 6}, {c: 8, r: 6}, {c: 7, r: 6}, {c: 7, r: 5}, {c: 7, r: 4}, {c: 7, r: 3}, {c: 7, r: 2}, {c: 8, r: 2}, {c: 9, r: 2}, {c: 10, r: 2}, {c: 11, r: 2}, {c: 11, r: 3}, {c: 10, r: 3}, {c: 9, r: 3}, {c: 8, r: 3}, {c: 8, r: 4}, {c: 9, r: 4}, {c: 10, r: 4}, {c: 11, r: 4}, {c: 11, r: 5}, {c: 10, r: 5}, {c: 9, r: 5}, {c: 8, r: 5}, {c: 18, r: 9}, {c: 19, r: 9}, {c: 19, r: 8}, {c: 19, r: 7}, {c: 18, r: 7}, {c: 18, r: 8}, {c: 16, r: 9}, {c: 16, r: 8}, {c: 16, r: 7}, {c: 15, r: 7}, {c: 14, r: 7}, {c: 14, r: 8}, {c: 15, r: 8}, {c: 15, r: 9}, {c: 14, r: 9}, {c: 13, r: 9}, {c: 13, r: 8}, {c: 13, r: 7}, {c: 12, r: 7}, {c: 12, r: 8}, {c: 12, r: 9}, {c: 2, r: 9}, {c: 3, r: 7}, {c: 4, r: 7}, {c: 5, r: 7}, {c: 6, r: 7}, {c: 7, r: 7}, {c: 3, r: 9}, {c: 4, r: 9}, {c: 5, r: 9}, {c: 6, r: 9}, {c: 7, r: 9}, {c: 8, r: 9}, {c: 8, r: 7}] },
+  L50: { name: "Final Apex", cols: 20, rows: 17, path: [{c: 0, r: 16}, {c: 0, r: 11}, {c: 6, r: 11}, {c: 6, r: 16}, {c: 1, r: 16}, {c: 1, r: 12}, {c: 5, r: 12}, {c: 5, r: 15}, {c: 2, r: 15}, {c: 2, r: 10}, {c: 19, r: 10}, {c: 19, r: 16}, {c: 14, r: 16}, {c: 14, r: 11}, {c: 18, r: 11}, {c: 18, r: 15}, {c: 15, r: 15}, {c: 15, r: 12}, {c: 17, r: 12}, {c: 17, r: 2}, {c: 14, r: 2}, {c: 14, r: 5}, {c: 18, r: 5}, {c: 18, r: 1}, {c: 13, r: 1}, {c: 13, r: 6}, {c: 19, r: 6}, {c: 19, r: 0}, {c: 0, r: 0}, {c: 0, r: 6}, {c: 6, r: 6}, {c: 6, r: 1}, {c: 1, r: 1}, {c: 1, r: 5}, {c: 5, r: 5}, {c: 5, r: 2}, {c: 2, r: 2}, {c: 2, r: 8}, {c: 10, r: 8}], blocked: [{c: 0, r: 10}, {c: 1, r: 10}, {c: 1, r: 9}, {c: 1, r: 8}, {c: 1, r: 7}, {c: 0, r: 7}, {c: 0, r: 8}, {c: 0, r: 9}, {c: 7, r: 16}, {c: 8, r: 16}, {c: 9, r: 16}, {c: 10, r: 16}, {c: 11, r: 16}, {c: 12, r: 16}, {c: 13, r: 16}, {c: 13, r: 15}, {c: 13, r: 14}, {c: 13, r: 13}, {c: 13, r: 12}, {c: 13, r: 11}, {c: 12, r: 11}, {c: 11, r: 11}, {c: 10, r: 11}, {c: 9, r: 11}, {c: 8, r: 11}, {c: 7, r: 11}, {c: 7, r: 12}, {c: 7, r: 13}, {c: 7, r: 14}, {c: 7, r: 15}, {c: 8, r: 15}, {c: 9, r: 15}, {c: 10, r: 15}, {c: 11, r: 15}, {c: 12, r: 15}, {c: 12, r: 14}, {c: 11, r: 14}, {c: 10, r: 14}, {c: 9, r: 14}, {c: 8, r: 14}, {c: 8, r: 13}, {c: 9, r: 13}, {c: 10, r: 13}, {c: 11, r: 13}, {c: 12, r: 12}, {c: 12, r: 13}, {c: 11, r: 12}, {c: 10, r: 12}, {c: 9, r: 12}, {c: 8, r: 12}, {c: 7, r: 1}, {c: 8, r: 1}, {c: 9, r: 1}, {c: 10, r: 1}, {c: 11, r: 1}, {c: 12, r: 1}, {c: 12, r: 2}, {c: 12, r: 3}, {c: 12, r: 4}, {c: 12, r: 5}, {c: 12, r: 6}, {c: 11, r: 6}, {c: 10, r: 6}, {c: 9, r: 6}, {c: 8, r: 6}, {c: 7, r: 6}, {c: 7, r: 5}, {c: 7, r: 4}, {c: 7, r: 3}, {c: 7, r: 2}, {c: 8, r: 2}, {c: 9, r: 2}, {c: 10, r: 2}, {c: 11, r: 2}, {c: 11, r: 3}, {c: 10, r: 3}, {c: 9, r: 3}, {c: 8, r: 3}, {c: 8, r: 4}, {c: 9, r: 4}, {c: 10, r: 4}, {c: 11, r: 4}, {c: 11, r: 5}, {c: 10, r: 5}, {c: 9, r: 5}, {c: 8, r: 5}, {c: 18, r: 9}, {c: 19, r: 9}, {c: 19, r: 8}, {c: 19, r: 7}, {c: 18, r: 7}, {c: 18, r: 8}, {c: 16, r: 9}, {c: 16, r: 8}, {c: 16, r: 7}, {c: 15, r: 7}, {c: 14, r: 7}, {c: 14, r: 8}, {c: 15, r: 8}, {c: 15, r: 9}, {c: 14, r: 9}, {c: 13, r: 9}, {c: 13, r: 8}, {c: 13, r: 7}, {c: 12, r: 7}, {c: 12, r: 8}, {c: 12, r: 9}, {c: 2, r: 9}, {c: 3, r: 7}, {c: 4, r: 7}, {c: 5, r: 7}, {c: 6, r: 7}, {c: 7, r: 7}, {c: 3, r: 9}, {c: 4, r: 9}, {c: 5, r: 9}, {c: 6, r: 9}, {c: 7, r: 9}] }
 };

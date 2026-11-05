@@ -1831,8 +1831,16 @@ let currentLevelMode = 'normal';
 
 // [UI.CF]
 function selectLevelMode(mode) {
+  const checkOverdrive = (typeof isOverdriveUnlocked === 'function')
+    ? isOverdriveUnlocked()
+    : ((typeof window !== 'undefined' && typeof window.isOverdriveUnlocked === 'function') ? window.isOverdriveUnlocked() : (typeof maxUnlockedLevel === 'number' && maxUnlockedLevel > 20));
+
+  const checkEndless = (typeof isEndlessUnlocked === 'function')
+    ? isEndlessUnlocked()
+    : ((typeof window !== 'undefined' && typeof window.isEndlessUnlocked === 'function') ? window.isEndlessUnlocked() : (typeof maxUnlockedLevel === 'number' && maxUnlockedLevel > 15));
+
   if (mode === 'overdrive') {
-    if (!isOverdriveUnlocked()) {
+    if (!checkOverdrive) {
       if (typeof sfx === 'function') sfx('denied');
       if (typeof showHintToast === 'function') {
         showHintToast(typeof t === 'function' ? t('unlock_hardcore_hint') : 'Complete Normal Level 20 to unlock HARDCORE');
@@ -1840,7 +1848,7 @@ function selectLevelMode(mode) {
       return;
     }
   } else if (mode === 'endless') {
-    if (!isEndlessUnlocked()) {
+    if (!checkEndless) {
       if (typeof sfx === 'function') sfx('denied');
       if (typeof showHintToast === 'function') {
         showHintToast(typeof t === 'function' ? t('unlock_endless_hint') : 'Complete Normal Level 15 to unlock Endless Arena');
@@ -1862,17 +1870,17 @@ function selectLevelMode(mode) {
   let targetSec = modeLevelSections[mode] || 1;
   let maxAllowedSec = 1;
   
-  if (devMode) {
-      maxAllowedSec = typeof TOTAL_SECTIONS !== 'undefined' ? TOTAL_SECTIONS : 5;
+  if (typeof devMode !== 'undefined' && devMode) {
+    maxAllowedSec = typeof TOTAL_SECTIONS !== 'undefined' ? TOTAL_SECTIONS : 5;
   } else if (mode === 'overdrive') {
-      let maxHC = 1;
-      const hcKeys = Object.keys(overdriveClearedLevels).map(Number);
-      if (hcKeys.length > 0) {
-          maxHC = Math.max(...hcKeys) + 1;
-      }
-      maxAllowedSec = Math.ceil(maxHC / LEVELS_PER_SECTION);
+    let maxHC = 1;
+    const hcKeys = (typeof overdriveClearedLevels !== 'undefined') ? Object.keys(overdriveClearedLevels).map(Number) : [];
+    if (hcKeys.length > 0) {
+      maxHC = Math.max(...hcKeys) + 1;
+    }
+    maxAllowedSec = Math.ceil(maxHC / LEVELS_PER_SECTION);
   } else {
-      maxAllowedSec = Math.ceil(maxUnlockedLevel / LEVELS_PER_SECTION);
+    maxAllowedSec = Math.ceil((typeof maxUnlockedLevel === 'number' ? maxUnlockedLevel : 1) / LEVELS_PER_SECTION);
   }
   
   currentLevelSection = Math.min(targetSec, Math.max(1, maxAllowedSec));
@@ -1893,8 +1901,13 @@ function updateModeSwitcherUI() {
   const tabEndless = document.getElementById('tabEndless');
   const levelsScreen = document.getElementById('levelsScreen');
 
-  const odUnlocked = isOverdriveUnlocked();
-  const endlessUnlocked = isEndlessUnlocked();
+  const odUnlocked = (typeof isOverdriveUnlocked === 'function')
+    ? isOverdriveUnlocked()
+    : ((typeof window !== 'undefined' && typeof window.isOverdriveUnlocked === 'function') ? window.isOverdriveUnlocked() : false);
+
+  const endlessUnlocked = (typeof isEndlessUnlocked === 'function')
+    ? isEndlessUnlocked()
+    : ((typeof window !== 'undefined' && typeof window.isEndlessUnlocked === 'function') ? window.isEndlessUnlocked() : false);
 
   if (tabNormal) tabNormal.classList.toggle('active', currentLevelMode === 'normal');
   if (tabOverdrive) {
@@ -1919,24 +1932,24 @@ function updateModeSwitcherUI() {
   if (currentLevelMode === 'endless') {
     if (campaignView) campaignView.classList.add('hidden');
     if (endlessView) {
-        endlessView.classList.remove('hidden');
-        if (swipeHint) {
-            const endlessNav = document.querySelector('.endless-part-nav');
-            if (endlessNav) endlessNav.after(swipeHint);
-        }
+      endlessView.classList.remove('hidden');
+      if (swipeHint) {
+        const endlessNav = document.querySelector('.endless-part-nav');
+        if (endlessNav) endlessNav.after(swipeHint);
+      }
     }
-    renderEndlessDashboardUI();
+    if (typeof renderEndlessDashboardUI === 'function') renderEndlessDashboardUI();
   } else {
     if (campaignView) {
-        campaignView.classList.remove('hidden');
-        if (swipeHint) {
-            const normalNav = document.querySelector('.level-part-navigator:not(.endless-part-nav)');
-            if (normalNav) normalNav.after(swipeHint);
-        }
+      campaignView.classList.remove('hidden');
+      if (swipeHint) {
+        const normalNav = document.querySelector('.level-part-navigator:not(.endless-part-nav)');
+        if (normalNav) normalNav.after(swipeHint);
+      }
     }
     if (endlessView) endlessView.classList.add('hidden');
   }
-  
+
   const artDisplay = document.getElementById('modeArtDisplay');
   const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
 
@@ -2076,7 +2089,7 @@ function updateModeSwitcherUI() {
       rulesBanner.innerHTML = ruleText.replace('{heart}', hpHeartSvg);
     } else if (currentLevelMode === 'endless') {
       rulesBanner.className = 'mode-rules-banner endless-rules';
-      const prismIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 1px 2px 2px;"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="22" x2="12" y2="22"/></svg>`;
+      const prismIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 1px 2px 2px;"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
       const diamondIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: middle; display: inline-block; margin: 0 1px 2px 1px;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
       const ruleText = (typeof t === 'function') ? t('rules_endless') : 'Infinite Loop • Earn {prism} Prisms & {diamond} Diamonds';
       rulesBanner.innerHTML = ruleText.replace('{prism}', prismIcon).replace('{diamond}', diamondIcon);
@@ -2214,7 +2227,7 @@ function confirmStartEndlessRun() {
   if (status.type === 'free') {
     launch();
   } else if (status.type === 'ad') {
-    if (!noAdsPurchased && typeof showAdPlaceholder === 'function') {
+    if (typeof showAdPlaceholder === 'function') {
       showAdPlaceholder(launch, null);
     } else {
       launch();
@@ -3265,7 +3278,10 @@ function updateBpProgressUI() {
   }
 }
 
-const VISIBLE_PALETTE_IDS = ['default', 'matrix_green', 'cyber_gold', 'blood_moon'];
+const VISIBLE_PALETTE_IDS = [
+  'default', 'matrix_green', 'cyber_gold', 'blood_moon',
+  'bio_venom', 'sakura_wave', 'solar_inferno'
+];
 
 // [UI.DY]
 function closeCustomPaletteMenus() {
@@ -3335,11 +3351,22 @@ function updatePaletteSelectDropdown(selectId) {
       e.stopPropagation();
       if (!isUnlocked) {
         if (typeof sfx === 'function') sfx('denied');
-        const lockMsg = (typeof t === 'function' && t(`pal_unlock_${pId}`)) 
-          ? t(`pal_unlock_${pId}`) 
-          : (pId === 'matrix_green' ? (typeof t === 'function' ? t('pal_unlock_t10_free') : 'Unlocks for free at Synth Pass Tier 10!')
-          : (pId === 'cyber_gold' ? (typeof t === 'function' ? t('pal_unlock_prem_t1') : 'Unlocks with Premium Synth Pass at Tier 1!')
-          : (typeof t === 'function' ? t('pal_unlock_prem_t30') : 'Unlocks with Premium Synth Pass at Tier 30!')));
+
+        let lockMsg = '';
+        if (pal.source === 'shop') {
+          lockMsg = (typeof t === 'function' && t('pal_unlock_shop'))
+            ? t('pal_unlock_shop')
+            : 'Available for purchase in Gifts & Shop!';
+        } else if (typeof t === 'function' && t(`pal_unlock_${pId}`)) {
+          lockMsg = t(`pal_unlock_${pId}`);
+        } else if (pId === 'matrix_green') {
+          lockMsg = (typeof t === 'function' ? t('pal_unlock_t10_free') : 'Unlocks for free at Synth Pass Tier 10!');
+        } else if (pId === 'cyber_gold') {
+          lockMsg = (typeof t === 'function' ? t('pal_unlock_prem_t1') : 'Unlocks with Premium Synth Pass at Tier 1!');
+        } else {
+          lockMsg = (typeof t === 'function' ? t('pal_unlock_prem_t30') : 'Unlocks with Premium Synth Pass at Tier 30!');
+        }
+
         showHintToast(lockMsg);
         return;
       }
@@ -3378,9 +3405,17 @@ function handleBpThemeClick(e) {}
 function selectPalette(paletteId) {
   if (!unlockedPalettes.includes(paletteId) && !devMode) {
     sfx('denied');
-    const lockMsg = (typeof t === 'function' && t(`pal_unlock_${paletteId}`))
-      ? t(`pal_unlock_${paletteId}`)
-      : ((typeof t === 'function' && t('theme_locked_synth_pass')) ? t('theme_locked_synth_pass') : 'Synth Pass');
+    const pal = (typeof NEON_PALETTES !== 'undefined') ? NEON_PALETTES[paletteId] : null;
+    let lockMsg = '';
+
+    if (pal && pal.source === 'shop') {
+      lockMsg = (typeof t === 'function' && t('pal_unlock_shop')) ? t('pal_unlock_shop') : 'Available in Shop!';
+    } else if (typeof t === 'function' && t(`pal_unlock_${paletteId}`)) {
+      lockMsg = t(`pal_unlock_${paletteId}`);
+    } else {
+      lockMsg = (typeof t === 'function' && t('theme_locked_synth_pass')) ? t('theme_locked_synth_pass') : 'Synth Pass';
+    }
+
     showHintToast(lockMsg);
     return;
   }
@@ -3480,14 +3515,20 @@ function renderBattlePassScreen() {
   const barText = document.getElementById('bpXpBarText');
   if (barText) barText.textContent = isMax ? `XP: ${typeof t === 'function' ? t('max') : 'MAX'} (3000/3000)` : `XP: ${xpInTier} / 100`;
 
+  const diamondIconSvg = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="flex:none; vertical-align:middle; margin-left:3px;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.28)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
+
   const premBtn = document.getElementById('bpActivatePremBtn');
   if (premBtn) {
     if (bpPremiumPurchased) {
       premBtn.className = 'bp-action-btn bp-btn-premium owned';
+      premBtn.disabled = true;
       premBtn.innerHTML = `<span>${typeof t === 'function' ? t('prem_unlocked') : 'PREMIUM UNLOCKED'}</span>`;
     } else {
-      premBtn.className = 'bp-action-btn bp-btn-premium';
-      premBtn.innerHTML = `<span>${typeof t === 'function' ? t('activate_prem') : 'ACTIVATE PREMIUM ($2.99)'}</span>`;
+      const canAfford = (diamonds >= 300);
+      premBtn.className = 'bp-action-btn bp-btn-premium' + (canAfford ? '' : ' cost-insufficient');
+      premBtn.disabled = false;
+      premBtn.innerHTML = `<span style="display:inline-flex; align-items:center; justify-content:center; gap:4px;">${typeof t === 'function' ? t('activate_prem', { cost: 300, icon: diamondIconSvg }) : 'ACTIVATE (300 ' + diamondIconSvg + ')'}</span>`;
+      premBtn.onclick = buyBpPremiumWithDiamonds;
     }
   }
 
@@ -3542,7 +3583,7 @@ function renderBattlePassScreen() {
     if (isFreeClaimed) {
       freeBtnHtml = `<button class="bp-cell-btn claimed-btn">${_tr('claimed')}</button>`;
     } else if (isUnlockedTier) {
-      if (fr.type === 'ad_capsule' && !noAdsPurchased) {
+      if (fr.type === 'ad_capsule') {
         freeBtnHtml = `<button class="bp-cell-btn ad-btn" onclick="claimBpFreeReward(${tNum})">${_tr('watch_ad')}</button>`;
       } else {
         freeBtnHtml = `<button class="bp-cell-btn claim-btn" onclick="claimBpFreeReward(${tNum})">${_tr('claim')}</button>`;
@@ -3639,7 +3680,7 @@ function claimBpFreeReward(tNum) {
     showHintToast(toast);
   };
 
-  if (fr.type === 'ad_capsule' && !noAdsPurchased) {
+  if (fr.type === 'ad_capsule') {
     showAdPlaceholder(executeClaim, null);
   } else {
     executeClaim();
@@ -3699,31 +3740,14 @@ function claimBpPremReward(tNum) {
 }
 
 // [UI.EM]
-function buyBpPremiumIAP() {
-  if (bpPremiumPurchased) {
-    showHintToast(typeof t === 'function' ? t('premium_already_activated') : 'Premium Pass already activated!');
-    return;
-  }
 
-  // [UI.EN]
-  const executePurchase = () => {
-    bpPremiumPurchased = true;
-    if (!unlockedPalettes.includes('cyber_gold')) {
-      unlockedPalettes.push('cyber_gold');
-    }
-    saveGame();
-    sfx('victory');
-    renderBattlePassScreen();
-    showHintToast(typeof t === 'function' ? t('synth_pass_premium_activated') : 'SYNTH PASS PREMIUM ACTIVATED!');
-  };
-
-  if (typeof showAdPlaceholder === 'function') {
-    showAdPlaceholder(executePurchase, null);
-  } else {
-    executePurchase();
+// [UI.EN]
+function handleThemeShopAction(paletteId, cost) {  
+  if (typeof buyThemeWithDiamonds === 'function') {
+    buyThemeWithDiamonds(paletteId, cost);
   }
-}
-window.buyBpPremiumIAP = buyBpPremiumIAP;
+}  
+window.handleThemeShopAction = handleThemeShopAction;
 
 // [UI.EO]
 function buyBpTierWithDiamonds() {
@@ -3880,7 +3904,6 @@ function toggleSettingPerf(isChecked) {
   saveGameSoon();
 }
 
-//  Level select horizontal swipe gesture handler.
 // [UI.FA]
 (function initLevelSelectSwipeGesture() {
   let touchStartX = 0;
@@ -3896,7 +3919,6 @@ function toggleSettingPerf(isChecked) {
     const levelsScreen = document.getElementById('levelsScreen');
     if (!levelsScreen || levelsScreen.classList.contains('hidden')) return;
 
-    // Игнорируем только вкладки режимов и шестеренку, но не ломаем свайп над навигатором
     if (e.target && e.target.closest && e.target.closest('.mode-3way-tab, .levels-main-menu-btn, .hud-gear-btn')) {
       isPointerDown = false;
       return;
@@ -4038,7 +4060,7 @@ function showLevelSelect() {
   showLoadoutWidgetIn('loadoutAnchor-levels');
   gameState = 'LEVELS';
   updateHudSpeedWidget();
-  
+
   syncTopHudVisibility();
   updateDailyBonusBtnVisibility();
 }
@@ -4123,7 +4145,7 @@ function showLevelSelectFromGame() {
 
   const customSpawner = document.getElementById('devCustomSpawner');
   if (customSpawner) customSpawner.classList.add('hidden');
-  
+
   currentLevelSection = Math.min(TOTAL_SECTIONS, Math.max(1, Math.ceil(currentLevel / LEVELS_PER_SECTION)));
   if (typeof modeLevelSections !== 'undefined' && currentLevelMode) {
     modeLevelSections[currentLevelMode] = currentLevelSection;
@@ -4132,14 +4154,10 @@ function showLevelSelectFromGame() {
   showLoadoutWidgetIn('loadoutAnchor-levels');
   gameState = 'LEVELS';
   updateHudSpeedWidget();
-  
+
   syncTopHudVisibility();
   updateDailyBonusBtnVisibility();
 }
-
-//  Player loadout slot configuration and milestone sequence manager.
-
-let loadoutWidgetExpanded = false;
 
 // [UI.FN]
 function showLoadoutWidgetIn(anchorId) {
@@ -4227,7 +4245,10 @@ function renderLoadoutWidgetGrid() {
       <span class="tower-btn-title">${TOWER_NAMES[type] || type}</span>
     `;
     // [UI.FR]
-    btn.onclick = (e) => { e.stopPropagation(); toggleLoadoutWidgetTower(type); };
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      toggleLoadoutWidgetTower(type);
+    };
     grid.appendChild(btn);
   });
 }
@@ -4248,12 +4269,6 @@ function toggleLoadoutWidgetTower(type) {
   renderLoadoutWidgetBody();
   saveGameSoon();
 }
-
-let milestoneSteps = [];
-let milestoneIndex = 0;
-let milestoneOnComplete = null;
-let pendingUpgradeUnlockFx = false;
-let pendingLoadoutRevealFx = false;
 
 // [UI.FT]
 function hasMilestoneForLevel(clearedLevel) {
@@ -4441,8 +4456,6 @@ function buildMilestoneSteps(clearedLevel) {
 
   newTowers.forEach(type => {
     const conf = TOWER_CONFIGS[type] || {};
-    
-    // Получаем переведенные буллиты из словаря или фоллбэк
     let locBlurbs = [];
     if (typeof I18N_DICT !== 'undefined') {
       const dict = I18N_DICT[currentLang] || I18N_DICT.en || {};
@@ -4679,7 +4692,7 @@ function showUpgradesScreen(fromSource) {
 // [UI.GD]
 function closeUpgradesScreen() {
   document.getElementById('upgradesScreen').classList.add('hidden');
-  
+
   const topHud = document.getElementById('topHud');
   if (topHud) topHud.classList.remove('hidden');
 
@@ -4701,7 +4714,7 @@ function closeUpgradesScreen() {
     document.getElementById('startScreen').classList.remove('hidden');
     gameState = 'START';
   }
-  
+
   syncTopHudVisibility();
   updateDailyBonusBtnVisibility();
 }
@@ -4826,7 +4839,7 @@ function renderShopScreen() {
       giftBtn.disabled = true;
       giftBtn.className = 'shop-item-btn shop-btn-claimed';
       giftBtn.innerHTML = `<span>${_tr('claimed')}</span>`;
-    } else if (dailyGiftsClaimedCount === 0 || noAdsPurchased) {
+    } else if (dailyGiftsClaimedCount === 0) {
       giftBtn.disabled = false;
       giftBtn.className = 'shop-item-btn shop-btn-free';
       giftBtn.innerHTML = `<span>${_tr('free')}</span>`;
@@ -4917,18 +4930,37 @@ function renderShopScreen() {
     }
   }
 
-  const noAdsBtn = document.getElementById('noAdsBuyBtn');
-  if (noAdsBtn) {
-    if (noAdsPurchased) {
-      noAdsBtn.disabled = true;
-      noAdsBtn.className = 'shop-item-btn shop-btn-claimed';
-      noAdsBtn.innerHTML = `<span>${_tr('owned')}</span>`;
+  // Витрина тем оформления в Магазине
+  const themesConfig = [
+  { id: 'bio_venom', cost: 150, btnId: 'themeBtn-bio_venom' },
+  { id: 'sakura_wave', cost: 200, btnId: 'themeBtn-sakura_wave' },
+  { id: 'solar_inferno', cost: 300, btnId: 'themeBtn-solar_inferno' }
+];
+
+  themesConfig.forEach(item => {
+    const btn = document.getElementById(item.btnId);
+    if (!btn) return;
+    const isUnlocked = (typeof devMode !== 'undefined' && devMode) || unlockedPalettes.includes(item.id);
+    const isEquipped = (activePalette === item.id);
+
+    if (isEquipped) {
+      btn.disabled = true;
+      btn.className = 'shop-item-btn shop-btn-equipped';
+      btn.innerHTML = `<span>${typeof t === 'function' ? t('equipped') : 'ACTIVE'}</span>`;
+      btn.onclick = null;
+    } else if (isUnlocked) {
+      btn.disabled = false;
+      btn.className = 'shop-item-btn shop-btn-equip';
+      btn.innerHTML = `<span>${typeof t === 'function' ? t('equip') : 'EQUIP'}</span>`;
+      btn.onclick = () => handleThemeShopAction(item.id, item.cost);
     } else {
-      noAdsBtn.disabled = false;
-      noAdsBtn.className = 'shop-item-btn shop-btn-buy';
-      noAdsBtn.innerHTML = '<span>$1.99</span>';
+      const canAfford = (diamonds >= item.cost);
+      btn.disabled = false;
+      btn.className = 'shop-item-btn shop-btn-buy' + (canAfford ? '' : ' dimmed');
+      btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${canAfford ? '#00e5ff' : '#f05f9f'}" stroke-width="2.2" stroke-linejoin="round" style="flex:none;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="${canAfford ? 'rgba(0,229,255,.25)' : 'rgba(240,95,159,.25)'}"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg><span>${item.cost}</span>`;
+      btn.onclick = () => handleThemeShopAction(item.id, item.cost);
     }
-  }
+  });
 }
 
 // --- Daily Login 7-Day Calendar Logic ---
@@ -5053,7 +5085,7 @@ function renderDailyLoginModal() {
       <div class="daily-streak-sub">${t('day_n_of_7', { n: activeStreakDay })}</div>
     `;
   }
-  
+
   DAILY_LOGIN_REWARDS.forEach(item => {
     const d = item.day;
     const isDay7 = (d === 7);
@@ -5189,18 +5221,10 @@ function renderDailyLoginModal() {
     if (doubleBtn) {
       doubleBtn.disabled = false;
       doubleBtn.style.display = 'flex';
-      if (noAdsPurchased) {
-        if (doubleLabel) doubleLabel.textContent = t('claim_x2_free');
-        if (adIcon) {
-          adIcon.style.display = 'inline-block';
-          adIcon.outerHTML = `<svg id="dailyDoubleAdIcon" width="18" height="15" viewBox="0 0 16 13" fill="none" stroke="currentColor" style="flex:none; margin-right:6px; vertical-align:middle;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke-width="1.6" opacity="0.85"/><polygon points="6,3.5 11,6.5 6,9.5" fill="currentColor" stroke="none" opacity="0.75"/><line x1="1.5" y1="12" x2="14.5" y2="1" stroke-width="1.8" stroke-linecap="round"/></svg>`;
-        }
-      } else {
-        if (doubleLabel) doubleLabel.textContent = t('claim_x2');
-        if (adIcon) {
-          adIcon.style.display = 'inline-block';
-          adIcon.outerHTML = `<svg id="dailyDoubleAdIcon" width="18" height="15" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:6px;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="currentColor"/></svg>`;
-        }
+      if (doubleLabel) doubleLabel.textContent = (typeof t === 'function' ? t('claim_x2') : 'CLAIM x2');
+      if (adIcon) {
+        adIcon.style.display = 'inline-block';
+        adIcon.outerHTML = `<svg id="dailyDoubleAdIcon" width="18" height="15" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:6px;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="currentColor"/></svg>`;
       }
     }
   }
@@ -5270,7 +5294,7 @@ function claimDailyLoginReward(isDouble) {
     closeDailyLoginModal();
   };
 
-  if (isDouble && !noAdsPurchased) {
+  if (isDouble) {
     showAdPlaceholder(executeGrantReward, null);
   } else {
     executeGrantReward();
@@ -5739,6 +5763,7 @@ function updateInspectUI() {
 
   const upgCost = getUpgradeCost(t.type, t.level);
   const upgBtn = document.getElementById('inspectUpgradeBtn');
+  const upgCostWrapEl = document.getElementById('inspectUpgradeCost');
   const upgValEl = document.getElementById('inspectUpgradeCostVal');
   const upgIconEl = document.getElementById('inspectUpgradeCostIcon');
   const upgStatusEl = document.getElementById('inspectUpgradeStatus');
@@ -5747,17 +5772,20 @@ function updateInspectUI() {
 
   if (!canUpgradeLevel) {
     upgBtn.disabled = true;
+    if (upgCostWrapEl) upgCostWrapEl.style.display = 'none';
     if (upgValEl) upgValEl.textContent = '';
     if (upgIconEl) upgIconEl.style.display = 'none';
     if (upgStatusEl) upgStatusEl.textContent = _tr('locked');
   } else if (t.level >= 3) {
     upgBtn.disabled = true;
+    if (upgCostWrapEl) upgCostWrapEl.style.display = 'none';
     if (upgValEl) upgValEl.textContent = '';
     if (upgIconEl) upgIconEl.style.display = 'none';
     if (upgStatusEl) upgStatusEl.textContent = _tr('max');
   } else {
     const canAfford = gold >= upgCost;
     upgBtn.disabled = !canAfford;
+    if (upgCostWrapEl) upgCostWrapEl.style.display = 'flex';
     if (upgValEl) {
       upgValEl.textContent = `${upgCost}`;
       upgValEl.style.color = canAfford ? '#ffffff' : '#f05f9f';
@@ -5781,7 +5809,6 @@ function updateInspectUI() {
     if (sellIconEl) sellIconEl.style.display = '';
   }
 }
-
 // [UI.HT]
 function updateWaveCircle(dt) {
   const progEl = el('waveCircleProg');
@@ -8434,19 +8461,21 @@ function toggleTacticalTips() {
 }
 window.toggleTacticalTips = toggleTacticalTips;
 
-//  Listener to intercept Back button on Android.
+// Listener to intercept Back button on Android.
 // [UI.JU]
 document.addEventListener('DOMContentLoaded', () => {
   if (window.Capacitor && window.Capacitor.Plugins) {
     if (window.Capacitor.Plugins.StatusBar) {
       window.Capacitor.Plugins.StatusBar.hide().catch(err => console.warn('StatusBar error:', err));
     }
-    
+
     const App = window.Capacitor.Plugins.App;
     if (App && typeof App.addListener === 'function') {
       // [UI.JV]
       App.addListener('backButton', () => {
-        if (typeof handleHardwareBack === 'function') handleHardwareBack();
+        if (typeof handleHardwareBack === 'function') {
+          handleHardwareBack();
+        }
       });
     }
   }

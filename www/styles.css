@@ -1,4 +1,4 @@
-/*  Base layout and canvas viewport setup */
+/* Base layout and canvas viewport setup */
 
 #initialLoadingScreen {
   position: fixed !important;
@@ -67,7 +67,7 @@ html, body {
 }
 /* [STY.A] */
 
-/*  Top HUD status bar container */
+/* Top HUD status bar container */
 .hud-top-bar {
   position: fixed;
   top: max(16px, env(safe-area-inset-top));
@@ -110,7 +110,7 @@ html, body {
   flex-shrink: 0;
 }
 
-/*  HUD interactive badges and stat indicators */
+/* HUD interactive badges and stat indicators */
 .hud-split-badge {
   display: inline-flex;
   align-items: center;
@@ -319,7 +319,7 @@ html, body {
 }
 /* [STY.G] */
 
-/*  HUD gear settings button and interactive animations */
+/* HUD gear settings button and interactive animations */
 .hud-gear-btn {
   width: 36px;
   height: 36px;
@@ -359,7 +359,7 @@ html, body {
   filter: drop-shadow(0 0 9px #00e5ff);
 }
 
-/*  Wave notification alerts and banners */
+/* Wave notification alerts and banners */
 .incoming-alert-banner {
   position: fixed;
   top: max(82px, calc(env(safe-area-inset-top) + 68px));
@@ -455,7 +455,7 @@ html, body {
 @keyframes newTowerBannerGlow {
   0%, 100% { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), 0 0 12px rgba(0, 229, 255, 0.28); }
 /* [STY.K] */
-  50%      { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), 0 0 24px rgba(0, 229, 255, 0.6); }
+  50% { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), 0 0 24px rgba(0, 229, 255, 0.6); }
 }
 .new-tower-icon {
   width: 34px;
@@ -499,7 +499,7 @@ html, body {
   line-height: 1.25;
 }
 
-/*  Bottom controls panel and build toolbar */
+/* Bottom controls panel and build toolbar */
 .controls-wrapper {
   position: relative;
   height: 96px;
@@ -532,7 +532,7 @@ html, body {
 }
 .hidden { display: none !important; }
 
-/*  Drag-and-drop cancel zone overlay */
+/* Drag-and-drop cancel zone overlay */
 .cancel-zone-overlay {
   position: absolute;
   top: 0;
@@ -565,7 +565,7 @@ html, body {
 }
 /* [STY.N] */
 
-/*  Tower selection build buttons and state modifiers */
+/* Tower selection build buttons and state modifiers */
 .tower-btn {
   flex: 1;
   min-width: 0;
@@ -795,7 +795,7 @@ html, body {
   flex-shrink: 0;
 }
 
-/*  Wave start action button and progress ring */
+/* Wave start action button and progress ring */
 .action-btn {
   flex: none;
   width: 78px;
@@ -947,7 +947,7 @@ html, body {
   pointer-events: auto;
 }
 
-/*  HUD time modulation speed drum widget */
+/* HUD time modulation speed drum widget */
 .speed-widget {
   position: fixed;
   right: max(max(16px, env(safe-area-inset-right)), calc(50vw - 480px + 16px));
@@ -1048,7 +1048,7 @@ html, body {
 
 @keyframes ridgeScroll {
   from { background-position-y: 0; }
-  to   { background-position-y: 28px; }
+  to { background-position-y: 28px; }
 }
 
 .spd-drum.dragging .drum-ridges {
@@ -1097,7 +1097,7 @@ html, body {
 @keyframes hintFloat {
   0%, 100% { transform: translateY(0); opacity: 0.35; }
 /* [STY.Z] */
-  50%      { transform: translateY(-2px); opacity: 0.9; }
+  50% { transform: translateY(-2px); opacity: 0.9; }
 }
 
 .spd-label {
@@ -1138,7 +1138,7 @@ html, body {
 
 @keyframes tipPulse {
   0%, 100% { opacity: 1; }
-  50%      { opacity: 0.55; }
+  50% { opacity: 0.55; }
 }
 
 .drag-tip::before {
@@ -1151,7 +1151,7 @@ html, body {
   border-left-color: var(--neon-primary, #00e5ff);
 }
 
-/*  Post-match result screens (victory and defeat, pause, settings) */
+/* Post-match result screens (victory and defeat, pause, settings) */
 .result-screen {
   background: transparent !important;
   backdrop-filter: none !important;
@@ -1206,7 +1206,7 @@ html, body {
 }
 /* [STY.AC] */
 
-/*  Victory fanfare animation background */
+/* Victory fanfare animation background */
 .victory-fanfare-rays {
   position: absolute;
   top: 40px;
@@ -1495,7 +1495,7 @@ html, body {
   margin-left: 1px;
 }
 
-/*  Star rating slot animations */
+/* Star rating slot animations */
 .result-stars-row {
   display: flex;
   align-items: center;
@@ -1580,23 +1580,23 @@ html, body {
 }
 
 @keyframes starArrive {
-  0%   { opacity: 0; transform: scale(0.25) rotate(-38deg);
-         filter: drop-shadow(0 0 0 rgba(245, 158, 11, 0)); }
-  55%  { opacity: 1; transform: scale(1.32) rotate(7deg);
-         filter: drop-shadow(0 0 22px rgba(245, 158, 11, 1)); }
+  0% { opacity: 0; transform: scale(0.25) rotate(-38deg);
+  filter: drop-shadow(0 0 0 rgba(245, 158, 11, 0)); }
+  55% { opacity: 1; transform: scale(1.32) rotate(7deg);
+  filter: drop-shadow(0 0 22px rgba(245, 158, 11, 1)); }
 /* [STY.AN] */
   100% { opacity: 1; transform: scale(1) rotate(0deg);
-         filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.65)); }
+  filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.65)); }
 }
 @keyframes starShockwave {
-  0%   { opacity: 0; transform: scale(0.35); border-width: 3px; }
-  18%  { opacity: 0.95; }
+  0% { opacity: 0; transform: scale(0.35); border-width: 3px; }
+  18% { opacity: 0.95; }
   100% { opacity: 0; transform: scale(2.1); border-width: 1px; }
 /* [STY.AO] */
 }
 @keyframes starBloom {
-  0%   { opacity: 0; transform: scale(0.3); }
-  40%  { opacity: 1; transform: scale(1.5); }
+  0% { opacity: 0; transform: scale(0.3); }
+  40% { opacity: 1; transform: scale(1.5); }
   100% { opacity: 0; transform: scale(2); }
 }
 /* [STY.AP] */
@@ -1714,7 +1714,7 @@ html, body {
   animation: seqIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/*  Defeat glitch title effect and sweep overlay */
+/* Defeat glitch title effect and sweep overlay */
 @keyframes failShake {
   0% { opacity: 0; transform: translateX(0) scale(1.06); }
   20% { opacity: 1; transform: translateX(-9px); }
@@ -1762,16 +1762,16 @@ html, body {
 }
 @keyframes glitchSlipA {
   0%, 6%, 100% { transform: translateX(0); opacity: 0; }
-  1%  { transform: translateX(-6px); opacity: 0.9; }
-  3%  { transform: translateX(4px); opacity: 0.7; }
-  5%  { transform: translateX(-2px); opacity: 0.5; }
+  1% { transform: translateX(-6px); opacity: 0.9; }
+  3% { transform: translateX(4px); opacity: 0.7; }
+  5% { transform: translateX(-2px); opacity: 0.5; }
 /* [STY.AW] */
 }
 @keyframes glitchSlipB {
   0%, 7%, 100% { transform: translateX(0); opacity: 0; }
-  2%  { transform: translateX(5px); opacity: 0.8; }
-  4%  { transform: translateX(-4px); opacity: 0.6; }
-  6%  { transform: translateX(2px); opacity: 0.4; }
+  2% { transform: translateX(5px); opacity: 0.8; }
+  4% { transform: translateX(-4px); opacity: 0.6; }
+  6% { transform: translateX(2px); opacity: 0.4; }
 /* [STY.AX] */
 }
 
@@ -1789,8 +1789,8 @@ html, body {
   animation: defeatSweep 1.2s ease-out both;
 }
 @keyframes defeatSweep {
-  0%   { opacity: 0; transform: translateY(-100%); }
-  30%  { opacity: 1; }
+  0% { opacity: 0; transform: translateY(-100%); }
+  30% { opacity: 1; }
   100% { opacity: 0.35; transform: translateY(0); }
 /* [STY.AY] */
 }
@@ -1801,7 +1801,7 @@ html, body {
   .star-slot::before, .star-slot::after { display: none !important; }
 }
 
-/*  Full-screen overlay screens and modal dialogs */
+/* Full-screen overlay screens and modal dialogs */
 .overlay-screen {
   position: absolute;
   top: 0;
@@ -1901,7 +1901,7 @@ html, body {
 }
 /* [STY.BB] */
 
-/*  Start screen title layout and main action capsule buttons */
+/* Start screen title layout and main action capsule buttons */
 .start-screen-container {
   position: absolute;
   inset: 0;
@@ -2135,7 +2135,7 @@ html, body {
   transform: none !important;
 }
 
-/*  Synth Pass Battle Pass & Color Palette Skin Overlay Styles */
+/* Synth Pass Battle Pass & Color Palette Skin Overlay Styles */
 :root {
   --neon-primary: #00e5ff;
   --neon-secondary: #ff007f;
@@ -2276,9 +2276,23 @@ html, body {
 /* [STY.BI] */
 
 .bp-btn-premium {
-  background: linear-gradient(135deg, #ffd700 0%, #9d4edd 100%);
-  color: #06070d;
-  box-shadow: 0 0 14px rgba(255, 215, 0, 0.4);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.9) 0%, rgba(157, 78, 221, 0.95) 100%);
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(255, 215, 0, 0.35);
+}
+
+.bp-btn-premium:active:not(.owned):not(:disabled) {
+  transform: scale(0.92) translateY(1px) !important;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important;
+}
+
+.bp-btn-premium:disabled,
+.bp-btn-premium.disabled,
+.bp-btn-premium.cost-insufficient {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  filter: grayscale(0.6) !important;
 }
 
 .bp-btn-premium.owned {
@@ -2295,7 +2309,7 @@ html, body {
   color: #dff9ff;
 }
 
-.bp-action-btn:active:not(.owned) {
+.bp-action-btn:active:not(.owned):not(:disabled) {
   transform: scale(0.92) translateY(1px) !important;
 }
 
@@ -2305,19 +2319,6 @@ html, body {
   margin-top: 2px;
 }
 /* [STY.BJ] */
-
-.bp-dev-btn {
-  flex: 1;
-  padding: 4px;
-  background: rgba(157, 78, 221, 0.25);
-  border: 1px solid #9d4edd;
-  color: #d8b4fe;
-  font-size: 9px;
-  font-weight: 800;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
 .bp-tier-list {
   gap: 8px !important;
 }
@@ -2490,7 +2491,7 @@ html, body {
   transform: none !important;
 }
 
-/*  Level selection screen grid and chapter navigation */
+/* Level selection screen grid and chapter navigation */
 .levels-bg {
   background: rgba(4, 6, 14, 0.65) !important;
   backdrop-filter: blur(8px) !important;
@@ -2675,7 +2676,7 @@ html, body {
 
 @keyframes swipeHintPulse {
   0%, 100% { opacity: 0.55; transform: scale(0.98); }
-  50%      { opacity: 0.95; transform: scale(1.02); }
+  50% { opacity: 0.95; transform: scale(1.02); }
 }
 
 .mode-overdrive-active .swipe-arrow,
@@ -3248,7 +3249,7 @@ html, body {
 }
 /* [STY.CK] */
 
-/*  Global tech tree upgrade cards and branch lists */
+/* Global tech tree upgrade cards and branch lists */
 .screen-bg-only > * { display: none !important; }
 
 .upgrades-bg {
@@ -3374,7 +3375,7 @@ html, body {
   flex: 1 1 auto !important;
   display: flex !important;
   flex-direction: column !important;
-  align-items: stretch !important; /* <--- САМОЕ ГЛАВНОЕ: заставляет внутренние блоки растянуться на всю 100% ширину */
+  align-items: stretch !important;
   gap: 5px !important;
   min-width: 0 !important;
 }
@@ -3483,7 +3484,7 @@ html, body {
   gap: 8px;
 }
 
-/*  In-game settings modal and volume sliders */
+/* In-game settings modal and volume sliders */
 .settings-box {
   display: flex;
   flex-direction: column;
@@ -3507,7 +3508,7 @@ html, body {
 }
 
 .setting-row:has(.custom-palette-dropdown) {
-  z-index: 30; /* Выносит всю строку с палитрой поверх нижних элементов */
+  z-index: 30;
 }
 .setting-row > span {
   flex: 1 1 50%;
@@ -3605,6 +3606,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   box-shadow: 0 0 8px var(--neon-glow, rgba(0, 229, 255, 0.6));
   cursor: pointer;
 }
+
 /* [STY.CU] */
 .vol-range::-moz-range-thumb {
   width: 15px;
@@ -3624,16 +3626,17 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   box-shadow: none;
 }
 
-/*  In-game tower inspection and management panel */
+/* In-game tower inspection and management panel */
 #inspectPanel {
   position: relative;
   z-index: 506 !important;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 2px;
+  gap: 5px;
+  padding: 2px 0;
   height: 100%;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .selected-info {
@@ -3642,19 +3645,19 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   align-items: center;
   justify-content: space-between;
   height: 100%;
-  padding: 4px 0 3px 0;
-  min-width: 0;
-  flex: none;
+  padding: 4px 2px 3px 2px;
+  min-width: 44px;
+  flex: 0 0 auto;
   box-sizing: border-box;
 }
 /* [STY.CV] */
 
 .selected-info .selected-title {
   font-family: 'Montserrat', sans-serif;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 900;
   color: #ffffff;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
   line-height: 1;
   text-transform: uppercase;
   margin: 0;
@@ -3699,7 +3702,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   font-family: 'Montserrat', sans-serif;
   font-size: 9px;
   font-weight: 900;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.5px;
   color: #ffffff;
   white-space: nowrap;
   text-transform: uppercase;
@@ -3710,10 +3713,11 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   font-family: 'Montserrat', sans-serif;
   font-size: 8px;
   font-weight: 800;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.6px;
   color: #8ea3c4;
   text-transform: uppercase;
   line-height: 1;
+  white-space: nowrap;
 }
 
 .selected-level-bars {
@@ -3723,7 +3727,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   justify-content: center;
 }
 .level-bar-seg {
-  width: 11px;
+  width: 10px;
   height: 2.5px;
   border-radius: 1.5px;
   background: rgba(140, 200, 255, 0.2);
@@ -3735,12 +3739,12 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 }
 /* [STY.CX] */
 
-/*  Tower upgrade and sell confirm action buttons */
+/* Tower upgrade and sell confirm action buttons */
 .btn-upgrade {
-  flex: 1.35 1 0%;
-  min-width: 88px;
+  flex: 1.15 1 0%;
+  min-width: 0;
   height: 100%;
-  border-radius: 18px;
+  border-radius: 16px;
   background: linear-gradient(rgba(0, 229, 255, 0.3), rgba(0, 229, 255, 0.06)), rgba(8, 12, 24, 0.92);
   border: 1.5px solid var(--neon-primary, #00e5ff);
   box-shadow: 0 0 22px rgba(0, 229, 255, 0.35);
@@ -3751,7 +3755,9 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   gap: 3px;
   cursor: pointer;
   transition: all 0.2s ease;
-  padding: 0 6px;
+  padding: 4px 6px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .btn-upgrade:active:not(:disabled),
@@ -3769,30 +3775,39 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 .upg-btn-title {
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 3px;
+  max-width: 100%;
   font-family: 'Montserrat', sans-serif;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 900;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.4px;
   color: #ffffff;
   text-transform: uppercase;
+  white-space: nowrap;
+}
+.upg-btn-title svg {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
 }
 .btn-upgrade .cost {
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 3px;
   font-family: 'Montserrat', sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 900;
   color: #ffffff;
 }
 /* [STY.CY] */
 
 .btn-sell {
-  flex: 1 1 0%;
-  min-width: 68px;
+  flex: 1.05 1 0%;
+  min-width: 0;
   height: 100%;
-  border-radius: 18px;
+  border-radius: 16px;
   background: rgba(8, 12, 24, 0.65);
   border: 1.5px solid rgba(240, 95, 159, 0.45);
   backdrop-filter: blur(10px);
@@ -3800,10 +3815,12 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
   cursor: pointer;
   transition: all 0.2s ease;
-  padding: 4px 4px;
+  padding: 4px 6px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .btn-sell:active,
@@ -3822,7 +3839,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 }
 .btn-sell.confirm-armed svg { stroke: #06070d; }
 .btn-sell.confirm-armed .sell-btn-title {
-  font-size: 9px;
+  font-size: 8.5px;
   letter-spacing: 0.2px;
   color: #06070d !important;
 }
@@ -3835,17 +3852,24 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   align-items: center;
   justify-content: center;
   gap: 3px;
+  max-width: 100%;
   font-family: 'Montserrat', sans-serif;
-  font-size: 9.5px;
+  font-size: 8.5px;
   font-weight: 900;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.3px;
   color: #ff8fb0;
   text-transform: uppercase;
   white-space: nowrap;
 }
+.sell-btn-title svg {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+}
 .btn-sell .cost {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 3px;
   font-family: 'Montserrat', sans-serif;
   font-size: 12px;
@@ -3854,11 +3878,11 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 }
 
 .btn-close-inspect {
-  flex: 0 0 42px !important;
-  width: 42px !important;
-  min-width: 42px !important;
+  flex: 0 0 36px !important;
+  width: 36px !important;
+  min-width: 36px !important;
   height: 100% !important;
-  border-radius: 18px !important;
+  border-radius: 16px !important;
   background: rgba(8, 12, 24, 0.65) !important;
   border: 1.5px solid rgba(240, 95, 159, 0.45) !important;
   backdrop-filter: blur(10px);
@@ -3883,15 +3907,15 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 /* [STY.DA] */
 
 .btn-close-inspect svg {
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
   stroke: #f28eae;
   stroke-width: 2.5;
   stroke-linecap: round;
   transition: stroke 0.2s ease;
 }
 
-/*  Interactive tutorial overlay spotlight and target indicators */
+/* Interactive tutorial overlay spotlight and target indicators */
 .tutorial-layer {
   position: fixed;
   inset: 0;
@@ -3909,10 +3933,9 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 }
 @keyframes tutorialGlowPulse {
   0%, 100% { box-shadow: 0 0 0 2000px rgba(4, 6, 14, 0.72), 0 0 14px 2px rgba(0, 229, 255, 0.4); }
-  50%      { box-shadow: 0 0 0 2000px rgba(4, 6, 14, 0.72), 0 0 26px 6px rgba(0, 229, 255, 0.85); }
-/* [STY.DB] */
-}
+  50% { box-shadow: 0 0 0 2000px rgba(4, 6, 14, 0.72), 0 0 26px 6px rgba(0, 229, 255, 0.85); }
 
+/* [STY.DB] */
 .tutorial-pointer {
   position: absolute;
   width: 44px;
@@ -3933,7 +3956,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 }
 @keyframes tutorialRingPulse {
   0%, 100% { opacity: 0.45; transform: scale(0.94); }
-  50%      { opacity: 0.95; transform: scale(1.04); }
+  50% { opacity: 0.95; transform: scale(1.04); }
 /* [STY.DC] */
 }
 
@@ -3946,7 +3969,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 }
 @keyframes tutorialFieldPulse {
   0%, 100% { opacity: 0.4; }
-  50%      { opacity: 0.85; }
+  50% { opacity: 0.85; }
 }
 /* [STY.DD] */
 
@@ -3971,8 +3994,8 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 }
 .tutorial-tap-pulse .tap-ring.r2 { animation-delay: 0.55s; }
 @keyframes tutorialTapRing {
-  0%   { transform: scale(0.35); opacity: 0.9; }
-  70%  { opacity: 0.18; }
+  0% { transform: scale(0.35); opacity: 0.9; }
+  70% { opacity: 0.18; }
 /* [STY.DE] */
   100% { transform: scale(2.8); opacity: 0; }
 }
@@ -4058,7 +4081,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   z-index: 503;
 }
 
-/*  Developer control bar and spawner panel */
+/* Developer control bar and spawner panel */
 .dev-bar {
   position: fixed;
   top: max(10px, env(safe-area-inset-top));
@@ -4198,7 +4221,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   line-height: 1.35;
 }
 
-/*  Collapsible accordion loadout and settings widgets */
+/* Collapsible accordion loadout and settings widgets */
 #settingsScreen .settings-box {
   background: transparent;
   border: none;
@@ -4390,7 +4413,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   margin-top: 6px;
   min-height: 46px;
   position: relative;
-  z-index: 1; /* Кнопка строго под выпадающим списком */
+  z-index: 1;
 }
 /* [STY.DP] */
 
@@ -4402,7 +4425,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 .loadout-widget,
 .settings-collapsible-widget {
   position: relative;
-  z-index: 20; /* Поднимает весь виджет настроек вместе с выпадающим меню над кнопкой BACK */
+  z-index: 20;
   width: 100%;
   max-width: 320px;
   margin: 4px auto;
@@ -5054,7 +5077,7 @@ label,
   display: none !important;
 }
 
-/*  Gifts & Shop Screen Grid and Cards */
+/* Gifts & Shop Screen Grid and Cards */
 #shopScreen {
   z-index: 210 !important;
   pointer-events: auto !important;
@@ -5152,6 +5175,11 @@ label,
   box-shadow: 0 0 12px rgba(217, 70, 239, 0.35);
 }
 
+.shop-card-icon.cyan-glow {
+  border-color: var(--neon-primary, #00e5ff);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
+}
+
 .shop-card-info {
   display: flex;
   flex-direction: column;
@@ -5204,7 +5232,7 @@ label,
   box-sizing: border-box;
 }
 
-.shop-item-btn:active:not(:disabled):not(.shop-btn-claimed) {
+.shop-item-btn:active:not(:disabled):not(.shop-btn-claimed):not(.shop-btn-equipped) {
   transform: scale(0.92) translateY(1px);
 }
 
@@ -5266,7 +5294,41 @@ label,
   text-shadow: 0 0 6px rgba(240, 95, 159, 0.6);
 }
 
-/*  Баннер режима выбора уровней */
+/* Стили витрины тем оформления (Visual Themes) */
+.shop-card-theme {
+  position: relative;
+  background: rgba(8, 12, 24, 0.75);
+}
+
+.shop-card-theme .theme-palette-preview {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.shop-btn-equip {
+  background: rgba(0, 229, 255, 0.18) !important;
+  border: 1.4px solid var(--neon-primary, #00e5ff) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.3) !important;
+}
+
+.shop-btn-equipped {
+  background: rgba(8, 12, 24, 0.5) !important;
+  border: 1px solid rgba(140, 200, 255, 0.16) !important;
+  color: #8ef3ff !important;
+  cursor: default !important;
+  box-shadow: none !important;
+}
+
+/* Баннер режима выбора уровней */
 .mode-art-display {
   width: 100%;
   max-width: 380px;
@@ -5289,7 +5351,7 @@ label,
   display: block;
 }
 
-/*  Стили строки и окаймления Daily Gift */
+/* Стили строки и окаймления Daily Gift */
 .daily-gift-card {
   border-radius: 18px;
   background: rgba(8, 12, 24, 0.65);
@@ -5319,9 +5381,9 @@ label,
   max-width: 95px;
 }
 
-/*  Отступы и разрядка карточек и секций на экране Gifts & Shop */
+/* Отступы и разрядка карточек и секций на экране Gifts & Shop */
 #shopScreen .upgrades-row-list {
-  gap: 12px !important;
+  gap: 10px !important;
   padding: 8px 4px 24px 4px !important;
 }
 
@@ -5465,13 +5527,13 @@ label,
   gap: 3px !important;
   color: #cbd5e1 !important;
   font-size: 8px !important;
-  font-weight: 800 !important;               /* Единый вес шрифта */
+  font-weight: 800 !important;
   line-height: 1 !important;
   white-space: nowrap !important;
   flex-shrink: 0 !important;
 }
 
-/* Лейблы DMG:, SPD:, RNG: — ровно 8px и 800 вес (не прыгают по высоте) */
+/* Лейблы DMG:, SPD:, RNG: — ровно 8px и 800 вес */
 .upg-stat-cur .upg-lbl {
   color: #8ea3c4 !important;
   font-size: 8px !important;
@@ -5494,7 +5556,7 @@ label,
   letter-spacing: 0.3px !important;
   line-height: 1 !important;
   white-space: nowrap !important;
-  margin-left: auto !important;              /* Выталкивает блок к правому краю контейнера */
+  margin-left: auto !important;
   text-align: right !important;
   flex-shrink: 0 !important;
 }
@@ -5525,7 +5587,7 @@ label,
   align-items: flex-start !important;
   justify-content: center !important;
   gap: 2px !important;
-  padding: 2px 4px !important;
+  padding: 2px 3px !important;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
@@ -5540,16 +5602,16 @@ label,
   align-items: baseline !important;
   justify-content: space-between !important;
   width: 100% !important;
-  gap: 5px !important;
-  min-width: 58px !important;
+  gap: 4px !important;
+  min-width: 54px !important;
   flex: none !important;
 }
 
 .inspect-stat-lbl {
   font-family: 'Montserrat', sans-serif !important;
-  font-size: 8px !important;
+  font-size: 7.5px !important;
   font-weight: 800 !important;
-  letter-spacing: 0.4px !important;
+  letter-spacing: 0.3px !important;
   color: #8ea3c4 !important;
   text-transform: uppercase !important;
   line-height: 1.1 !important;
@@ -5558,7 +5620,7 @@ label,
 
 .inspect-stat-val {
   font-family: 'Montserrat', sans-serif !important;
-  font-size: 10.5px !important;
+  font-size: 10px !important;
   font-weight: 900 !important;
   color: #ffffff !important;
   letter-spacing: 0.2px !important;
@@ -5567,13 +5629,13 @@ label,
   white-space: nowrap !important;
 }
 
-/*  Milestone & Achievement Unlock Modal Card + Live Tower Firing Demo */
+/* Milestone & Achievement Unlock Modal Card + Live Tower Firing Demo */
 #milestoneScreen {
   z-index: 10005 !important;
   padding: 0 !important;
 }
-/* [STY.ER] */
 
+/* [STY.ER] */
 #milestoneScreen .result-stack {
   --ms-accent: #00e5ff;
   background: linear-gradient(180deg, rgba(13, 21, 40, 0.97) 0%, rgba(7, 10, 20, 0.99) 100%);
@@ -6072,9 +6134,9 @@ label,
 /* [STY.FL] */
 
 /* ============================================================================
-    UNIVERSAL DYNAMIC THEME SYSTEM (Variables --c1 .. --c5)
-   Автоматически применяется ко всем цветовым схемам из NEON_PALETTES
-   ============================================================================ */
+ UNIVERSAL DYNAMIC THEME SYSTEM (Variables --c1 .. --c5)
+ Автоматически применяется ко всем цветовым схемам из NEON_PALETTES
+ ============================================================================ */
 
 :root {
   --c1: #00e5ff;
@@ -6335,7 +6397,7 @@ body:not([data-theme="default"]) .bp-btn-buy-tier {
   border-color: rgba(var(--tower-laser-rgb, 240, 95, 159), 0.34) !important;
 }
 .tower-btn[data-type="mortar"] {
-  background: linear-gradient(180deg, rgba(var(--tower-mortar-rgb, 255, 145, 0), 0.06) 0%, rgba(15, 19, 34, 0.92) 100%)!important;
+  background: linear-gradient(180deg, rgba(var(--tower-mortar-rgb, 255, 145, 0), 0.06) 0%, rgba(15, 19, 34, 0.92) 100%) !important;
   border-color: rgba(var(--tower-mortar-rgb, 255, 145, 0), 0.34) !important;
 }
 .tower-btn[data-type="tesla"] {
@@ -6366,7 +6428,8 @@ body:not([data-theme="default"]) .bp-btn-buy-tier {
 .loot-pill.diamond-pill svg,
 #synthPrismBtn svg,
 #timeModT1Btn svg,
-#timeModT2Btn svg {
+#timeModT2Btn svg,
+.shop-card-theme svg[stroke="#00e5ff"] {
   stroke: var(--c1) !important;
   filter: drop-shadow(0 0 6px rgba(var(--c1-rgb), 0.78)) !important;
 }
@@ -6374,7 +6437,8 @@ body:not([data-theme="default"]) .bp-btn-buy-tier {
 #hudDiamondBadge svg polygon,
 .levels-top-diamonds svg polygon,
 .shop-card-icon.diamond-glow svg polygon,
-.upgrade-row-buy svg[stroke="#00e5ff"] polygon {
+.upgrade-row-buy svg[stroke="#00e5ff"] polygon,
+.shop-card-theme svg[stroke="#00e5ff"] polygon {
   fill: rgba(var(--c1-rgb), 0.28) !important;
 }
 .shop-card-icon.diamond-glow {
@@ -6522,7 +6586,7 @@ body:not([data-theme="default"]) .bp-btn-buy-tier {
   position: relative;
   display: inline-flex;
   align-items: center;
-  z-index: 50; /* Поднимает триггер и меню над соседними строками */
+  z-index: 50;
 }
 
 .custom-palette-trigger {
@@ -6569,7 +6633,7 @@ body:not([data-theme="default"]) .bp-btn-buy-tier {
 
 .custom-palette-menu {
   position: absolute;
-  top: calc(100% + 6px); /* Открываем снова строго ВНИЗ */
+  top: calc(100% + 6px);
   bottom: auto;
   right: 0;
   min-width: 180px;
@@ -6581,7 +6645,7 @@ body:not([data-theme="default"]) .bp-btn-buy-tier {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  z-index: 9999; /* Поверх кнопки BACK */
+  z-index: 9999;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }

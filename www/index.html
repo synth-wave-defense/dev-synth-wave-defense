@@ -1,20 +1,20 @@
-<!--  Version: 1.36.37 - Synth Wave Defense HTML application layout and script bindings. -->
+<!-- Version: 1.37.0 - Synth Wave Defense HTML application layout and script bindings. -->
 <!DOCTYPE html>
 
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <script>
-    //  Environment Check: dynamically loads dev_gate.js if running in dev environment or localhost.
+    // Environment Check: dynamically loads dev_gate.js if running in dev environment or localhost.
     const isDevHost = window.location.hostname.includes('dev-synth-wave-defense') || 
-                    window.location.hostname === 'localhost' || 
-                    window.location.protocol === 'file:';
+                      window.location.hostname === 'localhost' || 
+                      window.location.protocol === 'file:';
 
-  if (isDevHost && window.location.hostname !== 'synth-wave-defense.github.io') {
-    const s = document.createElement("script");
-    s.src = "dev_gate.js";
-    document.head.appendChild(s);
-  }
+    if (isDevHost && window.location.hostname !== 'synth-wave-defense.github.io') {
+      const s = document.createElement("script");
+      s.src = "dev_gate.js";
+      document.head.appendChild(s);
+    }
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#03050d">
@@ -60,18 +60,18 @@
     gap: 16px;
   ">
     <!-- [HTM.C] -->
-<div id="initialLoadingText" data-i18n="loading" style="
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: clamp(17px, 4vw, 22px);
-  font-weight: 900;
-  letter-spacing: 0.28em;
-  line-height: 24px;
-  height: 24px;
-  color: #ffffff;
-  text-shadow: 0 0 16px rgba(255, 255, 255, 0.55), 0 0 28px rgba(0, 229, 255, 0.35);
-  white-space: nowrap;
-  text-align: center;
-"></div>
+    <div id="initialLoadingText" data-i18n="loading" style="
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: clamp(17px, 4vw, 22px);
+      font-weight: 900;
+      letter-spacing: 0.28em;
+      line-height: 24px;
+      height: 24px;
+      color: #ffffff;
+      text-shadow: 0 0 16px rgba(255, 255, 255, 0.55), 0 0 28px rgba(0, 229, 255, 0.35);
+      white-space: nowrap;
+      text-align: center;
+    "></div>
 
     <!-- Контейнер шкалы прогресса -->
     <div style="
@@ -110,7 +110,7 @@
   </script>
 </div>
 
-<!--  Audio Onboarding Screen: Headphones recommendation and audio gate modal overlay. -->
+<!-- Audio Onboarding Screen: Headphones recommendation and audio gate modal overlay. -->
 <div class="loading-screen" id="loadingScreen">
   <div class="loading-inner audio-gate-content hidden" id="audioGateContent">
     <div class="audio-gate-icon">
@@ -126,7 +126,7 @@
   </div>
 </div>
 
-<!--  Crash Safety Net: Global error logging and fallback UI overlay for unhandled runtime errors. -->
+<!-- Crash Safety Net: Global error logging and fallback UI overlay for unhandled runtime errors. -->
 <!-- [HTM.F] -->
 <!-- [HTM103] Crash Safety Net: Global error logging and fallback UI overlay for unhandled runtime errors. -->
 <div id="crashFallbackScreen" style="display:none; position:fixed; inset:0; z-index:999999; background:#06070d; color:#f1f5f9; flex-direction:column; align-items:center; justify-content:center; text-align:center; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; padding:24px;">
@@ -251,7 +251,7 @@
 <!-- [HTM.H] -->
 <canvas id="gameCanvas"></canvas>
 
-<!--  Top HUD Bar: Resource counters (diamonds, gold, base HP), level/wave indicator, and settings launcher. -->
+<!-- Top HUD Bar: Resource counters (diamonds, gold, base HP), level/wave indicator, and settings launcher. -->
 <div class="hud-top-bar" id="topHud">
   <div class="hud-left-group">
     <div class="badge-half" id="hudDiamondBadge" onclick="handleDevDiamondClick()">
@@ -345,7 +345,7 @@
   <span class="incoming-alert-text" id="incomingAlertText" data-i18n="boss_incoming">Boss Incoming</span>
 </div>
 
-<!--  Speed Control Widget: Purchased time modulation drum control. -->
+<!-- Speed Control Widget: Purchased time modulation drum control. -->
 <div class="speed-widget hidden" id="hudSpeedWidget">
   <!-- [HTM.M] -->
   <button class="spd-btn" id="hudSpeedFasterBtn" title="Speed Up" onclick="stepHudSpeed(1)">
@@ -383,7 +383,7 @@
   </div>
 </div>
 
-<!--  Gameplay UI Layer: Floating wave circle button, tower build panel, and tower inspector overlay. -->
+<!-- Gameplay UI Layer: Floating wave circle button, tower build panel, and tower inspector overlay. -->
 <div class="ui-layer">
   <div></div>
 
@@ -470,7 +470,7 @@
   </div>
 </div>
 
-<!--  Developer Tools Overlay: Developer bar with game speed, custom enemy spawner, and save tools. -->
+<!-- Developer Tools Overlay: Developer bar with game speed, custom enemy spawner, and save tools. -->
 <div class="dev-bar hidden" id="devBar" style="width: 210px; max-width: 92vw; box-sizing: border-box;">
   <div class="dev-bar-top" style="display:flex; align-items:center; justify-content:space-between; gap:3px;">
     <div class="dev-fps-badge" id="devFpsBadge" style="font-size:11px; min-width:48px;">FPS: 60</div>
@@ -502,7 +502,7 @@
 
   <div class="dev-details-pane hidden" id="devDetailsPane" style="width:100%; box-sizing:border-box; overflow:hidden;">
     
-    <!-- ================= 2 УРОВЕНЬ: GAME ================= -->
+<!-- ================= 2 УРОВЕНЬ: GAME ================= -->
     <div class="dev-spawner-sub" style="margin-top:4px;">
       <div class="dev-sub-title" onclick="toggleDevSubSection('Game')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none; padding:3px 2px;">
         <span>▸ GAME</span>
@@ -633,42 +633,42 @@
           <button type="button" class="dev-btn" onclick="window.AppUpdater && window.AppUpdater.forceApplyNow()" style="flex:1; font-size:9px; padding:4px 2px;">APPLY NOW</button>
         </div>
       </div>
-      <!-- ================= 2 УРОВЕНЬ: ADS ================= -->
-      <div class="dev-spawner-sub" style="margin-top:4px;">
-        <div class="dev-sub-title" onclick="toggleDevSubSection('Ads')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none; padding:3px 2px;">
-          <span>▸ ADS</span>
-          <span id="devSubArrowAds">▾</span>
+    <!-- ================= 2 УРОВЕНЬ: ADS ================= -->
+    <div class="dev-spawner-sub" style="margin-top:4px;">
+      <div class="dev-sub-title" onclick="toggleDevSubSection('Ads')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none; padding:3px 2px;">
+        <span>▸ ADS</span>
+        <span id="devSubArrowAds">▾</span>
+      </div>
+      <div id="devSubBodyAds" class="hidden" style="margin-top:4px; display:flex; flex-direction:column; gap:3px;">
+
+        <!-- 3 уровень: Состояние плагина и предзагрузки -->
+        <div style="border-top:1px solid rgba(0,229,255,0.15); padding-top:3px;">
+          <div onclick="toggleDevMetricGroup('AdStatus')" style="cursor:pointer; display:flex; justify-content:space-between; font-size:10px; color:#8ef3ff; user-select:none;">
+            <span>• Plugin & Status</span><span id="devMetricArrowAdStatus">▴</span>
+          </div>
+          <pre id="devAdLogStatus" class="dev-audio-log" style="font-size:10px; line-height:1.35; margin:3px 0 0 0; white-space:pre-wrap; overflow-wrap:anywhere;">Init...</pre>
         </div>
-        <div id="devSubBodyAds" class="hidden" style="margin-top:4px; display:flex; flex-direction:column; gap:3px;">
 
-          <!-- 3 уровень: Состояние плагина и предзагрузки -->
-          <div style="border-top:1px solid rgba(0,229,255,0.15); padding-top:3px;">
-            <div onclick="toggleDevMetricGroup('AdStatus')" style="cursor:pointer; display:flex; justify-content:space-between; font-size:10px; color:#8ef3ff; user-select:none;">
-              <span>• Plugin & Status</span><span id="devMetricArrowAdStatus">▴</span>
-            </div>
-            <pre id="devAdLogStatus" class="dev-audio-log" style="font-size:10px; line-height:1.35; margin:3px 0 0 0; white-space:pre-wrap; overflow-wrap:anywhere;">Init...</pre>
+        <!-- 3 уровень: История логов и событий -->
+        <div style="border-top:1px solid rgba(0,229,255,0.15); padding-top:3px;">
+          <div onclick="toggleDevMetricGroup('AdLogs')" style="cursor:pointer; display:flex; justify-content:space-between; font-size:10px; color:#94a3b8; user-select:none;">
+            <span>• Events & Errors</span><span id="devMetricArrowAdLogs">▾</span>
           </div>
+          <pre id="devAdLogHistory" class="dev-audio-log hidden" style="font-size:9px; line-height:1.3; margin:3px 0 0 0; max-height:85px; overflow-y:auto; white-space:pre-wrap; overflow-wrap:anywhere;">No events yet</pre>
+        </div>
 
-          <!-- 3 уровень: История логов и событий -->
-          <div style="border-top:1px solid rgba(0,229,255,0.15); padding-top:3px;">
-            <div onclick="toggleDevMetricGroup('AdLogs')" style="cursor:pointer; display:flex; justify-content:space-between; font-size:10px; color:#94a3b8; user-select:none;">
-              <span>• Events & Errors</span><span id="devMetricArrowAdLogs">▾</span>
-            </div>
-            <pre id="devAdLogHistory" class="dev-audio-log hidden" style="font-size:9px; line-height:1.3; margin:3px 0 0 0; max-height:85px; overflow-y:auto; white-space:pre-wrap; overflow-wrap:anywhere;">No events yet</pre>
-          </div>
-
-          <div class="dev-actions-row" style="display:flex; gap:4px; margin-top:4px;">
-            <button type="button" class="dev-btn" onclick="devPreloadRewardAd()" style="flex:1; font-size:9px; padding:4px 2px;">PRELOAD</button>
-            <button type="button" class="dev-btn" onclick="devShowRewardAd()" style="flex:1; font-size:9px; padding:4px 2px;">SHOW AD</button>
-          </div>
+        <div class="dev-actions-row" style="display:flex; gap:4px; margin-top:4px;">
+          <button type="button" class="dev-btn" onclick="devPreloadRewardAd()" style="flex:1; font-size:9px; padding:4px 2px;">PRELOAD</button>
+          <button type="button" class="dev-btn" onclick="devShowRewardAd()" style="flex:1; font-size:9px; padding:4px 2px;">SHOW AD</button>
         </div>
       </div>
     </div>
+  </div>
 
   </div>
 </div>
 
-<!--  Navigation & Menu Overlays: Main menu, tech tree, shop, settings/pause, level selection, and match result screens. -->
+<!-- Navigation & Menu Overlays: Main menu, tech tree, shop, settings/pause, level selection, and match result screens. -->
 <div class="overlay-screen transparent-bg" id="startScreen">
   <div class="start-screen-container">
     <div class="start-screen-top-zone">
@@ -819,6 +819,7 @@
     </div>
 
     <div class="upgrades-row-list" id="shopBodyList">
+      <!-- Секция 1: Ежедневные подарки -->
       <div class="upgrades-row-group-label" data-i18n="daily_gifts">Daily Gifts</div>
       <div class="shop-card shop-card-highlight">
         <div class="shop-card-left">
@@ -839,6 +840,7 @@
         </button>
       </div>
 
+      <!-- Секция 2: Модуляция времени -->
       <div class="upgrades-row-group-label" data-i18n="special_perks">Special Perks</div>
       <div class="shop-card">
         <div class="shop-card-left">
@@ -879,25 +881,7 @@
         </button>
       </div>
 
-      <div class="shop-card">
-        <div class="shop-card-left">
-          <div class="shop-card-icon gold-glow">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
-            </svg>
-          </div>
-          <div class="shop-card-info">
-            <span class="shop-card-title" data-i18n="no_ads_title">No Voluntary Ads</span>
-            <span class="shop-card-sub" data-i18n="no_ads_sub">Instant x2, Revives & Daily Gifts</span>
-          </div>
-        </div>
-        <!-- [HTM.AQ] -->
-        <button id="noAdsBuyBtn" class="shop-item-btn shop-btn-buy" onclick="buyShopIAP('no_ads')">
-          <span>$1.99</span>
-        </button>
-      </div>
-
+      <!-- Секция 3: Обмен валюты -->
       <div class="upgrades-row-group-label" data-i18n="currency_exchange">Currency Exchange</div>
 
       <div class="shop-card">
@@ -926,7 +910,8 @@
           <div class="shop-card-icon diamond-glow">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round">
               <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.3)"/>
-              <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
+              <polyline points="2 9 12 13 22 9"/>
+              <line x1="12" y1="22" x2="12" y2="13"/>
             </svg>
           </div>
           <div class="shop-card-info">
@@ -936,131 +921,68 @@
         </div>
         <!-- [HTM.AS] -->
         <button id="deconstructPrismBtn" class="shop-item-btn shop-btn-buy shop-btn-prism shop-btn-exchange" onclick="deconstructPrism()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" style="flex:none;"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.3)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" style="flex:none;"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.3)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="22" x2="12" y2="22"/></svg>
           <span id="deconstructPrismCostVal" class="exchange-cost-val">1</span>
         </button>
       </div>
 
-      <div class="upgrades-row-group-label" data-i18n="diamond_bundles">Diamond Bundles</div>
-      
-      <div class="shop-card">
+      <!-- Секция 4: Витрина тем оформления -->
+      <div class="upgrades-row-group-label" data-i18n="visual_themes">Visual Themes</div>
+
+      <!-- Тема 1: Bio-Venom Matrix (150 💎) -->
+      <div class="shop-card shop-card-theme" id="themeCard-bio_venom">
         <div class="shop-card-left">
-          <div class="shop-card-icon diamond-glow">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2">
-              <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.2)"/>
-              <polyline points="2 9 12 13 22 9"/>
-              <line x1="12" y1="22" x2="12" y2="13"/>
-            </svg>
+          <div class="shop-card-icon theme-palette-preview" style="background:#070410; border:1px solid #84cc16; display:flex; align-items:center; justify-content:center; gap:2px; border-radius:10px;">
+            <span style="width:5px; height:18px; border-radius:2px; background:#84cc16;"></span>
+            <span style="width:5px; height:18px; border-radius:2px; background:#a855f7;"></span>
+            <span style="width:5px; height:18px; border-radius:2px; background:#d946ef;"></span>
           </div>
           <div class="shop-card-info">
-            <span class="shop-card-title" data-i18n="pouch_diamonds">Pouch of Diamonds</span>
-            <span class="shop-card-sub" data-i18n="plus_75_diamonds">+75 Diamonds</span>
+            <span class="shop-card-title">Bio-Venom Matrix</span>
+            <span class="shop-card-sub">Acid Lime & Neon Purple</span>
           </div>
         </div>
-        <!-- [HTM.AT] -->
-        <button class="shop-item-btn shop-btn-buy" onclick="buyShopIAP('diamonds_75')">
-          <span>$0.49</span>
+        <button id="themeBtn-bio_venom" class="shop-item-btn shop-btn-buy" onclick="handleThemeShopAction('bio_venom', 150)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="flex:none;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>
+          <span>150</span>
         </button>
       </div>
 
-      <div class="shop-card">
+      <!-- Тема 2: Sakura Vaporwave (200 💎) -->
+      <div class="shop-card shop-card-theme" id="themeCard-sakura_wave">
         <div class="shop-card-left">
-          <div class="shop-card-icon diamond-glow">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2">
-              <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.3)"/>
-              <polyline points="2 9 12 13 22 9"/>
-              <line x1="12" y1="22" x2="12" y2="13"/>
-            </svg>
+          <div class="shop-card-icon theme-palette-preview" style="background:#09040e; border:1px solid #ff4da6; display:flex; align-items:center; justify-content:center; gap:2px; border-radius:10px;">
+            <span style="width:5px; height:18px; border-radius:2px; background:#00ffcc;"></span>
+            <span style="width:5px; height:18px; border-radius:2px; background:#38bdf8;"></span>
+            <span style="width:5px; height:18px; border-radius:2px; background:#ff4da6;"></span>
           </div>
           <div class="shop-card-info">
-            <span class="shop-card-title" data-i18n="bag_diamonds">Bag of Diamonds</span>
-            <span class="shop-card-sub" data-i18n="plus_180_diamonds">+180 Diamonds</span>
+            <span class="shop-card-title">Sakura Vaporwave</span>
+            <span class="shop-card-sub">Mint Turquoise & Sakura Pink</span>
           </div>
         </div>
-        <!-- [HTM.AU] -->
-        <button class="shop-item-btn shop-btn-buy" onclick="buyShopIAP('diamonds_180')">
-          <span>$0.99</span>
+        <button id="themeBtn-sakura_wave" class="shop-item-btn shop-btn-buy" onclick="handleThemeShopAction('sakura_wave', 200)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="flex:none;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>
+          <span>200</span>
         </button>
       </div>
 
-      <div class="shop-card shop-card-best">
+      <!-- Тема 3: Solar Inferno (300 💎) -->
+      <div class="shop-card shop-card-theme" id="themeCard-solar_inferno">
         <div class="shop-card-left">
-          <div class="shop-card-icon diamond-glow">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.4">
-              <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.45)"/>
-              <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
-            </svg>
+          <div class="shop-card-icon theme-palette-preview" style="background:#0d0402; border:1px solid #ff2a00; display:flex; align-items:center; justify-content:center; gap:2px; border-radius:10px;">
+            <span style="width:5px; height:18px; border-radius:2px; background:#ffb700;"></span>
+            <span style="width:5px; height:18px; border-radius:2px; background:#ff6b00;"></span>
+            <span style="width:5px; height:18px; border-radius:2px; background:#ff2a00;"></span>
           </div>
           <div class="shop-card-info">
-            <span class="shop-card-title"><span data-i18n="chest_diamonds">Chest of Diamonds</span> <span class="shop-badge" data-i18n="best_value">BEST VALUE</span></span>
-            <span class="shop-card-sub" data-i18n="plus_800_diamonds">+800 Diamonds</span>
+            <span class="shop-card-title">Solar Inferno</span>
+            <span class="shop-card-sub">Amber Gold & Lava Red</span>
           </div>
         </div>
-        <!-- [HTM.AV] -->
-        <button class="shop-item-btn shop-btn-buy" onclick="buyShopIAP('diamonds_800')">
-          <span>$3.49</span>
-        </button>
-      </div>
-
-      <div class="upgrades-row-group-label prism-group-label" data-i18n="prism_bundles">Prism Bundles</div>
-
-      <div class="shop-card shop-card-prism">
-        <div class="shop-card-left">
-          <div class="shop-card-icon prism-glow">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2">
-              <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/>
-              <polyline points="3 12 12 15 21 12"/>
-              <line x1="12" y1="2" x2="12" y2="22"/>
-            </svg>
-          </div>
-          <div class="shop-card-info">
-            <span class="shop-card-title" data-i18n="cluster_prisms">Cluster of Prisms</span>
-            <span class="shop-card-sub prism-sub" data-i18n="plus_12_prisms">+12 Prisms</span>
-          </div>
-        </div>
-        <!-- [HTM.AW] -->
-        <button class="shop-item-btn shop-btn-buy shop-btn-prism" onclick="buyShopIAP('prisms_12')">
-          <span>$0.99</span>
-        </button>
-      </div>
-
-      <div class="shop-card shop-card-prism">
-        <div class="shop-card-left">
-          <div class="shop-card-icon prism-glow">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2">
-              <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.35)"/>
-              <polyline points="3 12 12 15 21 12"/>
-              <line x1="12" y1="2" x2="12" y2="22"/>
-            </svg>
-          </div>
-          <div class="shop-card-info">
-            <span class="shop-card-title" data-i18n="core_prisms">Core of Prisms</span>
-            <span class="shop-card-sub prism-sub" data-i18n="plus_35_prisms">+35 Prisms</span>
-          </div>
-        </div>
-        <!-- [HTM.AX] -->
-        <button class="shop-item-btn shop-btn-buy shop-btn-prism" onclick="buyShopIAP('prisms_35')">
-          <span>$1.99</span>
-        </button>
-      </div>
-
-      <div class="shop-card shop-card-prism shop-card-max">
-        <div class="shop-card-left">
-          <div class="shop-card-icon prism-glow">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.4">
-              <polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.5)"/>
-              <polyline points="3 12 12 15 21 12"/>
-              <line x1="12" y1="2" x2="12" y2="22"/>
-            </svg>
-          </div>
-          <div class="shop-card-info">
-            <span class="shop-card-title"><span data-i18n="matrix_prisms">Matrix of Prisms</span> <span class="shop-badge shop-badge-purple" data-i18n="max_power">MAX POWER</span></span>
-            <span class="shop-card-sub prism-sub" data-i18n="plus_100_prisms">+100 Prisms</span>
-          </div>
-        </div>
-        <!-- [HTM.AY] -->
-        <button class="shop-item-btn shop-btn-buy shop-btn-prism shop-btn-prism-accent" onclick="buyShopIAP('prisms_100')">
-          <span>$3.99</span>
+        <button id="themeBtn-solar_inferno" class="shop-item-btn shop-btn-buy" onclick="handleThemeShopAction('solar_inferno', 300)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="flex:none;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>
+          <span>300</span>
         </button>
       </div>
     </div>
@@ -1075,7 +997,6 @@
     </button>
   </div>
 </div>
-
 <div class="overlay-screen result-screen hidden" id="settingsScreen">
   <div class="result-stack">
     <div class="result-heading seq-in">
@@ -1180,7 +1101,7 @@
             <span data-i18n="language">Language</span>
             <select id="settingLangSelect" class="hud-select-dropdown" onchange="setLanguage(this.value)"></select>
           </div>
-          <div class="setting-version-label" id="settingsVersionLabel">Version: 1.36.37</div>
+          <div class="setting-version-label" id="settingsVersionLabel">Version: 1.37.0</div>
         </div>
       </div>
     </div>
@@ -1192,7 +1113,7 @@
 
 <div class="overlay-screen levels-bg hidden" id="levelsScreen">
 
-<!-- 3-Way Mode Switcher -->
+  <!-- 3-Way Mode Switcher -->
   <div class="mode-3way-container">
     <div class="mode-3way-header" data-i18n="mode">MODE</div>
 
@@ -1367,7 +1288,7 @@
   </div>
 </div>
 
-<!--  Battle Pass Screen overlay -->
+<!-- Battle Pass Screen overlay -->
 <div class="overlay-screen transparent-bg upgrades-bg hidden" id="battlePassScreen">
   <div class="upgrades-content-col bp-content-col">
     <div class="upgrades-top-bar">
@@ -1411,9 +1332,17 @@
         <span class="bp-xp-bar-text" id="bpXpBarText">XP: 0 / 100</span>
       </div>
       <div class="bp-header-actions">
-        <!-- [HTM.BX] -->
-        <button id="bpActivatePremBtn" class="bp-action-btn bp-btn-premium" onclick="buyBpPremiumIAP()">
-          <span data-i18n="activate_prem">ACTIVATE PREMIUM ($2.99)</span>
+        <!-- [HTM.BX] Обновленная покупка Premium Pass за 300 Diamonds -->
+        <button id="bpActivatePremBtn" class="bp-action-btn bp-btn-premium" onclick="buyBpPremiumWithDiamonds()">
+          <span id="bpActivatePremText" style="display:inline-flex; align-items:center; gap:5px;">
+            <span>ACTIVATE PREMIUM (300</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" style="flex:none;">
+              <polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/>
+              <polyline points="2 9 12 13 22 9"/>
+              <line x1="12" y1="22" x2="12" y2="13"/>
+            </svg>
+            <span>)</span>
+          </span>
         </button>
         <!-- [HTM.BY] -->
         <button class="bp-action-btn bp-btn-buy-tier" onclick="buyBpTierWithDiamonds()">
@@ -1551,7 +1480,7 @@
         </svg>
       </div>
     </div>
-	
+    
     <!-- [HTM.CH] -->
     <button class="result-btn victory-claim-btn seq-in seq-d4" id="claimX2Btn" onclick="claimX2Reward()">
       <svg width="18" height="15" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:6px;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke="#ffffff" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="#ffffff"/></svg>
@@ -1636,7 +1565,7 @@
         ★ NEW RECORD! ★
       </div>
       <div class="endless-loot-line" id="endlessLootLine">
-        <span style="color:#ffffff; font-weight:800; margin-right:6px; letter-spacing:0.5px;"><span data-i18n="rewards">REWARDS</span>:</span><span style="color:#ffffff; font-weight:700;">+0</span> <svg class="loot-res-svg diamond" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: -2px; margin-left: 2px;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.3)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg> <span class="loot-line-sep" style="color:rgba(255,255,255,0.3); margin: 0 6px;">|</span><span style="color:#ffffff; font-weight:700;">+0</span> <svg class="loot-res-svg prism" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: -2px; margin-left: 2px;"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.3)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="22" x2="12" y2="22"/></svg>
+        <span style="color:#ffffff; font-weight:800; margin-right:6px; letter-spacing:0.5px;"><span data-i18n="rewards">REWARDS</span>:</span><span style="color:#ffffff; font-weight:700;">+0</span> <svg class="loot-res-svg diamond" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: -2px; margin-left: 2px;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.3)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg> <span class="loot-line-sep" style="color:rgba(255,255,255,0.3); margin: 0 6px;">|</span><span style="color:#ffffff; font-weight:700;">+0</span> <svg class="loot-res-svg prism" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round" style="vertical-align: -2px; margin-left: 2px;"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.3)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
       </div>
       <!-- [HTM.CP] -->
       <button class="result-btn victory-claim-btn hidden" id="endlessDoubleBtn" onclick="claimEndlessDoubleRewards()" style="margin-top: 8px;">
@@ -1740,7 +1669,7 @@
 <script src="ui.js"></script>
 
 <script>
-//  Application Bootstrap: Loads save data, configures audio systems, initializes build panel, and launches game loop.
+// Application Bootstrap: Loads save data, configures audio systems, initializes build panel, and launches game loop.
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) forcePauseForBackground();
   else musicResume();
@@ -1797,7 +1726,7 @@ loadGame().then(() => {
   updatePrismUI();
   showStartScreen();
 
-  // Инициализируем AdMob и предзагружаем первое тестовое видеоролик
+  // Инициализируем AdMob и предзагружаем первый тестовый видеоролик
   if (typeof initAdMobBridge === 'function') {
     initAdMobBridge();
   }
@@ -1813,7 +1742,7 @@ loadGame().then(() => {
 });
 </script>
 
-<!--  Tutorial Overlay & Service Worker: First-run interactive spotlight layer. -->
+<!-- Tutorial Overlay & Service Worker: First-run interactive spotlight layer. -->
 <div class="tutorial-layer hidden" id="tutorialLayer">
   <div class="tutorial-spotlight hidden" id="tutorialSpotlight"></div>
   <div class="tutorial-drop-ring hidden" id="tutorialDropRing"></div>
