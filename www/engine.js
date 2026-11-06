@@ -50,7 +50,7 @@ function triggerCameraShake(dur = 0.5, intensity = 15) {
   cameraShakeIntensity = intensity;
 }
 
-// Диагностический объект AdMob для Dev-панели
+// [ENG.AA_ADS] Диагностический объект рекламы для Dev-панели
 window.AdDiagnostics = {
   pluginAvailable: false,
   isNative: false,
@@ -67,62 +67,132 @@ function logAdEvent(msg) {
   window.AdDiagnostics.logs.unshift(line);
   if (window.AdDiagnostics.logs.length > 20) window.AdDiagnostics.logs.pop();
   window.AdDiagnostics.lastEvent = msg;
-  console.log('[AdMob]', line);
+  console.log('[AdsBridge]', line);
 }
 
-// Конфигурация AdMob (Тестовый Unit ID для Rewarded Video) — ДОЛЖНА БЫТЬ ТОЛЬКО ОДИН РАЗ!
-const ADMOB_REWARDED_TEST_ID = 'ca-app-pub-3940256099942544/5224354917';
-let isAdMobInitialized = false;
-let isAdMobVideoReady = false;
+// Конфигурация рекламного блока (Тестовый ID для РСЯ: 'demo-rewarded-yandex')
+const REWARDED_AD_UNIT_ID = 'demo-rewarded-yandex';
+let isAdsInitialized = false;
+let isRewardAdReady = false;
+let activeAdCallbacks = { onRewarded: null, onNotRewarded: null, rewardedFlag: false };
 
-async function initAdMobBridge() {
+// Глобальные слушатели событий нативного моста (вызываются из Java через evaluateJavascript)
+window.onNativeAdLoaded = function() {
+  isRewardAdReady = true;
+  window.AdDiagnostics.videoReady = true;
+  logAdEvent('Reward Video READY');
+};
+
+window.onNativeAdFailedToLoad = function(errMsg) {
+  isRewardAdReady = false;
+  window.AdDiagnostics.videoReady = false;
+  const errStr = errMsg || 'Unknown load error';
+  window.AdDiagnostics.lastError = errStr;
+  logAdEvent('Load Failed: ' + errStr);
+};
+
+window.onNativeAdRewarded = function() {
+  activeAdCallbacks.rewardedFlag = true;
+  logAdEvent('Event: onRewarded');
+};
+
+window.onNativeAdDismissed = function() {
+  logAdEvent('Event: Ad Dismissed');
+  isRewardAdReady = false;
+  window.AdDiagnostics.videoReady = false;
+
+  const wasRewarded = activeAdCallbacks.rewardedFlag;
+  const cbReward = activeAdCallbacks.onRewarded;
+  const cbFail = activeAdCallbacks.onNotRewarded;
+
+  activeAdCallbacks = { onRewarded: null, onNotRewarded: null, rewardedFlag: false };
+
+  // Фоновая предзагрузка следующего ролика
+  preloadRewardedAd();
+
+  if (wasRewarded) {
+    if (typeof cbReward === 'function') cbReward();
+  } else {
+    if (typeof cbFail === 'function') cbFail();
+  }
+};
+
+window.onNativeAdFailedToShow = function(errMsg) {
+  const errStr = errMsg || 'Show error';
+  window.AdDiagnostics.lastError = errStr;
+  logAdEvent('Show Error: ' + errStr);
+  isRewardAdReady = false;
+  window.AdDiagnostics.videoReady = false;
+
+  const cbFail = activeAdCallbacks.onNotRewarded;
+  activeAdCallbacks = { onRewarded: null, onNotRewarded: null, rewardedFlag: false };
+  preloadRewardedAd();
+  if (typeof cbFail === 'function') cbFail();
+};
+
+// Сохраняем алиасы под имена YandexBridge для обратной совместимости с MainActivity
+window.onYandexAdLoaded = window.onNativeAdLoaded;
+window.onYandexAdFailedToLoad = window.onNativeAdFailedToLoad;
+window.onYandexAdRewarded = window.onNativeAdRewarded;
+window.onYandexAdDismissed = window.onNativeAdDismissed;
+window.onYandexAdFailedToShow = window.onNativeAdFailedToShow;
+
+// [ENG.AB_ADS] Универсальная инициализация моста рекламы
+async function initAdsBridge() {
   const isNative = typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform();
   window.AdDiagnostics.isNative = isNative;
-  
-  const isPluginAvail = !!(window.Capacitor && window.Capacitor.isPluginAvailable && window.Capacitor.isPluginAvailable('AdMob'));
-  window.AdDiagnostics.pluginAvailable = isPluginAvail;
 
-  if (!isPluginAvail) {
-    logAdEvent('Plugin AdMob NOT available');
+  const hasNativeBridge = typeof window.NativeYandexAdsBridge !== 'undefined' || typeof window.NativeAdsBridge !== 'undefined';
+  const hasWebSdk = !!(window.Ya && window.Ya.Context && window.Ya.Context.AdvManager);
+  window.AdDiagnostics.pluginAvailable = hasNativeBridge || hasWebSdk;
+
+  if (hasNativeBridge) {
+    try {
+      logAdEvent('Initializing NativeAdsBridge...');
+      const bridge = window.NativeYandexAdsBridge || window.NativeAdsBridge;
+      bridge.initialize(REWARDED_AD_UNIT_ID);
+      isAdsInitialized = true;
+      window.AdDiagnostics.initialized = true;
+      logAdEvent('Native Ads SDK initialized');
+      preloadRewardedAd();
+    } catch (err) {
+      const errStr = (err && err.message) ? err.message : String(err);
+      window.AdDiagnostics.lastError = errStr;
+      logAdEvent('Init Error: ' + errStr);
+    }
     return;
   }
 
-  try {
-    const { AdMob } = window.Capacitor.Plugins;
-    logAdEvent('Calling AdMob.initialize()...');
-    await AdMob.initialize({ initializeForTesting: true });
-    isAdMobInitialized = true;
+  if (hasWebSdk) {
+    isAdsInitialized = true;
     window.AdDiagnostics.initialized = true;
-    logAdEvent('AdMob initialized successfully');
-    preloadRewardedAd();
-  } catch (err) {
-    const errStr = (err && err.message) ? err.message : JSON.stringify(err);
-    window.AdDiagnostics.lastError = errStr;
-    logAdEvent('Init Error: ' + errStr);
+    isRewardAdReady = true;
+    window.AdDiagnostics.videoReady = true;
+    logAdEvent('Web Ads SDK ready');
+    return;
   }
+
+  logAdEvent('Native Ads Bridge NOT available (using Sim)');
 }
+window.initAdsBridge = initAdsBridge;
 
 async function preloadRewardedAd() {
-  if (!isAdMobInitialized || !window.Capacitor?.Plugins?.AdMob) {
+  if (!isAdsInitialized) {
     logAdEvent('Cannot preload: not initialized');
     return;
   }
-  try {
-    const { AdMob } = window.Capacitor.Plugins;
-    logAdEvent('Preloading Reward Video...');
-    await AdMob.prepareRewardVideoAd({
-      adId: ADMOB_REWARDED_TEST_ID,
-      isTesting: true
-    });
-    isAdMobVideoReady = true;
-    window.AdDiagnostics.videoReady = true;
-    logAdEvent('Reward Video is READY');
-  } catch (err) {
-    isAdMobVideoReady = false;
-    window.AdDiagnostics.videoReady = false;
-    const errStr = (err && err.message) ? err.message : JSON.stringify(err);
-    window.AdDiagnostics.lastError = errStr;
-    logAdEvent('Preload Failed: ' + errStr);
+  const bridge = window.NativeYandexAdsBridge || window.NativeAdsBridge;
+  if (bridge && typeof bridge.loadRewardedAd === 'function') {
+    try {
+      logAdEvent('Preloading Rewarded Ad...');
+      bridge.loadRewardedAd(REWARDED_AD_UNIT_ID);
+    } catch (err) {
+      isRewardAdReady = false;
+      window.AdDiagnostics.videoReady = false;
+      const errStr = (err && err.message) ? err.message : String(err);
+      window.AdDiagnostics.lastError = errStr;
+      logAdEvent('Preload Failed: ' + errStr);
+    }
   }
 }
 
@@ -2389,116 +2459,86 @@ function calculateLevelStarsAndReward(lvl, currentHp, startingHp) {
   return { stars: earnedStars, reward: rewardDiamonds, rewardLabel, rewardKey };
 }
 
-// [ENG.BL]
+// [ENG.BL] Универсальный показ вознаграждаемой рекламы (РСЯ / Web SDK)
 async function showAdPlaceholder(onRewarded, onNotRewarded) {
-  const isNative = typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform();
-  const AdMob = window.Capacitor?.Plugins?.AdMob;
+  const bridge = window.NativeYandexAdsBridge || window.NativeAdsBridge;
 
-  if (isNative && AdMob) {
-    let userEarnedReward = false;
-    let rewardListener = null;
-    let dismissListener = null;
-    let failedListener = null;
-
+  // 1. Показ через нативный мост РСЯ в приложении
+  if (bridge && typeof bridge.showRewardedAd === 'function') {
     try {
-      if (!isAdMobInitialized) {
-        if (typeof logAdEvent === 'function') logAdEvent('Init via showAd...');
-        await AdMob.initialize({ initializeForTesting: true });
-        isAdMobInitialized = true;
-        if (window.AdDiagnostics) window.AdDiagnostics.initialized = true;
+      if (!isAdsInitialized) {
+        await initAdsBridge();
       }
 
-      // Слушатель успешного просмотра
-      rewardListener = await AdMob.addListener('onRewarded', () => {
-        userEarnedReward = true;
-        if (typeof logAdEvent === 'function') logAdEvent('Event: onRewarded');
-      });
+      const isReady = isRewardAdReady || (typeof bridge.isRewardedAdReady === 'function' && bridge.isRewardedAdReady());
 
-      // Слушатель закрытия рекламы
-      dismissListener = await AdMob.addListener('onRewardVideoAdDismissed', () => {
-        if (typeof logAdEvent === 'function') logAdEvent('Event: Ad Dismissed');
-        if (rewardListener) rewardListener.remove();
-        if (dismissListener) dismissListener.remove();
-        if (failedListener) failedListener.remove();
-        
+      if (isReady) {
+        activeAdCallbacks = {
+          onRewarded: onRewarded || null,
+          onNotRewarded: onNotRewarded || null,
+          rewardedFlag: false
+        };
+        logAdEvent('Calling NativeBridge.showRewardedAd()...');
+
+        if (typeof suppressBackgroundPause === 'function') suppressBackgroundPause(60000);
+        bridge.showRewardedAd();
+        return;
+      } else {
+        logAdEvent('Ad not ready yet, triggering preload and showing toast...');
         preloadRewardedAd();
-
-        if (userEarnedReward) {
-          if (onRewarded) onRewarded();
-        } else {
-          if (onNotRewarded) onNotRewarded();
-        }
-      });
-
-      // Слушатель ошибки загрузки
-      failedListener = await AdMob.addListener('onRewardVideoAdFailedToLoad', (err) => {
-        const errStr = JSON.stringify(err);
-        console.warn('Reward ad failed to load:', err);
-        if (window.AdDiagnostics) window.AdDiagnostics.lastError = errStr;
-        if (typeof logAdEvent === 'function') logAdEvent('FailedToLoad: ' + errStr);
-      });
-
-      if (!isAdMobVideoReady) {
-        if (typeof logAdEvent === 'function') logAdEvent('Preparing ad before show...');
-        await AdMob.prepareRewardVideoAd({
-          adId: ADMOB_REWARDED_TEST_ID,
-          isTesting: true
-        });
-        isAdMobVideoReady = true;
+        const toastMsg = typeof t === 'function' ? t('ad_not_ready') : 'Video is loading, please check network connection.';
+        if (typeof showHintToast === 'function') showHintToast(toastMsg);
+        if (typeof onNotRewarded === 'function') onNotRewarded();
+        return;
       }
-
-      isAdMobVideoReady = false;
-      if (window.AdDiagnostics) window.AdDiagnostics.videoReady = false;
-      if (typeof logAdEvent === 'function') logAdEvent('Calling showRewardVideoAd...');
-      await AdMob.showRewardVideoAd();
-      return;
     } catch (e) {
       const errStr = (e && e.message) ? e.message : String(e);
-      console.warn('AdMob execution error:', e);
       if (window.AdDiagnostics) window.AdDiagnostics.lastError = errStr;
-      if (typeof logAdEvent === 'function') logAdEvent('Show Error: ' + errStr);
-
-      if (rewardListener) rewardListener.remove();
-      if (dismissListener) dismissListener.remove();
-      if (failedListener) failedListener.remove();
-    }
-  } else {
-    if (typeof logAdEvent === 'function') {
-      logAdEvent(`Fallback: isNative=${isNative}, AdMob=${!!AdMob}`);
+      logAdEvent('Native Show Exception: ' + errStr);
+      const toastMsg = typeof t === 'function' ? t('ad_not_ready') : 'Video is loading, please check network connection.';
+      if (typeof showHintToast === 'function') showHintToast(toastMsg);
+      if (typeof onNotRewarded === 'function') onNotRewarded();
+      return;
     }
   }
 
-  // Фоллбэк: работа в браузере или при сбое нативного плагина
-  const adOverlay = document.getElementById('adSimOverlay');
-  const yesBtn = document.getElementById('adSimYesBtn');
-  const noBtn = document.getElementById('adSimNoBtn');
-
-  if (!adOverlay) {
-    if (onRewarded) onRewarded();
+  // 2. Показ через веб-версию РСЯ (при запуске в браузере с подключенным AdvManager)
+  if (window.Ya && window.Ya.Context && window.Ya.Context.AdvManager) {
+    let webRewarded = false;
+    logAdEvent('Calling Web AdvManager (rewarded)...');
+    window.Ya.Context.AdvManager.render({
+      blockId: REWARDED_AD_UNIT_ID,
+      type: 'rewarded',
+      platform: 'touch',
+      onRewarded: function(isRewarded) {
+        webRewarded = !!isRewarded;
+        logAdEvent('Web onRewarded: ' + webRewarded);
+      },
+      onClose: function() {
+        logAdEvent('Web Ad Closed');
+        if (webRewarded) {
+          if (typeof onRewarded === 'function') onRewarded();
+        } else {
+          if (typeof onNotRewarded === 'function') onNotRewarded();
+        }
+      },
+      onError: function(err) {
+        const errStr = JSON.stringify(err);
+        if (window.AdDiagnostics) window.AdDiagnostics.lastError = errStr;
+        logAdEvent('Web Ad Error: ' + errStr);
+        const toastMsg = typeof t === 'function' ? t('ad_not_ready') : 'Video is loading, please check network connection.';
+        if (typeof showHintToast === 'function') showHintToast(toastMsg);
+        if (typeof onNotRewarded === 'function') onNotRewarded();
+      }
+    });
     return;
   }
 
-  adOverlay.classList.remove('hidden');
-
-  const cleanup = () => {
-    adOverlay.classList.add('hidden');
-    if (yesBtn) yesBtn.onclick = null;
-    if (noBtn) noBtn.onclick = null;
-  };
-
-  if (yesBtn) {
-    yesBtn.onclick = () => {
-      cleanup();
-      if (onRewarded) onRewarded();
-    };
-  }
-
-  if (noBtn) {
-    noBtn.onclick = () => {
-      cleanup();
-      if (onNotRewarded) onNotRewarded();
-    };
-  }
+  // 3. Если нет рекламного плагина и нет интернета — информируем игрока и отклоняем награду
+  logAdEvent('Ad bridge unavailable');
+  const toastMsg = typeof t === 'function' ? t('ad_not_ready') : 'Video is loading, please check network connection.';
+  if (typeof showHintToast === 'function') showHintToast(toastMsg);
+  if (typeof onNotRewarded === 'function') onNotRewarded();
 }
 
 // [ENG.BP]
@@ -4021,92 +4061,102 @@ function claimDailyGiftsPack() {
 
 // [ENG.DM]
 function synthesizePrism() {
-  if (diamonds < 20) {
-    showHintToast(typeof t === 'function' ? t('not_enough_diamonds_cost', { cost: 20 }) : 'Not enough Diamonds! (20 required)');
-    sfx('denied');
-    return;
-  }
-  diamonds -= 20;
-  prisms = (prisms || 0) + 1;
-  updateDiamondUI();
-  if (typeof updatePrismUI === 'function') updatePrismUI();
-  saveGame();
-  sfx('reward');
-  if (typeof renderShopScreen === 'function') renderShopScreen();
-  showHintToast(typeof t === 'function' ? t('prism_synthesized') : '+1 Prism synthesized!');
+    const isUnlocked = (typeof devMode !== 'undefined' && devMode) ||
+        (typeof maxUnlockedLevel !== 'undefined' && maxUnlockedLevel >= 21) ||
+        (typeof clearedLevels !== 'undefined' && clearedLevels.includes(20));
+    if (!isUnlocked) {
+        showHintToast(typeof t === 'function' ? t('unlocks_on_level_n', { n: 21 }) : 'Unlocks on Level 21');
+        sfx('denied');
+        return;
+    }
+    if (diamonds < 20) {
+        showHintToast(typeof t === 'function' ? t('not_enough_diamonds_cost', { cost: 20 }) : 'Not enough Diamonds! (20 required)');
+        sfx('denied');
+        return;
+    }
+    diamonds -= 20;
+    prisms = (prisms || 0) + 1;
+    updateDiamondUI();
+    if (typeof updatePrismUI === 'function') updatePrismUI();
+    saveGame();
+    sfx('reward');
+    if (typeof renderShopScreen === 'function') renderShopScreen();
+    showHintToast(typeof t === 'function' ? t('prism_synthesized') : '+1 Prism synthesized!');
 }
 
 // [ENG.DN]
 function deconstructPrism() {
-  const isUnlocked = (typeof devMode !== 'undefined' && devMode) || (typeof maxUnlockedLevel !== 'undefined' && maxUnlockedLevel >= 31) || (typeof clearedLevels !== 'undefined' && clearedLevels.includes(30));
-  if (!isUnlocked) {
-    showHintToast(typeof t === 'function' ? t('locked_requires_lvl_31') : 'Locked! Requires Level 31');
-    sfx('denied');
-    return;
-  }
-  if (prisms < 1) {
-    showHintToast(typeof t === 'function' ? t('not_enough_prisms_cost', { cost: 1 }) : 'Not enough Prisms! (1 required)');
-    sfx('denied');
-    return;
-  }
-  prisms -= 1;
-  diamonds = (diamonds || 0) + 15;
-  updateDiamondUI();
-  if (typeof updatePrismUI === 'function') updatePrismUI();
-  saveGame();
-  sfx('reward');
-  if (typeof renderShopScreen === 'function') renderShopScreen();
-  showHintToast(typeof t === 'function' ? t('diamonds_deconstructed') : '+15 Diamonds deconstructed!');
+    const isUnlocked = (typeof devMode !== 'undefined' && devMode) ||
+        (typeof maxUnlockedLevel !== 'undefined' && maxUnlockedLevel >= 21) ||
+        (typeof clearedLevels !== 'undefined' && clearedLevels.includes(20));
+    if (!isUnlocked) {
+        showHintToast(typeof t === 'function' ? t('unlocks_on_level_n', { n: 21 }) : 'Unlocks on Level 21');
+        sfx('denied');
+        return;
+    }
+    if (prisms < 1) {
+        showHintToast(typeof t === 'function' ? t('not_enough_prisms_cost', { cost: 1 }) : 'Not enough Prisms! (1 required)');
+        sfx('denied');
+        return;
+    }
+    prisms -= 1;
+    diamonds = (diamonds || 0) + 15;
+    updateDiamondUI();
+    if (typeof updatePrismUI === 'function') updatePrismUI();
+    saveGame();
+    sfx('reward');
+    if (typeof renderShopScreen === 'function') renderShopScreen();
+    showHintToast(typeof t === 'function' ? t('diamonds_deconstructed') : '+15 Diamonds deconstructed!');
 }
 
 // [ENG.DO] Покупки только внутриигровых перков за кристаллы
 function buyShopIAP(productId) {
-  sfx('confirm');
+    sfx('confirm');
 
-  if (productId === 'time_mod_t1') {
-    if (timeModTier >= 1) {
-      showHintToast(typeof t === 'function' ? t('already_unlocked') : 'Already unlocked!');
-      return;
+    if (productId === 'time_mod_t1') {
+        if (timeModTier >= 1) {
+            showHintToast(typeof t === 'function' ? t('already_unlocked') : 'Already unlocked!');
+            return;
+        }
+        if (diamonds < 50) {
+            sfx('denied');
+            showHintToast(typeof t === 'function' ? t('not_enough_diamonds_cost', { cost: 50 }) : 'Not enough Diamonds! (50 required)');
+            return;
+        }
+        diamonds -= 50;
+        timeModTier = 1;
+        updateDiamondUI();
+        saveGame();
+        sfx('reward');
+        if (typeof renderShopScreen === 'function') renderShopScreen();
+        showHintToast(typeof t === 'function' ? t('time_mod_t1_unlocked') : 'Time Control Tier 1 unlocked!');
+        return;
     }
-    if (diamonds < 40) {
-      sfx('denied');
-      showHintToast(typeof t === 'function' ? t('not_enough_diamonds_cost', { cost: 40 }) : 'Not enough Diamonds! (40 required)');
-      return;
-    }
-    diamonds -= 40;
-    timeModTier = 1;
-    updateDiamondUI();
-    saveGame();
-    sfx('reward');
-    if (typeof renderShopScreen === 'function') renderShopScreen();
-    showHintToast(typeof t === 'function' ? t('time_mod_t1_unlocked') : 'Time Control Tier 1 unlocked!');
-    return;
-  }
 
-  if (productId === 'time_mod_t2') {
-    if (timeModTier >= 2) {
-      showHintToast(typeof t === 'function' ? t('already_maxed') : 'Already maxed!');
-      return;
+    if (productId === 'time_mod_t2') {
+        if (timeModTier >= 2) {
+            showHintToast(typeof t === 'function' ? t('already_maxed') : 'Already maxed!');
+            return;
+        }
+        if (timeModTier < 1) {
+            sfx('denied');
+            showHintToast(typeof t === 'function' ? t('unlock_tier_1_first') : 'Unlock Tier 1 first!');
+            return;
+        }
+        if (diamonds < 200) {
+            sfx('denied');
+            showHintToast(typeof t === 'function' ? t('not_enough_diamonds_cost', { cost: 200 }) : 'Not enough Diamonds! (200 required)');
+            return;
+        }
+        diamonds -= 200;
+        timeModTier = 2;
+        updateDiamondUI();
+        saveGame();
+        sfx('reward');
+        if (typeof renderShopScreen === 'function') renderShopScreen();
+        showHintToast(typeof t === 'function' ? t('time_mod_t2_unlocked') : 'Time Control Tier 2 unlocked!');
+        return;
     }
-    if (timeModTier < 1) {
-      sfx('denied');
-      showHintToast(typeof t === 'function' ? t('unlock_tier_1_first') : 'Unlock Tier 1 first!');
-      return;
-    }
-    if (diamonds < 50) {
-      sfx('denied');
-      showHintToast(typeof t === 'function' ? t('not_enough_diamonds_cost', { cost: 50 }) : 'Not enough Diamonds! (50 required)');
-      return;
-    }
-    diamonds -= 50;
-    timeModTier = 2;
-    updateDiamondUI();
-    saveGame();
-    sfx('reward');
-    if (typeof renderShopScreen === 'function') renderShopScreen();
-    showHintToast(typeof t === 'function' ? t('time_mod_t2_unlocked') : 'Time Control Tier 2 unlocked!');
-    return;
-  }
 }
 window.buyShopIAP = buyShopIAP;
 

@@ -5249,12 +5249,13 @@ label,
   color: #ffffff;
   box-shadow: 0 0 14px rgba(0, 229, 255, 0.4);
 }
-/* [STY.EJ] */
 
+/* [STY.EJ] */
 .shop-btn-buy {
   background: rgba(14, 20, 38, 0.9);
   border: 1.4px solid rgba(0, 229, 255, 0.45);
   color: #ffffff;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
 }
 
 .shop-btn-prism {

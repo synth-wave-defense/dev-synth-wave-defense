@@ -4793,174 +4793,202 @@ function closeShopScreen() {
 
 // [UI.GG]
 function renderShopScreen() {
-  checkDailyGiftReset();
-  updateMenuBadges();
-  const shopBody = document.getElementById('shopBodyList');
-  if (shopBody) enablePointerScroll(shopBody);
-  const diamondLabel = document.getElementById('shopDiamondVal');
-  if (diamondLabel) diamondLabel.textContent = diamonds;
-  const prismLabel = document.getElementById('shopPrismVal');
-  if (prismLabel) prismLabel.textContent = prisms;
+    checkDailyGiftReset();
+    updateMenuBadges();
+    const shopBody = document.getElementById('shopBodyList');
+    if (shopBody) enablePointerScroll(shopBody);
+    const diamondLabel = document.getElementById('shopDiamondVal');
+    if (diamondLabel) diamondLabel.textContent = diamonds;
+    const prismLabel = document.getElementById('shopPrismVal');
+    if (prismLabel) prismLabel.textContent = prisms;
 
-  const giftTitle = document.getElementById('dailyGiftTitleText');
-  const giftSub = document.getElementById('dailyGiftSubText');
-  const giftBtn = document.getElementById('dailyGiftClaimBtn');
-  const _tr = (typeof window.t === 'function') ? window.t : ((k) => k);
+    const giftTitle = document.getElementById('dailyGiftTitleText');
+    const giftSub = document.getElementById('dailyGiftSubText');
+    const giftBtn = document.getElementById('dailyGiftClaimBtn');
+    const _tr = (typeof window.t === 'function') ? window.t : ((k) => k);
 
-  if (giftTitle) {
-    if (dailyGiftsClaimedCount === 0) {
-      giftTitle.innerHTML = `+10 ${getDailyDiamondSvg(14)}`;
-    } else if (dailyGiftsClaimedCount === 1) {
-      giftTitle.innerHTML = `+15 ${getDailyDiamondSvg(14)}`;
-    } else if (dailyGiftsClaimedCount === 2) {
-      giftTitle.innerHTML = `+20 ${getDailyDiamondSvg(14)} + 1 ${getDailyPrismSvg(14)}`;
-    } else {
-      giftTitle.textContent = (typeof t === 'function') ? t('daily_gifts_completed') : 'Daily Gifts Completed';
+    if (giftTitle) {
+        if (dailyGiftsClaimedCount === 0) {
+            giftTitle.innerHTML = `+10 ${getDailyDiamondSvg(14)}`;
+        } else if (dailyGiftsClaimedCount === 1) {
+            giftTitle.innerHTML = `+15 ${getDailyDiamondSvg(14)}`;
+        } else if (dailyGiftsClaimedCount === 2) {
+            giftTitle.innerHTML = `+20 ${getDailyDiamondSvg(14)} + 1 ${getDailyPrismSvg(14)}`;
+        } else {
+            giftTitle.textContent = (typeof t === 'function') ? t('daily_gifts_completed') : 'Daily Gifts Completed';
+        }
     }
-  }
 
-  if (giftSub) {
-    if (dailyGiftsClaimedCount === 0) {
-      const txt = (typeof t === 'function') ? t('next_pack_diamonds', { n: 10, cur: 1, max: 3 }) : 'Next pack: 10 {dia} (1/3)';
-      giftSub.innerHTML = txt.replace('{dia}', getDailyDiamondSvg(12));
-    } else if (dailyGiftsClaimedCount === 1) {
-      const txt = (typeof t === 'function') ? t('next_pack_diamonds', { n: 15, cur: 2, max: 3 }) : 'Next pack: 15 {dia} (2/3)';
-      giftSub.innerHTML = txt.replace('{dia}', getDailyDiamondSvg(12));
-    } else if (dailyGiftsClaimedCount === 2) {
-      const txt = (typeof t === 'function') ? t('next_pack_combo', { dia: 20, prism: 1 }) : 'Next pack: 20 {dia} + 1 {prism}';
-      giftSub.innerHTML = txt.replace('{dia}', getDailyDiamondSvg(12)).replace('{prism}', getDailyPrismSvg(12));
-    } else {
-      giftSub.textContent = (typeof t === 'function') ? t('claimed_today_packs', { cur: 3, max: 3 }) : 'Claimed today: 3/3 packs';
+    if (giftSub) {
+        if (dailyGiftsClaimedCount === 0) {
+            giftSub.innerHTML = (typeof t === 'function')
+                ? t('next_pack_diamonds', { d: 10, icon: getDailyDiamondSvg(12), cur: 1, max: 3 })
+                : `Next pack: 10 ${getDailyDiamondSvg(12)} (1/3)`;
+        } else if (dailyGiftsClaimedCount === 1) {
+            giftSub.innerHTML = (typeof t === 'function')
+                ? t('next_pack_diamonds', { d: 15, icon: getDailyDiamondSvg(12), cur: 2, max: 3 })
+                : `Next pack: 15 ${getDailyDiamondSvg(12)} (2/3)`;
+        } else if (dailyGiftsClaimedCount === 2) {
+            giftSub.innerHTML = (typeof t === 'function')
+                ? t('next_pack_combo', { d: 20, dIcon: getDailyDiamondSvg(12), p: 1, pIcon: getDailyPrismSvg(12) })
+                : `Next pack: 20 ${getDailyDiamondSvg(12)} + 1 ${getDailyPrismSvg(12)}`;
+        } else {
+            giftSub.textContent = (typeof t === 'function')
+                ? t('claimed_today_packs', { cur: 3, max: 3 })
+                : 'Claimed today: 3/3 packs';
+        }
     }
-  }
 
-  if (giftBtn) {
-    if (dailyGiftsClaimedCount >= 3) {
-      giftBtn.disabled = true;
-      giftBtn.className = 'shop-item-btn shop-btn-claimed';
-      giftBtn.innerHTML = `<span>${_tr('claimed')}</span>`;
-    } else if (dailyGiftsClaimedCount === 0) {
-      giftBtn.disabled = false;
-      giftBtn.className = 'shop-item-btn shop-btn-free';
-      giftBtn.innerHTML = `<span>${_tr('free')}</span>`;
-    } else {
-      giftBtn.disabled = false;
-      giftBtn.className = 'shop-item-btn shop-btn-ad';
-      giftBtn.innerHTML = `<svg width="16" height="13" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:4px;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="currentColor"/></svg><span>${_tr('watch_ad')}</span>`;
+    if (giftBtn) {
+        if (dailyGiftsClaimedCount >= 3) {
+            giftBtn.disabled = true;
+            giftBtn.className = 'shop-item-btn shop-btn-claimed';
+            giftBtn.innerHTML = `<span>${_tr('claimed')}</span>`;
+        } else if (dailyGiftsClaimedCount === 0) {
+            giftBtn.disabled = false;
+            giftBtn.className = 'shop-item-btn shop-btn-free';
+            giftBtn.innerHTML = `<span>${_tr('free')}</span>`;
+        } else {
+            giftBtn.disabled = false;
+            giftBtn.className = 'shop-item-btn shop-btn-ad';
+            giftBtn.innerHTML = `<svg width="16" height="13" viewBox="0 0 16 13" fill="none" style="flex:none; margin-right:4px;"><rect x="0.8" y="0.8" width="14.4" height="11.4" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><polygon points="6,3.5 11,6.5 6,9.5" fill="currentColor"/></svg><span>${_tr('watch_ad')}</span>`;
+        }
     }
-  }
 
-  const synthBtn = document.getElementById('synthPrismBtn');
-  if (synthBtn) {
-    const hasEnoughDiamonds = diamonds >= 20;
-    synthBtn.disabled = false;
-    synthBtn.className = `shop-item-btn shop-btn-buy shop-btn-exchange${hasEnoughDiamonds ? '' : ' dimmed'}`;
-    synthBtn.innerHTML = `
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${hasEnoughDiamonds ? '#00e5ff' : '#f05f9f'}" stroke-width="2.2" stroke-linejoin="round" style="flex:none;">
-        <polygon points="6 3 18 3 22 9 12 22 2 9" fill="${hasEnoughDiamonds ? 'rgba(0,229,255,.25)' : 'rgba(240,95,159,.25)'}"/>
-        <polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/>
-      </svg>
-      <span id="synthPrismCostVal" class="${hasEnoughDiamonds ? 'exchange-cost-val' : 'exchange-cost-val cost-red'}">20</span>
-    `;
-  }
+    const lockSvg = (typeof CUSTOM_LOCK_SVG !== 'undefined')
+        ? CUSTOM_LOCK_SVG
+        : `<svg width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><path d="M 7,10 V 6 C 7,3.5 9,2 12,2 C 15,2 17,3.5 17,6 V 10"/><rect x="4" y="10" width="16" height="12" rx="3" fill="currentColor" fill-opacity="0.2"/></svg>`;
 
-  const deconstructBtn = document.getElementById('deconstructPrismBtn');
-  if (deconstructBtn) {
-    const isUnlocked = (typeof devMode !== 'undefined' && devMode) || (typeof maxUnlockedLevel !== 'undefined' && maxUnlockedLevel >= 31) || (typeof clearedLevels !== 'undefined' && clearedLevels.includes(30));
-    if (!isUnlocked) {
-      deconstructBtn.disabled = false;
-      deconstructBtn.className = 'shop-item-btn shop-btn-buy locked-buy';
-      deconstructBtn.innerHTML = `
-        <svg width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="flex:none; margin-right:4px; opacity:0.7;">
-          <path d="M 7,10 V 6 C 7,3.5 9,2 12,2 C 15,2 17,3.5 17,6 V 10" />
-          <rect x="4" y="10" width="16" height="12" rx="3" fill="currentColor" fill-opacity="0.2" />
-        </svg>
-        <span style="font-size:10px; font-weight:800;">LVL 31</span>`;
-    } else {
-      const hasEnoughPrisms = prisms >= 1;
-      deconstructBtn.disabled = !hasEnoughPrisms;
-      deconstructBtn.className = `shop-item-btn shop-btn-buy shop-btn-prism shop-btn-exchange${hasEnoughPrisms ? '' : ' dimmed'}`;
-      deconstructBtn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${hasEnoughPrisms ? '#d946ef' : '#f05f9f'}" stroke-width="2.2" stroke-linejoin="round" style="flex:none; filter:drop-shadow(0 0 4px ${hasEnoughPrisms ? 'rgba(217,70,239,0.5)' : 'rgba(240,95,159,0.5)'});">
-          <polygon points="12 2 21 12 12 22 3 12" fill="${hasEnoughPrisms ? 'rgba(217,70,239,.3)' : 'rgba(240,95,159,.25)'}"/>
-          <polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/>
-        </svg>
-        <span id="deconstructPrismCostVal" class="${hasEnoughPrisms ? 'exchange-cost-val' : 'exchange-cost-val cost-red'}">1</span>
-      `;
+    // --- Currency Exchange (обе кнопки заблокированы до 21 уровня Normal) ---
+    const isExchangeUnlocked = (typeof devMode !== 'undefined' && devMode) ||
+        (typeof maxUnlockedLevel !== 'undefined' && maxUnlockedLevel >= 21) ||
+        (typeof clearedLevels !== 'undefined' && clearedLevels.includes(20));
+
+    const synthBtn = document.getElementById('synthPrismBtn');
+    const synthCard = document.getElementById('synthPrismCard') || (synthBtn ? synthBtn.closest('.shop-card') : null);
+    if (synthBtn) {
+        if (!isExchangeUnlocked) {
+            if (synthCard) synthCard.classList.add('locked-item');
+            synthBtn.disabled = false;
+            synthBtn.className = 'shop-item-btn locked-buy';
+            synthBtn.innerHTML = `<span style="display:inline-flex; align-items:center; justify-content:center; gap:3px;">${lockSvg} <span style="font-size:11px; font-weight:900;">L21</span></span>`;
+            synthBtn.onclick = () => {
+                if (typeof sfx === 'function') sfx('denied');
+                if (typeof showHintToast === 'function') {
+                    showHintToast(typeof t === 'function' ? t('unlocks_on_level_n', { n: 21 }) : 'Unlocks on Level 21');
+                }
+            };
+        } else {
+            if (synthCard) synthCard.classList.remove('locked-item');
+            const hasEnoughDiamonds = diamonds >= 20;
+            synthBtn.disabled = !hasEnoughDiamonds;
+            synthBtn.className = `shop-item-btn shop-btn-buy shop-btn-exchange${hasEnoughDiamonds ? '' : ' dimmed'}`;
+            synthBtn.innerHTML = `<span style="display:inline-flex; align-items:center; justify-content:center; gap:4px;">${getDailyDiamondSvg(12)} 20</span>`;
+            synthBtn.onclick = () => synthesizePrism();
+        }
     }
-  }
 
-  const t1Btn = document.getElementById('timeModT1Btn');
-  if (t1Btn) {
-    if (timeModTier >= 1) {
-      t1Btn.disabled = true;
-      t1Btn.className = 'shop-item-btn shop-btn-claimed';
-      t1Btn.innerHTML = `<span>${_tr('owned')}</span>`;
-    } else {
-      t1Btn.disabled = false;
-      t1Btn.className = 'shop-item-btn shop-btn-buy';
-      t1Btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="flex:none;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg><span>40</span>';
+    const deconstructBtn = document.getElementById('deconstructPrismBtn');
+    const deconstructCard = document.getElementById('deconstructPrismCard') || (deconstructBtn ? deconstructBtn.closest('.shop-card') : null);
+    if (deconstructBtn) {
+        if (!isExchangeUnlocked) {
+            if (deconstructCard) deconstructCard.classList.add('locked-item');
+            deconstructBtn.disabled = false;
+            deconstructBtn.className = 'shop-item-btn locked-buy';
+            deconstructBtn.innerHTML = `<span style="display:inline-flex; align-items:center; justify-content:center; gap:3px;">${lockSvg} <span style="font-size:11px; font-weight:900;">L21</span></span>`;
+            deconstructBtn.onclick = () => {
+                if (typeof sfx === 'function') sfx('denied');
+                if (typeof showHintToast === 'function') {
+                    showHintToast(typeof t === 'function' ? t('unlocks_on_level_n', { n: 21 }) : 'Unlocks on Level 21');
+                }
+            };
+        } else {
+            if (deconstructCard) deconstructCard.classList.remove('locked-item');
+            const hasEnoughPrisms = prisms >= 1;
+            deconstructBtn.disabled = !hasEnoughPrisms;
+            deconstructBtn.className = `shop-item-btn shop-btn-buy shop-btn-prism shop-btn-exchange${hasEnoughPrisms ? '' : ' dimmed'}`;
+            deconstructBtn.innerHTML = `<span style="display:inline-flex; align-items:center; justify-content:center; gap:4px;">${getDailyPrismSvg(12)} 1</span>`;
+            deconstructBtn.onclick = () => deconstructPrism();
+        }
     }
-  }
 
-  const t2Btn = document.getElementById('timeModT2Btn');
-  if (t2Btn) {
-    if (timeModTier >= 2) {
-      t2Btn.disabled = true;
-      t2Btn.className = 'shop-item-btn shop-btn-claimed';
-      t2Btn.innerHTML = `<span>${_tr('owned')}</span>`;
-    } else if (timeModTier < 1) {
-      t2Btn.disabled = false;
-      t2Btn.className = 'shop-item-btn shop-btn-buy locked-buy';
-      const lockIconSvg = `
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none; opacity:0.8;">
-          <rect x="4" y="10" width="16" height="12" rx="3"></rect>
-          <path d="M7 10V6a5 5 0 0 1 10 0v4"></path>
-        </svg>`;
-      const tier1ReqLabel = (typeof t === 'function') ? t('tier_1_required') : 'TIER 1<br>REQUIRED';
-      t2Btn.innerHTML = `
-        ${lockIconSvg}
-        <span style="font-size:8.5px; font-weight:800; line-height:1.15; letter-spacing:0.4px; display:inline-block; text-align:center;">
-          ${tier1ReqLabel}
-        </span>`;
-    } else {
-      t2Btn.disabled = false;
-      t2Btn.className = 'shop-item-btn shop-btn-buy';
-      t2Btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="flex:none;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg><span>50</span>';
+    // --- Обновление состояния кнопок тем ---
+    const themesConfig = [
+        { id: 'bio_venom', cost: 150, btnId: 'themeBtn-bio_venom' },
+        { id: 'sakura_wave', cost: 200, btnId: 'themeBtn-sakura_wave' },
+        { id: 'solar_inferno', cost: 300, btnId: 'themeBtn-solar_inferno' }
+    ];
+
+    themesConfig.forEach(tConf => {
+        const btn = document.getElementById(tConf.btnId);
+        if (!btn) return;
+        const isOwned = Boolean(unlockedPalettes && unlockedPalettes.includes(tConf.id));
+        const isActive = activePalette === tConf.id;
+
+        if (isActive) {
+            btn.disabled = true;
+            btn.className = 'shop-item-btn shop-btn-claimed';
+            btn.innerHTML = `<span>${_tr('equipped')}</span>`;
+        } else if (isOwned) {
+            btn.disabled = false;
+            btn.className = 'shop-item-btn shop-btn-free';
+            btn.innerHTML = `<span>${_tr('equip')}</span>`;
+        } else {
+            const canAfford = diamonds >= tConf.cost;
+            btn.disabled = !canAfford;
+            btn.className = `shop-item-btn shop-btn-buy${canAfford ? '' : ' dimmed'}`;
+            btn.innerHTML = `<span style="display:inline-flex; align-items:center; justify-content:center; gap:4px;">${getDailyDiamondSvg(12)} ${tConf.cost}</span>`;
+        }
+    });
+
+    // --- Time Modulation Perks State ---
+    const t1Btn = document.getElementById('shopPerkTimeT1Btn') || document.getElementById('timeModT1Btn');
+    const t1Card = document.getElementById('shopPerkTimeT1Card') || (t1Btn ? t1Btn.closest('.shop-card') : null);
+    if (t1Btn) {
+        if (timeModTier >= 1) {
+            t1Btn.disabled = true;
+            t1Btn.className = 'shop-item-btn shop-btn-claimed';
+            t1Btn.textContent = _tr('owned');
+            if (t1Card) t1Card.classList.remove('locked-item');
+        } else {
+            const canAffordT1 = diamonds >= 50;
+            t1Btn.disabled = !canAffordT1;
+            t1Btn.className = `shop-item-btn shop-btn-buy${canAffordT1 ? '' : ' dimmed'}`;
+            t1Btn.innerHTML = `<span style="display:inline-flex; align-items:center; justify-content:center; gap:4px;">${getDailyDiamondSvg(12)} 50</span>`;
+            if (t1Card) t1Card.classList.remove('locked-item');
+        }
     }
-  }
 
-  // Витрина тем оформления в Магазине
-  const themesConfig = [
-  { id: 'bio_venom', cost: 150, btnId: 'themeBtn-bio_venom' },
-  { id: 'sakura_wave', cost: 200, btnId: 'themeBtn-sakura_wave' },
-  { id: 'solar_inferno', cost: 300, btnId: 'themeBtn-solar_inferno' }
-];
-
-  themesConfig.forEach(item => {
-    const btn = document.getElementById(item.btnId);
-    if (!btn) return;
-    const isUnlocked = (typeof devMode !== 'undefined' && devMode) || unlockedPalettes.includes(item.id);
-    const isEquipped = (activePalette === item.id);
-
-    if (isEquipped) {
-      btn.disabled = true;
-      btn.className = 'shop-item-btn shop-btn-equipped';
-      btn.innerHTML = `<span>${typeof t === 'function' ? t('equipped') : 'ACTIVE'}</span>`;
-      btn.onclick = null;
-    } else if (isUnlocked) {
-      btn.disabled = false;
-      btn.className = 'shop-item-btn shop-btn-equip';
-      btn.innerHTML = `<span>${typeof t === 'function' ? t('equip') : 'EQUIP'}</span>`;
-      btn.onclick = () => handleThemeShopAction(item.id, item.cost);
-    } else {
-      const canAfford = (diamonds >= item.cost);
-      btn.disabled = false;
-      btn.className = 'shop-item-btn shop-btn-buy' + (canAfford ? '' : ' dimmed');
-      btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${canAfford ? '#00e5ff' : '#f05f9f'}" stroke-width="2.2" stroke-linejoin="round" style="flex:none;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="${canAfford ? 'rgba(0,229,255,.25)' : 'rgba(240,95,159,.25)'}"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg><span>${item.cost}</span>`;
-      btn.onclick = () => handleThemeShopAction(item.id, item.cost);
+    const t2Btn = document.getElementById('shopPerkTimeT2Btn') || document.getElementById('timeModT2Btn');
+    const t2Card = document.getElementById('shopPerkTimeT2Card') || (t2Btn ? t2Btn.closest('.shop-card') : null);
+    if (t2Btn) {
+        if (timeModTier >= 2) {
+            t2Btn.disabled = true;
+            t2Btn.className = 'shop-item-btn shop-btn-claimed';
+            t2Btn.textContent = _tr('owned');
+            t2Btn.onclick = () => buyShopIAP('time_mod_t2');
+            if (t2Card) t2Card.classList.remove('locked-item');
+        } else if (timeModTier < 1) {
+            t2Btn.disabled = false; // Оставляем кликабельной для вывода toast
+            t2Btn.className = 'shop-item-btn locked-buy';
+            const reqLabel = (typeof t === 'function' ? t('tier_1_required') : 'TIER 1<br>REQUIRED');
+            t2Btn.innerHTML = `<span style="display:inline-flex; align-items:center; justify-content:center; gap:3px; text-align:center; font-size:9px; line-height:1.15;">${lockSvg} <span>${reqLabel}</span></span>`;
+            t2Btn.onclick = () => {
+                if (typeof sfx === 'function') sfx('denied');
+                if (typeof showHintToast === 'function') {
+                    showHintToast(typeof t === 'function' ? t('unlock_tier_1_first') : 'Unlock Tier 1 first!');
+                }
+            };
+            if (t2Card) t2Card.classList.add('locked-item');
+        } else {
+            const canAffordT2 = diamonds >= 200;
+            t2Btn.disabled = !canAffordT2;
+            t2Btn.className = `shop-item-btn shop-btn-buy${canAffordT2 ? '' : ' dimmed'}`;
+            t2Btn.innerHTML = `<span style="display:inline-flex; align-items:center; justify-content:center; gap:4px;">${getDailyDiamondSvg(12)} 200</span>`;
+            t2Btn.onclick = () => buyShopIAP('time_mod_t2');
+            if (t2Card) t2Card.classList.remove('locked-item');
+        }
     }
-  });
 }
 
 // --- Daily Login 7-Day Calendar Logic ---

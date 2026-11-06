@@ -19,3 +19,16 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Protect JavaScript Interfaces for WebView
+-keepattributes *Annotation*,JavascriptInterface
+-keepclassmembers class io.github.synthwave.defense.dev.MainActivity$NativeYandexAdsBridge {
+    @android.webkit.JavascriptInterface <methods>;
+}
+-keepclassmembers class io.github.synthwave.defense.dev.MainActivity$NativeOtaBridge {
+    @android.webkit.JavascriptInterface <methods>;
+}
+
+# Rules for Yandex Mobile Ads SDK
+-keep class com.yandex.mobile.ads.** { *; }
+-dontwarn com.yandex.mobile.ads.**

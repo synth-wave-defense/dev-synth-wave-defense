@@ -15,6 +15,19 @@ import java.io.FileOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import org.json.JSONObject;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import com.yandex.mobile.ads.common.AdError;
+import com.yandex.mobile.ads.common.AdRequestConfiguration;
+import com.yandex.mobile.ads.common.AdRequestError;
+import com.yandex.mobile.ads.common.ImpressionData;
+import com.yandex.mobile.ads.common.InitializationListener;
+import com.yandex.mobile.ads.common.MobileAds;
+import com.yandex.mobile.ads.rewarded.Reward;
+import com.yandex.mobile.ads.rewarded.RewardedAd;
+import com.yandex.mobile.ads.rewarded.RewardedAdEventListener;
+import com.yandex.mobile.ads.rewarded.RewardedAdLoadListener;
+import com.yandex.mobile.ads.rewarded.RewardedAdLoader;
 
 public class MainActivity extends BridgeActivity {
     private static final String PREFS_NAME = "SynthWaveNativeOtaPrefs";
@@ -36,9 +49,10 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         try {
-            if (this.bridge != null && this.bridge.getWebView() != null) {
-                this.bridge.getWebView().addJavascriptInterface(new NativeOtaBridge(this), "NativeOtaBridge");
-            }
+            if (this.bridge != null && this.bridge.getWebView() != null) {  
+				this.bridge.getWebView().addJavascriptInterface(new NativeOtaBridge(this), "NativeOtaBridge");  
+				this.bridge.getWebView().addJavascriptInterface(new NativeYandexAdsBridge(this), "NativeYandexAdsBridge");
+				}
             checkAndApplyStartupOta();
         } catch (Exception e) {
             e.printStackTrace();
@@ -435,6 +449,123 @@ private boolean isRollingBack = false;
                 }
             }
             f.delete();
+        }
+    }
+public class NativeYandexAdsBridge {
+        private final Context context;
+        private RewardedAdLoader rewardedAdLoader;
+        private RewardedAd rewardedAd;
+        private boolean isAdLoading = false;
+
+        public NativeYandexAdsBridge(Context context) {
+            this.context = context;
+        }
+
+        private void runJs(final String jsCode) {
+            runOnUiThread(() -> {
+                try {
+                    if (MainActivity.this.bridge != null && MainActivity.this.bridge.getWebView() != null) {
+                        MainActivity.this.bridge.getWebView().evaluateJavascript(jsCode, null);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void initialize(final String defaultAdUnitId) {
+            runOnUiThread(() -> {
+                MobileAds.initialize(context, new InitializationListener() {
+                    @Override
+                    public void onInitializationCompleted() {
+                        setupLoader();
+                        if (defaultAdUnitId != null && !defaultAdUnitId.isEmpty()) {
+                            loadRewardedAd(defaultAdUnitId);
+                        }
+                    }
+                });
+            });
+        }
+
+        private void setupLoader() {
+            if (rewardedAdLoader != null) return;
+            rewardedAdLoader = new RewardedAdLoader(context);
+            rewardedAdLoader.setAdLoadListener(new RewardedAdLoadListener() {
+                @Override
+                public void onAdLoaded(@NonNull RewardedAd ad) {
+                    rewardedAd = ad;
+                    isAdLoading = false;
+                    attachEventListener(ad);
+                    runJs("window.onYandexAdLoaded && window.onYandexAdLoaded();");
+                }
+
+                @Override
+                public void onAdFailedToLoad(@NonNull AdRequestError adRequestError) {
+                    rewardedAd = null;
+                    isAdLoading = false;
+                    String safeDescription = adRequestError.getDescription().replace("'", "\\'");
+                    runJs("window.onYandexAdFailedToLoad && window.onYandexAdFailedToLoad('" + safeDescription + "');");
+                }
+            });
+        }
+
+        private void attachEventListener(RewardedAd ad) {
+            ad.setAdEventListener(new RewardedAdEventListener() {
+                @Override
+                public void onAdShown() {}
+
+                @Override
+                public void onAdFailedToShow(@NonNull AdError adError) {
+                    rewardedAd = null;
+                    String safeDescription = adError.getDescription().replace("'", "\\'");
+                    runJs("window.onYandexAdFailedToShow && window.onYandexAdFailedToShow('" + safeDescription + "');");
+                }
+
+                @Override
+                public void onAdDismissed() {
+                    rewardedAd = null;
+                    runJs("window.onYandexAdDismissed && window.onYandexAdDismissed();");
+                }
+
+                @Override
+                public void onAdClicked() {}
+
+                @Override
+                public void onRewarded(@NonNull Reward reward) {
+                    runJs("window.onYandexAdRewarded && window.onYandexAdRewarded();");
+                }
+
+                @Override
+                public void onAdImpression(@Nullable ImpressionData impressionData) {}
+            });
+        }
+
+        @JavascriptInterface
+        public void loadRewardedAd(final String adUnitId) {
+            runOnUiThread(() -> {
+                if (isAdLoading || rewardedAd != null) return;
+                setupLoader();
+                isAdLoading = true;
+                AdRequestConfiguration config = new AdRequestConfiguration.Builder(adUnitId).build();
+                rewardedAdLoader.loadAd(config);
+            });
+        }
+
+        @JavascriptInterface
+        public boolean isRewardedAdReady() {
+            return rewardedAd != null;
+        }
+
+        @JavascriptInterface
+        public void showRewardedAd() {
+            runOnUiThread(() -> {
+                if (rewardedAd != null) {
+                    rewardedAd.show(MainActivity.this);
+                } else {
+                    runJs("window.onYandexAdFailedToShow && window.onYandexAdFailedToShow('Ad not ready');");
+                }
+            });
         }
     }
 }
