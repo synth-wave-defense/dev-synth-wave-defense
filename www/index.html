@@ -1,4 +1,4 @@
-<!-- Version: 1.37.0 - Synth Wave Defense HTML application layout and script bindings. -->
+<!-- Synth Wave Defense HTML application layout and script bindings. -->
 <!DOCTYPE html>
 
 <html lang="en">
@@ -1091,22 +1091,26 @@
               <span class="setting-slider-val" id="sfxVolLabel">100%</span>
             </div>
             <!-- [HTM.BI] -->
-            <input type="range" class="vol-range" id="settingSfxVol" min="0" max="100" step="5" value="100"
-                   oninput="setSfxVolume(this.value)">
-          </div>
-          <div class="setting-row">
-            <span data-i18n="visual">Visual</span>
-            <!-- [HTM.BJ] -->
-            <select id="settingPaletteSelect" class="hud-select-dropdown" onchange="selectPalette(this.value)"></select>
-          </div>
-          <div class="setting-row">
-            <span data-i18n="language">Language</span>
-            <select id="settingLangSelect" class="hud-select-dropdown" onchange="setLanguage(this.value)"></select>
-          </div>
-          <div class="setting-version-label" id="settingsVersionLabel">Version: 1.37.0</div>
+          <input type="range" class="vol-range" id="settingSfxVol" min="0" max="100" step="5" value="100"
+            oninput="setSfxVolume(this.value)">
         </div>
+        <div class="setting-row">
+          <span data-i18n="visual">Visual</span>
+          <!-- [HTM.BJ] -->
+          <select id="settingPaletteSelect" class="hud-select-dropdown" onchange="selectPalette(this.value)"></select>
+        </div>
+        <div class="setting-row">
+          <span data-i18n="language">Language</span>
+          <select id="settingLangSelect" class="hud-select-dropdown" onchange="setLanguage(this.value)"></select>
+        </div>
+        <div class="setting-version-label" id="settingsVersionLabel">Version: —</div>
+        <!-- [HTM.BJM] -->
+        <button type="button" class="setting-privacy-link" id="settingsPrivacyBtn" onclick="window.open('https://synth-wave-defense.github.io/privacy.html', '_blank')">
+          <span data-i18n="privacy_policy">Privacy Policy</span>
+        </button>
       </div>
     </div>
+  </div>
 
     <!-- [HTM.BK] -->
     <button class="menu-btn-glass-capsule" id="settingsBackBtn" onclick="closeSettings()"><span data-i18n="back">BACK</span></button>

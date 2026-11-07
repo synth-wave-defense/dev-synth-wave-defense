@@ -22,12 +22,15 @@ window._maxThreadLag = 0;
 window._lastThreadLag = 0;
 
 // [UI.B]
-(function initThreadLagMonitor() {
+let threadLagMonitorId = null;
+
+function startThreadLagMonitor() {
+  if (threadLagMonitorId !== null) return;
   let lastTick = performance.now();
   const lagSamples = [];
 
   // [UI.C]
-  setInterval(() => {
+  threadLagMonitorId = setInterval(() => {
     const now = performance.now();
     const delta = now - lastTick;
     lastTick = now;
@@ -54,7 +57,15 @@ window._lastThreadLag = 0;
     }
     window._lastThreadLag = peakLast;
   }, 20);
-})();
+}
+
+// [UI.CM_STOP]
+function stopThreadLagMonitor() {
+  if (threadLagMonitorId !== null) {
+    clearInterval(threadLagMonitorId);
+    threadLagMonitorId = null;
+  }
+}
 
 // [UI.D]
 function getJSHeapSizeMB() {
@@ -2373,6 +2384,7 @@ function openDevMode() {
   devMode = true;
   window._maxThreadLag = 0;
   window._lastThreadLag = 0;
+  startThreadLagMonitor();
   const bar = document.getElementById('devBar');
   if (bar) bar.classList.remove('hidden');
   
@@ -2404,6 +2416,7 @@ function closeDevMode() {
   isDevModeActive = false;
   devMode = false;
   isDevExpanded = false;
+  stopThreadLagMonitor();
   
   const bar = document.getElementById('devBar');
   if (bar) {
@@ -3154,6 +3167,7 @@ function handleHudSettingsClick() {
   }
 }
 
+
 // [UI.DW]
 function showSettings(fromSource = 'start') {
   settingsPreviousSource = fromSource;
@@ -3163,10 +3177,10 @@ function showSettings(fromSource = 'start') {
 
   const isResultScreen = (fromSource === 'victory' || fromSource === 'defeat');
   const bgScreenId = fromSource === 'victory' ? 'victoryScreen' 
-    : (fromSource === 'defeat' ? 'defeatScreen' 
-    : (fromSource === 'levels' ? 'levelsScreen' 
-    : (fromSource === 'shop' ? 'shopScreen' 
-    : (fromSource === 'upgrades' ? 'upgradesScreen' : 'startScreen'))));
+                   : (fromSource === 'defeat' ? 'defeatScreen' 
+                   : (fromSource === 'levels' ? 'levelsScreen' 
+                   : (fromSource === 'shop' ? 'shopScreen' 
+                   : (fromSource === 'upgrades' ? 'upgradesScreen' : 'startScreen'))));
 
   ['startScreen', 'victoryScreen', 'defeatScreen', 'levelsScreen', 'shopScreen', 'upgradesScreen']
     .forEach(id => {
@@ -3240,9 +3254,10 @@ function showSettings(fromSource = 'start') {
 
   const versionLabel = document.getElementById('settingsVersionLabel');
   if (versionLabel) {
-    const liveVersion = (window.OtaDiagnostics && window.OtaDiagnostics.localVersion && window.OtaDiagnostics.localVersion !== '—' && window.OtaDiagnostics.localVersion !== 'ERROR')
+    const fallbackVer = window.APP_VERSION || '1.37.0';
+    const liveVersion = (window.OtaDiagnostics && window.OtaDiagnostics.localVersion && window.OtaDiagnostics.localVersion !== '—' && window.OtaDiagnostics.localVersion !== 'ERROR' && window.OtaDiagnostics.localVersion !== 'MISSING')
       ? window.OtaDiagnostics.localVersion
-      : '1.36.38';
+      : fallbackVer;
     versionLabel.textContent = (typeof t === 'function') ? t('version_label', { v: liveVersion }) : `Version: ${liveVersion}`;
   }
   if (typeof populateLanguageDropdown === 'function') {
@@ -5898,41 +5913,80 @@ function updateWaveCircle(dt) {
 }
 
 //  Main UI frame update and HUD sync loop.
+// Main UI frame update and HUD sync loop.
+const _hudStateCache = {
+  goldStr: '',
+  hpStr: '',
+  lvlStr: '',
+  waveStr: '',
+  waveBtnDisabled: null,
+  towerClasses: Object.create(null)
+};
+
 // [UI.HU]
 function updateUI() {
   const lvlConfig = LEVELS_DATA[currentLevel];
   const maxW = lvlConfig ? lvlConfig.totalWaves : 10;
 
-  document.getElementById('goldVal').textContent = formatResourceVal(gold);
-  document.getElementById('hpVal').textContent = formatResourceVal(baseHp);
+  const goldStr = formatResourceVal(gold);
+  if (_hudStateCache.goldStr !== goldStr) {
+    _hudStateCache.goldStr = goldStr;
+    const goldEl = el('goldVal');
+    if (goldEl) goldEl.textContent = goldStr;
+  }
+
+  const hpStr = formatResourceVal(baseHp);
+  if (_hudStateCache.hpStr !== hpStr) {
+    _hudStateCache.hpStr = hpStr;
+    const hpEl = el('hpVal');
+    if (hpEl) hpEl.textContent = hpStr;
+  }
+
+  let lvlStr, waveStr;
   if (typeof isEndlessMode !== 'undefined' && isEndlessMode) {
-    document.getElementById('levelText').textContent = `${currentLevelSection || 1}`;
-    document.getElementById('waveText').textContent = `${wave}/∞`;
+    lvlStr = `${currentLevelSection || 1}`;
+    waveStr = `${wave}/∞`;
   } else {
-    document.getElementById('levelText').textContent = `${currentLevel}`;
-    document.getElementById('waveText').textContent = `${Math.min(wave, maxW)}/${maxW}`;
+    lvlStr = `${currentLevel}`;
+    waveStr = `${Math.min(wave, maxW)}/${maxW}`;
+  }
+
+  if (_hudStateCache.lvlStr !== lvlStr) {
+    _hudStateCache.lvlStr = lvlStr;
+    const lvlEl = el('levelText');
+    if (lvlEl) lvlEl.textContent = lvlStr;
+  }
+
+  if (_hudStateCache.waveStr !== waveStr) {
+    _hudStateCache.waveStr = waveStr;
+    const waveEl = el('waveText');
+    if (waveEl) waveEl.textContent = waveStr;
   }
 
   syncTopHudVisibility();
 
   for (let key in TOWER_CONFIGS) {
-    const btn = document.getElementById(`btn-${key}`);
+    const btn = el(`btn-${key}`);
     if (btn) {
       const isUnlocked = isTowerActiveThisLevel(key);
       const affordable = gold >= TOWER_CONFIGS[key].cost;
-      if (!isUnlocked) {
-        btn.className = 'tower-btn locked disabled';
-      } else if (!affordable) {
-        btn.className = 'tower-btn disabled';
-      } else {
-        btn.className = 'tower-btn ready';
+      const nextCls = !isUnlocked
+        ? 'tower-btn locked disabled'
+        : (!affordable ? 'tower-btn disabled' : 'tower-btn ready');
+      if (_hudStateCache.towerClasses[key] !== nextCls) {
+        _hudStateCache.towerClasses[key] = nextCls;
+        btn.className = nextCls;
       }
     }
   }
 
-  const waveBtn = document.getElementById('waveBtn');
+  const waveBtn = el('waveBtn');
   if (waveBtn) {
-    waveBtn.disabled = (waveInProgress || spawnQueue.length > 0 || (!(typeof isEndlessMode !== 'undefined' && isEndlessMode) && wave >= maxW));
+    const shouldDisable = (waveInProgress || spawnQueue.length > 0 || (!(typeof isEndlessMode !== 'undefined' && isEndlessMode) && wave >= maxW));
+    if (_hudStateCache.waveBtnDisabled !== shouldDisable) {
+      _hudStateCache.waveBtnDisabled = shouldDisable;
+      waveBtn.disabled = shouldDisable;
+    }
   }
 
   updateHudSpeedWidget();
@@ -7910,21 +7964,23 @@ function render(now) {
     reviveStartTime = 0;
   }
 
-  if (perfProfiler.accum.frames > 30) {
-    const f = perfProfiler.accum.frames;
-    const s = (perfProfiler.accum.sim / f).toFixed(1);
-    const t = (perfProfiler.accum.towers / f).toFixed(1);
-    const m = (perfProfiler.accum.drawMobs / f).toFixed(1);
-    const fx = (perfProfiler.accum.drawFx / f).toFixed(1);
-    perfProfiler.report = `Sim:${s}ms | Tow:${t}ms | Mobs:${m}ms | Fx:${fx}ms`;
-    
-    const badge = document.getElementById('devFpsBadge');
-    if (badge) {
-      badge.title = perfProfiler.report;
+  if (isDevModeActive) {
+    if (perfProfiler.accum.frames > 30) {
+      const f = perfProfiler.accum.frames;
+      const s = (perfProfiler.accum.sim / f).toFixed(1);
+      const t = (perfProfiler.accum.towers / f).toFixed(1);
+      const m = (perfProfiler.accum.drawMobs / f).toFixed(1);
+      const fx = (perfProfiler.accum.drawFx / f).toFixed(1);
+      perfProfiler.report = `Sim:${s}ms | Tow:${t}ms | Mobs:${m}ms | Fx:${fx}ms`;
+
+      const badge = document.getElementById('devFpsBadge');
+      if (badge) {
+        badge.title = perfProfiler.report;
+      }
+      perfProfiler.accum = { sim: 0, towers: 0, drawMobs: 0, drawFx: 0, frames: 0 };
     }
-    perfProfiler.accum = { sim: 0, towers: 0, drawMobs: 0, drawFx: 0, frames: 0 };
+    perfProfiler.accum.frames++;
   }
-  perfProfiler.accum.frames++;
 
   if (isDevModeActive) {
     if (!window._fpsLastTime) {

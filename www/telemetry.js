@@ -1,23 +1,12 @@
-//  Telemetry & Analytics Module: Best-effort crash reporting and event logging.
+// Telemetry & Analytics Module: Best-effort crash reporting and event logging.
 
-//  Crash Reporting: Discord webhook error reporter.
+// Единая версия сборки (используется как фоллбэк в UI и в телеметрии)
+window.APP_VERSION = '1.37.0';
+
+// Эндпоинт для сбора краш-логов (укажите URL вашего Cloudflare Worker или оставьте '' для отключения)
 const ERROR_WEBHOOK_URL = '';
 
-window.reportErrorToWebhook = function (info) {
-  if (!ERROR_WEBHOOK_URL) return;
-  const lines = [
-    '\uD83D\uDEA8 SectorDefenseTD crash',
-    `**${info.message}**`,
-    `${info.source}:${info.lineno}:${info.colno}`,
-    `Booted before crash: ${info.booted}`,
-    `Time: ${info.ts}`,
-    `UA: ${info.ua}`
-  ];
-  if (info.stack) lines.push('```' + info.stack.slice(0, 800) + '```');
-  sendJSON(ERROR_WEBHOOK_URL, { content: lines.join('\n') });
-};
-
-//  Lightweight Gameplay Analytics: GA4 event tracker.
+// Эндпоинт для игровой аналитики GA4 / Cloudflare Worker (оставьте '' для отключения)
 const ANALYTICS_ENDPOINT_URL = '';
 const ANALYTICS_CLIENT_ID_KEY = 'sectorDefenseTD_analytics_cid';
 
@@ -35,16 +24,47 @@ function getAnalyticsClientId() {
   }
 }
 
+// [TEL.AA]
+window.reportErrorToWebhook = function (info) {
+  if (!ERROR_WEBHOOK_URL || !info) return;
+  const ver = (window.OtaDiagnostics && window.OtaDiagnostics.localVersion && window.OtaDiagnostics.localVersion !== '—')
+    ? window.OtaDiagnostics.localVersion
+    : (window.APP_VERSION || '1.37.0');
+
+  const lines = [
+    '\uD83D\uDEA8 **Synth Wave Defense Crash** (v' + ver + ')',
+    `**${info.message}**`,
+    `Loc: \`${info.source}:${info.lineno}:${info.colno}\``,
+    `Booted: \`${info.booted}\` | Time: \`${info.ts}\``,
+    `UA: \`${info.ua}\``
+  ];
+  if (info.stack) {
+    lines.push('```' + String(info.stack).slice(0, 800) + '```');
+  }
+
+  sendJSON(ERROR_WEBHOOK_URL, {
+    version: ver,
+    client_id: getAnalyticsClientId(),
+    crash: info,
+    content: lines.join('\n')
+  });
+};
+
 // [TEL.B]
 function trackEvent(name, params) {
   if (!ANALYTICS_ENDPOINT_URL) return;
+  const ver = (window.OtaDiagnostics && window.OtaDiagnostics.localVersion && window.OtaDiagnostics.localVersion !== '—')
+    ? window.OtaDiagnostics.localVersion
+    : (window.APP_VERSION || '1.37.0');
+
+  const enrichedParams = Object.assign({ app_version: ver }, params || {});
   sendJSON(ANALYTICS_ENDPOINT_URL, {
     client_id: getAnalyticsClientId(),
-    events: [{ name: name, params: params || {} }]
+    events: [{ name: name, params: enrichedParams }]
   });
 }
 
-//  Shared Fire-and-Forget POST Request Dispatcher.
+// Shared Fire-and-Forget POST Request Dispatcher.
 // [TEL.C]
 function sendJSON(url, body) {
   if (!url) return;
@@ -55,8 +75,9 @@ function sendJSON(url, body) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
+      keepalive: true,
       signal: controller ? controller.signal : undefined
-    // [TEL.D]
+      // [TEL.D]
     }).catch(() => { /* offline / unreachable -- silently drop, never retry-spam */ })
       // [TEL.E]
       .finally(() => { if (timeoutId) clearTimeout(timeoutId); });

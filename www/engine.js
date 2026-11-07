@@ -4983,9 +4983,11 @@ function update(dt) {
   }
 
   // Гибель врагов
+  let enemyKilledThisTick = false;
   for (let i = enemies.length - 1; i >= 0; i--) {
     const e = enemies[i];
     if (e.hp <= 0) {
+      enemyKilledThisTick = true;
       sessionMobKillsCount++;
       if (sessionMobKillsCount % 5 === 0) {
         addBpXp(1);
@@ -5016,7 +5018,9 @@ function update(dt) {
       enemies.splice(i, 1);
     }
   }
-  updateUI();
+  if (enemyKilledThisTick) {
+    updateUI();
+  }
 
   // Частицы
   for (let i = particles.length - 1; i >= 0; i--) {

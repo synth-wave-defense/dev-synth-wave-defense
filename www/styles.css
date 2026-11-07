@@ -3534,6 +3534,27 @@ html, body {
   margin-top: 4px;
   letter-spacing: 0.5px;
 }
+/* [STY.CRM] */
+.setting-privacy-link {
+  align-self: center;
+  background: transparent;
+  border: none;
+  padding: 2px 8px;
+  margin-top: -6px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #64748b;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color 0.15s ease, transform 0.08s ease;
+}
+.setting-privacy-link:active {
+  color: var(--c1-light, #8ef3ff);
+  transform: scale(0.95);
+}
 .switch {
   position: relative;
   display: inline-block;
@@ -3541,6 +3562,7 @@ html, body {
   height: 24px;
 }
 .switch input { opacity: 0; width: 0; height: 0; }
+
 /* [STY.CS] */
 .slider {
   position: absolute;
