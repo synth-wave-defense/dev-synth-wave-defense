@@ -1,42 +1,67 @@
-name: Build Android APK
+name: Build Android APK / AAB
 
 on:
   workflow_dispatch:
+    inputs:
+      app_stage:
+        description: 'Build Stage (development or production)'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - production
 
 jobs:
   build:
-    name: Build APK
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Получение кода
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🟢 Настройка Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: 22
 
-      - name: ☕ Настройка Java (JDK 21)
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: 📦 Установка зависимостей
+      - name: Install dependencies
         run: npm install
 
-      - name: 🔄 Синхронизация Capacitor
+      - name: Remove OTA plugin & Clean Native OTA Bridge for Production
+        if: ${{ github.event.inputs.app_stage == 'production' }}
+        run: |
+          npm uninstall @capgo/capacitor-updater || true
+          npm run build
+          # Remove any .js.map files if generated anywhere
+          find www -name "*.map" -type f -delete
+          # Strip AssetCacheManager registration from MainActivity.java for Google Play compliance
+          MAIN_ACT=$(find android/app/src/main/java -name "MainActivity.java" | head -n 1)
+          if [ -n "$MAIN_ACT" ]; then
+            sed -i '/AssetCacheManager/d' "$MAIN_ACT"
+            sed -i '/verifyAndMountAssetCache/d' "$MAIN_ACT"
+          fi
+          npx cap sync android
+
+      - name: Sync Capacitor for Development
+        if: ${{ github.event.inputs.app_stage != 'production' }}
         run: npx cap sync android
 
-      - name: 🔨 Сборка APK (Debug)
-        working-directory: ./android
-        run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+      - name: Grant execute permission for gradlew
+        run: chmod +x android/gradlew
 
-      - name: 📤 Загрузка готового APK
+      - name: Build Android APK
+        working-directory: ./android
+        run: ./gradlew assembleDebug
+
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
+          name: synth-wave-defense-${{ github.event.inputs.app_stage || 'development' }}-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk

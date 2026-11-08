@@ -7,16 +7,10 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.webkit.JavascriptInterface;
-import com.getcapacitor.BridgeActivity;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import org.json.JSONObject;
+import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import com.getcapacitor.BridgeActivity;
 import com.yandex.mobile.ads.common.AdError;
 import com.yandex.mobile.ads.common.AdRequestConfiguration;
 import com.yandex.mobile.ads.common.AdRequestError;
@@ -28,32 +22,40 @@ import com.yandex.mobile.ads.rewarded.RewardedAd;
 import com.yandex.mobile.ads.rewarded.RewardedAdEventListener;
 import com.yandex.mobile.ads.rewarded.RewardedAdLoadListener;
 import com.yandex.mobile.ads.rewarded.RewardedAdLoader;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import org.json.JSONObject;
 
 public class MainActivity extends BridgeActivity {
-    private static final String PREFS_NAME = "SynthWaveNativeOtaPrefs";
-    private static final String KEY_ACTIVE_PATH = "active_ota_path";
-    private static final String KEY_ACTIVE_VER = "active_ota_version";
-    private static final String KEY_PREV_PATH = "prev_ota_path";
-    private static final String KEY_PREV_VER = "prev_ota_version";
-    private static final String KEY_PENDING_PATH = "pending_ota_path";
-    private static final String KEY_PENDING_VER = "pending_ota_version";
-    private static final String KEY_BAD_VER = "bad_ota_version";
-    private static final String KEY_APK_TIME = "last_apk_update_time";
-    private static final String KEY_BOOT_LOG = "last_boot_ota_log";
-    private static final String KEY_BOOT_STATUS = "ota_boot_status";
+    private static final String PREFS_NAME = "SynthWaveAssetCachePrefs";
+    private static final String KEY_ACTIVE_PATH = "active_cache_path";
+    private static final String KEY_ACTIVE_VER = "active_cache_version";
+    private static final String KEY_PREV_PATH = "prev_cache_path";
+    private static final String KEY_PREV_VER = "prev_cache_version";
+    private static final String KEY_PENDING_PATH = "pending_cache_path";
+    private static final String KEY_PENDING_VER = "pending_cache_version";
+    private static final String KEY_BAD_VER = "bad_cache_version";
+    private static final String KEY_APK_TIME = "last_pkg_update_time";
+    private static final String KEY_BOOT_LOG = "last_boot_cache_log";
+    private static final String KEY_BOOT_STATUS = "cache_boot_status";
 
     private final Handler watchdogHandler = new Handler(Looper.getMainLooper());
     private Runnable watchdogRunnable = null;
+    private boolean isRollingBack = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         try {
-            if (this.bridge != null && this.bridge.getWebView() != null) {  
-				this.bridge.getWebView().addJavascriptInterface(new NativeOtaBridge(this), "NativeOtaBridge");  
-				this.bridge.getWebView().addJavascriptInterface(new NativeYandexAdsBridge(this), "NativeYandexAdsBridge");
-				}
-            checkAndApplyStartupOta();
+            if (this.bridge != null && this.bridge.getWebView() != null) {
+                this.bridge.getWebView().addJavascriptInterface(new AssetCacheManager(this), "AssetCacheManager");
+                this.bridge.getWebView().addJavascriptInterface(new NativeYandexAdsBridge(this), "NativeYandexAdsBridge");
+            }
+            verifyAndMountAssetCache();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -66,20 +68,18 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
-private boolean isRollingBack = false;
-
     private void startWatchdogTimer() {
         cancelWatchdogTimer();
         watchdogRunnable = () -> {
             SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
             if ("PENDING".equals(prefs.getString(KEY_BOOT_STATUS, "SUCCESS")) && !isRollingBack) {
-                performSilentRollback(prefs, "Watchdog timeout");
+                restorePreviousCacheState(prefs, "Watchdog timeout");
             }
         };
         watchdogHandler.postDelayed(watchdogRunnable, 8000);
     }
 
-    private void performSilentRollback(SharedPreferences prefs, String reason) {
+    private void restorePreviousCacheState(SharedPreferences prefs, String reason) {
         if (isRollingBack) return;
         isRollingBack = true;
         cancelWatchdogTimer();
@@ -88,7 +88,6 @@ private boolean isRollingBack = false;
         String prevPath = prefs.getString(KEY_PREV_PATH, null);
         String prevVer = prefs.getString(KEY_PREV_VER, "builtin");
 
-        // Защита от петли: если prevPath совпадает с битым activePath, сбрасываем на builtin APK
         String curActivePath = prefs.getString(KEY_ACTIVE_PATH, null);
         if (prevPath != null && prevPath.equals(curActivePath)) {
             prevPath = null;
@@ -107,14 +106,14 @@ private boolean isRollingBack = false;
         if (canUsePrev) {
             editor.putString(KEY_ACTIVE_PATH, prevPath);
             editor.putString(KEY_ACTIVE_VER, prevVer);
-            editor.putString(KEY_BOOT_LOG, reason + " -> Rolled back to v" + prevVer);
+            editor.putString(KEY_BOOT_LOG, reason + " -> Restored v" + prevVer);
         } else {
             editor.remove(KEY_ACTIVE_PATH);
             editor.remove(KEY_ACTIVE_VER);
-            editor.putString(KEY_BOOT_LOG, reason + " -> Rolled back to builtin APK");
+            editor.putString(KEY_BOOT_LOG, reason + " -> Restored builtin assets");
         }
         editor.putString(KEY_BOOT_STATUS, "ROLLED_BACK");
-        editor.commit(); // синхронная запись перед перезагрузкой WebView
+        editor.commit();
 
         final String targetPath = canUsePrev ? prevPath : null;
         runOnUiThread(() -> {
@@ -131,12 +130,12 @@ private boolean isRollingBack = false;
             }
         });
     }
-	
-    private void checkAndApplyStartupOta() {
+
+    private void verifyAndMountAssetCache() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         StringBuilder bootLog = new StringBuilder();
 
-        // 1. Сброс OTA при установке свежего APK поверх старого
+        // 1. Сброс кэша при установке свежего APK поверх старого
         long curApkTime = 0;
         try {
             PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
@@ -155,12 +154,12 @@ private boolean isRollingBack = false;
                 .remove(KEY_PENDING_VER)
                 .remove(KEY_BAD_VER)
                 .putString(KEY_BOOT_STATUS, "SUCCESS")
-                .putString(KEY_BOOT_LOG, "Fresh APK install detected, reset OTA")
+                .putString(KEY_BOOT_LOG, "Fresh package install detected, reset cache")
                 .apply();
             return;
         }
 
-        // 2. Если предыдущий запуск упал (остался в PENDING), сразу переключаемся на prevPath (или builtin APK)
+        // 2. Если предыдущий запуск не завершился (остался в PENDING), восстанавливаем prevPath или builtin
         String bootStatus = prefs.getString(KEY_BOOT_STATUS, "SUCCESS");
         if ("PENDING".equals(bootStatus)) {
             String deadVer = prefs.getString(KEY_ACTIVE_VER, "");
@@ -174,21 +173,21 @@ private boolean isRollingBack = false;
 
             if (prevPath != null && new File(prevPath, "index.html").exists()) {
                 ed.putString(KEY_ACTIVE_PATH, prevPath)
-                  .putString(KEY_ACTIVE_VER, prevVer)
-                  .putString(KEY_BOOT_STATUS, "ROLLED_BACK")
-                  .apply();
-                bootLog.append("Auto-rollback to v").append(prevVer).append("; ");
+                    .putString(KEY_ACTIVE_VER, prevVer)
+                    .putString(KEY_BOOT_STATUS, "ROLLED_BACK")
+                    .apply();
+                bootLog.append("Restored v").append(prevVer).append("; ");
             } else {
                 ed.remove(KEY_ACTIVE_PATH)
-                  .remove(KEY_ACTIVE_VER)
-                  .putString(KEY_BOOT_STATUS, "ROLLED_BACK")
-                  .apply();
-                bootLog.append("Auto-rollback to builtin APK; ");
+                    .remove(KEY_ACTIVE_VER)
+                    .putString(KEY_BOOT_STATUS, "ROLLED_BACK")
+                    .apply();
+                bootLog.append("Restored builtin assets; ");
             }
             bootStatus = "ROLLED_BACK";
         }
 
-        // 3. Продвижение ожидающей (pending) версии в активную при холодном старте
+        // 3. Активация подготовленного кэша при холодном старте
         String pendingPath = prefs.getString(KEY_PENDING_PATH, null);
         String pendingVer = prefs.getString(KEY_PENDING_VER, null);
         if (pendingPath != null) {
@@ -199,30 +198,30 @@ private boolean isRollingBack = false;
                 SharedPreferences.Editor ed = prefs.edit();
                 if (curActivePath != null && new File(curActivePath, "index.html").exists() && "SUCCESS".equals(bootStatus)) {
                     ed.putString(KEY_PREV_PATH, curActivePath);
-                    ed.putString(KEY_PREV_VER, curActiveVer != null ? curActiveVer : "ota");
+                    ed.putString(KEY_PREV_VER, curActiveVer != null ? curActiveVer : "cached");
                 }
                 ed.putString(KEY_ACTIVE_PATH, pendingPath)
-                  .putString(KEY_ACTIVE_VER, pendingVer != null ? pendingVer : "ota")
-                  .remove(KEY_PENDING_PATH)
-                  .remove(KEY_PENDING_VER)
-                  .putString(KEY_BOOT_STATUS, "PENDING")
-                  .apply();
+                    .putString(KEY_ACTIVE_VER, pendingVer != null ? pendingVer : "cached")
+                    .remove(KEY_PENDING_PATH)
+                    .remove(KEY_PENDING_VER)
+                    .putString(KEY_BOOT_STATUS, "PENDING")
+                    .apply();
                 bootStatus = "PENDING";
-                bootLog.append("Promoted v").append(pendingVer).append("; ");
+                bootLog.append("Mounted v").append(pendingVer).append("; ");
             } else {
                 prefs.edit().remove(KEY_PENDING_PATH).remove(KEY_PENDING_VER).apply();
-                bootLog.append("Pending index missing; ");
+                bootLog.append("Staged index missing; ");
             }
         }
 
-        // 4. Загрузка активной версии
+        // 4. Загрузка активного пути ресурсов
         String activePath = prefs.getString(KEY_ACTIVE_PATH, null);
         String activeVer = prefs.getString(KEY_ACTIVE_VER, "builtin");
         if (activePath != null) {
             File indexFile = new File(activePath, "index.html");
             if (indexFile.exists() && this.bridge != null) {
                 this.bridge.setServerBasePath(activePath);
-                bootLog.append("Loaded OTA v").append(activeVer);
+                bootLog.append("Loaded pack v").append(activeVer);
                 if ("PENDING".equals(bootStatus)) {
                     startWatchdogTimer();
                 }
@@ -231,17 +230,19 @@ private boolean isRollingBack = false;
                 bootLog.append("Active index missing, loaded builtin");
             }
         } else {
-            bootLog.append("Running builtin APK");
+            bootLog.append("Running builtin assets");
         }
         prefs.edit().putString(KEY_BOOT_LOG, bootLog.toString()).apply();
     }
 
-    public class NativeOtaBridge {
+    @Keep
+    public class AssetCacheManager {
         private final Context ctx;
-        public NativeOtaBridge(Context c) { this.ctx = c; }
+        public AssetCacheManager(Context c) { this.ctx = c; }
 
+        @Keep
         @JavascriptInterface
-        public void markBootSuccessful() {
+        public void confirmCacheValid() {
             cancelWatchdogTimer();
             SharedPreferences prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
             String activePath = prefs.getString(KEY_ACTIVE_PATH, null);
@@ -250,22 +251,24 @@ private boolean isRollingBack = false;
             ed.putString(KEY_BOOT_STATUS, "SUCCESS");
             if (activePath != null && new File(activePath, "index.html").exists()) {
                 ed.putString(KEY_PREV_PATH, activePath);
-                ed.putString(KEY_PREV_VER, activeVer != null ? activeVer : "ota");
+                ed.putString(KEY_PREV_VER, activeVer != null ? activeVer : "cached");
             }
             ed.apply();
         }
 
+        @Keep
         @JavascriptInterface
-        public String rollbackToPreviousNow() {
+        public String restoreBackupPack() {
             try {
                 SharedPreferences prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-                performSilentRollback(prefs, "JS boot error");
+                restorePreviousCacheState(prefs, "JS runtime fallback");
                 return "OK_ROLLBACK";
             } catch (Exception e) {
                 return "ERR_ROLLBACK:" + e.getMessage();
             }
         }
 
+        @Keep
         @JavascriptInterface
         public String getStatusJson() {
             try {
@@ -285,19 +288,20 @@ private boolean isRollingBack = false;
             }
         }
 
+        @Keep
         @JavascriptInterface
-        public String unpackAndStage(String zipFileName, String version, boolean applyImmediately) {
+        public String syncResourcePack(String cacheFileName, String version, boolean applyImmediately) {
             try {
-                File zipFile = new File(ctx.getFilesDir(), zipFileName);
-                if (!zipFile.exists()) {
-                    return "ERR: Zip missing at " + zipFile.getAbsolutePath();
+                File packFile = new File(ctx.getFilesDir(), cacheFileName);
+                if (!packFile.exists()) {
+                    return "ERR: Cache file missing at " + packFile.getAbsolutePath();
                 }
-                long zipLen = zipFile.length();
-                if (zipLen < 1000) {
-                    return "ERR: Zip too small (" + zipLen + "B)";
+                long packLen = packFile.length();
+                if (packLen < 1000) {
+                    return "ERR: Cache file too small (" + packLen + "B)";
                 }
 
-                File destDir = new File(ctx.getFilesDir(), "ota_bundles/v_" + version.replaceAll("[^a-zA-Z0-9._-]", "_"));
+                File destDir = new File(ctx.getFilesDir(), "asset_packs/v_" + version.replaceAll("[^a-zA-Z0-9._-]", "_"));
                 if (destDir.exists()) {
                     deleteRecursive(destDir);
                 }
@@ -305,7 +309,7 @@ private boolean isRollingBack = false;
 
                 int fileCount = 0;
                 byte[] buffer = new byte[8192];
-                try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(zipFile)))) {
+                try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(packFile)))) {
                     ZipEntry ze;
                     while ((ze = zis.getNextEntry()) != null) {
                         File outFile = new File(destDir, ze.getName());
@@ -333,20 +337,20 @@ private boolean isRollingBack = false;
 
                 File indexCheck = new File(destDir, "index.html");
                 if (!indexCheck.exists()) {
-                    return "ERR: Unzipped " + fileCount + " files, but index.html not in root";
+                    return "ERR: Extracted " + fileCount + " files, but index.html not in root";
                 }
 
-                if (zipFile.exists()) {
-                    zipFile.delete();
+                if (packFile.exists()) {
+                    packFile.delete();
                 }
 
                 SharedPreferences prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
                 String activePath = prefs.getString(KEY_ACTIVE_PATH, null);
                 String prevPath = prefs.getString(KEY_PREV_PATH, null);
 
-                File bundlesDir = new File(ctx.getFilesDir(), "ota_bundles");
-                if (bundlesDir.exists() && bundlesDir.isDirectory()) {
-                    File[] files = bundlesDir.listFiles();
+                File packsDir = new File(ctx.getFilesDir(), "asset_packs");
+                if (packsDir.exists() && packsDir.isDirectory()) {
+                    File[] files = packsDir.listFiles();
                     if (files != null) {
                         for (File f : files) {
                             if (f.isDirectory()) {
@@ -369,15 +373,15 @@ private boolean isRollingBack = false;
                     SharedPreferences.Editor ed = prefs.edit();
                     if (activePath != null && "SUCCESS".equals(prefs.getString(KEY_BOOT_STATUS, "SUCCESS"))) {
                         ed.putString(KEY_PREV_PATH, activePath);
-                        ed.putString(KEY_PREV_VER, curVer != null ? curVer : "ota");
+                        ed.putString(KEY_PREV_VER, curVer != null ? curVer : "cached");
                     }
                     ed.putString(KEY_ACTIVE_PATH, finalPath)
-                      .putString(KEY_ACTIVE_VER, version)
-                      .remove(KEY_PENDING_PATH)
-                      .remove(KEY_PENDING_VER)
-                      .putString(KEY_BOOT_STATUS, "PENDING")
-                      .putString(KEY_BOOT_LOG, "Applied critical v" + version)
-                      .apply();
+                        .putString(KEY_ACTIVE_VER, version)
+                        .remove(KEY_PENDING_PATH)
+                        .remove(KEY_PENDING_VER)
+                        .putString(KEY_BOOT_STATUS, "PENDING")
+                        .putString(KEY_BOOT_LOG, "Synced critical v" + version)
+                        .apply();
                     runOnUiThread(() -> {
                         if (MainActivity.this.bridge != null) {
                             MainActivity.this.bridge.setServerBasePath(finalPath);
@@ -397,8 +401,9 @@ private boolean isRollingBack = false;
             }
         }
 
+        @Keep
         @JavascriptInterface
-        public String applyPendingNow() {
+        public String activateStagedPack() {
             try {
                 SharedPreferences prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
                 String pendingPath = prefs.getString(KEY_PENDING_PATH, null);
@@ -411,22 +416,22 @@ private boolean isRollingBack = false;
                     pendingVer = curActiveVer;
                 }
                 if (pendingPath == null || !new File(pendingPath, "index.html").exists()) {
-                    return "ERR: No staged bundle on disk";
+                    return "ERR: No staged pack on disk";
                 }
 
                 final String pathToApply = pendingPath;
                 SharedPreferences.Editor ed = prefs.edit();
                 if (curActivePath != null && !curActivePath.equals(pathToApply) && "SUCCESS".equals(prefs.getString(KEY_BOOT_STATUS, "SUCCESS"))) {
                     ed.putString(KEY_PREV_PATH, curActivePath);
-                    ed.putString(KEY_PREV_VER, curActiveVer != null ? curActiveVer : "ota");
+                    ed.putString(KEY_PREV_VER, curActiveVer != null ? curActiveVer : "cached");
                 }
                 ed.putString(KEY_ACTIVE_PATH, pathToApply)
-                  .putString(KEY_ACTIVE_VER, pendingVer != null ? pendingVer : "ota")
-                  .remove(KEY_PENDING_PATH)
-                  .remove(KEY_PENDING_VER)
-                  .putString(KEY_BOOT_STATUS, "PENDING")
-                  .putString(KEY_BOOT_LOG, "Manual Dev Apply v" + pendingVer)
-                  .apply();
+                    .putString(KEY_ACTIVE_VER, pendingVer != null ? pendingVer : "cached")
+                    .remove(KEY_PENDING_PATH)
+                    .remove(KEY_PENDING_VER)
+                    .putString(KEY_BOOT_STATUS, "PENDING")
+                    .putString(KEY_BOOT_LOG, "Manual Sync v" + pendingVer)
+                    .apply();
 
                 cancelWatchdogTimer();
 
@@ -451,7 +456,9 @@ private boolean isRollingBack = false;
             f.delete();
         }
     }
-public class NativeYandexAdsBridge {
+
+    @Keep
+    public class NativeYandexAdsBridge {
         private final Context context;
         private RewardedAdLoader rewardedAdLoader;
         private RewardedAd rewardedAd;
@@ -473,6 +480,7 @@ public class NativeYandexAdsBridge {
             });
         }
 
+        @Keep
         @JavascriptInterface
         public void initialize(final String defaultAdUnitId) {
             runOnUiThread(() -> {
@@ -541,6 +549,7 @@ public class NativeYandexAdsBridge {
             });
         }
 
+        @Keep
         @JavascriptInterface
         public void loadRewardedAd(final String adUnitId) {
             runOnUiThread(() -> {
@@ -552,11 +561,13 @@ public class NativeYandexAdsBridge {
             });
         }
 
+        @Keep
         @JavascriptInterface
         public boolean isRewardedAdReady() {
             return rewardedAd != null;
         }
 
+        @Keep
         @JavascriptInterface
         public void showRewardedAd() {
             runOnUiThread(() -> {

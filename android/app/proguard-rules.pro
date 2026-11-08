@@ -3,13 +3,13 @@
 # proguardFiles setting in build.gradle.
 #
 # For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+#   http://android.com
 
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface
 # class:
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
+#    public *;
 #}
 
 # Uncomment this to preserve the line number information for
@@ -22,10 +22,20 @@
 
 # Protect JavaScript Interfaces for WebView
 -keepattributes *Annotation*,JavascriptInterface
--keepclassmembers class io.github.synthwave.defense.dev.MainActivity$NativeYandexAdsBridge {
+
+-keepclassmembers class * {
     @android.webkit.JavascriptInterface <methods>;
 }
--keepclassmembers class io.github.synthwave.defense.dev.MainActivity$NativeOtaBridge {
+
+-keepclassmembers class * extends com.getcapacitor.BridgeActivity {
+    *;
+}
+
+-keepclassmembers class **$NativeYandexAdsBridge {
+    @android.webkit.JavascriptInterface <methods>;
+}
+
+-keepclassmembers class **$AssetCacheManager {
     @android.webkit.JavascriptInterface <methods>;
 }
 

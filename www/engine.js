@@ -3820,8 +3820,31 @@ function handleDevSpawnClick() {
 
 // [ENG.DC]
 function onDomReady() {
-  if (window.AppUpdater && typeof window.AppUpdater.init === 'function') {
-    window.AppUpdater.init();
+  if (window.__APP_STAGE__ === 'development') {
+    import('./dev/ota-service.dev.js')
+      .then(m => m.runOtaUpdate())
+      .catch(err => console.warn('[DevSync] Not loaded:', err));
+  } else {
+    // Production mode: читаем только локальный манифест для версии и легальной докачки музыки (.ogg)
+    fetch('update_manifest.json?t=' + Date.now(), { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(manifest => {
+        if (!manifest) return;
+        if (manifest.version) {
+          window.APP_VERSION = String(manifest.version);
+          const verLabel = document.getElementById('settingsVersionLabel');
+          if (verLabel) {
+            verLabel.textContent = (typeof t === 'function')
+              ? t('version_label', { v: window.APP_VERSION })
+              : `Version: ${window.APP_VERSION}`;
+          }
+        }
+        if (window.MusicDownloader) {
+          window.MusicDownloader.setManifest(manifest);
+          window.MusicDownloader.startBackgroundDownload(manifest);
+        }
+      })
+      .catch(() => {});
   }
 }
 

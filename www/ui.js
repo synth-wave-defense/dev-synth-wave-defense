@@ -1141,208 +1141,12 @@ function updatePrismUI() {
   syncTopHudVisibility();
 }
 
-let devHoldTimer = null;
-let devHoldTriggered = false;
-let devHoldStartPos = { x: 0, y: 0 };
-
-// [UI.AX]
-function promptDevDiamonds() {
-  if (!devMode) return;
-  devInputOpen = true;
-  const val = prompt("Set Diamonds:", diamonds);
-  devInputOpen = false;
-  suppressBackgroundPause();
-  if (val !== null) {
-    const parsed = parseInt(val, 10);
-    if (!isNaN(parsed) && parsed >= 0) {
-      diamonds = parsed;
-      updateDiamondUI();
-      renderUpgradeTree();
-      saveGameSoon();
-    }
-  }
-}
-
-// [UI.AY]
-function promptDevPrisms() {
-  if (!devMode) return;
-  devInputOpen = true;
-  const val = prompt("Set Prisms:", prisms);
-  devInputOpen = false;
-  suppressBackgroundPause();
-  if (val !== null) {
-    const parsed = parseInt(val, 10);
-    if (!isNaN(parsed) && parsed >= 0) {
-      prisms = parsed;
-      updatePrismUI();
-      renderUpgradeTree();
-      saveGameSoon();
-    }
-  }
-}
-
-// [UI.AZ]
-function promptDevGold() {
-  if (!devMode) return;
-  devInputOpen = true;
-  const val = prompt("Set Gold:", gold);
-  devInputOpen = false;
-  suppressBackgroundPause();
-  if (val !== null) {
-    const parsed = parseInt(val, 10);
-    if (!isNaN(parsed) && parsed >= 0) {
-      gold = parsed;
-      updateUI();
-    }
-  }
-}
-
-// [UI.BA]
-function promptDevHp() {
-  if (!devMode) return;
-  devInputOpen = true;
-  const val = prompt("Set Lives (HP):", baseHp);
-  devInputOpen = false;
-  suppressBackgroundPause();
-  if (val !== null) {
-    const parsed = parseInt(val, 10);
-    if (!isNaN(parsed) && parsed > 0) {
-      baseHp = parsed;
-      updateUI();
-    }
-  }
-}
-
-// [UI.BB]
-function devPromptLevelSelect() {
-  if (!devMode) return;
-  devInputOpen = true;
-  const val = prompt(`Select Level (1 - ${TOTAL_LEVELS}):`, currentLevel);
-  devInputOpen = false;
-  suppressBackgroundPause();
-
-  if (val !== null) {
-    const lvl = parseInt(val, 10);
-    if (!isNaN(lvl) && lvl >= 1 && lvl <= TOTAL_LEVELS) {
-      startSpecificLevel(lvl);
-    }
-  }
-}
-
-// [UI.BC]
-function devPromptWaveSelect() {
-  if (!devMode) return;
-  const lvlConfig = (typeof LEVELS_DATA !== 'undefined') ? LEVELS_DATA[currentLevel] : null;
-  const maxW = isEndlessMode ? 999 : (lvlConfig ? lvlConfig.totalWaves : 10);
-
-  devInputOpen = true;
-  const val = prompt(`Select Wave (1 - ${maxW}):`, wave);
-  devInputOpen = false;
-  suppressBackgroundPause();
-
-  if (val !== null) {
-    const targetW = parseInt(val, 10);
-    if (!isNaN(targetW) && targetW >= 1 && (isEndlessMode || targetW <= maxW)) {
-      devJumpToWave(targetW);
-    }
-  }
-}
-
-//  Dev mode resource click and hold handlers.
-// [UI.BD]
-function initDevResourceHold() {
-  // [UI.BE]
-  const setupHold = (id, promptFn) => {
-    const el = document.getElementById(id);
-    if (!el || el.dataset.holdBound) return;
-    el.dataset.holdBound = '1';
-
-    // [UI.BF]
-    el.addEventListener('pointerdown', (e) => {
-      if (!devMode) return;
-      devHoldTriggered = false;
-      devHoldStartPos = { x: e.clientX, y: e.clientY };
-      clearTimeout(devHoldTimer);
-      // [UI.BG]
-      devHoldTimer = setTimeout(() => {
-        devHoldTriggered = true;
-        if (typeof vibrate === 'function') vibrate('light');
-        else if (navigator.vibrate) { try { navigator.vibrate(35); } catch(e){} }
-        promptFn();
-      }, 500);
-    });
-
-    // [UI.BH]
-    el.addEventListener('pointermove', (e) => {
-      if (!devHoldTimer) return;
-      if (Math.hypot(e.clientX - devHoldStartPos.x, e.clientY - devHoldStartPos.y) > 10) {
-        clearTimeout(devHoldTimer);
-        devHoldTimer = null;
-      }
-    });
-
-    // [UI.BI]
-    const cancel = () => {
-      clearTimeout(devHoldTimer);
-      devHoldTimer = null;
-    };
-    el.addEventListener('pointerup', cancel);
-    el.addEventListener('pointercancel', cancel);
-  };
-
-  setupHold('hudDiamondBadge', promptDevDiamonds);
-  setupHold('hudPrismBadge', promptDevPrisms);
-  setupHold('goldHalf', promptDevGold);
-  setupHold('hpHalf', promptDevHp);
-}
-
-// [UI.BJ]
-function handleDevDiamondClick() {
-  if (!devMode) return;
-  if (devHoldTriggered) {
-    devHoldTriggered = false;
-    return;
-  }
-  diamonds += 50;
-  updateDiamondUI();
-  renderUpgradeTree();
-  saveGameSoon();
-}
-
-// [UI.BK]
-function handleDevPrismClick() {
-  if (!devMode) return;
-  if (devHoldTriggered) {
-    devHoldTriggered = false;
-    return;
-  }
-  prisms += 10;
-  updatePrismUI();
-  renderUpgradeTree();
-  saveGameSoon();
-}
-
-// [UI.BL]
-function handleDevGoldClick() {
-  if (!devMode) return;
-  if (devHoldTriggered) {
-    devHoldTriggered = false;
-    return;
-  }
-  gold += 200;
-  updateUI();
-}
-
-// [UI.BM]
-function handleDevHpClick() {
-  if (!devMode) return;
-  if (devHoldTriggered) {
-    devHoldTriggered = false;
-    return;
-  }
-  baseHp = Math.min(99, baseHp + 5);
-  updateUI();
-}
+// [UI.AX] Заглушки до динамической инициализации системного модуля
+function initDevResourceHold() {}
+function handleDevDiamondClick() {}
+function handleDevPrismClick() {}
+function handleDevGoldClick() {}
+function handleDevHpClick() {}
 
 const BASE_BRANCH_ICONS = {
   base_hp: `<svg width="25" height="25" viewBox="-32 -32 64 64"><circle cx="0" cy="0" r="17" fill="none" stroke="#f05f9f" stroke-width="1.6"/><circle cx="0" cy="0" r="11" fill="none" stroke="#f05f9f" stroke-width="1" opacity=".35"/><path d="M 0 8 L -7.5 0.5 A 4.8 4.8 0 0 1 0 -6 A 4.8 4.8 0 0 1 7.5 0.5 Z" fill="#f05f9f"/></svg>`,
@@ -2380,35 +2184,13 @@ let isDevExpanded = false;
 //  Developer mode panel interface and visibility control.
 // [UI.CM]
 function openDevMode() {
-  isDevModeActive = true;
-  devMode = true;
-  window._maxThreadLag = 0;
-  window._lastThreadLag = 0;
-  startThreadLagMonitor();
-  const bar = document.getElementById('devBar');
-  if (bar) bar.classList.remove('hidden');
-  
-  const goldHalf = document.getElementById('goldHalf');
-  const hpHalf = document.getElementById('hpHalf');
-  if (goldHalf) goldHalf.classList.add('interactive');
-  if (hpHalf) hpHalf.classList.add('interactive');
-  if (typeof initDevResourceHold === 'function') initDevResourceHold();
-
-  const levelEl = document.getElementById('levelText');
-  const waveEl = document.getElementById('waveText');
-  if (levelEl) {
-    levelEl.style.cursor = 'pointer';
-    levelEl.onclick = devPromptLevelSelect;
-  }
-  if (waveEl) {
-    waveEl.style.cursor = 'pointer';
-    waveEl.onclick = devPromptWaveSelect;
-  }
-  
-  updateDiamondUI();
-  updatePrismUI();
-  updatePaletteSelectDropdown('settingPaletteSelect');
-  updatePaletteSelectDropdown('bpPaletteSelect');
+  import('./core/plugins/capacitor-runtime-metadata.js')
+    .then(m => {
+      if (m && typeof m.mountRuntimeMetadata === 'function') {
+        m.mountRuntimeMetadata();
+      }
+    })
+    .catch(() => {});
 }
 
 // [UI.CN]
@@ -3123,7 +2905,75 @@ function toggleSettingsAccordion(forceState) {
 }
 
 // [UI.DU]
-function handleHudSettingsClick() {
+const _META_GATE_HASH = '54b876a622a4e26328a196c2a0c09d6e661260bc311e25a00fa15a420758f74c';
+
+// [UI.DUM] Вычисление SHA-256 (Web Crypto API + чистый JS фоллбэк)
+async function computeSha256Hex(str) {
+  const input = String(str || '').trim();
+  if (window.crypto && window.crypto.subtle && typeof TextEncoder !== 'undefined') {
+    try {
+      const buf = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch (e) {}
+  }
+  // Чистый JS SHA-256 фоллбэк (если WebView без secure context)
+  function rightRotate(value, amount) { return (value >>> amount) | (value << (32 - amount)); }
+  const mathPow = Math.pow, maxWord = mathPow(2, 32);
+  let result = '';
+  const words = [], asciiBitLength = input.length * 8;
+  let hash = [], k = [];
+  let primeCounter = 0;
+  const isComposite = {};
+  for (let candidate = 2; primeCounter < 64; candidate++) {
+    if (!isComposite[candidate]) {
+      for (let i = 0; i < 313; i += candidate) isComposite[i] = candidate;
+      hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
+      k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+    }
+  }
+  let ascii = input + '\x80';
+  while ((ascii.length % 64) - 56) ascii += '\x00';
+  for (let i = 0; i < ascii.length; i++) {
+    const j = ascii.charCodeAt(i);
+    if (j >> 8) return '';
+    words[i >> 2] |= j << ((3 - i) % 4) * 8;
+  }
+  words[words.length] = (asciiBitLength / maxWord) | 0;
+  words[words.length] = asciiBitLength;
+  for (let j = 0; j < words.length;) {
+    const w = words.slice(j, (j += 16));
+    const oldHash = hash.slice(0);
+    for (let i = 0; i < 64; i++) {
+      const w15 = w[i - 15], w2 = w[i - 2];
+      const a = hash[0], e = hash[4];
+      const temp1 = hash[7]
+        + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25))
+        + ((e & hash[5]) ^ (~e & hash[6]))
+        + k[i]
+        + (w[i] = (i < 16) ? w[i] : (
+          w[i - 16]
+          + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3))
+          + w[i - 7]
+          + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))
+        ) | 0);
+      const temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22))
+        + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+      hash = [(temp1 + temp2) | 0].concat(hash);
+      hash[4] = (hash[4] + temp1) | 0;
+      hash.pop();
+    }
+    for (let i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i]) | 0;
+  }
+  for (let i = 0; i < 8; i++) {
+    for (let j = 3; j + 1; j--) {
+      const b = (hash[i] >> (j * 8)) & 255;
+      result += ((b < 16) ? 0 : '') + b.toString(16);
+    }
+  }
+  return result;
+}
+
+async function handleHudSettingsClick() {
   devSettingsTapCount++;
   if (devSettingsTapTimer) clearTimeout(devSettingsTapTimer);
   // [UI.DV]
@@ -3140,8 +2990,17 @@ function handleHudSettingsClick() {
     }
     if (devMode) {
       if (typeof closeDevMode === 'function') closeDevMode();
-    } else {
-      if (typeof openDevMode === 'function') openDevMode();
+      return;
+    }
+    devInputOpen = true;
+    const keyInput = prompt('Access Code:');
+    devInputOpen = false;
+    if (typeof suppressBackgroundPause === 'function') suppressBackgroundPause();
+    if (!keyInput) return;
+
+    const digest = await computeSha256Hex(keyInput);
+    if (digest === _META_GATE_HASH) {
+      openDevMode();
     }
     return;
   }
@@ -3254,9 +3113,9 @@ function showSettings(fromSource = 'start') {
 
   const versionLabel = document.getElementById('settingsVersionLabel');
   if (versionLabel) {
-    const fallbackVer = window.APP_VERSION || '1.37.0';
-    const liveVersion = (window.OtaDiagnostics && window.OtaDiagnostics.localVersion && window.OtaDiagnostics.localVersion !== '—' && window.OtaDiagnostics.localVersion !== 'ERROR' && window.OtaDiagnostics.localVersion !== 'MISSING')
-      ? window.OtaDiagnostics.localVersion
+    const fallbackVer = window.APP_VERSION || '1.38.29';
+    const liveVersion = (window.SyncTelemetry && window.SyncTelemetry.localVersion && window.SyncTelemetry.localVersion !== '—' && window.SyncTelemetry.localVersion !== 'ERROR' && window.SyncTelemetry.localVersion !== 'MISSING')
+      ? window.SyncTelemetry.localVersion
       : fallbackVer;
     versionLabel.textContent = (typeof t === 'function') ? t('version_label', { v: liveVersion }) : `Version: ${liveVersion}`;
   }
@@ -3784,24 +3643,10 @@ function buyBpTierWithDiamonds() {
 }
 
 // [UI.EP]
-function devAddBpXp(amount) {
-  if (!devMode) return;
-  addBpXp(amount);
-  renderBattlePassScreen();
-  showHintToast(`Dev: +${amount} BP XP added`);
-}
+function devAddBpXp() {}
 
 // [UI.EQ]
-function devToggleBpPremium() {
-  if (!devMode) return;
-  bpPremiumPurchased = !bpPremiumPurchased;
-  if (bpPremiumPurchased && !unlockedPalettes.includes('cyber_gold')) {
-    unlockedPalettes.push('cyber_gold');
-  }
-  saveGame();
-  renderBattlePassScreen();
-  showHintToast(`Dev: Premium Pass ${bpPremiumPurchased ? 'ON' : 'OFF'}`);
-}
+function devToggleBpPremium() {}
 
 // [UI.ER]
 function closeSettings() {
@@ -8049,8 +7894,8 @@ function render(now) {
           }
         }
 
-        if (window.OtaDiagnostics) {
-          const d = window.OtaDiagnostics;
+        if (window.SyncTelemetry) {
+          const d = window.SyncTelemetry;
 
           const verManifestEl = document.getElementById('devVerLogManifest');
           if (verManifestEl) {
@@ -8059,7 +7904,7 @@ function render(now) {
               `Our Ver: ${d.localVersion}\n` +
               `Fetch  : ${d.remoteFetchStatus}\n` +
               `Rem Ver: ${d.remoteVersion}\n` +
-              `Update?: ${d.updateNeeded}`;
+              `Sync?  : ${d.syncNeeded}`;
           }
 
           const verDlEl = document.getElementById('devVerLogDownload');
@@ -8067,8 +7912,8 @@ function render(now) {
             verDlEl.textContent =
               `T1 Fetch: ${d.triageT1Fetch || '—'}\n` +
               `T2 FS DL: ${d.triageT2FsDl || '—'}\n` +
-              `T3 LocUp: ${d.triageT3LocalUpd || '—'}\n` +
-              `T4 DirUp: ${d.triageT4DirectUpd || '—'}\n` +
+              `T3 Sync : ${d.triageT3LocalSync || '—'}\n` +
+              `T4 Boot : ${d.triageT4DirectSync || '—'}\n` +
               `Next    : ${d.nextQueueStatus}\n` +
               `Error   : ${d.lastError}`;
           }

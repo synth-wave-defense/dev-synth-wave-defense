@@ -5,16 +5,13 @@
 <head>
   <meta charset="UTF-8">
   <script>
-    // Environment Check: dynamically loads dev_gate.js if running in dev environment or localhost.
-    const isDevHost = window.location.hostname.includes('dev-synth-wave-defense') || 
-                      window.location.hostname === 'localhost' || 
-                      window.location.protocol === 'file:';
-
-    if (isDevHost && window.location.hostname !== 'synth-wave-defense.github.io') {
-      const s = document.createElement("script");
-      s.src = "dev_gate.js";
-      document.head.appendChild(s);
-    }
+  window.APP_VERSION = '1.38.29';
+  window.__APP_STAGE__ = 'development';
+  if (window.__APP_STAGE__ === 'development' && window.location.hostname !== 'synth-wave-defense.github.io') {
+    const s = document.createElement("script");
+    s.src = "dev_gate.js";
+    document.head.appendChild(s);
+  }
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#03050d">
@@ -147,7 +144,7 @@
 
   function isManualDevApply() {
     try {
-      return sessionStorage.getItem('ota_manual_apply') === '1';
+      return sessionStorage.getItem('cache_manual_sync') === '1';
     } catch (e) {
       return false;
     }
@@ -169,8 +166,8 @@
 
   function trySilentRollback() {
     try {
-      if (window.NativeOtaBridge && typeof window.NativeOtaBridge.rollbackToPreviousNow === 'function') {
-        var res = window.NativeOtaBridge.rollbackToPreviousNow();
+      if (window.AssetCacheManager && typeof window.AssetCacheManager.restoreBackupPack === 'function') {
+        var res = window.AssetCacheManager.restoreBackupPack();
         if (res && res.indexOf('OK_') === 0) {
           return true;
         }
@@ -246,7 +243,6 @@
 <script src="audio.js"></script>
 <script src="music_downloader.js"></script>
 <script src="music.js"></script>
-<script src="updater.js"></script>
 
 <!-- [HTM.H] -->
 <canvas id="gameCanvas"></canvas>
@@ -628,9 +624,9 @@
 
         <div class="dev-actions-row" style="display:flex; gap:4px; margin-top:4px;">
           <!-- [HTM.AG] -->
-          <button type="button" class="dev-btn" onclick="window.AppUpdater && window.AppUpdater.init()" style="flex:1; font-size:9px; padding:4px 2px;">CHECK</button>
+          <button type="button" class="dev-btn" onclick="window.ResourceSync && window.ResourceSync.init()" style="flex:1; font-size:9px; padding:4px 2px;">CHECK</button>
           <!-- [HTM.AH] -->
-          <button type="button" class="dev-btn" onclick="window.AppUpdater && window.AppUpdater.forceApplyNow()" style="flex:1; font-size:9px; padding:4px 2px;">APPLY NOW</button>
+          <button type="button" class="dev-btn" onclick="window.ResourceSync && window.ResourceSync.forceApplyNow()" style="flex:1; font-size:9px; padding:4px 2px;">APPLY NOW</button>
         </div>
       </div>
     <!-- ================= 2 УРОВЕНЬ: ADS ================= -->
@@ -1724,9 +1720,9 @@ loadGame().then(() => {
   }
 
   window.__gameBooted = true;
-  try { sessionStorage.removeItem('ota_manual_apply'); } catch (e) {}
-  if (window.NativeOtaBridge && typeof window.NativeOtaBridge.markBootSuccessful === 'function') {
-    try { window.NativeOtaBridge.markBootSuccessful(); } catch (e) {}
+  try { sessionStorage.removeItem('cache_manual_sync'); } catch (e) {}
+  if (window.AssetCacheManager && typeof window.AssetCacheManager.confirmCacheValid === 'function') {
+    try { window.AssetCacheManager.confirmCacheValid(); } catch (e) {}
   }
   safeTrack('app_launch', {});
 
