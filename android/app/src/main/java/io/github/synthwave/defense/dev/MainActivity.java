@@ -164,12 +164,31 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
-    private void installGlobalCrashInterceptor() {
+	private void installGlobalCrashInterceptor() {
         final Thread.UncaughtExceptionHandler defaultHandler = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
             try {
                 String stack = Log.getStackTraceString(throwable);
                 String tName = thread != null ? thread.getName() : "unknown";
+                boolean isMainThread = (thread == Looper.getMainLooper().getThread());
+
+                // Проверяем, является ли это фоновым крашем рекламного SDK / корутин
+                boolean isBgSdkCrash = !isMainThread && (
+                    tName.contains("YandexAds") ||
+                    tName.contains("ExoPlayer") ||
+                    tName.contains(" OkHttp") ||
+                    stack.contains("com.monetization.ads") ||
+                    stack.contains("com.yandex.mobile.ads") ||
+                    stack.contains("CompletionHandlerException")
+                );
+
+                if (isBgSdkCrash) {
+                    // Поглощаем ошибку фонового потока SDK без закрытия игры!
+                    recordStep("SUPPRESSED BG SDK EXCEPTION on [" + tName + "]: "
+                        + throwable.getClass().getSimpleName() + " - " + throwable.getMessage());
+                    return;
+                }
+
                 String header = "FATAL UNCAUGHT EXCEPTION on thread [" + tName + "]:\n"
                     + throwable.getClass().getName() + ": " + throwable.getMessage() + "\n" + stack;
 
@@ -183,17 +202,23 @@ public class MainActivity extends BridgeActivity {
                     .commit();
 
                 writeLogFileToDisk();
-            } catch (Throwable ignored) {
-            } finally {
-                if (defaultHandler != null) {
-                    defaultHandler.uncaughtException(thread, throwable);
-                } else {
-                    System.exit(1);
+
+                // Если краш случился не на главном потоке, также не убиваем процесс
+                if (!isMainThread) {
+                    recordStep("Non-main thread crash absorbed to keep app alive: " + tName);
+                    return;
                 }
+            } catch (Throwable ignored) {
+            }
+
+            if (defaultHandler != null) {
+                defaultHandler.uncaughtException(thread, throwable);
+            } else {
+                System.exit(1);
             }
         });
     }
-
+  
     private synchronized void recordStep(String msg) {
         long elapsed = System.currentTimeMillis() - bootStartTimeMs;
         String timeStr = new SimpleDateFormat("HH:mm:ss.SSS", Locale.US).format(new Date());
