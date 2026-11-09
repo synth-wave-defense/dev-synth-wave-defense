@@ -150,8 +150,11 @@
     }
   }
 
-  function logLocally(info) {
+function logLocally(info) {
     try {
+      if (window.AssetCacheManager && typeof window.AssetCacheManager.logJsDiagnostic === 'function') {
+        window.AssetCacheManager.logJsDiagnostic('CRASH: ' + info.message + ' @ ' + info.source + ':' + info.lineno + '\n' + (info.stack || ''));
+      }
       var existing = JSON.parse(localStorage.getItem(ERROR_LOG_KEY) || '[]');
       existing.push(info);
       if (existing.length > 20) existing = existing.slice(existing.length - 20);
