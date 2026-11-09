@@ -41,11 +41,11 @@ jobs:
           npm run build
           # Remove any .js.map files if generated anywhere
           find www -name "*.map" -type f -delete
-          # Strip AssetCacheManager registration from MainActivity.java for Google Play compliance
+          # Strip only the registration & call lines in onCreate() without breaking Java syntax
           MAIN_ACT=$(find android/app/src/main/java -name "MainActivity.java" | head -n 1)
           if [ -n "$MAIN_ACT" ]; then
-            sed -i '/AssetCacheManager/d' "$MAIN_ACT"
-            sed -i '/verifyAndMountAssetCache/d' "$MAIN_ACT"
+            sed -i '/addJavascriptInterface(new AssetCacheManager/d' "$MAIN_ACT"
+            sed -i '/verifyAndMountAssetCache();/d' "$MAIN_ACT"
           fi
           npx cap sync android
 

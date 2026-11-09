@@ -474,7 +474,7 @@ public class MainActivity extends BridgeActivity {
                     if (MainActivity.this.bridge != null && MainActivity.this.bridge.getWebView() != null) {
                         MainActivity.this.bridge.getWebView().evaluateJavascript(jsCode, null);
                     }
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     e.printStackTrace();
                 }
             });
@@ -484,80 +484,112 @@ public class MainActivity extends BridgeActivity {
         @JavascriptInterface
         public void initialize(final String defaultAdUnitId) {
             runOnUiThread(() -> {
-                MobileAds.initialize(context, new InitializationListener() {
-                    @Override
-                    public void onInitializationCompleted() {
-                        setupLoader();
-                        if (defaultAdUnitId != null && !defaultAdUnitId.isEmpty()) {
-                            loadRewardedAd(defaultAdUnitId);
+                try {
+                    MobileAds.initialize(context, new InitializationListener() {
+                        @Override
+                        public void onInitializationCompleted() {
+                            try {
+                                setupLoader();
+                                if (defaultAdUnitId != null && !defaultAdUnitId.isEmpty()) {
+                                    loadRewardedAd(defaultAdUnitId);
+                                }
+                            } catch (Throwable t) {
+                                t.printStackTrace();
+                            }
                         }
-                    }
-                });
+                    });
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                    String msg = t.getMessage() != null ? t.getMessage().replace("'", "\\'") : "Init error";
+                    runJs("window.onYandexAdFailedToLoad && window.onYandexAdFailedToLoad('Native init error: " + msg + "');");
+                }
             });
         }
 
         private void setupLoader() {
             if (rewardedAdLoader != null) return;
-            rewardedAdLoader = new RewardedAdLoader(context);
-            rewardedAdLoader.setAdLoadListener(new RewardedAdLoadListener() {
-                @Override
-                public void onAdLoaded(@NonNull RewardedAd ad) {
-                    rewardedAd = ad;
-                    isAdLoading = false;
-                    attachEventListener(ad);
-                    runJs("window.onYandexAdLoaded && window.onYandexAdLoaded();");
-                }
+            try {
+                rewardedAdLoader = new RewardedAdLoader(context);
+                rewardedAdLoader.setAdLoadListener(new RewardedAdLoadListener() {
+                    @Override
+                    public void onAdLoaded(@NonNull RewardedAd ad) {
+                        rewardedAd = ad;
+                        isAdLoading = false;
+                        attachEventListener(ad);
+                        runJs("window.onYandexAdLoaded && window.onYandexAdLoaded();");
+                    }
 
-                @Override
-                public void onAdFailedToLoad(@NonNull AdRequestError adRequestError) {
-                    rewardedAd = null;
-                    isAdLoading = false;
-                    String safeDescription = adRequestError.getDescription().replace("'", "\\'");
-                    runJs("window.onYandexAdFailedToLoad && window.onYandexAdFailedToLoad('" + safeDescription + "');");
-                }
-            });
+                    @Override
+                    public void onAdFailedToLoad(@NonNull AdRequestError adRequestError) {
+                        rewardedAd = null;
+                        isAdLoading = false;
+                        String desc = adRequestError.getDescription() != null ? adRequestError.getDescription() : "Load error";
+                        String safeDescription = desc.replace("'", "\\'");
+                        runJs("window.onYandexAdFailedToLoad && window.onYandexAdFailedToLoad('" + safeDescription + "');");
+                    }
+                });
+            } catch (Throwable t) {
+                t.printStackTrace();
+                rewardedAdLoader = null;
+            }
         }
 
         private void attachEventListener(RewardedAd ad) {
-            ad.setAdEventListener(new RewardedAdEventListener() {
-                @Override
-                public void onAdShown() {}
+            try {
+                ad.setAdEventListener(new RewardedAdEventListener() {
+                    @Override
+                    public void onAdShown() {}
 
-                @Override
-                public void onAdFailedToShow(@NonNull AdError adError) {
-                    rewardedAd = null;
-                    String safeDescription = adError.getDescription().replace("'", "\\'");
-                    runJs("window.onYandexAdFailedToShow && window.onYandexAdFailedToShow('" + safeDescription + "');");
-                }
+                    @Override
+                    public void onAdFailedToShow(@NonNull AdError adError) {
+                        rewardedAd = null;
+                        String desc = adError.getDescription() != null ? adError.getDescription() : "Show error";
+                        String safeDescription = desc.replace("'", "\\'");
+                        runJs("window.onYandexAdFailedToShow && window.onYandexAdFailedToShow('" + safeDescription + "');");
+                    }
 
-                @Override
-                public void onAdDismissed() {
-                    rewardedAd = null;
-                    runJs("window.onYandexAdDismissed && window.onYandexAdDismissed();");
-                }
+                    @Override
+                    public void onAdDismissed() {
+                        rewardedAd = null;
+                        runJs("window.onYandexAdDismissed && window.onYandexAdDismissed();");
+                    }
 
-                @Override
-                public void onAdClicked() {}
+                    @Override
+                    public void onAdClicked() {}
 
-                @Override
-                public void onRewarded(@NonNull Reward reward) {
-                    runJs("window.onYandexAdRewarded && window.onYandexAdRewarded();");
-                }
+                    @Override
+                    public void onRewarded(@NonNull Reward reward) {
+                        runJs("window.onYandexAdRewarded && window.onYandexAdRewarded();");
+                    }
 
-                @Override
-                public void onAdImpression(@Nullable ImpressionData impressionData) {}
-            });
+                    @Override
+                    public void onAdImpression(@Nullable ImpressionData impressionData) {}
+                });
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
         }
 
         @Keep
         @JavascriptInterface
         public void loadRewardedAd(final String adUnitId) {
             runOnUiThread(() -> {
-                if (isAdLoading || rewardedAd != null) return;
-                setupLoader();
-                isAdLoading = true;
-                AdRequestConfiguration config = new AdRequestConfiguration.Builder(adUnitId).build();
-                rewardedAdLoader.loadAd(config);
+                try {
+                    if (isAdLoading || rewardedAd != null) return;
+                    setupLoader();
+                    if (rewardedAdLoader == null) {
+                        runJs("window.onYandexAdFailedToLoad && window.onYandexAdFailedToLoad('Loader unavailable');");
+                        return;
+                    }
+                    isAdLoading = true;
+                    AdRequestConfiguration config = new AdRequestConfiguration.Builder(adUnitId).build();
+                    rewardedAdLoader.loadAd(config);
+                } catch (Throwable t) {
+                    isAdLoading = false;
+                    t.printStackTrace();
+                    String msg = t.getMessage() != null ? t.getMessage().replace("'", "\\'") : "Load exception";
+                    runJs("window.onYandexAdFailedToLoad && window.onYandexAdFailedToLoad('" + msg + "');");
+                }
             });
         }
 
@@ -571,12 +603,18 @@ public class MainActivity extends BridgeActivity {
         @JavascriptInterface
         public void showRewardedAd() {
             runOnUiThread(() -> {
-                if (rewardedAd != null) {
-                    rewardedAd.show(MainActivity.this);
-                } else {
-                    runJs("window.onYandexAdFailedToShow && window.onYandexAdFailedToShow('Ad not ready');");
+                try {
+                    if (rewardedAd != null) {
+                        rewardedAd.show(MainActivity.this);
+                    } else {
+                        runJs("window.onYandexAdFailedToShow && window.onYandexAdFailedToShow('Ad not ready');");
+                    }
+                } catch (Throwable t) {
+                    rewardedAd = null;
+                    t.printStackTrace();
+                    String msg = t.getMessage() != null ? t.getMessage().replace("'", "\\'") : "Show exception";
+                    runJs("window.onYandexAdFailedToShow && window.onYandexAdFailedToShow('" + msg + "');");
                 }
             });
         }
     }
-}

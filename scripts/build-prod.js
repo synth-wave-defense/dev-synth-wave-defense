@@ -76,7 +76,7 @@ function getAllJsFiles(dir, list = []) {
 const jsFiles = getAllJsFiles(WWW_DIR);
 for (const jsFile of jsFiles) {
   execSync(
-    `npx --yes terser "${jsFile}" -o "${jsFile}" --compress dead_code=true,unused=true,conditionals=true --mangle`,
+    `npx --yes terser "${jsFile}" -o "${jsFile}" --compress dead_code=true,unused=false,conditionals=true`,
     { stdio: 'inherit' }
   );
 }
