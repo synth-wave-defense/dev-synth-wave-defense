@@ -34,14 +34,20 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Sanitize AndroidManifest (Remove invalid Yandex dummy ID)
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          if [ -f "$MANIFEST" ]; then
+            sed -i '/com.yandex.mobile.ads.APPLICATION_ID/d' "$MANIFEST"
+            sed -i '/xxxxxx-x/d' "$MANIFEST"
+          fi
+
       - name: Remove OTA plugin & Clean Native OTA Bridge for Production
         if: ${{ github.event.inputs.app_stage == 'production' }}
         run: |
           npm uninstall @capgo/capacitor-updater || true
           npm run build
-          # Remove any .js.map files if generated anywhere
           find www -name "*.map" -type f -delete
-          # Strip only the registration & call lines in onCreate() without breaking Java syntax
           MAIN_ACT=$(find android/app/src/main/java -name "MainActivity.java" | head -n 1)
           if [ -n "$MAIN_ACT" ]; then
             sed -i '/addJavascriptInterface(new AssetCacheManager/d' "$MAIN_ACT"

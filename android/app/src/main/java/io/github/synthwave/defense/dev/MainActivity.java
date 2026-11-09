@@ -56,7 +56,7 @@ public class MainActivity extends BridgeActivity {
                 this.bridge.getWebView().addJavascriptInterface(new NativeYandexAdsBridge(this), "NativeYandexAdsBridge");
             }
             verifyAndMountAssetCache();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
     }
