@@ -6,9 +6,9 @@ const MOB_BEAUTIFICATION_DEFAULT = {
   cornerBrackets: false,   // #2: Угловые силовые бамперы (снаружи корпуса)
   chassisStruts: true,     // #3: Силовые ребра жесткости шасси
   darkGlassFill: true,     // #4: Обсидиановая заливка корпуса
-  vinylGrooves: true,      // #5: Виниловые звуковые дорожки
+  vinylGrooves: false,      // #5: Виниловые звуковые дорожки
   liveWaveform: true,      // #6: Живая осциллограмма в ядре (по форме моба)
-  vuEqualizer: false,      // #7: Спектральный эквалайзер (VU-Meter для боссов/минибоссов)
+  vuEqualizer: true,      // #7: Спектральный эквалайзер (VU-Meter для боссов/минибоссов)
   subBassKick: false,      // #8: Сабвуферный бас-импульс (125 BPM)
   beatNeonBloom: true,     // #9: Вспышка неона на сильную долю
   sonicBowWave: false,     // #10: Носовая акустическая волна
@@ -29,12 +29,11 @@ const MOB_BEAUTIFICATION_DEFAULT = {
 const MOB_MODE_OVERRIDES = {
   normal: {},
   endless: {
-    vuEqualizer: true,
-    bossOrbitals: true
+    cornerBrackets: true,
+	sonicBowWave: true
   },
   overdrive: {
-    hardcoreFlame: true,
-    subBassKick: true,
+    vinylGrooves: true,
     glowDistance: 1.5
   }
 };

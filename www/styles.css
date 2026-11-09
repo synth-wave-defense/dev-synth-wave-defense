@@ -4268,29 +4268,31 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 /* [STY.DK] */
 
 .result-btn-pill {
-  width: 248px;
-  max-width: 100%;
-  padding: 13px 24px;
-  border-radius: 26px;
-  background: rgba(8, 12, 24, 0.55);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(0, 229, 255, 0.22);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 2px;
-  color: #dff9ff;
-  text-transform: uppercase;
-  cursor: pointer;
-  box-sizing: border-box;
-  transition: transform 0.06s ease-out, background 0.06s ease-out, border-color 0.06s ease-out, box-shadow 0.06s ease-out;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
+  width: 248px !important;
+  max-width: 100% !important;
+  min-height: 48px !important;
+  padding: 12px 24px !important;
+  border-radius: 26px !important;
+  background: rgba(8, 12, 24, 0.75) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1.5px solid rgba(0, 229, 255, 0.35) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  font-family: 'Montserrat', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  letter-spacing: 2px !important;
+  color: #dff9ff !important;
+  text-transform: uppercase !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  box-sizing: border-box !important;
+  transition: transform 0.08s ease-out, background 0.15s ease-out, border-color 0.15s ease-out, box-shadow 0.15s ease-out !important;
+  user-select: none !important;
+  -webkit-tap-highlight-color: transparent !important;
 }
 
 .result-btn-pill:active {
@@ -4298,24 +4300,39 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   border-color: var(--neon-primary, #00e5ff) !important;
   color: #ffffff !important;
   box-shadow: 0 0 24px var(--neon-glow, rgba(0, 229, 255, 0.6)), inset 0 0 10px rgba(0, 229, 255, 0.25) !important;
-  background: rgba(14, 22, 44, 0.85) !important;
+  background: rgba(14, 22, 44, 0.95) !important;
 }
 
+/* Фиксированная системная оранжевая кнопка RESUME по GDTRD */
 .result-btn-resume {
-  background: linear-gradient(180deg, rgba(0, 229, 255, 0.18) 0%, rgba(0, 74, 96, 0.12) 100%);
-  border: 1.8px solid var(--neon-primary, #00e5ff);
-  color: #ffffff;
-  font-weight: 900;
-  box-shadow: 0 0 16px rgba(0, 229, 255, 0.35);
+  background: linear-gradient(135deg, rgba(255, 145, 0, 0.38) 0%, rgba(255, 145, 0, 0.18) 50%, rgba(255, 145, 0, 0.38) 100%), rgba(10, 14, 26, 0.88) !important;
+  border: 1.8px solid #ff9100 !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  box-shadow: 0 0 22px rgba(255, 145, 0, 0.45), inset 0 0 12px rgba(255, 145, 0, 0.22) !important;
+  text-shadow: 0 0 12px #ff9100 !important;
+}
+
+.result-btn-resume:active {
+  transform: scale(0.92) translateY(2px) !important;
+  background: linear-gradient(135deg, rgba(255, 145, 0, 0.58) 0%, rgba(255, 145, 0, 0.28) 50%, rgba(255, 145, 0, 0.58) 100%), rgba(14, 20, 36, 0.95) !important;
+  border-color: #ffc166 !important;
+  box-shadow: 0 0 34px rgba(255, 145, 0, 0.85), inset 0 0 16px rgba(255, 145, 0, 0.4) !important;
+}
+
+.result-btn-resume .resume-play-icon {
+  color: #ff9100 !important;
+  filter: drop-shadow(0 0 6px #ff9100) !important;
 }
 
 .result-btn-retry {
-  color: #dff9ff;
+  color: #dff9ff !important;
 }
 
 .result-btn-giveup {
-  color: #f05f9f;
-  font-weight: 900;
+  color: #f05f9f !important;
+  border-color: rgba(240, 95, 159, 0.45) !important;
+  font-weight: 900 !important;
 }
 /* [STY.DL] */
 .result-btn-giveup:active {
@@ -4450,29 +4467,31 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   z-index: 20;
   width: 100%;
   max-width: 320px;
-  margin: 4px auto;
-  background: linear-gradient(180deg, rgba(4, 26, 41, 0.95) 0%, rgba(3, 16, 25, 0.98) 100%);
+  margin: 6px auto;
+  background: linear-gradient(180deg, rgba(8, 14, 28, 0.95) 0%, rgba(4, 8, 18, 0.98) 100%) !important;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1.3px solid #0e3a52;
+  border: 1.3px solid rgba(var(--c1-rgb, 0, 229, 255), 0.35) !important;
   border-radius: 18px;
   overflow: visible;
   flex-shrink: 0 !important;
   box-sizing: border-box !important;
   transition: border-color 0.2s ease, background 0.2s ease;
+  pointer-events: auto !important;
 }
 
 .loadout-widget-expanded {
-  padding: 4px 14px 14px;
-  border-top: 1px solid rgba(140, 200, 255, 0.1);
+  padding: 8px 14px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
   max-height: none !important;
   overflow: visible !important;
+  pointer-events: auto !important;
 }
-.loadout-widget-expanded.hidden { display: none; }
+.loadout-widget-expanded.hidden { display: none !important; }
 
 .settings-collapsible-body {
-  padding: 4px 14px 14px;
-  border-top: 1px solid rgba(140, 200, 255, 0.1);
+  padding: 8px 14px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
   max-height: none !important;
   overflow: visible !important;
 }
@@ -4480,7 +4499,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 .settings-collapsible-body.hidden {
   display: none !important;
 }
-.loadout-widget.hidden { display: none; }
+.loadout-widget.hidden { display: none !important; }
 
 .loadout-widget-header,
 .settings-collapsible-header {
@@ -4493,6 +4512,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   transition: background 0.15s ease;
+  pointer-events: auto !important;
 }
 
 .loadout-widget-label,
@@ -4501,7 +4521,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 2px;
-  color: #8ef3ff;
+  color: var(--c1-light, #ffffff);
   text-transform: uppercase;
   display: flex;
   align-items: center;
@@ -4512,9 +4532,9 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   display: inline-block;
   padding: 1px 7px;
   border-radius: 9px;
-  background: rgba(0, 229, 255, 0.14);
-  border: 1px solid rgba(0, 229, 255, 0.45);
-  color: #8ef3ff;
+  background: rgba(var(--c1-rgb, 0, 229, 255), 0.14);
+  border: 1px solid rgba(var(--c1-rgb, 0, 229, 255), 0.45);
+  color: var(--c1-light, #ffffff);
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.5px;
@@ -4522,15 +4542,16 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
 }
 /* [STY.DR] */
 .loadout-widget-count.is-full {
-  background: rgba(0, 229, 255, 0.22);
+  background: rgba(var(--c1-rgb, 0, 229, 255), 0.22);
   border-color: var(--neon-primary, #00e5ff);
   color: #ffffff;
-  box-shadow: 0 0 8px rgba(0, 229, 255, 0.35);
+  box-shadow: 0 0 8px rgba(var(--c1-rgb, 0, 229, 255), 0.35);
 }
 .loadout-widget-right {
   display: flex;
   align-items: center;
   gap: 10px;
+  pointer-events: none;
 }
 
 .loadout-widget-mini-icons {
@@ -4544,7 +4565,7 @@ input:checked + .slider:before { transform: translateX(20px); background-color: 
   height: 30px;
   border-radius: 50%;
   background: #0d1322;
-  border: 1.5px solid rgba(140, 200, 255, 0.3);
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6505,12 +6526,24 @@ body:not([data-theme="default"]) .bp-btn-buy-tier {
   border-color: rgba(var(--c2-rgb), 0.5);
 }
 
-/* 8. АККОРДЕОНЫ SETTINGS И LOADOUT */
+/* Кнопка ПРОДОЛЖИТЬ (Resume) в паузе: убираем жесткую бирюзовую заливку и привязываем к теме (--c4 / --c1) */
+.result-btn-resume {
+  background: linear-gradient(135deg, rgba(var(--c4-rgb, 255, 145, 0), 0.35) 0%, rgba(var(--c4-rgb, 255, 145, 0), 0.14) 50%, rgba(var(--c4-rgb, 255, 145, 0), 0.35) 100%), rgba(10, 12, 22, 0.92) !important;
+  border: 1.8px solid var(--c4, #ff9100) !important;
+  box-shadow: 0 0 20px rgba(var(--c4-rgb, 255, 145, 0), 0.42), inset 0 0 10px rgba(var(--c4-rgb, 255, 145, 0), 0.18) !important;
+  color: #ffffff !important;
+}
+.result-btn-resume .resume-play-icon {
+  color: var(--c4, #ff9100) !important;
+  filter: drop-shadow(0 0 6px rgba(var(--c4-rgb, 255, 145, 0), 0.85)) !important;
+}
+
+/* 8. АККОРДЕОНЫ SETTINGS И LOADOUT (нейтральный темный обсидиан без бирюзовой заливки) */
 .loadout-widget,
 .settings-collapsible-widget {
-  background: linear-gradient(180deg, rgba(10, 18, 38, 0.92) 0%, rgba(6, 11, 24, 0.96) 100%) !important;
+  background: linear-gradient(180deg, rgba(10, 12, 22, 0.94) 0%, rgba(6, 8, 16, 0.98) 100%) !important;
   border: 1.2px solid rgba(var(--c1-rgb), 0.36) !important;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5), inset 0 0 14px rgba(var(--c1-rgb), 0.08) !important;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6), inset 0 0 12px rgba(var(--c1-rgb), 0.06) !important;
 }
 .loadout-widget-label,
 .settings-collapsible-label,

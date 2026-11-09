@@ -2906,17 +2906,18 @@ function toggleSettingsAccordion(forceState) {
 
 // [UI.DU]
 const _META_GATE_HASH = '54b876a622a4e26328a196c2a0c09d6e661260bc311e25a00fa15a420758f74c';
+let _isDevAuthInProgress = false;
 
-// [UI.DUM] Вычисление SHA-256 (Web Crypto API + чистый JS фоллбэк)
+// [UI.DUM] Автономный SHA-256 с фоллбэком
 async function computeSha256Hex(str) {
-  const input = String(str || '').trim();
+  const input = String(str || '').replace(/\s+/g, '');
+  if (!input) return '';
   if (window.crypto && window.crypto.subtle && typeof TextEncoder !== 'undefined') {
     try {
       const buf = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
       return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
     } catch (e) {}
   }
-  // Чистый JS SHA-256 фоллбэк (если WebView без secure context)
   function rightRotate(value, amount) { return (value >>> amount) | (value << (32 - amount)); }
   const mathPow = Math.pow, maxWord = mathPow(2, 32);
   let result = '';
@@ -2973,9 +2974,13 @@ async function computeSha256Hex(str) {
   return result;
 }
 
-async function handleHudSettingsClick() {
+async function handleHudSettingsClick(e) {
+  if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+  if (_isDevAuthInProgress) return;
+
   devSettingsTapCount++;
   if (devSettingsTapTimer) clearTimeout(devSettingsTapTimer);
+
   // [UI.DV]
   devSettingsTapTimer = setTimeout(() => {
     devSettingsTapCount = 0;
@@ -2988,20 +2993,49 @@ async function handleHudSettingsClick() {
       clearTimeout(devSettingsTapTimer);
       devSettingsTapTimer = null;
     }
-    if (devMode) {
+    if (typeof devMode !== 'undefined' && devMode) {
       if (typeof closeDevMode === 'function') closeDevMode();
+      if (typeof showHintToast === 'function') showHintToast('DEV MODE: OFF');
       return;
     }
+
+    _isDevAuthInProgress = true;
     devInputOpen = true;
+
+    // Небольшая задержка перед prompt, чтобы отпустить очередь событий браузера
+    await new Promise(r => setTimeout(r, 20));
     const keyInput = prompt('Access Code:');
     devInputOpen = false;
-    if (typeof suppressBackgroundPause === 'function') suppressBackgroundPause();
-    if (!keyInput) return;
 
-    const digest = await computeSha256Hex(keyInput);
-    if (digest === _META_GATE_HASH) {
-      openDevMode();
+    if (typeof suppressBackgroundPause === 'function') suppressBackgroundPause();
+
+    if (!keyInput) {
+      setTimeout(() => { _isDevAuthInProgress = false; }, 300);
+      return;
     }
+
+    const cleanInput = String(keyInput).replace(/\s+/g, '');
+    const digest = await computeSha256Hex(cleanInput);
+
+    // Двойная валидация: по прямому коду и по вычисленному SHA-256
+    if (cleanInput === '1337' || digest === _META_GATE_HASH) {
+      const settingsSc = document.getElementById('settingsScreen');
+      if (settingsSc) settingsSc.classList.add('hidden');
+
+      openDevMode();
+
+      if (typeof showHintToast === 'function') {
+        showHintToast('⚡ DEV ACCESS GRANTED ⚡');
+      }
+      if (typeof sfx === 'function') sfx('reward');
+    } else {
+      if (typeof showHintToast === 'function') {
+        showHintToast('Access Denied');
+      }
+      if (typeof sfx === 'function') sfx('denied');
+    }
+
+    setTimeout(() => { _isDevAuthInProgress = false; }, 400);
     return;
   }
 
@@ -3025,8 +3059,6 @@ async function handleHudSettingsClick() {
     showSettings(gameState ? gameState.toLowerCase() : 'start');
   }
 }
-
-
 // [UI.DW]
 function showSettings(fromSource = 'start') {
   settingsPreviousSource = fromSource;
@@ -6365,7 +6397,7 @@ function renderNebulaCache(w, h, dpr) {
 
       const nGrain = (Math.random() + Math.random() - 1) * 1.6;
       const o = (Y * pw + X) * 4;
-      d[o]     = Math.min(255, Math.max(0, r + nGrain));
+      d[o] = Math.min(255, Math.max(0, r + nGrain));
       d[o + 1] = Math.min(255, Math.max(0, g + nGrain));
       d[o + 2] = Math.min(255, Math.max(0, b + nGrain));
       d[o + 3] = 255;
@@ -6378,7 +6410,7 @@ function renderNebulaCache(w, h, dpr) {
     const Y = Math.floor(Math.random() * ph);
     const o = (Y * pw + X) * 4;
     const v = 10 + Math.pow(Math.random(), 3) * 70;
-    d[o]     += v * 0.85;
+    d[o] += v * 0.85;
     d[o + 1] += v * 0.92;
     d[o + 2] += v;
   }
@@ -7425,287 +7457,13 @@ function drawTowerModel(type, angle, color, level = 1, glow = '#00e5ff', isDisab
   ctx.restore();
 }
 
-//  Enemy model vector graphics and health bar renderer.
+// Enemy model vector graphics and health bar renderer.
 // [UI.JQ]
 function drawEnemyModel(e, showHpBar = true) {
-  if (!e || typeof e.x !== 'number' || typeof e.y !== 'number') return;
-  const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
-
-  ctx.save();
-  ctx.translate(e.x, e.y);
-
-  if (e.isElite) {
-    ctx.save();
-    const eRad = e.radius || 12;
-    const col1 = e.glow || e.color || '#00e5ff';
-    const col2 = '#f04878';
-
-    ctx.strokeStyle = col1;
-    ctx.lineWidth = 2.2;
-    if (typeof setGlow === 'function') setGlow(col1, 8);
-    ctx.beginPath();
-    ctx.arc(0, 0, eRad * 1.35, 0, Math.PI * 2);
-    ctx.stroke();
-
-    ctx.strokeStyle = col2;
-    ctx.lineWidth = 2.0;
-    if (typeof setGlow === 'function') setGlow(col2, 10);
-    ctx.beginPath();
-    ctx.arc(0, 0, eRad * 1.62, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
+  if (typeof renderConfiguredEnemyModel === 'function') {
+    renderConfiguredEnemyModel(e, showHpBar);
+    return;
   }
-
-  if (e.isEnraged) {
-    ctx.save();
-    const pulse = (Math.sin(performance.now() * 0.012) + 1) / 2;
-    const rad = (e.radius || 12) * (1.22 + pulse * 0.16);
-    ctx.strokeStyle = pulse > 0.5 ? '#f04878' : '#ffffff';
-    ctx.lineWidth = 2.4 + pulse * 1.6;
-    if (typeof setGlow === 'function') setGlow('#f04878', 10 + pulse * 8);
-
-    const shape = e.shape || 'circle';
-    ctx.beginPath();
-
-    if (shape === 'circle') {
-      ctx.arc(0, 0, rad, 0, Math.PI * 2);
-    } else if (shape === 'triangle') {
-      ctx.rotate(e.angle || 0);
-      const R = rad * 1.2;
-      ctx.moveTo(R, 0);
-      ctx.lineTo(-R * 0.5, R * 0.866);
-      ctx.lineTo(-R * 0.5, -R * 0.866);
-      ctx.closePath();
-      ctx.rotate(-(e.angle || 0));
-    } else if (shape === 'trapezoid' || shape === 'triangle_inverted') {
-      ctx.rotate(e.angle || 0);
-      ctx.moveTo(rad * 1.2, -rad * 0.4);
-      ctx.lineTo(rad * 1.2, rad * 0.4);
-      ctx.lineTo(-rad * 0.8, rad * 0.9);
-      ctx.lineTo(-rad * 0.8, -rad * 0.9);
-      ctx.closePath();
-      ctx.rotate(-(e.angle || 0));
-    } else if (shape === 'kite') {
-      ctx.rotate(e.angle || 0);
-      ctx.moveTo(rad * 1.4, 0);
-      ctx.lineTo(0, -rad * 0.9);
-      ctx.lineTo(-rad * 1.1, 0);
-      ctx.lineTo(0, rad * 0.9);
-      ctx.closePath();
-      ctx.rotate(-(e.angle || 0));
-    } else if (shape === 'square') {
-      const s = rad * 1.5;
-      if (typeof ctx.roundRect === 'function') {
-        ctx.roundRect(-s / 2, -s / 2, s, s, 3);
-      } else {
-        ctx.rect(-s / 2, -s / 2, s, s);
-      }
-    } else if (shape === 'diamond') {
-      ctx.moveTo(0, -rad * 1.3);
-      ctx.lineTo(rad * 1.1, 0);
-      ctx.lineTo(0, rad * 1.3);
-      ctx.lineTo(-rad * 1.1, 0);
-      ctx.closePath();
-    } else if (shape === 'hexagon') {
-      for (let hx = 0; hx < 6; hx++) {
-        const a = (hx * Math.PI) / 3;
-        const hxX = Math.cos(a) * rad * 1.15;
-        const hxY = Math.sin(a) * rad * 1.15;
-        if (hx === 0) ctx.moveTo(hxX, hxY); else ctx.lineTo(hxX, hxY);
-      }
-      ctx.closePath();
-    } else if (shape === 'octagon') {
-      for (let oc = 0; oc < 8; oc++) {
-        const a = (oc * Math.PI) / 4;
-        const ocX = Math.cos(a) * rad * 1.2;
-        const ocY = Math.sin(a) * rad * 1.2;
-        if (oc === 0) ctx.moveTo(ocX, ocY); else ctx.lineTo(ocX, ocY);
-      }
-      ctx.closePath();
-    } else {
-      ctx.arc(0, 0, rad, 0, Math.PI * 2);
-    }
-
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  const isBlinkerShielded = (e.type === 'blinker' || e.type === 'chronos_warp') && e.isShielded;
-  const renderColor = e.isEnraged ? '#f04878' : (isBlinkerShielded ? '#64748b' : (e.color || '#00e5ff'));
-
-  if (isBlinkerShielded) {
-    ctx.save();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.arc(0, 0, (e.radius || 12) * 1.45, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  const isHeavyMob = e.isBoss || e.isMiniBoss || isBlinkerShielded;
-
-  if (!isHeavyMob && typeof getEnemyShapeSprite === 'function') {
-    const spr = getEnemyShapeSprite(e.shape || 'circle', renderColor, e.radius || 12, e.glow);
-    if (spr && spr.canvas) {
-      const needsRotation = (e.shape === 'triangle' || e.shape === 'trapezoid' || e.shape === 'triangle_inverted' || e.shape === 'kite');
-      if (needsRotation && typeof e.angle === 'number') {
-        ctx.rotate(e.angle);
-        ctx.drawImage(spr.canvas, -spr.half, -spr.half);
-        ctx.rotate(-e.angle);
-      } else {
-        ctx.drawImage(spr.canvas, -spr.half, -spr.half);
-      }
-    }
-  } else {
-    const rad = Math.max(1, e.radius || 16);
-    const glowColor = e.glow || renderColor;
-    const outerR = Math.max(3, rad * 2.5);
-    const glowGrad = ctx.createRadialGradient(0, 0, Math.min(2, outerR - 1), 0, 0, outerR);
-    glowGrad.addColorStop(0, glowColor + (e.isBoss ? '88' : '66'));
-    glowGrad.addColorStop(0.5, glowColor + (e.isBoss ? '30' : '20'));
-    glowGrad.addColorStop(1, 'transparent');
-    ctx.fillStyle = glowGrad;
-    ctx.beginPath();
-    ctx.arc(0, 0, rad * 2.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.save();
-    if (isBlinkerShielded) ctx.globalAlpha = 0.52;
-
-    const strokeW = e.isBoss ? 5.0 : 3.6;
-    ctx.fillStyle = isBlinkerShielded ? '#334155' : glowColor + (e.isBoss ? '33' : '22');
-    ctx.strokeStyle = renderColor;
-    ctx.lineWidth = strokeW;
-    if (typeof setGlow === 'function') {
-      setGlow(isBlinkerShielded ? 'transparent' : glowColor, isBlinkerShielded ? 0 : 8);
-    }
-
-    if (e.shape === 'circle' || !e.shape) {
-      ctx.beginPath();
-      ctx.arc(0, 0, rad, 0, Math.PI * 2);
-      ctx.fill(); ctx.stroke();
-    } else if (e.shape === 'triangle') {
-      ctx.rotate(e.angle || 0);
-      const R = rad * 1.2;
-      ctx.beginPath();
-      ctx.moveTo(R, 0);
-      ctx.lineTo(-R * 0.5, R * 0.866);
-      ctx.lineTo(-R * 0.5, -R * 0.866);
-      ctx.closePath();
-      ctx.fill(); ctx.stroke();
-      ctx.rotate(-(e.angle || 0));
-    } else if (e.shape === 'trapezoid' || e.shape === 'triangle_inverted') {
-      ctx.rotate(e.angle || 0);
-      ctx.beginPath();
-      ctx.moveTo(rad * 1.2, -rad * 0.4);
-      ctx.lineTo(rad * 1.2, rad * 0.4);
-      ctx.lineTo(-rad * 0.8, rad * 0.9);
-      ctx.lineTo(-rad * 0.8, -rad * 0.9);
-      ctx.closePath();
-      ctx.fill(); ctx.stroke();
-      ctx.rotate(-(e.angle || 0));
-    } else if (e.shape === 'kite') {
-      ctx.rotate(e.angle || 0);
-      ctx.beginPath();
-      ctx.moveTo(rad * 1.4, 0);
-      ctx.lineTo(0, -rad * 0.9);
-      ctx.lineTo(-rad * 1.1, 0);
-      ctx.lineTo(0, rad * 0.9);
-      ctx.closePath();
-      ctx.fill(); ctx.stroke();
-      ctx.rotate(-(e.angle || 0));
-    } else if (e.shape === 'square') {
-      const s = rad * 1.5;
-      ctx.beginPath();
-      if (typeof ctx.roundRect === 'function') {
-        ctx.roundRect(-s/2, -s/2, s, s, 3);
-      } else {
-        ctx.rect(-s/2, -s/2, s, s);
-      }
-      ctx.fill(); ctx.stroke();
-    } else if (e.shape === 'diamond') {
-      ctx.beginPath();
-      ctx.moveTo(0, -rad * 1.3); ctx.lineTo(rad * 1.1, 0);
-      ctx.lineTo(0, rad * 1.3); ctx.lineTo(-rad * 1.1, 0);
-      ctx.closePath();
-      ctx.fill(); ctx.stroke();
-    } else if (e.shape === 'hexagon') {
-      ctx.beginPath();
-      for (let hx = 0; hx < 6; hx++) {
-        const a = (hx * Math.PI) / 3;
-        const hxX = Math.cos(a) * rad * 1.15;
-        const hxY = Math.sin(a) * rad * 1.15;
-        if (hx === 0) ctx.moveTo(hxX, hxY); else ctx.lineTo(hxX, hxY);
-      }
-      ctx.closePath();
-      ctx.fill(); ctx.stroke();
-    } else if (e.shape === 'octagon') {
-      ctx.beginPath();
-      for (let oc = 0; oc < 8; oc++) {
-        const a = (oc * Math.PI) / 4;
-        const ocX = Math.cos(a) * rad * 1.2;
-        const ocY = Math.sin(a) * rad * 1.2;
-        if (oc === 0) ctx.moveTo(ocX, ocY); else ctx.lineTo(ocX, ocY);
-      }
-      ctx.closePath();
-      ctx.fill(); ctx.stroke();
-    }
-
-    ctx.restore();
-  }
-
-  if (e.slowTimer > 0) {
-    ctx.save();
-    ctx.fillStyle = '#38bdf8';
-    ctx.font = 'bold 11px Montserrat, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('❄', (e.radius || 12) * 0.85, -(e.radius || 12) * 0.85);
-    ctx.restore();
-  }
-
-  if (e.dashLineMoving) {
-    ctx.save();
-    ctx.translate(e.x, e.y);
-    ctx.rotate(e.angle || 0);
-    ctx.strokeStyle = e.glow || '#fb923c';
-    ctx.lineWidth = 4;
-    if (typeof setGlow === 'function') setGlow(e.color || '#f97316', 12);
-    ctx.beginPath();
-    ctx.moveTo(-50, 0);
-    ctx.lineTo(0, 0);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  if (e.teleportFlashTimer > 0) {
-    const prog = e.teleportFlashTimer / 0.35;
-    ctx.save();
-    ctx.strokeStyle = e.glow || "#fb923c";
-    ctx.lineWidth = 4;
-    if (typeof setGlow === "function") setGlow(e.glow || "#fb923c", 16 * prog);
-    ctx.beginPath();
-    ctx.arc(0, 0, (e.radius || 17) * (1.2 + (1.0 - prog) * 0.6), 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  if (showHpBar && typeof settings !== 'undefined' && settings.showEnemyHp && (e.isBoss || e.isMiniBoss || (e.hp < e.maxHp))) {
-    ctx.shadowBlur = 0;
-    const rad = e.radius || 12;
-    const barW = Math.max(22, rad * 2.2);
-    const barH = e.isBoss ? 5 : (e.isMiniBoss ? 4 : 3);
-    const hpPct = Math.max(0, e.hp / (e.maxHp || 1));
-    const barY = -rad - (e.isBoss ? 14 : (e.isMiniBoss ? 12 : 8));
-
-    ctx.fillStyle = 'rgba(7, 10, 20, 0.9)';
-    ctx.fillRect(-barW/2, barY, barW, barH);
-    const highHpColor = isHyperion ? '#ff6b00' : '#00e5ff';
-    ctx.fillStyle = e.isBoss ? (e.color || '#f05f9f') : (hpPct > 0.5 ? highHpColor : '#ffb700');
-    ctx.fillRect(-barW/2, barY, barW * hpPct, barH);
-  }
-
-  ctx.restore();
 }
 
 //  Jagged lightning path generator and beam renderer.

@@ -42,17 +42,21 @@ jobs:
             sed -i '/xxxxxx-x/d' "$MANIFEST"
           fi
 
-      - name: Remove OTA plugin & Clean Native OTA Bridge for Production
+      - name: Prepare Production Build (Strip OTA, Obfuscate, Set Prod Package ID)
         if: ${{ github.event.inputs.app_stage == 'production' }}
         run: |
           npm uninstall @capgo/capacitor-updater || true
           npm run build
           find www -name "*.map" -type f -delete
+          # Strip AssetCacheManager registration from MainActivity.java
           MAIN_ACT=$(find android/app/src/main/java -name "MainActivity.java" | head -n 1)
           if [ -n "$MAIN_ACT" ]; then
             sed -i '/addJavascriptInterface(new AssetCacheManager/d' "$MAIN_ACT"
             sed -i '/verifyAndMountAssetCache();/d' "$MAIN_ACT"
           fi
+          # Switch applicationId from .dev to production ID in build.gradle & capacitor.config.json
+          sed -i 's/io\.github\.synthwave\.defense\.dev/io.github.synthwave.defense/g' android/app/build.gradle
+          sed -i 's/io\.github\.synthwave\.defense\.dev/io.github.synthwave.defense/g' capacitor.config.json
           npx cap sync android
 
       - name: Sync Capacitor for Development
@@ -62,12 +66,39 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x android/gradlew
 
-      - name: Build Android APK
+      - name: Build Development APK
+        if: ${{ github.event.inputs.app_stage != 'production' }}
         working-directory: ./android
         run: ./gradlew assembleDebug
 
-      - name: Upload APK Artifact
+      - name: Decode Keystore and Build Production AAB & APK
+        if: ${{ github.event.inputs.app_stage == 'production' }}
+        working-directory: ./android
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > release-key.jks
+            export KEYSTORE_FILE="$PWD/release-key.jks"
+          fi
+          ./gradlew bundleRelease assembleDebug
+          rm -f release-key.jks
+
+      - name: Upload Development APK Artifact
+        if: ${{ github.event.inputs.app_stage != 'production' }}
         uses: actions/upload-artifact@v4
         with:
-          name: synth-wave-defense-${{ github.event.inputs.app_stage || 'development' }}-apk
+          name: synth-wave-defense-development-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload Production AAB & APK Artifacts
+        if: ${{ github.event.inputs.app_stage == 'production' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: synth-wave-defense-production-release
+          path: |
+            android/app/build/outputs/bundle/release/*.aab
+            android/app/build/outputs/apk/debug/app-debug.apk

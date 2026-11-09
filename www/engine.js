@@ -1090,21 +1090,24 @@ function applyPaletteColors(paletteId) {
   const c4Light = mixHexWithWhite(c4, 0.45);
   const c5Light = mixHexWithWhite(c5, 0.45);
 
+// Для правой части туманности: в Cyber Gold берем теплый оранж/фуксию (c4/c3), в Blood Moon и Sakura — c3 (вместо фиолетового слота призм c2)
+  const nebRightRgb = (pId === 'cyber_gold') ? rgb4 : ((pId === 'blood_moon' || pId === 'sakura_wave') ? rgb3 : rgb2);
+
   // Сохраняем глобальный объект текущей темы для Canvas (ui.js и engine.js)
   window.activeThemeColors = {
     id: pId,
     c1, c2, c3, c4, c5, bg,
     c1Light, c2Light, c3Light, c4Light, c5Light,
     rgb1, rgb2, rgb3, rgb4, rgb5,
-    // Кластеры туманности: слева c1, справа c2
+    // Кластеры туманности: слева c1, справа nebRightRgb
     nebulaClusters: [
       { cx: 0.22, cy: 0.22, scale: 0.43, angle: 0.38, aspect: 0.65, intensity: 1.08, base: darkenNormRgb(rgb1.norm, 0.45), hot: rgb1.norm },
-      { cx: 0.78, cy: 0.20, scale: 0.42, angle: -0.38, aspect: 0.65, intensity: 1.08, base: darkenNormRgb(rgb2.norm, 0.45), hot: rgb2.norm },
+      { cx: 0.78, cy: 0.20, scale: 0.42, angle: -0.38, aspect: 0.65, intensity: 1.08, base: darkenNormRgb(nebRightRgb.norm, 0.45), hot: nebRightRgb.norm },
       { cx: 0.20, cy: 0.76, scale: 0.45, angle: -0.28, aspect: 0.70, intensity: 0.52, base: darkenNormRgb(rgb1.norm, 0.35), hot: rgb1.norm },
-      { cx: 0.80, cy: 0.74, scale: 0.44, angle: 0.32, aspect: 0.70, intensity: 0.52, base: darkenNormRgb(rgb2.norm, 0.35), hot: rgb2.norm }
+      { cx: 0.80, cy: 0.74, scale: 0.44, angle: 0.32, aspect: 0.70, intensity: 0.52, base: darkenNormRgb(nebRightRgb.norm, 0.35), hot: nebRightRgb.norm }
     ]
   };
-
+  
   // Записываем все переменные в CSS :root
   if (typeof document !== 'undefined') {
     const root = document.documentElement;
