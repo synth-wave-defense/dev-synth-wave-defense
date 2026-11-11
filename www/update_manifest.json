@@ -1,6 +1,6 @@
 {
-  "version": "1.38.0",
-  "bundleUrl": "https://raw.githubusercontent.com/synth-wave-defense/dev-synth-wave-defense/6d7a105124a3577fd3e353cf91b3cf791b38e25f/bundle.zip",
+  "version": "1.0.136",
+  "bundleUrl": "https://raw.githubusercontent.com/synth-wave-defense/dev-synth-wave-defense/cfb6bb373e3a7863113144c95b2d914ae2e47eeb/bundle.zip",
   "music": [
     {
       "id": "menu_01",
