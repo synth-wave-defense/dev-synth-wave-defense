@@ -2,7 +2,7 @@
   "name": "37-cap",
   "version": "1.38",
   "description": "<!-- [DOC100] Synth Wave Defense repository documentation. --> # dev-synth-wave-defense",
-  "main": "audio.js",
+  "main": "index.js",
   "scripts": {
     "build": "node scripts/build-prod.js",
     "test": "echo \"Error: no test specified\" && exit 1"

@@ -1,26 +1,14 @@
 package io.github.synthwave.defense.dev;
 
-import android.app.AlertDialog;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
-import android.graphics.Color;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.util.TypedValue;
-import android.view.Gravity;
-import android.widget.Button;
-import android.widget.FrameLayout;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.TextView;
-import android.widget.Toast;
 import android.webkit.JavascriptInterface;
+import android.webkit.WebView;
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -48,7 +36,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import org.json.JSONObject;
 
+@Keep
 public class MainActivity extends BridgeActivity {
+    private static final String TAG = "SynthWaveDiag";
     private static final String PREFS_NAME = "SynthWaveAssetCachePrefs";
     private static final String KEY_ACTIVE_PATH = "active_cache_path";
     private static final String KEY_ACTIVE_VER = "active_cache_version";
@@ -61,110 +51,62 @@ public class MainActivity extends BridgeActivity {
     private static final String KEY_BOOT_LOG = "last_boot_cache_log";
     private static final String KEY_BOOT_STATUS = "cache_boot_status";
 
-    // Диагностические ключи для хранения краш-логов между перезапусками
-    private static final String DIAG_PREFS = "SynthWaveCrashDiagPrefs";
-    private static final String KEY_PREV_SESSION_LOG = "prev_session_log";
-    private static final String KEY_CURR_SESSION_LOG = "curr_session_log";
-    private static final String KEY_LAST_CRASH_STACK = "last_crash_stack";
-    private static final String KEY_LAST_EXIT_REASON = "last_exit_reason";
-    private static final String KEY_SESSION_START_TS = "session_start_ts";
-    private static final String KEY_SESSION_CLEAN_BOOT = "session_clean_boot";
-    private static final String KEY_SAFE_MODE_NEXT = "safe_mode_next_boot";
+    private static final String DIAG_PREFS = "SynthWaveDevDiagPrefs";
+    private static final String KEY_PREV_LOG = "prev_session_log";
+    private static final String KEY_CURR_LOG = "curr_session_log";
+    private static final String KEY_LAST_CRASH = "last_crash_stack";
+    private static final String KEY_LAST_EXIT = "last_exit_reason";
 
     private final Handler watchdogHandler = new Handler(Looper.getMainLooper());
     private Runnable watchdogRunnable = null;
     private boolean isRollingBack = false;
 
-    private long bootStartTimeMs = 0L;
-    private boolean safeModeActive = false;
-    private boolean isDiagDialogShowing = false;
-    private boolean allowExplicitFinish = false;
     private final StringBuilder liveSessionLog = new StringBuilder();
+    private long bootStartTimeMs = 0L;
+    private NativeYandexAdsBridge adsBridge;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         bootStartTimeMs = System.currentTimeMillis();
-        installGlobalCrashInterceptor();
+        installSilentCrashInterceptor();
 
-        SharedPreferences diagPrefs = getSharedPreferences(DIAG_PREFS, Context.MODE_PRIVATE);
-        String prevCurrLog = diagPrefs.getString(KEY_CURR_SESSION_LOG, "");
-        String lastCrashStack = diagPrefs.getString(KEY_LAST_CRASH_STACK, "");
-        String lastExitReason = diagPrefs.getString(KEY_LAST_EXIT_REASON, "NONE");
-        long prevStartTs = diagPrefs.getLong(KEY_SESSION_START_TS, 0L);
-        boolean prevCleanBoot = diagPrefs.getBoolean(KEY_SESSION_CLEAN_BOOT, true);
-        safeModeActive = diagPrefs.getBoolean(KEY_SAFE_MODE_NEXT, false);
+        SharedPreferences dp = getSharedPreferences(DIAG_PREFS, Context.MODE_PRIVATE);
+        String prevCurrLog = dp.getString(KEY_CURR_LOG, "");
+        String lastExit = dp.getString(KEY_LAST_EXIT, "NONE");
 
-        // Определяем, был ли прошлый запуск аварийным или оборвался в первые 12 секунд
-        boolean hadCrash = (lastCrashStack != null && !lastCrashStack.isEmpty());
-        boolean hadAbnormalEarlyExit = !prevCleanBoot && prevStartTs > 0;
-        boolean shouldShowReportOnStart = hadCrash || hadAbnormalEarlyExit || safeModeActive;
-
-        // Сохраняем лог прошлой сессии в архив перед стартом новой
         if (prevCurrLog != null && !prevCurrLog.isEmpty()) {
-            diagPrefs.edit().putString(KEY_PREV_SESSION_LOG, prevCurrLog).commit();
+            dp.edit().putString(KEY_PREV_LOG, prevCurrLog).commit();
         }
 
-        // Инициализируем новую сессию (флаг clean_boot станет true только после 12 секунд стабильной работы)
-        diagPrefs.edit()
-            .putString(KEY_CURR_SESSION_LOG, "")
-            .putLong(KEY_SESSION_START_TS, bootStartTimeMs)
-            .putBoolean(KEY_SESSION_CLEAN_BOOT, false)
-            .putBoolean(KEY_SAFE_MODE_NEXT, false)
+        dp.edit()
+            .putString(KEY_CURR_LOG, "")
+            .putString(KEY_LAST_EXIT, "RUNNING")
             .commit();
 
-        recordStep("onCreate start | safeMode=" + safeModeActive + " | prevExit=" + lastExitReason);
+        recordStep("onCreate start | prevExit=" + lastExit);
 
         super.onCreate(savedInstanceState);
         recordStep("super.onCreate completed");
 
         try {
             if (this.bridge != null && this.bridge.getWebView() != null) {
-                this.bridge.getWebView().addJavascriptInterface(new AssetCacheManager(this), "AssetCacheManager");
-                this.bridge.getWebView().addJavascriptInterface(new NativeYandexAdsBridge(this), "NativeYandexAdsBridge");
-                recordStep("JS Bridges attached (AssetCacheManager, NativeYandexAdsBridge)");
+                WebView webView = this.bridge.getWebView();
+                adsBridge = new NativeYandexAdsBridge(this);
+                webView.addJavascriptInterface(new AssetCacheManager(this), "AssetCacheManager");
+                webView.addJavascriptInterface(adsBridge, "NativeYandexAdsBridge");
+                webView.addJavascriptInterface(adsBridge, "NativeAdsBridge");
+                recordStep("JS Bridges attached (NativeYandexAdsBridge + AssetCacheManager)");
             } else {
-                recordStep("WARN: bridge or WebView is null after super.onCreate");
+                recordStep("WARN: bridge or WebView is null!");
             }
 
-            if (safeModeActive) {
-                recordStep("SAFE MODE ACTIVE: skipping verifyAndMountAssetCache, forcing builtin assets");
-                if (this.bridge != null) {
-                    this.bridge.setServerAssetPath("public");
-                }
-            } else if (shouldShowReportOnStart) {
-                recordStep("DIAG PAUSE: Holding OTA mount until user reviews previous crash/exit log");
-            } else {
-                verifyAndMountAssetCache();
-            }
+            verifyAndMountAssetCache();
         } catch (Throwable e) {
             recordStep("ERROR in onCreate init: " + Log.getStackTraceString(e));
         }
-
-        // Добавляем плавающую кнопку "🐞 LOG" поверх WebView
-        attachFloatingLogButton();
-
-        // Через 12 секунд стабильной работы помечаем запуск как успешный
-        watchdogHandler.postDelayed(() -> {
-            getSharedPreferences(DIAG_PREFS, Context.MODE_PRIVATE)
-                .edit()
-                .putBoolean(KEY_SESSION_CLEAN_BOOT, true)
-                .commit();
-            recordStep("12s stability mark reached (clean boot = true)");
-        }, 12000);
-
-        // Если прошлый запуск упал или закрылся сразу — замораживаем таймеры и показываем отчет
-        if (shouldShowReportOnStart) {
-            if (this.bridge != null && this.bridge.getWebView() != null) {
-                try {
-                    this.bridge.getWebView().pauseTimers();
-                    recordStep("WebView timers paused for diagnostic inspection");
-                } catch (Throwable ignored) {}
-            }
-            watchdogHandler.postDelayed(() -> showDiagnosticDialog(true), 250);
-        }
     }
 
-	private void installGlobalCrashInterceptor() {
+    private void installSilentCrashInterceptor() {
         final Thread.UncaughtExceptionHandler defaultHandler = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
             try {
@@ -172,44 +114,25 @@ public class MainActivity extends BridgeActivity {
                 String tName = thread != null ? thread.getName() : "unknown";
                 boolean isMainThread = (thread == Looper.getMainLooper().getThread());
 
-                // Проверяем, является ли это фоновым крашем рекламного SDK / корутин
-                boolean isBgSdkCrash = !isMainThread && (
-                    tName.contains("YandexAds") ||
-                    tName.contains("ExoPlayer") ||
-                    tName.contains(" OkHttp") ||
-                    stack.contains("com.monetization.ads") ||
-                    stack.contains("com.yandex.mobile.ads") ||
-                    stack.contains("CompletionHandlerException")
-                );
-
-                if (isBgSdkCrash) {
-                    // Поглощаем ошибку фонового потока SDK без закрытия игры!
-                    recordStep("SUPPRESSED BG SDK EXCEPTION on [" + tName + "]: "
+                // Поглощаем сбои сторонних фоновых потоков (SDK Яндекса, OkHttp и др.)
+                if (!isMainThread) {
+                    recordStep("ABSORBED BG THREAD EXCEPTION [" + tName + "]: "
                         + throwable.getClass().getSimpleName() + " - " + throwable.getMessage());
                     return;
                 }
 
-                String header = "FATAL UNCAUGHT EXCEPTION on thread [" + tName + "]:\n"
+                String header = "FATAL MAIN THREAD CRASH [" + tName + "]:\n"
                     + throwable.getClass().getName() + ": " + throwable.getMessage() + "\n" + stack;
-
                 recordStep(header);
 
                 SharedPreferences dp = getSharedPreferences(DIAG_PREFS, Context.MODE_PRIVATE);
                 dp.edit()
-                    .putString(KEY_LAST_CRASH_STACK, header)
-                    .putString(KEY_LAST_EXIT_REASON, "JAVA_CRASH (" + throwable.getClass().getSimpleName() + " on " + tName + ")")
-                    .putBoolean(KEY_SESSION_CLEAN_BOOT, false)
+                    .putString(KEY_LAST_CRASH, header)
+                    .putString(KEY_LAST_EXIT, "JAVA_CRASH: " + throwable.getClass().getSimpleName())
                     .commit();
 
                 writeLogFileToDisk();
-
-                // Если краш случился не на главном потоке, также не убиваем процесс
-                if (!isMainThread) {
-                    recordStep("Non-main thread crash absorbed to keep app alive: " + tName);
-                    return;
-                }
-            } catch (Throwable ignored) {
-            }
+            } catch (Throwable ignored) {}
 
             if (defaultHandler != null) {
                 defaultHandler.uncaughtException(thread, throwable);
@@ -218,17 +141,17 @@ public class MainActivity extends BridgeActivity {
             }
         });
     }
-  
+
     private synchronized void recordStep(String msg) {
         long elapsed = System.currentTimeMillis() - bootStartTimeMs;
         String timeStr = new SimpleDateFormat("HH:mm:ss.SSS", Locale.US).format(new Date());
         String line = "[" + timeStr + " | +" + elapsed + "ms] " + msg + "\n";
         liveSessionLog.append(line);
-        Log.d("SynthWaveDiag", msg);
+        Log.d(TAG, msg);
 
         try {
             SharedPreferences dp = getSharedPreferences(DIAG_PREFS, Context.MODE_PRIVATE);
-            dp.edit().putString(KEY_CURR_SESSION_LOG, liveSessionLog.toString()).commit();
+            dp.edit().putString(KEY_CURR_LOG, liveSessionLog.toString()).commit();
             writeLogFileToDisk();
         } catch (Throwable ignored) {}
     }
@@ -250,229 +173,62 @@ public class MainActivity extends BridgeActivity {
     private String buildFullDiagnosticText(SharedPreferences dp) {
         SharedPreferences otaPrefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         StringBuilder sb = new StringBuilder();
-        sb.append("=== SYNTH WAVE DEFENSE DIAGNOSTIC REPORT ===\n");
-        sb.append("Last Exit Reason : ").append(dp.getString(KEY_LAST_EXIT_REASON, "NONE")).append("\n");
-        sb.append("Safe Mode Active : ").append(safeModeActive).append("\n");
+        sb.append("=== SYNTH WAVE STAGE DIAGNOSTIC LOG ===\n");
+        sb.append("Package          : ").append(getPackageName()).append("\n");
+        sb.append("Last Exit Reason : ").append(dp.getString(KEY_LAST_EXIT, "NONE")).append("\n");
         sb.append("OTA Active Ver   : ").append(otaPrefs.getString(KEY_ACTIVE_VER, "builtin")).append("\n");
         sb.append("OTA Pending Ver  : ").append(otaPrefs.getString(KEY_PENDING_VER, "none")).append("\n");
         sb.append("OTA Boot Status  : ").append(otaPrefs.getString(KEY_BOOT_STATUS, "SUCCESS")).append("\n");
         sb.append("OTA Boot Log     : ").append(otaPrefs.getString(KEY_BOOT_LOG, "none")).append("\n\n");
 
-        String crashStack = dp.getString(KEY_LAST_CRASH_STACK, "");
+        String crashStack = dp.getString(KEY_LAST_CRASH, "");
         if (crashStack != null && !crashStack.isEmpty()) {
-            sb.append("--- LAST FATAL CRASH / STACK TRACE ---\n");
+            sb.append("--- LAST CRASH STACK ---\n");
             sb.append(crashStack).append("\n\n");
         }
 
-        String prevLog = dp.getString(KEY_PREV_SESSION_LOG, "");
+        String prevLog = dp.getString(KEY_PREV_LOG, "");
         if (prevLog != null && !prevLog.isEmpty()) {
-            sb.append("--- PREVIOUS LAUNCH TIMELINE ---\n");
+            sb.append("--- PREVIOUS SESSION TIMELINE ---\n");
             sb.append(prevLog).append("\n");
         }
 
-        sb.append("--- CURRENT LAUNCH TIMELINE ---\n");
+        sb.append("--- CURRENT SESSION TIMELINE ---\n");
         sb.append(liveSessionLog.toString()).append("\n");
         return sb.toString();
     }
 
-    private void attachFloatingLogButton() {
-        runOnUiThread(() -> {
-            try {
-                FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.WRAP_CONTENT,
-                    FrameLayout.LayoutParams.WRAP_CONTENT
-                );
-                lp.gravity = Gravity.TOP | Gravity.START;
-                lp.topMargin = dpToPx(36);
-                lp.leftMargin = dpToPx(10);
-
-                Button btn = new Button(this);
-                btn.setText("🐞 LOG");
-                btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
-                btn.setTextColor(Color.parseColor("#00e5ff"));
-                btn.setBackgroundColor(Color.argb(190, 6, 7, 13));
-                btn.setPadding(dpToPx(8), dpToPx(4), dpToPx(8), dpToPx(4));
-                btn.setAllCaps(false);
-                btn.setOnClickListener(v -> showDiagnosticDialog(false));
-
-                addContentView(btn, lp);
-            } catch (Throwable e) {
-                recordStep("Failed to attach floating log button: " + e.getMessage());
-            }
-        });
-    }
-
-    private int dpToPx(int dp) {
-        return Math.round(dp * getResources().getDisplayMetrics().density);
-    }
-
-    private void showDiagnosticDialog(final boolean isStartupIntercept) {
-        runOnUiThread(() -> {
-            if (isFinishing() || isDestroyed()) return;
-            isDiagDialogShowing = true;
-
-            final SharedPreferences dp = getSharedPreferences(DIAG_PREFS, Context.MODE_PRIVATE);
-            final String reportText = buildFullDiagnosticText(dp);
-
-            LinearLayout root = new LinearLayout(this);
-            root.setOrientation(LinearLayout.VERTICAL);
-            root.setBackgroundColor(Color.parseColor("#0b0f19"));
-            int pad = dpToPx(14);
-            root.setPadding(pad, pad, pad, pad);
-
-            TextView titleView = new TextView(this);
-            titleView.setText(isStartupIntercept
-                ? "⚠️ Перехвачено закрытие / сбой при старте"
-                : "🐞 Журнал диагностики запуска");
-            titleView.setTextColor(Color.parseColor("#00e5ff"));
-            titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
-            titleView.setTypeface(Typeface.DEFAULT_BOLD);
-            root.addView(titleView);
-
-            TextView subView = new TextView(this);
-            subView.setText("Файл также сохранен в: Android/data/" + getPackageName() + "/files/crash_log.txt");
-            subView.setTextColor(Color.parseColor("#94a3b8"));
-            subView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
-            subView.setPadding(0, dpToPx(4), 0, dpToPx(8));
-            root.addView(subView);
-
-            ScrollView scroll = new ScrollView(this);
-            LinearLayout.LayoutParams scrollLp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                dpToPx(340)
-            );
-            scroll.setLayoutParams(scrollLp);
-            scroll.setBackgroundColor(Color.parseColor("#05070c"));
-
-            final TextView logTv = new TextView(this);
-            logTv.setText(reportText);
-            logTv.setTextColor(Color.parseColor("#e2e8f0"));
-            logTv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10.5f);
-            logTv.setTypeface(Typeface.MONOSPACE);
-            logTv.setTextIsSelectable(true);
-            int innerPad = dpToPx(8);
-            logTv.setPadding(innerPad, innerPad, innerPad, innerPad);
-            scroll.addView(logTv);
-            root.addView(scroll);
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setView(root);
-            builder.setCancelable(false);
-
-            builder.setPositiveButton("📋 Скопировать", null);
-            builder.setNeutralButton("🛡 Safe Mode (Без OTA/РСЯ)", null);
-            builder.setNegativeButton("▶️ Продолжить", null);
-
-            final AlertDialog dialog = builder.create();
-            dialog.show();
-
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-                try {
-                    String latest = buildFullDiagnosticText(dp);
-                    logTv.setText(latest);
-                    ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                    if (cm != null) {
-                        cm.setPrimaryClip(ClipData.newPlainText("SynthWaveCrashLog", latest));
-                    }
-                    Toast.makeText(this, "Лог скопирован в буфер обмена!", Toast.LENGTH_SHORT).show();
-                } catch (Throwable e) {
-                    Toast.makeText(this, "Ошибка копирования: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                }
-            });
-
-            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> {
-                isDiagDialogShowing = false;
-                safeModeActive = true;
-                recordStep("User activated SAFE MODE (Resetting OTA to builtin & disabling Yandex Ads)");
-
-                // Очищаем OTA-пути, чтобы гарантированно грузился встроенный APK
-                getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                    .edit()
-                    .remove(KEY_ACTIVE_PATH)
-                    .remove(KEY_ACTIVE_VER)
-                    .remove(KEY_PENDING_PATH)
-                    .remove(KEY_PENDING_VER)
-                    .putString(KEY_BOOT_STATUS, "SUCCESS")
-                    .putString(KEY_BOOT_LOG, "Safe Mode Reset to builtin")
-                    .commit();
-
-                dp.edit()
-                    .putString(KEY_LAST_CRASH_STACK, "")
-                    .putString(KEY_LAST_EXIT_REASON, "SAFE_MODE_RESET")
-                    .putBoolean(KEY_SESSION_CLEAN_BOOT, true)
-                    .commit();
-
-                dialog.dismiss();
-                if (this.bridge != null) {
-                    if (this.bridge.getWebView() != null) {
-                        this.bridge.getWebView().resumeTimers();
-                    }
-                    this.bridge.setServerAssetPath("public");
-                }
-            });
-
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v -> {
-                isDiagDialogShowing = false;
-                dp.edit()
-                    .putString(KEY_LAST_CRASH_STACK, "")
-                    .putBoolean(KEY_SESSION_CLEAN_BOOT, true)
-                    .commit();
-                dialog.dismiss();
-
-                if (isStartupIntercept) {
-                    recordStep("User chose normal continue after intercept -> mounting cache & resuming timers");
-                    if (this.bridge != null && this.bridge.getWebView() != null) {
-                        this.bridge.getWebView().resumeTimers();
-                    }
-                    if (!safeModeActive) {
-                        verifyAndMountAssetCache();
-                    }
-                }
-            });
-        });
-    }
-
-    // Перехват любых попыток программно закрыть или свернуть Activity в первые 10 секунд
-    private boolean shouldInterceptAutoClose(String methodName) {
+    private void logCloseCall(String methodName) {
         long elapsed = System.currentTimeMillis() - bootStartTimeMs;
-        String callerStack = Log.getStackTraceString(new Throwable("Caller of " + methodName));
-        recordStep("INTERCEPTED " + methodName + " at +" + elapsed + "ms!\nStack:\n" + callerStack);
+        String stack = Log.getStackTraceString(new Throwable("Caller of " + methodName));
+        recordStep("CALLED " + methodName + " at +" + elapsed + "ms:\n" + stack);
 
         SharedPreferences dp = getSharedPreferences(DIAG_PREFS, Context.MODE_PRIVATE);
-        dp.edit()
-            .putString(KEY_LAST_EXIT_REASON, methodName + " called at +" + elapsed + "ms")
-            .putString(KEY_LAST_CRASH_STACK, "App called " + methodName + ":\n" + callerStack)
-            .commit();
-
-        if (!allowExplicitFinish && (elapsed < 10000 || isDiagDialogShowing)) {
-            recordStep("BLOCKED automatic " + methodName + " (within 10s boot protection window)");
-            showDiagnosticDialog(false);
-            return true;
-        }
-        return false;
+        dp.edit().putString(KEY_LAST_EXIT, methodName + " at +" + elapsed + "ms").commit();
+        writeLogFileToDisk();
     }
 
     @Override
     public void finish() {
-        if (shouldInterceptAutoClose("finish()")) return;
+        logCloseCall("finish()");
         super.finish();
     }
 
     @Override
     public void finishAffinity() {
-        if (shouldInterceptAutoClose("finishAffinity()")) return;
+        logCloseCall("finishAffinity()");
         super.finishAffinity();
     }
 
     @Override
     public void finishAndRemoveTask() {
-        if (shouldInterceptAutoClose("finishAndRemoveTask()")) return;
+        logCloseCall("finishAndRemoveTask()");
         super.finishAndRemoveTask();
     }
 
     @Override
     public boolean moveTaskToBack(boolean nonRoot) {
-        if (shouldInterceptAutoClose("moveTaskToBack(" + nonRoot + ")")) return false;
+        logCloseCall("moveTaskToBack(" + nonRoot + ")");
         return super.moveTaskToBack(nonRoot);
     }
 
@@ -491,10 +247,6 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onDestroy() {
         recordStep("Lifecycle: onDestroy() | isFinishing=" + isFinishing());
-        SharedPreferences dp = getSharedPreferences(DIAG_PREFS, Context.MODE_PRIVATE);
-        if ("NONE".equals(dp.getString(KEY_LAST_EXIT_REASON, "NONE"))) {
-            dp.edit().putString(KEY_LAST_EXIT_REASON, "onDestroy (isFinishing=" + isFinishing() + ")").commit();
-        }
         super.onDestroy();
     }
 
@@ -738,11 +490,7 @@ public class MainActivity extends BridgeActivity {
         @Keep
         @JavascriptInterface
         public String syncResourcePack(String cacheFileName, String version, boolean applyImmediately) {
-            recordStep("JS called syncResourcePack: ver=" + version + ", immediate=" + applyImmediately + ", safeMode=" + safeModeActive);
-            if (safeModeActive) {
-                recordStep("syncResourcePack blocked by Safe Mode");
-                return "ERR: Blocked in Safe Mode";
-            }
+            recordStep("JS called syncResourcePack: ver=" + version + ", immediate=" + applyImmediately);
             try {
                 File packFile = new File(ctx.getFilesDir(), cacheFileName);
                 if (!packFile.exists()) {
@@ -920,6 +668,8 @@ public class MainActivity extends BridgeActivity {
         private RewardedAd rewardedAd;
         private boolean isAdLoading = false;
         private boolean isSdkInitialized = false;
+        private boolean isInitializing = false;
+        private String pendingAdUnitId = "demo-rewarded-yandex";
 
         public NativeYandexAdsBridge(Context context) {
             this.context = context;
@@ -940,30 +690,41 @@ public class MainActivity extends BridgeActivity {
         @Keep
         @JavascriptInterface
         public void initialize(final String defaultAdUnitId) {
-            recordStep("JS called NativeYandexAdsBridge.initialize(" + defaultAdUnitId + ") | safeMode=" + safeModeActive);
-            if (safeModeActive) {
-                recordStep("YandexAds initialize skipped due to Safe Mode");
-                return;
+            recordStep("JS called NativeYandexAdsBridge.initialize(" + defaultAdUnitId + ")");
+            if (defaultAdUnitId != null && !defaultAdUnitId.isEmpty()) {
+                pendingAdUnitId = defaultAdUnitId;
             }
             runOnUiThread(() -> {
                 try {
+                    if (isSdkInitialized) {
+                        recordStep("YandexAds already initialized -> loading " + pendingAdUnitId);
+                        loadRewardedAd(pendingAdUnitId);
+                        return;
+                    }
+                    if (isInitializing) {
+                        recordStep("YandexAds initialization already in progress...");
+                        return;
+                    }
+                    isInitializing = true;
                     recordStep("Calling MobileAds.initialize...");
                     MobileAds.initialize(context.getApplicationContext(), new InitializationListener() {
                         @Override
                         public void onInitializationCompleted() {
-                            try {
-                                isSdkInitialized = true;
-                                recordStep("MobileAds.onInitializationCompleted()");
-                                setupLoader();
-                                if (defaultAdUnitId != null && !defaultAdUnitId.isEmpty()) {
-                                    loadRewardedAd(defaultAdUnitId);
+                            runOnUiThread(() -> {
+                                try {
+                                    isSdkInitialized = true;
+                                    isInitializing = false;
+                                    recordStep("MobileAds.onInitializationCompleted() SUCCESS");
+                                    setupLoader();
+                                    loadRewardedAd(pendingAdUnitId);
+                                } catch (Throwable t) {
+                                    recordStep("ERROR in onInitializationCompleted: " + Log.getStackTraceString(t));
                                 }
-                            } catch (Throwable t) {
-                                recordStep("ERROR in onInitializationCompleted: " + Log.getStackTraceString(t));
-                            }
+                            });
                         }
                     });
                 } catch (Throwable t) {
+                    isInitializing = false;
                     recordStep("ERROR in MobileAds.initialize: " + Log.getStackTraceString(t));
                     String msg = t.getMessage() != null ? t.getMessage().replace("'", "\\'") : "Init error";
                     runJs("window.onYandexAdFailedToLoad && window.onYandexAdFailedToLoad('Native init error: " + msg + "');");
@@ -978,7 +739,7 @@ public class MainActivity extends BridgeActivity {
                 rewardedAdLoader.setAdLoadListener(new RewardedAdLoadListener() {
                     @Override
                     public void onAdLoaded(@NonNull RewardedAd ad) {
-                        recordStep("YandexAds: onAdLoaded");
+                        recordStep("YandexAds: onAdLoaded SUCCESS");
                         rewardedAd = ad;
                         isAdLoading = false;
                         attachEventListener(ad);
@@ -990,7 +751,7 @@ public class MainActivity extends BridgeActivity {
                         rewardedAd = null;
                         isAdLoading = false;
                         String desc = adRequestError.getDescription() != null ? adRequestError.getDescription() : "Load error";
-                        recordStep("YandexAds: onAdFailedToLoad (" + desc + ")");
+                        recordStep("YandexAds: onAdFailedToLoad (" + adRequestError.getCode() + ": " + desc + ")");
                         String safeDescription = desc.replace("'", "\\'");
                         runJs("window.onYandexAdFailedToLoad && window.onYandexAdFailedToLoad('" + safeDescription + "');");
                     }
@@ -1026,11 +787,13 @@ public class MainActivity extends BridgeActivity {
                     }
 
                     @Override
-                    public void onAdClicked() {}
+                    public void onAdClicked() {
+                        recordStep("YandexAds: onAdClicked");
+                    }
 
                     @Override
                     public void onRewarded(@NonNull Reward reward) {
-                        recordStep("YandexAds: onRewarded");
+                        recordStep("YandexAds: onRewarded!");
                         runJs("window.onYandexAdRewarded && window.onYandexAdRewarded();");
                     }
 
@@ -1045,22 +808,34 @@ public class MainActivity extends BridgeActivity {
         @Keep
         @JavascriptInterface
         public void loadRewardedAd(final String adUnitId) {
-            if (safeModeActive) return;
+            final String unitToLoad = (adUnitId != null && !adUnitId.isEmpty()) ? adUnitId : pendingAdUnitId;
+            pendingAdUnitId = unitToLoad;
+            recordStep("YandexAds.loadRewardedAd called for: " + unitToLoad + " | isSdkInit=" + isSdkInitialized);
+
             runOnUiThread(() -> {
                 try {
                     if (!isSdkInitialized) {
-                        recordStep("loadRewardedAd deferred: MobileAds SDK not initialized yet");
+                        recordStep("loadRewardedAd: SDK not initialized yet, calling initialize()");
+                        initialize(unitToLoad);
                         return;
                     }
-                    if (isAdLoading || rewardedAd != null) return;
+                    if (isAdLoading) {
+                        recordStep("loadRewardedAd: already loading, skipping duplicate call");
+                        return;
+                    }
+                    if (rewardedAd != null) {
+                        recordStep("loadRewardedAd: ad already loaded, notifying JS");
+                        runJs("window.onYandexAdLoaded && window.onYandexAdLoaded();");
+                        return;
+                    }
                     setupLoader();
                     if (rewardedAdLoader == null) {
                         runJs("window.onYandexAdFailedToLoad && window.onYandexAdFailedToLoad('Loader unavailable');");
                         return;
                     }
                     isAdLoading = true;
-                    recordStep("YandexAds: loading rewarded ad (" + adUnitId + ")");
-                    AdRequestConfiguration config = new AdRequestConfiguration.Builder(adUnitId).build();
+                    recordStep("YandexAds: requesting ad from server (" + unitToLoad + ")...");
+                    AdRequestConfiguration config = new AdRequestConfiguration.Builder(unitToLoad).build();
                     rewardedAdLoader.loadAd(config);
                 } catch (Throwable t) {
                     isAdLoading = false;
@@ -1080,20 +855,10 @@ public class MainActivity extends BridgeActivity {
         @Keep
         @JavascriptInterface
         public void showRewardedAd() {
+            recordStep("JS called showRewardedAd() | adReady=" + (rewardedAd != null));
             runOnUiThread(() -> {
                 try {
                     if (rewardedAd != null) {
                         rewardedAd.show(MainActivity.this);
                     } else {
-                        runJs("window.onYandexAdFailedToShow && window.onYandexAdFailedToShow('Ad not ready');");
-                    }
-                } catch (Throwable t) {
-                    rewardedAd = null;
-                    recordStep("ERROR in showRewardedAd: " + Log.getStackTraceString(t));
-                    String msg = t.getMessage() != null ? t.getMessage().replace("'", "\\'") : "Show exception";
-                    runJs("window.onYandexAdFailedToShow && window.onYandexAdFailedToShow('" + msg + "');");
-                }
-            });
-        }
-    }
-}
+                        recordStep("showRewardedAd
