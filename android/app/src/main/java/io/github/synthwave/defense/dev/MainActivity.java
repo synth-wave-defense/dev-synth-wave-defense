@@ -783,7 +783,9 @@ public class MainActivity extends BridgeActivity {
                     public void onAdDismissed() {
                         recordStep("YandexAds: onAdDismissed");
                         rewardedAd = null;
-                        runJs("window.onYandexAdDismissed && window.onYandexAdDismissed();");
+                        isAdLoading = false;
+                        runJs("if (window.onYandexAdDismissed) { window.onYandexAdDismissed(); }");
+                        loadRewardedAd(pendingAdUnitId);
                     }
 
                     @Override
@@ -820,19 +822,21 @@ public class MainActivity extends BridgeActivity {
                         return;
                     }
                     if (isAdLoading) {
-                        recordStep("loadRewardedAd: already loading, skipping duplicate call");
+                        recordStep("loadRewardedAd: already loading, ignoring duplicate call");
                         return;
                     }
                     if (rewardedAd != null) {
-                        recordStep("loadRewardedAd: ad already loaded, notifying JS");
-                        runJs("window.onYandexAdLoaded && window.onYandexAdLoaded();");
+                        recordStep("loadRewardedAd: ad already in memory and ready -> notifying JS");
+                        runJs("if (window.onYandexAdLoaded) { window.onYandexAdLoaded(); }");
                         return;
                     }
+
                     setupLoader();
                     if (rewardedAdLoader == null) {
-                        runJs("window.onYandexAdFailedToLoad && window.onYandexAdFailedToLoad('Loader unavailable');");
+                        runJs("if (window.onYandexAdFailedToLoad) { window.onYandexAdFailedToLoad('Loader unavailable'); }");
                         return;
                     }
+
                     isAdLoading = true;
                     recordStep("YandexAds: requesting ad from server (" + unitToLoad + ")...");
                     AdRequestConfiguration config = new AdRequestConfiguration.Builder(unitToLoad).build();
@@ -841,7 +845,7 @@ public class MainActivity extends BridgeActivity {
                     isAdLoading = false;
                     recordStep("ERROR in loadRewardedAd: " + Log.getStackTraceString(t));
                     String msg = t.getMessage() != null ? t.getMessage().replace("'", "\\'") : "Load exception";
-                    runJs("window.onYandexAdFailedToLoad && window.onYandexAdFailedToLoad('" + msg + "');");
+                    runJs("if (window.onYandexAdFailedToLoad) { window.onYandexAdFailedToLoad('" + msg + "'); }");
                 }
             });
         }

@@ -76,38 +76,46 @@ let isAdsInitialized = false;
 let isRewardAdReady = false;
 let activeAdCallbacks = { onRewarded: null, onNotRewarded: null, rewardedFlag: false };
 
-// Глобальные слушатели событий нативного моста (вызываются из Java через evaluateJavascript)
-window.onNativeAdLoaded = function() {
+// --- Глобальные обработчики событий нативного моста (вызываются из Java) ---
+
+function handleAdLoaded() {
   isRewardAdReady = true;
-  window.AdDiagnostics.videoReady = true;
+  if (window.AdDiagnostics) {
+    window.AdDiagnostics.videoReady = true;
+  }
   logAdEvent('Reward Video READY');
-};
+}
 
-window.onNativeAdFailedToLoad = function(errMsg) {
+function handleAdFailedToLoad(reason) {
   isRewardAdReady = false;
-  window.AdDiagnostics.videoReady = false;
-  const errStr = errMsg || 'Unknown load error';
-  window.AdDiagnostics.lastError = errStr;
-  logAdEvent('Load Failed: ' + errStr);
-};
+  const errStr = reason || 'Load failed';
+  if (window.AdDiagnostics) {
+    window.AdDiagnostics.videoReady = false;
+    window.AdDiagnostics.lastError = errStr;
+  }
+  logAdEvent('Reward Ad Failed: ' + errStr);
+}
 
-window.onNativeAdRewarded = function() {
+function handleAdRewarded() {
   activeAdCallbacks.rewardedFlag = true;
-  logAdEvent('Event: onRewarded');
-};
+  logAdEvent('Reward Granted');
+}
 
-window.onNativeAdDismissed = function() {
-  logAdEvent('Event: Ad Dismissed');
+function handleAdDismissed() {
+  logAdEvent('Reward Ad Dismissed');
   isRewardAdReady = false;
-  window.AdDiagnostics.videoReady = false;
+  if (window.AdDiagnostics) {
+    window.AdDiagnostics.videoReady = false;
+  }
 
   const wasRewarded = activeAdCallbacks.rewardedFlag;
   const cbReward = activeAdCallbacks.onRewarded;
   const cbFail = activeAdCallbacks.onNotRewarded;
 
+  // Очищаем коллбэки текущего показа
   activeAdCallbacks = { onRewarded: null, onNotRewarded: null, rewardedFlag: false };
 
-  // Фоновая предзагрузка следующего ролика
+  // Автоматическая фоновая предзагрузка следующего ролика
   preloadRewardedAd();
 
   if (wasRewarded) {
@@ -115,27 +123,39 @@ window.onNativeAdDismissed = function() {
   } else {
     if (typeof cbFail === 'function') cbFail();
   }
-};
+}
 
-window.onNativeAdFailedToShow = function(errMsg) {
-  const errStr = errMsg || 'Show error';
-  window.AdDiagnostics.lastError = errStr;
+function handleAdFailedToShow(reason) {
+  const errStr = reason || 'Show error';
+  if (window.AdDiagnostics) {
+    window.AdDiagnostics.videoReady = false;
+    window.AdDiagnostics.lastError = errStr;
+  }
   logAdEvent('Show Error: ' + errStr);
   isRewardAdReady = false;
-  window.AdDiagnostics.videoReady = false;
 
   const cbFail = activeAdCallbacks.onNotRewarded;
   activeAdCallbacks = { onRewarded: null, onNotRewarded: null, rewardedFlag: false };
+
   preloadRewardedAd();
   if (typeof cbFail === 'function') cbFail();
-};
+}
 
-// Сохраняем алиасы под имена YandexBridge для обратной совместимости с MainActivity
-window.onYandexAdLoaded = window.onNativeAdLoaded;
-window.onYandexAdFailedToLoad = window.onNativeAdFailedToLoad;
-window.onYandexAdRewarded = window.onNativeAdRewarded;
-window.onYandexAdDismissed = window.onNativeAdDismissed;
-window.onYandexAdFailedToShow = window.onNativeAdFailedToShow;
+// Привязываем оба формата имён (полная совместимость со всеми версиями MainActivity)
+window.onNativeAdLoaded = handleAdLoaded;
+window.onYandexAdLoaded = handleAdLoaded;
+
+window.onNativeAdFailedToLoad = handleAdFailedToLoad;
+window.onYandexAdFailedToLoad = handleAdFailedToLoad;
+
+window.onNativeAdRewarded = handleAdRewarded;
+window.onYandexAdRewarded = handleAdRewarded;
+
+window.onNativeAdDismissed = handleAdDismissed;
+window.onYandexAdDismissed = handleAdDismissed;
+
+window.onNativeAdFailedToShow = handleAdFailedToShow;
+window.onYandexAdFailedToShow = handleAdFailedToShow;
 
 // [ENG.AB_ADS] Универсальная инициализация моста рекламы
 async function initAdsBridge() {
