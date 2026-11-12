@@ -184,7 +184,8 @@ const I18N_DICT = {
     endless_arena: 'ENDLESS ARENA',
     run_complete: 'RUN COMPLETE',
     rewards: 'REWARDS',
-    tap_back_exit: 'Tap Back one more time to close game',
+    not_enough_gold: 'Not enough Gold!',
+	tap_back_exit: 'Tap Back one more time to close game',
     ad_not_ready: 'Video is loading, please check your network connection.',
 	not_enough_diamonds: 'Not enough Diamonds!',
     not_enough_prisms: 'Not enough Prisms!',
@@ -449,7 +450,8 @@ const I18N_DICT = {
     endless_arena: 'БЕСКОНЕЧНАЯ АРЕНА',
     run_complete: 'БОЙ ЗАВЕРШЕН',
     rewards: 'НАГРАДЫ',
-    tap_back_exit: 'Нажмите «Назад» ещё раз для выхода',
+    not_enough_gold: 'Недостаточно золота!',
+	tap_back_exit: 'Нажмите «Назад» ещё раз для выхода',
     ad_not_ready: 'Видео еще загружается, проверьте подключение к сети.',
 	not_enough_diamonds: 'Недостаточно алмазов!',
     not_enough_prisms: 'Недостаточно призм!',
@@ -2767,6 +2769,9 @@ function setLanguage(langCode, persist = true) {
   if (langSelect && langSelect.value !== langCode) {
     langSelect.value = langCode;
   }
+  if (typeof updateLanguageSelectDropdown === 'function') {
+    updateLanguageSelectDropdown('settingLangSelect');
+  }
 
   // Перерисовываем открытые динамические экраны и виджеты
   if (typeof window !== 'undefined' && window.__gameBooted) {
@@ -2808,6 +2813,10 @@ function populateLanguageDropdown(selectId = 'settingLangSelect') {
       setLanguage(e.target.value, true);
     });
     select.dataset.i18nBound = 'true';
+  }
+
+  if (typeof updateLanguageSelectDropdown === 'function') {
+    updateLanguageSelectDropdown(selectId);
   }
 }
 

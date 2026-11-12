@@ -159,11 +159,11 @@ const NEON_PALETTES = {
 
 // [DAT.A]
 function getBpTierInfo(xp) {
-  const currentXp = Math.max(0, xp || 0);
-  const tier = Math.min(30, Math.floor(currentXp / 100) + 1);
-  const xpInTier = (tier === 30 && currentXp >= 3000) ? 100 : (currentXp % 100);
-  const isMax = tier === 30 && currentXp >= 3000;
-  return { tier, xpInTier, isMax, totalXp: currentXp };
+    const currentXp = Math.max(0, xp || 0);
+    const tier = Math.min(30, Math.floor(currentXp / 100));
+    const isMax = currentXp >= 3000;
+    const xpInTier = isMax ? 100 : (currentXp % 100);
+    return { tier, xpInTier, isMax, totalXp: currentXp };
 }
 
 const UPGRADE_BRANCH_SPECS = {

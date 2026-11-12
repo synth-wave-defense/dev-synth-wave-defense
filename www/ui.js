@@ -395,9 +395,39 @@ function hideIncomingAlert() {
 
 //  Viewport canvas resize and camera coordinate transform system.
 // [UI.P]
-function resizeCanvasAndCamera() {
-  const vpWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
-  const vpHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+let _lastCanvasResizeW = 0;
+let _lastCanvasResizeH = 0;
+
+function isMobileInputFocused() {
+  if (typeof devInputOpen !== 'undefined' && devInputOpen) return true;
+  const active = document.activeElement;
+  if (!active) return false;
+  const tag = active.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || active.isContentEditable;
+}
+
+function resizeCanvasAndCamera(forceEv) {
+  // Не пересчитываем холст и фон, когда на мобилке открыта клавиатура или поле ввода дев-меню
+  if (isMobileInputFocused() && _lastCanvasResizeW > 0) {
+    return;
+  }
+
+  const vpWidth = window.innerWidth || (window.visualViewport ? window.visualViewport.width : 360);
+  const vpHeight = window.innerHeight || (window.visualViewport ? window.visualViewport.height : 640);
+
+  // Если ширина не изменилась, а высота сжалась из-за выезда мобильной клавиатуры — игнорируем ресайз
+  if (
+    forceEv !== true &&
+    _lastCanvasResizeW > 0 &&
+    Math.abs(vpWidth - _lastCanvasResizeW) < 4 &&
+    vpHeight < _lastCanvasResizeH * 0.85
+  ) {
+    return;
+  }
+
+  _lastCanvasResizeW = vpWidth;
+  _lastCanvasResizeH = vpHeight;
+
   const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
 
   canvas.width = vpWidth * dpr;
@@ -455,8 +485,8 @@ function resizeCanvasAndCamera() {
 
 // [UI.Q]
 function clampCamera() {
-  const screenW = window.visualViewport ? window.visualViewport.width : window.innerWidth;
-  const screenH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  const screenW = _lastCanvasResizeW || window.innerWidth;
+  const screenH = _lastCanvasResizeH || window.innerHeight;
   const viewFieldW = FIELD_WIDTH * camZoom;
   const viewFieldH = FIELD_HEIGHT * camZoom;
 
@@ -521,13 +551,9 @@ function worldToScreen(wx, wy) {
 window.addEventListener('resize', resizeCanvasAndCamera);
 // [UI.T]
 window.addEventListener('orientationchange', () => {
-  setTimeout(resizeCanvasAndCamera, 100);
+  setTimeout(() => resizeCanvasAndCamera(true), 150);
 });
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', resizeCanvasAndCamera);
-  window.visualViewport.addEventListener('scroll', resizeCanvasAndCamera);
-}
-window.addEventListener('load', resizeCanvasAndCamera);
+window.addEventListener('load', () => resizeCanvasAndCamera(true));
 
 //  Lock default touch behaviors on active canvas and UI overlays.
 // [UI.U]
@@ -2181,16 +2207,60 @@ function renderLevelsGrid() {
 let isDevModeActive = false;
 let isDevExpanded = false;
 
-//  Developer mode panel interface and visibility control.
+// Developer mode panel interface and visibility control.
 // [UI.CM]
+function activateDevBarFallbackUI() {
+  isDevModeActive = true;
+  devMode = true;
+  window._maxThreadLag = 0;
+  window._lastThreadLag = 0;
+  if (typeof startThreadLagMonitor === 'function') startThreadLagMonitor();
+
+  const bar = document.getElementById('devBar');
+  if (bar) bar.classList.remove('hidden');
+
+  const goldHalf = document.getElementById('goldHalf');
+  const hpHalf = document.getElementById('hpHalf');
+  if (goldHalf) goldHalf.classList.add('interactive');
+  if (hpHalf) hpHalf.classList.add('interactive');
+
+  if (typeof refreshDevDropdowns === 'function') refreshDevDropdowns();
+  updateDiamondUI();
+  updatePrismUI();
+  updatePaletteSelectDropdown('settingPaletteSelect');
+  updatePaletteSelectDropdown('bpPaletteSelect');
+}
+
 function openDevMode() {
+  // Сразу открываем панель, чтобы она гарантированно появилась
+  activateDevBarFallbackUI();
+
+  if (typeof window.mountRuntimeMetadata === 'function') {
+    window.mountRuntimeMetadata();
+    return;
+  }
+
   import('./core/plugins/capacitor-runtime-metadata.js')
     .then(m => {
       if (m && typeof m.mountRuntimeMetadata === 'function') {
         m.mountRuntimeMetadata();
+      } else if (typeof window.mountRuntimeMetadata === 'function') {
+        window.mountRuntimeMetadata();
       }
     })
-    .catch(() => {});
+    .catch(() => {
+      // Фоллбэк через обычный <script>, если динамический import() заблокирован в WebView/OTA
+      if (document.getElementById('devRuntimeMetaScript')) return;
+      const s = document.createElement('script');
+      s.id = 'devRuntimeMetaScript';
+      s.src = 'core/plugins/capacitor-runtime-metadata.js';
+      s.onload = () => {
+        if (typeof window.mountRuntimeMetadata === 'function') {
+          window.mountRuntimeMetadata();
+        }
+      };
+      document.head.appendChild(s);
+    });
 }
 
 // [UI.CN]
@@ -2974,6 +3044,84 @@ async function computeSha256Hex(str) {
   return result;
 }
 
+// [UI.DUN] Кастомное модальное окно ввода для Dev-меню (не триггерит ресайз фона на мобилках)
+function showDevInputModal(titleText, defaultValue = '', isPassword = false) {
+  return new Promise(resolve => {
+    devInputOpen = true;
+    if (typeof suppressBackgroundPause === 'function') suppressBackgroundPause(60000);
+
+    let modal = document.getElementById('devCustomInputModal');
+    if (modal) modal.remove();
+
+    modal = document.createElement('div');
+    modal.id = 'devCustomInputModal';
+    modal.className = 'dev-input-modal-overlay';
+    modal.innerHTML = `
+      <div class="dev-input-modal-card">
+        <div class="dev-input-modal-title">${titleText}</div>
+        <input
+          type="${isPassword ? 'password' : 'text'}"
+          inputmode="${isPassword ? 'text' : 'numeric'}"
+          id="devCustomModalInput"
+          class="dev-modal-field"
+          value="${defaultValue !== null && defaultValue !== undefined ? defaultValue : ''}"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+        />
+        <div class="dev-input-modal-actions">
+          <button type="button" class="dev-modal-btn dev-modal-btn-cancel" id="devModalCancelBtn">CANCEL</button>
+          <button type="button" class="dev-modal-btn dev-modal-btn-ok" id="devModalOkBtn">OK</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const inputEl = document.getElementById('devCustomModalInput');
+    const okBtn = document.getElementById('devModalOkBtn');
+    const cancelBtn = document.getElementById('devModalCancelBtn');
+
+    const cleanup = (val) => {
+      if (inputEl) inputEl.blur();
+      if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
+      setTimeout(() => {
+        devInputOpen = false;
+        if (typeof suppressBackgroundPause === 'function') suppressBackgroundPause(1200);
+      }, 250);
+      resolve(val);
+    };
+
+    okBtn.onclick = (ev) => {
+      ev.stopPropagation();
+      cleanup(inputEl ? inputEl.value : '');
+    };
+    cancelBtn.onclick = (ev) => {
+      ev.stopPropagation();
+      cleanup(null);
+    };
+    modal.onclick = (ev) => {
+      if (ev.target === modal) cleanup(null);
+    };
+    if (inputEl) {
+      inputEl.onkeydown = (ev) => {
+        if (ev.key === 'Enter') {
+          ev.preventDefault();
+          cleanup(inputEl.value);
+        } else if (ev.key === 'Escape') {
+          ev.preventDefault();
+          cleanup(null);
+        }
+      };
+      setTimeout(() => {
+        inputEl.focus({ preventScroll: true });
+        if (!isPassword && inputEl.select) inputEl.select();
+      }, 30);
+    }
+  });
+}
+window.showDevInputModal = showDevInputModal;
+
 async function handleHudSettingsClick(e) {
   if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
   if (_isDevAuthInProgress) return;
@@ -3000,14 +3148,7 @@ async function handleHudSettingsClick(e) {
     }
 
     _isDevAuthInProgress = true;
-    devInputOpen = true;
-
-    // Небольшая задержка перед prompt, чтобы отпустить очередь событий браузера
-    await new Promise(r => setTimeout(r, 20));
-    const keyInput = prompt('Access Code:');
-    devInputOpen = false;
-
-    if (typeof suppressBackgroundPause === 'function') suppressBackgroundPause();
+    const keyInput = await showDevInputModal('Access Code:', '', true);
 
     if (!keyInput) {
       setTimeout(() => { _isDevAuthInProgress = false; }, 300);
@@ -3059,6 +3200,7 @@ async function handleHudSettingsClick(e) {
     showSettings(gameState ? gameState.toLowerCase() : 'start');
   }
 }
+
 // [UI.DW]
 function showSettings(fromSource = 'start') {
   settingsPreviousSource = fromSource;
@@ -3163,25 +3305,25 @@ let bpPreviousSource = 'start';
 
 // [UI.DX]
 function updateBpProgressUI() {
-  const { tier, xpInTier, isMax, totalXp } = getBpTierInfo(bpXp);
+    const { tier, xpInTier, isMax } = getBpTierInfo(bpXp);
 
-  const tierText = document.getElementById('startBpTierText');
-  if (tierText) {
-    tierText.textContent = (typeof t === 'function') ? t('tier_n', { n: tier }) : `TIER ${tier}`;
-  }
+    const tierText = document.getElementById('startBpTierText');
+    if (tierText) {
+        tierText.textContent = (typeof t === 'function') ? t('tier\_n', { n: tier }) : `TIER ${tier}`;
+    }
 
-  const startFill = document.getElementById('startBpProgressFill');
-  if (startFill) {
-    const pct = isMax ? 100 : xpInTier;
-    startFill.style.width = `${pct}%`;
-  }
+    const startFill = document.getElementById('startBpProgressFill');
+    if (startFill) {
+        const pct = isMax ? 100 : xpInTier;
+        startFill.style.width = `${pct}%`;
+    }
 
-  updateMenuBadges();
+    updateMenuBadges();
 
-  const bpScreen = document.getElementById('battlePassScreen');
-  if (bpScreen && !bpScreen.classList.contains('hidden')) {
-    renderBattlePassScreen();
-  }
+    const bpScreen = document.getElementById('battlePassScreen');
+    if (bpScreen && !bpScreen.classList.contains('hidden')) {
+        renderBattlePassScreen();
+    }
 }
 
 const VISIBLE_PALETTE_IDS = [
@@ -3304,6 +3446,83 @@ function updatePaletteSelectDropdown(selectId) {
   wrapper.appendChild(menu);
 }
 
+// [UI.ECM] Кастомный выпадающий список выбора языка в стиле проекта
+function updateLanguageSelectDropdown(selectId = 'settingLangSelect') {
+  const selectEl = document.getElementById(selectId);
+  if (!selectEl || typeof SUPPORTED_LANGUAGES === 'undefined') return;
+
+  selectEl.style.display = 'none';
+
+  let wrapper = selectEl.parentNode.querySelector(`.custom-palette-dropdown[data-for="${selectId}"]`);
+  if (!wrapper) {
+    wrapper = document.createElement('div');
+    wrapper.className = 'custom-palette-dropdown';
+    wrapper.dataset.for = selectId;
+    selectEl.parentNode.insertBefore(wrapper, selectEl.nextSibling);
+  }
+
+  const activeCode = (typeof currentLang !== 'undefined' && SUPPORTED_LANGUAGES[currentLang]) ? currentLang : 'en';
+  const activeName = SUPPORTED_LANGUAGES[activeCode] || 'English';
+
+  wrapper.innerHTML = '';
+
+  const trigger = document.createElement('button');
+  trigger.type = 'button';
+  trigger.className = 'custom-palette-trigger';
+  trigger.innerHTML = `
+    <span class="pal-trigger-name">${activeName}</span>
+    <span class="pal-trigger-arrow">▾</span>
+  `;
+
+  const menu = document.createElement('div');
+  menu.className = 'custom-palette-menu hidden';
+  if (typeof enablePointerScroll === 'function') {
+    enablePointerScroll(menu);
+  }
+
+  Object.keys(SUPPORTED_LANGUAGES).forEach(code => {
+    const langLabel = SUPPORTED_LANGUAGES[code];
+    const isSelected = (code === activeCode);
+
+    const item = document.createElement('div');
+    item.className = 'custom-palette-option' + (isSelected ? ' selected' : '');
+    item.innerHTML = `
+      <span class="lang-opt-code">${code.toUpperCase()}</span>
+      <span class="pal-opt-name">${langLabel}</span>
+    `;
+
+    item.onclick = (e) => {
+      e.stopPropagation();
+      closeCustomPaletteMenus();
+      if (typeof sfx === 'function') sfx('confirm');
+      if (typeof setLanguage === 'function') {
+        setLanguage(code, true);
+      }
+      const prefix = typeof t === 'function' ? t('language') : 'Language';
+      if (typeof showHintToast === 'function') {
+        showHintToast(`${prefix}: ${langLabel}`);
+      }
+    };
+
+    menu.appendChild(item);
+  });
+
+  trigger.onclick = (e) => {
+    e.stopPropagation();
+    const wasHidden = menu.classList.contains('hidden');
+    closeCustomPaletteMenus();
+    if (wasHidden) {
+      menu.classList.remove('hidden');
+      trigger.classList.add('open');
+      if (typeof sfx === 'function') sfx('tap');
+    }
+  };
+
+  wrapper.appendChild(trigger);
+  wrapper.appendChild(menu);
+}
+window.updateLanguageSelectDropdown = updateLanguageSelectDropdown;
+
 // [UI.ED]
 function handleBpThemeClick(e) {}
 
@@ -3405,273 +3624,287 @@ function closeBattlePassScreen() {
 
 // [UI.EH]
 function renderBattlePassScreen() {
-  const dVal = document.getElementById('bpDiamondVal');
-  if (dVal) dVal.textContent = diamonds;
-  const pVal = document.getElementById('bpPrismVal');
-  if (pVal) pVal.textContent = prisms;
+    const dVal = document.getElementById('bpDiamondVal');
+    if (dVal) dVal.textContent = diamonds;
+    const pVal = document.getElementById('bpPrismVal');
+    if (pVal) pVal.textContent = prisms;
 
-  const { tier, xpInTier, isMax } = getBpTierInfo(bpXp);
+    const { tier, xpInTier, isMax } = getBpTierInfo(bpXp);
 
-  const badgeText = document.getElementById('bpTierBadgeText');
-  if (badgeText) badgeText.textContent = typeof t === 'function' ? t('tier_n_of_m', { n: tier, m: 30 }) : `TIER ${tier} / 30`;
+    const badgeText = document.getElementById('bpTierBadgeText');
+    if (badgeText) badgeText.textContent = typeof t === 'function' ? t('tier_n_of_m', { n: tier, m: 30 }) : `TIER ${tier} / 30`;
 
-  const barFill = document.getElementById('bpXpBarFill');
-  if (barFill) barFill.style.width = isMax ? '100%' : `${xpInTier}%`;
+    const barFill = document.getElementById('bpXpBarFill');
+    if (barFill) barFill.style.width = isMax ? '100%' : `${xpInTier}%`;
 
-  const barText = document.getElementById('bpXpBarText');
-  if (barText) barText.textContent = isMax ? `XP: ${typeof t === 'function' ? t('max') : 'MAX'} (3000/3000)` : `XP: ${xpInTier} / 100`;
+    const barText = document.getElementById('bpXpBarText');
+    if (barText) barText.textContent = isMax ? `XP: ${typeof t === 'function' ? t('max') : 'MAX'} (3000/3000)` : `XP: ${xpInTier} / 100`;
 
-  const diamondIconSvg = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="flex:none; vertical-align:middle; margin-left:3px;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.28)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
+    const diamondIconSvg = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round" style="flex:none; vertical-align:middle; margin-left:3px;"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.28)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
 
-  const premBtn = document.getElementById('bpActivatePremBtn');
-  if (premBtn) {
-    if (bpPremiumPurchased) {
-      premBtn.className = 'bp-action-btn bp-btn-premium owned';
-      premBtn.disabled = true;
-      premBtn.innerHTML = `<span>${typeof t === 'function' ? t('prem_unlocked') : 'PREMIUM UNLOCKED'}</span>`;
-    } else {
-      const canAfford = (diamonds >= 300);
-      premBtn.className = 'bp-action-btn bp-btn-premium' + (canAfford ? '' : ' cost-insufficient');
-      premBtn.disabled = false;
-      premBtn.innerHTML = `<span style="display:inline-flex; align-items:center; justify-content:center; gap:4px;">${typeof t === 'function' ? t('activate_prem', { cost: 300, icon: diamondIconSvg }) : 'ACTIVATE (300 ' + diamondIconSvg + ')'}</span>`;
-      premBtn.onclick = buyBpPremiumWithDiamonds;
-    }
-  }
-
-  const devBox = document.getElementById('bpDevControls');
-  if (devBox) devBox.classList.toggle('hidden', !devMode);
-
-  updatePaletteSelectDropdown('bpPaletteSelect');
-
-  const listBody = document.getElementById('bpTierListBody');
-  if (!listBody) return;
-  enablePointerScroll(listBody);
-  listBody.innerHTML = '';
-
-  const diamondIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
-  const prismIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
-
-  const _tr = (typeof window.t === 'function') ? window.t : ((k) => k.toUpperCase());
-
-  BATTLE_PASS_TIERS.forEach(item => {
-    const tNum = item.tier;
-    const isUnlockedTier = tier >= tNum;
-    const isCurrentTier = tier === tNum;
-
-    const row = document.createElement('div');
-    row.className = `bp-tier-row${isCurrentTier ? ' current-tier' : ''}`;
-
-    const freeCell = document.createElement('div');
-    const isFreeClaimed = !!bpClaimedFree[tNum];
-    freeCell.className = `bp-cell bp-cell-free${isFreeClaimed ? ' claimed' : ''}`;
-
-    // [UI.EI]
-    const formatRewardText = (str) => {
-      if (!str) return '';
-      let s = str.replace(/\(\s*(\+?\s*\d+\s*[\u{1F52E}🔮\u{1F48E}💎])\s*\)/gu, '$1');
-      s = s.replace(/(\+?\s*\d+)\s*[\u{1F52E}🔮]/gu, `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:2px; color:#ffffff;">$1 ${prismIcon}</span>`);
-      s = s.replace(/(\+?\s*\d+)\s*[\u{1F48E}💎]/gu, `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:2px; color:#ffffff;">$1 ${diamondIcon}</span>`);
-      s = s.replace(/[\u{1F52E}🔮]/gu, prismIcon).replace(/[\u{1F48E}💎]/gu, diamondIcon);
-      return s;
-    };
-
-    let freeTitle = '';
-    const fr = item.freeReward;
-    if (fr.type === 'diamonds') freeTitle = `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:3px; color:#ffffff;">+${fr.amount} ${diamondIcon}</span>`;
-    else if (fr.type === 'prisms') freeTitle = `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:3px; color:#ffffff;">+${fr.amount} ${prismIcon}</span>`;
-    else if (fr.type === 'ad_capsule') {
-      const capTitle = (typeof t === 'function' && t('ad_capsule')) ? t('ad_capsule') : (_tr('ad_capsule') || 'Ad-Capsule');
-      freeTitle = `${capTitle} <span style="white-space:nowrap; display:inline-flex; align-items:center; gap:2px; color:#ffffff;">+2 ${prismIcon}</span>`;
-    }
-    else if (fr.title) freeTitle = formatRewardText(fr.title);
-
-    let freeBtnHtml = '';
-    if (isFreeClaimed) {
-      freeBtnHtml = `<button class="bp-cell-btn claimed-btn">${_tr('claimed')}</button>`;
-    } else if (isUnlockedTier) {
-      if (fr.type === 'ad_capsule') {
-        freeBtnHtml = `<button class="bp-cell-btn ad-btn" onclick="claimBpFreeReward(${tNum})">${_tr('watch_ad')}</button>`;
-      } else {
-        freeBtnHtml = `<button class="bp-cell-btn claim-btn" onclick="claimBpFreeReward(${tNum})">${_tr('claim')}</button>`;
-      }
-    } else {
-      freeBtnHtml = `<button class="bp-cell-btn locked-btn" onclick="claimBpFreeReward(${tNum})">${_tr('locked')}</button>`;
+    const premBtn = document.getElementById('bpActivatePremBtn');
+    if (premBtn) {
+        if (bpPremiumPurchased) {
+            premBtn.className = 'bp-action-btn bp-btn-premium owned';
+            premBtn.disabled = true;
+            premBtn.innerHTML = `<span>${typeof t === 'function' ? t('prem_unlocked') : 'PREMIUM UNLOCKED'}</span>`;
+        } else {
+            const canAfford = (diamonds >= 300);
+            premBtn.className = 'bp-action-btn bp-btn-premium' + (canAfford ? '' : ' cost-insufficient');
+            premBtn.disabled = false;
+            premBtn.innerHTML = `<span style="display:inline-flex; align-items:center; justify-content:center; gap:4px;">${typeof t === 'function' ? t('activate_prem', { cost: 300, icon: diamondIconSvg }) : 'ACTIVATE (300 ' + diamondIconSvg + ')'}</span>`;
+            premBtn.onclick = buyBpPremiumWithDiamonds;
+        }
     }
 
-    freeCell.innerHTML = `<span class="bp-cell-title">${freeTitle}</span>${freeBtnHtml}`;
-
-    const numBox = document.createElement('div');
-    numBox.className = 'bp-tier-num-box';
-    numBox.innerHTML = `<span class="bp-tier-num">${tNum}</span><span class="bp-tier-status">${isUnlockedTier ? _tr('unlocked') : _tr('locked')}</span>`;
-
-    const premCell = document.createElement('div');
-    const isPremClaimed = !!bpClaimedPrem[tNum];
-    premCell.className = `bp-cell bp-cell-prem${isPremClaimed ? ' claimed' : ''}`;
-
-    let premTitle = '';
-    const pr = item.premReward;
-    if (pr.type === 'diamonds') premTitle = `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:3px; color:#ffffff;">+${pr.amount} ${diamondIcon}</span>`;
-    else if (pr.type === 'prisms') premTitle = `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:3px; color:#ffffff;">+${pr.amount} ${prismIcon}</span>`;
-    else if (pr.type === 'palette' || pr.type === 'perk' || pr.type === 'ultimate') {
-      premTitle = formatRewardText(pr.title);
+    const buyTierBtn = document.getElementById('bpBuyTierBtn') || document.querySelector('.bp-btn-buy-tier');
+    if (buyTierBtn) {
+        const canAffordTier = (diamonds >= 30) && !isMax;
+        buyTierBtn.disabled = isMax;
+        buyTierBtn.className = 'bp-action-btn bp-btn-buy-tier' + (canAffordTier ? '' : ' cost-insufficient');
     }
 
-    let premBtnHtml = '';
-    if (isPremClaimed) {
-      premBtnHtml = `<button class="bp-cell-btn claimed-btn">${_tr('claimed')}</button>`;
-    } else if (bpPremiumPurchased && isUnlockedTier) {
-      premBtnHtml = `<button class="bp-cell-btn claim-btn" onclick="claimBpPremReward(${tNum})">${_tr('claim')}</button>`;
-    } else if (!bpPremiumPurchased) {
-      premBtnHtml = `<button class="bp-cell-btn locked-btn" onclick="claimBpPremReward(${tNum})">PREMIUM</button>`;
-    } else {
-      premBtnHtml = `<button class="bp-cell-btn locked-btn" onclick="claimBpPremReward(${tNum})">${_tr('locked')}</button>`;
-    }
+    const devBox = document.getElementById('bpDevControls');
+    if (devBox) devBox.classList.toggle('hidden', !devMode);
 
-    premCell.innerHTML = `<span class="bp-cell-title">${premTitle}</span>${premBtnHtml}`;
+    updatePaletteSelectDropdown('bpPaletteSelect');
 
-    row.appendChild(freeCell);
-    row.appendChild(numBox);
-    row.appendChild(premCell);
+    const listBody = document.getElementById('bpTierListBody');
+    if (!listBody) return;
+    enablePointerScroll(listBody);
+    listBody.innerHTML = '';
 
-    listBody.appendChild(row);
-  });
+    const diamondIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2.2"><polygon points="6 3 18 3 22 9 12 22 2 9" fill="rgba(0,229,255,.25)"/><polyline points="2 9 12 13 22 9"/><line x1="12" y1="22" x2="12" y2="13"/></svg>`;
+    const prismIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d946ef" stroke-width="2.2" stroke-linejoin="round"><polygon points="12 2 21 12 12 22 3 12" fill="rgba(217,70,239,.25)"/><polyline points="3 12 12 15 21 12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>`;
+
+    const _tr = (typeof window.t === 'function') ? window.t : ((k) => k.toUpperCase());
+    const nextTargetTier = isMax ? 30 : (tier + 1);
+
+    BATTLE_PASS_TIERS.forEach(item => {
+        const tNum = item.tier;
+        const isUnlockedTier = tier >= tNum;
+        const isCurrentTier = (tNum === nextTargetTier && !isMax) || (isMax && tNum === 30);
+
+        const row = document.createElement('div');
+        row.className = `bp-tier-row${isCurrentTier ? ' current-tier' : ''}`;
+
+        const freeCell = document.createElement('div');
+        const isFreeClaimed = !!bpClaimedFree[tNum];
+        freeCell.className = `bp-cell bp-cell-free${isFreeClaimed ? ' claimed' : ''}`;
+
+        // [UI.EI]
+        const formatRewardText = (str) => {
+            if (!str) return '';
+            let s = str.replace(/\(\s*(\+?\s*\d+\s*[\u{1F52E}🔮\u{1F48E}💎])\s*\)/gu, '$1');
+            s = s.replace(/(\+?\s*\d+)\s*[\u{1F52E}🔮]/gu, `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:2px; color:#ffffff;">$1 ${prismIcon}</span>`);
+            s = s.replace(/(\+?\s*\d+)\s*[\u{1F48E}💎]/gu, `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:2px; color:#ffffff;">$1 ${diamondIcon}</span>`);
+            s = s.replace(/[\u{1F52E}🔮]/gu, prismIcon).replace(/[\u{1F48E}💎]/gu, diamondIcon);
+            return s;
+        };
+
+        let freeTitle = '';
+        const fr = item.freeReward;
+        if (fr.type === 'diamonds') freeTitle = `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:3px; color:#ffffff;">+${fr.amount} ${diamondIcon}</span>`;
+        else if (fr.type === 'prisms') freeTitle = `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:3px; color:#ffffff;">+${fr.amount} ${prismIcon}</span>`;
+        else if (fr.type === 'ad_capsule') {
+            const capTitle = (typeof t === 'function' && t('ad_capsule')) ? t('ad_capsule') : (_tr('ad_capsule') || 'Ad-Capsule');
+            freeTitle = `${capTitle} <span style="white-space:nowrap; display:inline-flex; align-items:center; gap:2px; color:#ffffff;">+2 ${prismIcon}</span>`;
+        }
+        else if (fr.title) freeTitle = formatRewardText(fr.title);
+
+        let freeBtnHtml = '';
+        if (isFreeClaimed) {
+            freeBtnHtml = `<button class="bp-cell-btn claimed-btn">${_tr('claimed')}</button>`;
+        } else if (isUnlockedTier) {
+            if (fr.type === 'ad_capsule') {
+                freeBtnHtml = `<button class="bp-cell-btn ad-btn" onclick="claimBpFreeReward(${tNum})">${_tr('watch_ad')}</button>`;
+            } else {
+                freeBtnHtml = `<button class="bp-cell-btn claim-btn" onclick="claimBpFreeReward(${tNum})">${_tr('claim')}</button>`;
+            }
+        } else {
+            freeBtnHtml = `<button class="bp-cell-btn locked-btn" onclick="claimBpFreeReward(${tNum})">${_tr('locked')}</button>`;
+        }
+
+        freeCell.innerHTML = `<span class="bp-cell-title">${freeTitle}</span>${freeBtnHtml}`;
+
+        const numBox = document.createElement('div');
+        numBox.className = 'bp-tier-num-box';
+        numBox.innerHTML = `<span class="bp-tier-num">${tNum}</span><span class="bp-tier-status">${isUnlockedTier ? _tr('unlocked') : _tr('locked')}</span>`;
+
+        const premCell = document.createElement('div');
+        const isPremClaimed = !!bpClaimedPrem[tNum];
+        premCell.className = `bp-cell bp-cell-prem${isPremClaimed ? ' claimed' : ''}`;
+
+        let premTitle = '';
+        const pr = item.premReward;
+        if (pr.type === 'diamonds') premTitle = `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:3px; color:#ffffff;">+${pr.amount} ${diamondIcon}</span>`;
+        else if (pr.type === 'prisms') premTitle = `<span style="white-space:nowrap; display:inline-flex; align-items:center; gap:3px; color:#ffffff;">+${pr.amount} ${prismIcon}</span>`;
+        else if (pr.type === 'palette' || pr.type === 'perk' || pr.type === 'ultimate') {
+            premTitle = formatRewardText(pr.title);
+        }
+
+        let premBtnHtml = '';
+        if (isPremClaimed) {
+            premBtnHtml = `<button class="bp-cell-btn claimed-btn">${_tr('claimed')}</button>`;
+        } else if (bpPremiumPurchased && isUnlockedTier) {
+            premBtnHtml = `<button class="bp-cell-btn claim-btn" onclick="claimBpPremReward(${tNum})">${_tr('claim')}</button>`;
+        } else if (!bpPremiumPurchased) {
+            premBtnHtml = `<button class="bp-cell-btn locked-btn" onclick="claimBpPremReward(${tNum})">PREMIUM</button>`;
+        } else {
+            premBtnHtml = `<button class="bp-cell-btn locked-btn" onclick="claimBpPremReward(${tNum})">${_tr('locked')}</button>`;
+        }
+
+        premCell.innerHTML = `<span class="bp-cell-title">${premTitle}</span>${premBtnHtml}`;
+
+        row.appendChild(freeCell);
+        row.appendChild(numBox);
+        row.appendChild(premCell);
+
+        listBody.appendChild(row);
+    });
 }
 
 // [UI.EJ]
 function claimBpFreeReward(tNum) {
-  const { tier } = getBpTierInfo(bpXp);
-  if (tier < tNum) {
-    showHintToast(typeof t === 'function' ? t('reach_tier_first', { t: tNum }) : `Reach Tier ${tNum} first!`);
-    return;
-  }
-  if (bpClaimedFree[tNum]) return;
-
-  const item = BATTLE_PASS_TIERS.find(i => i.tier === tNum);
-  if (!item) return;
-  const fr = item.freeReward;
-
-  // [UI.EK]
-  const executeClaim = () => {
-    bpClaimedFree[tNum] = true;
-    let toast = '';
-    if (fr.type === 'diamonds') {
-      diamonds += fr.amount;
-      toast = typeof t === 'function' ? t('diamonds_claimed', { n: fr.amount }) : `+${fr.amount} Diamonds claimed!`;
-    } else if (fr.type === 'prisms') {
-      prisms += fr.amount;
-      toast = typeof t === 'function' ? t('prisms_claimed', { n: fr.amount }) : `+${fr.amount} Prisms claimed!`;
-    } else if (fr.type === 'ad_capsule') {
-      prisms += fr.prisms;
-      toast = typeof t === 'function' ? t('ad_capsule_claimed', { n: fr.prisms }) : `Ad-Capsule: +${fr.prisms} Prisms claimed!`;
-    } else if (fr.type === 'combo' || fr.paletteId || fr.type === 'palette') {
-      if (fr.paletteId) {
-        if (!unlockedPalettes.includes(fr.paletteId)) {
-          unlockedPalettes.push(fr.paletteId);
-        }
-        applyPaletteColors(fr.paletteId);
-      }
-      if (fr.prisms) {
-        prisms += fr.prisms;
-      }
-      if (fr.diamonds) {
-        diamonds += fr.diamonds;
-      }
-      toast = fr.title ? `${fr.title} claimed!` : `Unlocked ${NEON_PALETTES[fr.paletteId] ? NEON_PALETTES[fr.paletteId].name : fr.paletteId}!`;
+    const { tier } = getBpTierInfo(bpXp);
+    if (tier < tNum) {
+        if (typeof sfx === 'function') sfx('denied');
+        showHintToast(typeof t === 'function' ? t('reach_tier_first', { t: tNum }) : `Reach Tier ${tNum} first!`);
+        return;
     }
+    if (bpClaimedFree[tNum]) return;
+
+    const item = BATTLE_PASS_TIERS.find(i => i.tier === tNum);
+    if (!item) return;
+    const fr = item.freeReward;
+
+    // [UI.EK]
+    const executeClaim = () => {
+        bpClaimedFree[tNum] = true;
+        let toast = '';
+        if (fr.type === 'diamonds') {
+            diamonds += fr.amount;
+            toast = typeof t === 'function' ? t('diamonds_claimed', { n: fr.amount }) : `+${fr.amount} Diamonds claimed!`;
+        } else if (fr.type === 'prisms') {
+            prisms += fr.amount;
+            toast = typeof t === 'function' ? t('prisms_claimed', { n: fr.amount }) : `+${fr.amount} Prisms claimed!`;
+        } else if (fr.type === 'ad_capsule') {
+            prisms += fr.prisms;
+            toast = typeof t === 'function' ? t('ad_capsule_claimed', { n: fr.prisms }) : `Ad-Capsule: +${fr.prisms} Prisms claimed!`;
+        } else if (fr.type === 'combo' || fr.paletteId || fr.type === 'palette') {
+            if (fr.paletteId) {
+                if (!unlockedPalettes.includes(fr.paletteId)) {
+                    unlockedPalettes.push(fr.paletteId);
+                }
+                applyPaletteColors(fr.paletteId);
+            }
+            if (fr.prisms) {
+                prisms += fr.prisms;
+            }
+            if (fr.diamonds) {
+                diamonds += fr.diamonds;
+            }
+            toast = fr.title ? `${fr.title} claimed!` : `Unlocked ${NEON_PALETTES[fr.paletteId] ? NEON_PALETTES[fr.paletteId].name : fr.paletteId}!`;
+        }
+        updateDiamondUI();
+        updatePrismUI();
+        saveGame();
+        sfx('reward');
+        renderBattlePassScreen();
+        showHintToast(toast);
+    };
+
+    if (fr.type === 'ad_capsule') {
+        showAdPlaceholder(executeClaim, null);
+    } else {
+        executeClaim();
+    }
+}
+
+// [UI.EL]
+function claimBpPremReward(tNum) {
+    if (!bpPremiumPurchased) {
+        if (typeof sfx === 'function') sfx('denied');
+        showHintToast(typeof t === 'function' ? t('activate_premium_first') : 'Activate Premium Pass first!');
+        return;
+    }
+    const { tier } = getBpTierInfo(bpXp);
+    if (tier < tNum) {
+        if (typeof sfx === 'function') sfx('denied');
+        showHintToast(typeof t === 'function' ? t('reach_tier_first', { t: tNum }) : `Reach Tier ${tNum} first!`);
+        return;
+    }
+    if (bpClaimedPrem[tNum]) return;
+
+    const item = BATTLE_PASS_TIERS.find(i => i.tier === tNum);
+    if (!item) return;
+    const pr = item.premReward;
+
+    bpClaimedPrem[tNum] = true;
+    let toast = '';
+
+    if (pr.type === 'diamonds') {
+        diamonds += pr.amount;
+        toast = typeof t === 'function' ? t('diamonds_claimed', { n: pr.amount }) : `+${pr.amount} Diamonds claimed!`;
+    } else if (pr.type === 'prisms') {
+        prisms += pr.amount;
+        toast = typeof t === 'function' ? t('prisms_claimed', { n: pr.amount }) : `+${pr.amount} Prisms claimed!`;
+    } else if (pr.type === 'palette') {
+        if (!unlockedPalettes.includes(pr.paletteId)) {
+            unlockedPalettes.push(pr.paletteId);
+        }
+        applyPaletteColors(pr.paletteId);
+        toast = typeof t === 'function' ? t('unlocked_palette', { name: NEON_PALETTES[pr.paletteId].name }) : `Unlocked Palette: ${NEON_PALETTES[pr.paletteId].name}!`;
+    } else if (pr.type === 'perk') {
+        toast = typeof t === 'function' ? t('perk_starting_reserve_unlocked') : 'Unlocked Perk: Starting Reserve (+15% Gold)!';
+    } else if (pr.type === 'ultimate') {
+        if (!unlockedPalettes.includes(pr.paletteId)) {
+            unlockedPalettes.push(pr.paletteId);
+        }
+        prisms += pr.prisms;
+        diamonds += pr.diamonds;
+        applyPaletteColors(pr.paletteId);
+        toast = typeof t === 'function' ? t('ultimate_bp_reward_claimed') : 'ULTIMATE REWARD CLAIMED! Blood Moon + 25 Prisms + 150 Diamonds';
+    }
+
     updateDiamondUI();
     updatePrismUI();
     saveGame();
     sfx('reward');
     renderBattlePassScreen();
     showHintToast(toast);
-  };
-
-  if (fr.type === 'ad_capsule') {
-    showAdPlaceholder(executeClaim, null);
-  } else {
-    executeClaim();
-  }
-}
-
-// [UI.EL]
-function claimBpPremReward(tNum) {
-  if (!bpPremiumPurchased) {
-    showHintToast(typeof t === 'function' ? t('activate_premium_first') : 'Activate Premium Pass first!');
-    return;
-  }
-  const { tier } = getBpTierInfo(bpXp);
-  if (tier < tNum) {
-    showHintToast(typeof t === 'function' ? t('reach_tier_first', { t: tNum }) : `Reach Tier ${tNum} first!`);
-    return;
-  }
-  if (bpClaimedPrem[tNum]) return;
-
-  const item = BATTLE_PASS_TIERS.find(i => i.tier === tNum);
-  if (!item) return;
-  const pr = item.premReward;
-
-  bpClaimedPrem[tNum] = true;
-  let toast = '';
-
-  if (pr.type === 'diamonds') {
-    diamonds += pr.amount;
-    toast = typeof t === 'function' ? t('diamonds_claimed', { n: pr.amount }) : `+${pr.amount} Diamonds claimed!`;
-  } else if (pr.type === 'prisms') {
-    prisms += pr.amount;
-    toast = typeof t === 'function' ? t('prisms_claimed', { n: pr.amount }) : `+${pr.amount} Prisms claimed!`;
-  } else if (pr.type === 'palette') {
-    if (!unlockedPalettes.includes(pr.paletteId)) {
-      unlockedPalettes.push(pr.paletteId);
-    }
-    applyPaletteColors(pr.paletteId);
-    toast = typeof t === 'function' ? t('unlocked_palette', { name: NEON_PALETTES[pr.paletteId].name }) : `Unlocked Palette: ${NEON_PALETTES[pr.paletteId].name}!`;
-  } else if (pr.type === 'perk') {
-    toast = typeof t === 'function' ? t('perk_starting_reserve_unlocked') : 'Unlocked Perk: Starting Reserve (+15% Gold)!';
-  } else if (pr.type === 'ultimate') {
-    if (!unlockedPalettes.includes(pr.paletteId)) {
-      unlockedPalettes.push(pr.paletteId);
-    }
-    prisms += pr.prisms;
-    diamonds += pr.diamonds;
-    applyPaletteColors(pr.paletteId);
-    toast = typeof t === 'function' ? t('ultimate_bp_reward_claimed') : 'ULTIMATE REWARD CLAIMED! Blood Moon + 25 Prisms + 150 Diamonds';
-  }
-
-  updateDiamondUI();
-  updatePrismUI();
-  saveGame();
-  sfx('reward');
-  renderBattlePassScreen();
-  showHintToast(toast);
 }
 
 // [UI.EM]
 
 // [UI.EN]
-function handleThemeShopAction(paletteId, cost) {  
-  if (typeof buyThemeWithDiamonds === 'function') {
-    buyThemeWithDiamonds(paletteId, cost);
-  }
-}  
+function handleThemeShopAction(paletteId, cost) { 
+    if (typeof buyThemeWithDiamonds === 'function') {
+        buyThemeWithDiamonds(paletteId, cost);
+    }
+} 
 window.handleThemeShopAction = handleThemeShopAction;
 
 // [UI.EO]
 function buyBpTierWithDiamonds() {
-  const { tier } = getBpTierInfo(bpXp);
-  if (tier >= 30 && bpXp >= 3000) {
-    showHintToast(typeof t === 'function' ? t('synth_pass_max_tier') : 'Synth Pass already at Max Tier!');
-    return;
-  }
-  if (diamonds < 30) {
-    showHintToast(typeof t === 'function' ? t('not_enough_diamonds_30') : 'Not enough Diamonds! (30 required)');
-    return;
-  }
-  diamonds -= 30;
-  addBpXp(100);
-  updateDiamondUI();
-  sfx('confirm');
-  renderBattlePassScreen();
-  showHintToast(typeof t === 'function' ? t('tier_purchased_plus_100_xp') : '+1 Tier purchased (+100 XP)!');
+    const { tier, isMax } = getBpTierInfo(bpXp);
+    if (isMax || (tier >= 30 && bpXp >= 3000)) {
+        if (typeof sfx === 'function') sfx('denied');
+        showHintToast(typeof t === 'function' ? t('synth_pass_max_tier') : 'Synth Pass already at Max Tier!');
+        return;
+    }
+    if (diamonds < 30) {
+        if (typeof sfx === 'function') sfx('denied');
+        if (typeof vibrate === 'function') vibrate('warning');
+        showHintToast(typeof t === 'function' ? t('not_enough_diamonds_30', { cost: 30 }) : 'Not enough Diamonds! (30 required)');
+        return;
+    }
+    diamonds -= 30;
+    addBpXp(100);
+    updateDiamondUI();
+    sfx('confirm');
+    renderBattlePassScreen();
+    showHintToast(typeof t === 'function' ? t('tier_purchased_plus_100_xp') : '+1 Tier purchased (+100 XP)!');
 }
 
 // [UI.EP]
@@ -5437,65 +5670,106 @@ function showHintToast(message) {
 //  Tower selection, build panel UI and inspection state controller.
 // [UI.HF]
 function initBuildPanel() {
-  const panel = document.getElementById('buildPanel');
-  if (!panel || typeof TOWER_CONFIGS === 'undefined') return;
-  panel.querySelectorAll('.tower-btn').forEach(b => b.remove());
+    const panel = document.getElementById('buildPanel');
+    if (!panel || typeof TOWER_CONFIGS === 'undefined') return;
+    panel.querySelectorAll('.tower-btn').forEach(b => b.remove());
 
-  const canonicalOrder = Object.keys(TOWER_CONFIGS);
-  const pool = getBuildPanelPool(currentLevel);
-  const towerTypes = canonicalOrder.filter(t => pool.includes(t));
+    // Очищаем кэш DOM и кэш классов кнопок, чтобы новые элементы гарантированно получили актуальные стили
+    if (typeof _elCache !== 'undefined' && _elCache) {
+        for (const k in TOWER_CONFIGS) {
+            delete _elCache[`btn-${k}`];
+        }
+    }
+    if (typeof _hudStateCache !== 'undefined' && _hudStateCache && _hudStateCache.towerClasses) {
+        _hudStateCache.towerClasses = Object.create(null);
+    }
 
-  towerTypes.forEach(type => {
-    const conf = TOWER_CONFIGS[type];
-    const btn = document.createElement('div');
-    btn.className = 'tower-btn';
-    btn.id = `btn-${type}`;
-    btn.setAttribute('data-type', type);
-    btn.innerHTML = `
-      <span class="tower-btn-title">${TOWER_NAMES[type] || type}</span>
-      <div class="tower-btn-icon">
-        ${TOWER_ICONS[type] || ''}
-      </div>
-      <span class="cost">
-        <span class="cost-icon">
-          <svg width="12" height="12" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#ff9100" /><text x="12" y="17.5" font-size="16" font-weight="900" fill="#000000" text-anchor="middle" font-family="Montserrat, sans-serif">$</text></svg>
-        </span>
-        ${conf.cost}
-      </span>
-    `;
+    const canonicalOrder = Object.keys(TOWER_CONFIGS);
+    const pool = getBuildPanelPool(currentLevel);
+    const towerTypes = canonicalOrder.filter(t => pool.includes(t));
 
-    // [UI.HG]
-    btn.addEventListener('mousedown', (e) => {
-      if (gameState !== 'PLAYING') return;
-      if (!isTowerActiveThisLevel(type)) {
+    towerTypes.forEach(type => {
+        const conf = TOWER_CONFIGS[type];
+        const isUnlocked = isTowerActiveThisLevel(type);
+        const affordable = gold >= conf.cost;
+        const initialCls = !isUnlocked
+            ? 'tower-btn locked disabled'
+            : (!affordable ? 'tower-btn disabled' : 'tower-btn ready');
+
+        const btn = document.createElement('div');
+        btn.className = initialCls;
+        btn.id = `btn-${type}`;
+        btn.setAttribute('data-type', type);
+
+        if (typeof _hudStateCache !== 'undefined' && _hudStateCache && _hudStateCache.towerClasses) {
+            _hudStateCache.towerClasses[type] = initialCls;
+        }
+
         const reqLvl = getTowerUnlockLevel(type);
-        showHintToast(typeof t === 'function' ? (t('unlocks_on_level_n', { n: reqLvl }) || t('available_on_level_n', { n: reqLvl })) : `Level ${reqLvl}`);
-        return;
-      }
-      if (gold < TOWER_CONFIGS[type].cost || btn.classList.contains('disabled')) return;
-      const worldPos = screenToWorld(e.clientX, e.clientY);
-      draggingTower = { type: type, worldX: worldPos.x, worldY: worldPos.y, isTouch: false };
-      showCancelZoneVisual(true);
+        const costRowHtml = isUnlocked
+            ? `<span class="cost">
+                <span class="cost-icon">
+                    <svg width="12" height="12" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#ff9100" /><text x="12" y="17.5" font-size="16" font-weight="900" fill="#000000" text-anchor="middle" font-family="Montserrat, sans-serif">$</text></svg>
+                </span>
+                ${conf.cost}
+               </span>`
+            : `<span class="cost" style="color:#8ea3c4; gap:3px;">
+                ${typeof CUSTOM_LOCK_SVG !== 'undefined' ? CUSTOM_LOCK_SVG : ''}
+                <span>L${reqLvl}</span>
+               </span>`;
+
+        btn.innerHTML = `
+            <span class="tower-btn-title">${TOWER_NAMES[type] || type}</span>
+            <div class="tower-btn-icon">
+                ${TOWER_ICONS[type] || ''}
+            </div>
+            ${costRowHtml}
+        `;
+
+        // [UI.HG]
+        btn.addEventListener('mousedown', (e) => {
+            if (gameState !== 'PLAYING') return;
+            if (!isTowerActiveThisLevel(type)) {
+                if (typeof sfx === 'function') sfx('denied');
+                const unlockLvl = getTowerUnlockLevel(type);
+                showHintToast(typeof t === 'function' ? (t('unlocks_on_level_n', { n: unlockLvl }) || t('available_on_level_n', { n: unlockLvl })) : `Unlocks on Level ${unlockLvl}`);
+                return;
+            }
+            if (gold < TOWER_CONFIGS[type].cost || btn.classList.contains('disabled')) {
+                if (typeof sfx === 'function') sfx('denied');
+                if (typeof vibrate === 'function') vibrate('warning');
+                showHintToast(typeof t === 'function' ? (t('not_enough_gold') || 'Not enough Gold!') : 'Not enough Gold!');
+                return;
+            }
+            const worldPos = screenToWorld(e.clientX, e.clientY);
+            draggingTower = { type: type, worldX: worldPos.x, worldY: worldPos.y, isTouch: false };
+            showCancelZoneVisual(true);
+        });
+
+        // [UI.HH]
+        btn.addEventListener('touchstart', (e) => {
+            if (gameState !== 'PLAYING') return;
+            if (!isTowerActiveThisLevel(type)) {
+                if (typeof sfx === 'function') sfx('denied');
+                const unlockLvl = getTowerUnlockLevel(type);
+                showHintToast(typeof t === 'function' ? (t('unlocks_on_level_n', { n: unlockLvl }) || t('available_on_level_n', { n: unlockLvl })) : `Unlocks on Level ${unlockLvl}`);
+                return;
+            }
+            if (gold < TOWER_CONFIGS[type].cost || btn.classList.contains('disabled')) {
+                if (typeof sfx === 'function') sfx('denied');
+                if (typeof vibrate === 'function') vibrate('warning');
+                showHintToast(typeof t === 'function' ? (t('not_enough_gold') || 'Not enough Gold!') : 'Not enough Gold!');
+                return;
+            }
+            const touch = e.touches[0];
+            const worldPos = screenToWorld(touch.clientX, touch.clientY - TOUCH_OFFSET_Y);
+            draggingTower = { type: type, worldX: worldPos.x, worldY: worldPos.y, isTouch: true };
+            showCancelZoneVisual(true);
+            e.preventDefault();
+        }, { passive: false });
+
+        panel.appendChild(btn);
     });
-
-    // [UI.HH]
-    btn.addEventListener('touchstart', (e) => {
-      if (gameState !== 'PLAYING') return;
-      if (!isTowerActiveThisLevel(type)) {
-        const reqLvl = getTowerUnlockLevel(type);
-        showHintToast(typeof t === 'function' ? (t('unlocks_on_level_n', { n: reqLvl }) || t('available_on_level_n', { n: reqLvl })) : `Level ${reqLvl}`);
-        return;
-      }
-      if (gold < TOWER_CONFIGS[type].cost || btn.classList.contains('disabled')) return;
-      const touch = e.touches[0];
-      const worldPos = screenToWorld(touch.clientX, touch.clientY - TOUCH_OFFSET_Y);
-      draggingTower = { type: type, worldX: worldPos.x, worldY: worldPos.y, isTouch: true };
-      showCancelZoneVisual(true);
-      e.preventDefault();
-    }, { passive: false });
-
-    panel.appendChild(btn);
-  });
 }
 
 // [UI.HI]

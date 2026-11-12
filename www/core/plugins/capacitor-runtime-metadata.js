@@ -5,13 +5,21 @@ let devHoldTimer = null;
 let devHoldTriggered = false;
 let devHoldStartPos = { x: 0, y: 0 };
 
-// [CRM.B]
-function promptDevDiamonds() {
-  if (!devMode) return;
+async function askDevValue(label, currentVal) {
+  if (typeof window.showDevInputModal === 'function') {
+    return await window.showDevInputModal(label, currentVal, false);
+  }
   devInputOpen = true;
-  const val = prompt("Set Diamonds:", diamonds);
+  const val = prompt(label, currentVal);
   devInputOpen = false;
-  suppressBackgroundPause();
+  if (typeof suppressBackgroundPause === 'function') suppressBackgroundPause();
+  return val;
+}
+
+// [CRM.B]
+async function promptDevDiamonds() {
+  if (!devMode) return;
+  const val = await askDevValue("Set Diamonds:", diamonds);
   if (val !== null) {
     const parsed = parseInt(val, 10);
     if (!isNaN(parsed) && parsed >= 0) {
@@ -24,12 +32,9 @@ function promptDevDiamonds() {
 }
 
 // [CRM.C]
-function promptDevPrisms() {
+async function promptDevPrisms() {
   if (!devMode) return;
-  devInputOpen = true;
-  const val = prompt("Set Prisms:", prisms);
-  devInputOpen = false;
-  suppressBackgroundPause();
+  const val = await askDevValue("Set Prisms:", prisms);
   if (val !== null) {
     const parsed = parseInt(val, 10);
     if (!isNaN(parsed) && parsed >= 0) {
@@ -42,12 +47,9 @@ function promptDevPrisms() {
 }
 
 // [CRM.D]
-function promptDevGold() {
+async function promptDevGold() {
   if (!devMode) return;
-  devInputOpen = true;
-  const val = prompt("Set Gold:", gold);
-  devInputOpen = false;
-  suppressBackgroundPause();
+  const val = await askDevValue("Set Gold:", gold);
   if (val !== null) {
     const parsed = parseInt(val, 10);
     if (!isNaN(parsed) && parsed >= 0) {
@@ -58,12 +60,9 @@ function promptDevGold() {
 }
 
 // [CRM.E]
-function promptDevHp() {
+async function promptDevHp() {
   if (!devMode) return;
-  devInputOpen = true;
-  const val = prompt("Set Lives (HP):", baseHp);
-  devInputOpen = false;
-  suppressBackgroundPause();
+  const val = await askDevValue("Set Lives (HP):", baseHp);
   if (val !== null) {
     const parsed = parseInt(val, 10);
     if (!isNaN(parsed) && parsed > 0) {
@@ -74,13 +73,9 @@ function promptDevHp() {
 }
 
 // [CRM.F]
-function devPromptLevelSelect() {
+async function devPromptLevelSelect() {
   if (!devMode) return;
-  devInputOpen = true;
-  const val = prompt(`Select Level (1 - ${TOTAL_LEVELS}):`, currentLevel);
-  devInputOpen = false;
-  suppressBackgroundPause();
-
+  const val = await askDevValue(`Select Level (1 - ${TOTAL_LEVELS}):`, currentLevel);
   if (val !== null) {
     const lvl = parseInt(val, 10);
     if (!isNaN(lvl) && lvl >= 1 && lvl <= TOTAL_LEVELS) {
@@ -90,16 +85,12 @@ function devPromptLevelSelect() {
 }
 
 // [CRM.G]
-function devPromptWaveSelect() {
+async function devPromptWaveSelect() {
   if (!devMode) return;
   const lvlConfig = (typeof LEVELS_DATA !== 'undefined') ? LEVELS_DATA[currentLevel] : null;
   const maxW = isEndlessMode ? 999 : (lvlConfig ? lvlConfig.totalWaves : 10);
 
-  devInputOpen = true;
-  const val = prompt(`Select Wave (1 - ${maxW}):`, wave);
-  devInputOpen = false;
-  suppressBackgroundPause();
-
+  const val = await askDevValue(`Select Wave (1 - ${maxW}):`, wave);
   if (val !== null) {
     const targetW = parseInt(val, 10);
     if (!isNaN(targetW) && targetW >= 1 && (isEndlessMode || targetW <= maxW)) {
@@ -148,6 +139,24 @@ function initDevResourceHold() {
   setupHold('hudPrismBadge', promptDevPrisms);
   setupHold('goldHalf', promptDevGold);
   setupHold('hpHalf', promptDevHp);
+
+  // Защищаем поля ввода внутри самого дев-меню (#devSpawnCount, #devSpawnType), чтобы клавиатура не триггерила паузу и ресайз фона
+  ['devSpawnCount', 'devSpawnType', 'speedContainer'].forEach(id => {
+    const inputEl = document.getElementById(id);
+    if (inputEl && !inputEl.dataset.devFocusGuard) {
+      inputEl.dataset.devFocusGuard = '1';
+      inputEl.addEventListener('focus', () => {
+        devInputOpen = true;
+        if (typeof suppressBackgroundPause === 'function') suppressBackgroundPause(15000);
+      });
+      inputEl.addEventListener('blur', () => {
+        setTimeout(() => {
+          devInputOpen = false;
+          if (typeof suppressBackgroundPause === 'function') suppressBackgroundPause(1000);
+        }, 250);
+      });
+    }
+  });
 }
 
 // [CRM.I]
@@ -245,6 +254,7 @@ function openRuntimeMetadataPanel() {
     waveEl.onclick = devPromptWaveSelect;
   }
 
+  if (typeof refreshDevDropdowns === 'function') refreshDevDropdowns();
   updateDiamondUI();
   updatePrismUI();
   updatePaletteSelectDropdown('settingPaletteSelect');
@@ -252,7 +262,7 @@ function openRuntimeMetadataPanel() {
 }
 
 // [CRM.P]
-export function mountRuntimeMetadata() {
+function mountRuntimeMetadata() {
   window.promptDevDiamonds = promptDevDiamonds;
   window.promptDevPrisms = promptDevPrisms;
   window.promptDevGold = promptDevGold;
@@ -270,3 +280,5 @@ export function mountRuntimeMetadata() {
 
   openRuntimeMetadataPanel();
 }
+
+window.mountRuntimeMetadata = mountRuntimeMetadata;
