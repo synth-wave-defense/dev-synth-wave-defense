@@ -22,9 +22,13 @@ import com.yandex.mobile.ads.rewarded.RewardedAdEventListener;
 import com.yandex.mobile.ads.rewarded.RewardedAdLoadListener;
 import com.yandex.mobile.ads.rewarded.RewardedAdLoader;
 import org.json.JSONObject;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 @Keep
 public class MainActivity extends BridgeActivity {
@@ -36,15 +40,23 @@ public class MainActivity extends BridgeActivity {
 
     private NativeYandexAdsBridge adsBridge;
 
+    private AssetCacheManager cacheManager;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         installSilentCrashInterceptor();
         super.onCreate(savedInstanceState);
 
         try {
+            cacheManager = new AssetCacheManager();
+            String customWebDir = cacheManager.prepareBootWebDir();
+            if (customWebDir != null && this.bridge != null) {
+                this.bridge.setServerBasePath(customWebDir);
+            }
+
             if (this.bridge != null && this.bridge.getWebView() != null) {
                 adsBridge = new NativeYandexAdsBridge(this);
-                this.bridge.getWebView().addJavascriptInterface(new AssetCacheManager(), "AssetCacheManager");
+                this.bridge.getWebView().addJavascriptInterface(cacheManager, "AssetCacheManager");
                 this.bridge.getWebView().addJavascriptInterface(adsBridge, "NativeYandexAdsBridge");
                 this.bridge.getWebView().addJavascriptInterface(adsBridge, "NativeAdsBridge");
             }
@@ -103,9 +115,69 @@ public class MainActivity extends BridgeActivity {
 
     @Keep
     public class AssetCacheManager {
+        private static final String OTA_PREFS = "SynthWaveOtaPrefs";
+        private static final String KEY_ACTIVE_VER = "active_version";
+        private static final String KEY_PREV_VER = "prev_version";
+        private static final String KEY_PENDING_VER = "pending_version";
+        private static final String KEY_BAD_VER = "bad_version";
+
+        private String bootStatus = "SUCCESS";
+        private String bootLog = "builtin";
+
+        private SharedPreferences prefs() {
+            return getSharedPreferences(OTA_PREFS, Context.MODE_PRIVATE);
+        }
+
+        private File getPackDir(String version) {
+            return new File(getFilesDir(), "ota_packs/" + version);
+        }
+
+        public String prepareBootWebDir() {
+            try {
+                SharedPreferences sp = prefs();
+                String pending = sp.getString(KEY_PENDING_VER, null);
+                String active = sp.getString(KEY_ACTIVE_VER, "builtin");
+
+                if (pending != null && !pending.isEmpty()) {
+                    File pendingDir = getPackDir(pending);
+                    if (new File(pendingDir, "index.html").exists()) {
+                        sp.edit()
+                            .putString(KEY_PREV_VER, active)
+                            .putString(KEY_ACTIVE_VER, pending)
+                            .remove(KEY_PENDING_VER)
+                            .commit();
+                        active = pending;
+                        bootLog = "promoted:" + active;
+                    } else {
+                        sp.edit().remove(KEY_PENDING_VER).commit();
+                        bootLog = "missing_pending";
+                    }
+                }
+
+                if (active != null && !"builtin".equals(active)) {
+                    File activeDir = getPackDir(active);
+                    if (new File(activeDir, "index.html").exists()) {
+                        bootStatus = "SUCCESS";
+                        if ("builtin".equals(bootLog)) bootLog = "loaded:" + active;
+                        return activeDir.getAbsolutePath();
+                    } else {
+                        sp.edit().putString(KEY_ACTIVE_VER, "builtin").commit();
+                        bootStatus = "FALLBACK_MISSING";
+                        bootLog = "fallback_builtin";
+                    }
+                }
+            } catch (Throwable e) {
+                bootStatus = "ERR";
+                bootLog = e.getMessage();
+            }
+            return null;
+        }
+
         @Keep
         @JavascriptInterface
-        public void logJsDiagnostic(String msg) {}
+        public void logJsDiagnostic(String msg) {
+            Log.d(TAG, "[OTA] " + msg);
+        }
 
         @Keep
         @JavascriptInterface
@@ -113,28 +185,140 @@ public class MainActivity extends BridgeActivity {
 
         @Keep
         @JavascriptInterface
-        public String restoreBackupPack() { return "OK_BUILTIN"; }
+        public String restoreBackupPack() {
+            prefs().edit()
+                .putString(KEY_ACTIVE_VER, "builtin")
+                .remove(KEY_PENDING_VER)
+                .commit();
+            return "OK_BUILTIN";
+        }
 
         @Keep
         @JavascriptInterface
         public String getStatusJson() {
             try {
+                SharedPreferences sp = prefs();
                 JSONObject obj = new JSONObject();
-                obj.put("bootStatus", "SUCCESS");
-                obj.put("activeVersion", "builtin");
+                obj.put("bootStatus", bootStatus);
+                obj.put("bootLog", bootLog);
+                obj.put("activeVersion", sp.getString(KEY_ACTIVE_VER, "builtin"));
+                obj.put("prevVersion", sp.getString(KEY_PREV_VER, "builtin"));
+                obj.put("pendingVersion", sp.getString(KEY_PENDING_VER, "none"));
+                obj.put("badVersion", sp.getString(KEY_BAD_VER, ""));
                 return obj.toString();
             } catch (Exception e) {
-                return "{\"bootStatus\":\"SUCCESS\"}";
+                return "{\"bootStatus\":\"ERR\"}";
             }
         }
 
         @Keep
         @JavascriptInterface
-        public String syncResourcePack(String f, String v, boolean imm) { return "OK_DISABLED"; }
+        public String syncResourcePack(String cacheFileName, String version, boolean immediate) {
+            try {
+                File zipFile = new File(getFilesDir(), cacheFileName);
+                if (!zipFile.exists()) {
+                    return "ERR_NO_ZIP";
+                }
+
+                File targetDir = getPackDir(version);
+                deleteRecursive(targetDir);
+                if (!targetDir.mkdirs() && !targetDir.exists()) {
+                    return "ERR_MKDIR";
+                }
+
+                unzipToDir(zipFile, targetDir);
+
+                if (!new File(targetDir, "index.html").exists()) {
+                    deleteRecursive(targetDir);
+                    return "ERR_NO_INDEX_HTML";
+                }
+
+                prefs().edit()
+                    .putString(KEY_PENDING_VER, version)
+                    .commit();
+
+                if (immediate) {
+                    return activateStagedPack();
+                }
+                return "OK_STAGED";
+            } catch (Throwable e) {
+                Log.e(TAG, "syncResourcePack error", e);
+                return "ERR_UNZIP: " + e.getMessage();
+            }
+        }
 
         @Keep
         @JavascriptInterface
-        public String activateStagedPack() { return "OK_DISABLED"; }
+        public String activateStagedPack() {
+            try {
+                SharedPreferences sp = prefs();
+                String pending = sp.getString(KEY_PENDING_VER, null);
+                if (pending == null || pending.isEmpty()) {
+                    return "ERR_NO_PENDING";
+                }
+                File pendingDir = getPackDir(pending);
+                if (!new File(pendingDir, "index.html").exists()) {
+                    return "ERR_PENDING_MISSING";
+                }
+
+                String prev = sp.getString(KEY_ACTIVE_VER, "builtin");
+                sp.edit()
+                    .putString(KEY_PREV_VER, prev)
+                    .putString(KEY_ACTIVE_VER, pending)
+                    .remove(KEY_PENDING_VER)
+                    .commit();
+
+                runOnUiThread(() -> {
+                    try {
+                        if (MainActivity.this.bridge != null) {
+                            MainActivity.this.bridge.setServerBasePath(pendingDir.getAbsolutePath());
+                        }
+                    } catch (Throwable ignored) {}
+                });
+
+                return "OK_ACTIVATED";
+            } catch (Throwable e) {
+                return "ERR_ACTIVATE: " + e.getMessage();
+            }
+        }
+
+        private void unzipToDir(File zipFile, File destDir) throws Exception {
+            String destCanonical = destDir.getCanonicalPath() + File.separator;
+            try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(zipFile)))) {
+                ZipEntry entry;
+                byte[] buffer = new byte[8192];
+                while ((entry = zis.getNextEntry()) != null) {
+                    File outFile = new File(destDir, entry.getName());
+                    if (!outFile.getCanonicalPath().startsWith(destCanonical)) {
+                        throw new SecurityException("Zip Slip blocked: " + entry.getName());
+                    }
+                    if (entry.isDirectory()) {
+                        outFile.mkdirs();
+                    } else {
+                        File parent = outFile.getParentFile();
+                        if (parent != null && !parent.exists()) parent.mkdirs();
+                        try (FileOutputStream fos = new FileOutputStream(outFile)) {
+                            int count;
+                            while ((count = zis.read(buffer)) != -1) {
+                                fos.write(buffer, 0, count);
+                            }
+                        }
+                    }
+                    zis.closeEntry();
+                }
+            }
+        }
+
+        private void deleteRecursive(File file) {
+            if (file == null || !file.exists()) return;
+            if (file.isDirectory()) {
+                File[] children = file.listFiles();
+                if (children != null) {
+                    for (File child : children) deleteRecursive(child);
+                }
+            }
+            file.delete();
+        }
     }
 
     @Keep
