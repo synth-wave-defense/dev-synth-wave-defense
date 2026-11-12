@@ -6891,11 +6891,41 @@ body:not([data-theme="default"]) .bp-btn-buy-tier {
   flex: none;
 }
 
-.custom-palette-option.locked .pal-opt-dot {
-  opacity: 0.4;
+.pal-opt-bars {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 3px 4px;
+  border-radius: 5px;
+  background: #070a14;
+  border: 1px solid rgba(140, 200, 255, 0.28);
+  flex: none;
 }
-/* [STY.GB] */
 
+.pal-opt-bars span {
+  display: block;
+  width: 3.5px;
+  height: 12px;
+  border-radius: 1.5px;
+}
+
+.pal-opt-bars.is-mini {
+  padding: 2px 3px;
+  gap: 1.5px;
+}
+
+.pal-opt-bars.is-mini span {
+  width: 3px;
+  height: 10px;
+}
+
+.custom-palette-option.locked .pal-opt-dot,
+.custom-palette-option.locked .pal-opt-bars {
+  opacity: 0.45;
+}
+
+/* [STY.GB] */
 .pal-opt-name {
   flex: 1;
   text-align: left;

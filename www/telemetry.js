@@ -1,7 +1,7 @@
 // Telemetry & Analytics Module: Best-effort crash reporting and event logging.
 
 // Единая версия сборки (используется как фоллбэк в UI и в телеметрии)
-window.APP_VERSION = '1.38.29';
+window.APP_VERSION = '1.38.30';
 
 // Флаг среды выполнения ('development' | 'production')
 window.__APP_STAGE__ = window.__APP_STAGE__ || 'development';
@@ -32,7 +32,7 @@ window.reportErrorToWebhook = function (info) {
   if (!ERROR_WEBHOOK_URL || !info) return;
   const ver = (window.SyncTelemetry && window.SyncTelemetry.localVersion && window.SyncTelemetry.localVersion !== '—')
     ? window.SyncTelemetry.localVersion
-    : (window.APP_VERSION || '1.38.29');
+    : (window.APP_VERSION || '1.38.30');
 
   const lines = [
     '\uD83D\uDEA8 **Synth Wave Defense Crash** (v' + ver + ')',
@@ -58,7 +58,7 @@ function trackEvent(name, params) {
   if (!ANALYTICS_ENDPOINT_URL) return;
   const ver = (window.SyncTelemetry && window.SyncTelemetry.localVersion && window.SyncTelemetry.localVersion !== '—')
     ? window.SyncTelemetry.localVersion
-    : (window.APP_VERSION || '1.38.29');
+    : (window.APP_VERSION || '1.38.30');
 
   const enrichedParams = Object.assign({ app_version: ver }, params || {});
   sendJSON(ANALYTICS_ENDPOINT_URL, {

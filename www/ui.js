@@ -3370,6 +3370,11 @@ function updatePaletteSelectDropdown(selectId) {
   trigger.className = 'custom-palette-trigger' + (isLockedInitial ? ' is-disabled' : '');
   trigger.innerHTML = `
     ${isLockedInitial ? `<span class="pal-lock-icon">${CUSTOM_LOCK_SVG}</span>` : ''}
+    <span class="pal-opt-bars is-mini">
+      <span style="background:${currentPal.c1};"></span>
+      <span style="background:${currentPal.c2};"></span>
+      <span style="background:${currentPal.c3};"></span>
+    </span>
     <span class="pal-trigger-name">${currentPal.name}</span>
     <span class="pal-trigger-arrow">▾</span>
   `;
@@ -3389,7 +3394,11 @@ function updatePaletteSelectDropdown(selectId) {
       + (!isUnlocked ? ' locked' : '');
 
     item.innerHTML = `
-      <span class="pal-opt-dot" style="background:${pal.c1}; box-shadow: 0 0 6px ${pal.c1};"></span>
+      <span class="pal-opt-bars" style="border-color:${isUnlocked ? pal.c1 + '66' : 'rgba(140, 200, 255, 0.14)'};">
+        <span style="background:${pal.c1};"></span>
+        <span style="background:${pal.c2};"></span>
+        <span style="background:${pal.c3};"></span>
+      </span>
       <span class="pal-opt-name">${pal.name}</span>
       ${!isUnlocked ? `<span class="pal-opt-lock">${CUSTOM_LOCK_SVG}</span>` : ''}
     `;

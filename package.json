@@ -1,9 +1,10 @@
 {
   "name": "37-cap",
-  "version": "1.38",
+  "version": "1.38.30",
   "description": "<!-- [DOC100] Synth Wave Defense repository documentation. --> # dev-synth-wave-defense",
   "main": "index.js",
   "scripts": {
+    "bump": "node scripts/bump-version.js",
     "build": "node scripts/build-prod.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
