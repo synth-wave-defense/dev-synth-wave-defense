@@ -1,5 +1,5 @@
-// Synth Wave Defense -- audio.js  v2.5 (1.36.19)
-//  SFX Engine Module: Handles sound effect playback, custom synthesis, and dynamic throttling.
+// Synth Wave Defense -- audio.js v2.5 (1.36.19)
+// SFX Engine Module: Handles sound effect playback, custom synthesis, and dynamic throttling.
 
 window._audioCtxStateStalls = 0;
 window._audioCtxState = 'closed';
@@ -7,12 +7,12 @@ window._audioCtxState = 'closed';
 const SFX = (function () {
   'use strict';
 
-  //  Core Audio Constants
+  // Core Audio Constants
   const MASTER_VOLUME = 0.45;
   const MAX_VOICES = 128; // Increased to accommodate delayed node cleanup
   const BEAM_KEEPALIVE = 0.14;
 
-  //  Default Sound Throttling Configuration (minimum interval between duplicate sounds in seconds)
+  // Default Sound Throttling Configuration (minimum interval between duplicate sounds in seconds)
   const THROTTLE = {
     gun: 0.055, mortarFire: 0.09, explosion: 0.07, tesla: 0.09,
     railgun: 0.11, stasis: 0.12, steam: 0.10, enemyDeath: 0.045,
@@ -20,7 +20,7 @@ const SFX = (function () {
     laserHit: 0.035, melterHit: 0.045, beamHit: 0.045
   };
 
-  //  Voice Allocation Priorities
+  // Voice Allocation Priorities
   const LOW_PRIORITY = {
     gun: true, tesla: true, railgun: true, stasis: true,
     enemyDeath: true, explosion: true, steam: true, mortarFire: true,
@@ -60,7 +60,7 @@ const SFX = (function () {
     return curve;
   }
 
-  //  AudioContext Initialization & DSP Graph Pipeline
+  // AudioContext Initialization & DSP Graph Pipeline
   // [AUD.C]
   function ensureCtx() {
     if (ctx) return ctx;
@@ -80,7 +80,7 @@ const SFX = (function () {
       });
       window._audioCtxState = ctx.state;
 
-      //  Dynamics Compressor Setup
+      // Dynamics Compressor Setup
       comp = ctx.createDynamicsCompressor();
       comp.threshold.setValueAtTime(-18, ctx.currentTime);
       comp.knee.setValueAtTime(8, ctx.currentTime);
@@ -88,9 +88,10 @@ const SFX = (function () {
       comp.attack.setValueAtTime(0.001, ctx.currentTime);
       comp.release.setValueAtTime(0.10, ctx.currentTime);
 
-      //  Audio Gain Buses Configuration & Analyser Setup
+      // Audio Gain Buses Configuration & Analyser Setup
+      // Держим выход в 0 до первого пользовательского жеста (unlock), чтобы не было щелчка ЦАП при прогреве AudioContext
       master = ctx.createGain();
-      master.gain.value = MASTER_VOLUME * volume;
+      master.gain.value = unlocked ? (MASTER_VOLUME * volume) : 0;
 
       sfxBus = ctx.createGain();
       sfxBus.gain.value = 1;
@@ -99,15 +100,14 @@ const SFX = (function () {
       analyser.fftSize = 2048;
       timeDomainData = new Float32Array(analyser.fftSize);
 
-      //  Master Signal Routing: sfxBus -> comp -> master -> analyser -> destination
+      // Master Signal Routing: sfxBus -> comp -> master -> analyser -> destination
       sfxBus.connect(comp);
       comp.connect(master);
       master.connect(analyser);
       analyser.connect(ctx.destination);
 
-      //  Audio Noise Buffer Generation
+      // Audio Noise Buffer Generation
       const len = Math.floor(ctx.sampleRate * 2);
-      
       whiteNoiseBuffer = ctx.createBuffer(1, len, ctx.sampleRate);
       const wd = whiteNoiseBuffer.getChannelData(0);
       for (let i = 0; i < len; i++) wd[i] = Math.random() * 2 - 1;
@@ -130,14 +130,30 @@ const SFX = (function () {
       return null;
     }
   }
-  
+
   // [AUD.E]
   function resume() {
     if (!ctx) return;
     try { if (ctx.state === 'suspended') ctx.resume(); } catch (e) { }
   }
 
-  //  Sample Asset Loader & Registry
+  // [AUD.EM] Бесшумная разблокировка и плавное открытие выходного гейна после тапа пользователя
+  function unlockAudioOutput() {
+    unlocked = true;
+    ensureCtx();
+    resume();
+    if (master && ctx) {
+      try {
+        const t = ctx.currentTime;
+        master.gain.cancelScheduledValues(t);
+        master.gain.setTargetAtTime(MASTER_VOLUME * volume, t, 0.015);
+      } catch (e) {
+        master.gain.value = MASTER_VOLUME * volume;
+      }
+    }
+  }
+
+  // Sample Asset Loader & Registry
   const samples = Object.create(null);
   const customSynths = Object.create(null);
   let sampleBase = 'sfx/';
@@ -264,7 +280,7 @@ const SFX = (function () {
     setTimeout(release, (dur + 0.3) * 1000);
   }
 
-  //  Procedural Tone Synthesizer
+  // Procedural Tone Synthesizer
   // [AUD.V]
   function tone(o) {
     if (!ensureCtx()) return;
@@ -317,7 +333,7 @@ const SFX = (function () {
     return osc;
   }
 
-  //  Procedural Noise Synthesizer
+  // Procedural Noise Synthesizer
   // [AUD.W]
   function noise(o) {
     if (!ensureCtx()) return;
@@ -383,7 +399,7 @@ const SFX = (function () {
     noise({ dur: 0.012, gain: 0.06, attack: 0.001, filter: 'bandpass', cutoff: 3400, q: 1.1 });
   }
 
-  //  Sound Alias & Default FX Mappings
+  // Sound Alias & Default FX Mappings
   const SOUND_ALIAS = {
     tap: ['ui', 0], back: ['ui', -1], toggle: ['ui', 1], confirm: ['ui', 2],
     denied: ['ui', -2], build: ['ui', 1], upgrade: ['ui', 2], sell: ['ui', -1],
@@ -418,7 +434,7 @@ const SFX = (function () {
     else noise(layer);
   }
 
-  //  Audio Dispatcher & Playback Control
+  // Audio Dispatcher & Playback Control
   // [AUD.AD]
   function play(name, arg) {
     if (!enabled) return;
@@ -461,7 +477,7 @@ const SFX = (function () {
     return play('enemyDeath');
   }
 
-  //  Real-Time Audio Diagnostics Metrics
+  // Real-Time Audio Diagnostics Metrics
   // [AUD.AF]
   function getAudioMetrics() {
     if (ctx) window._audioCtxState = ctx.state;
@@ -508,7 +524,7 @@ const SFX = (function () {
   // [AUD.AH]
   function setVolume(v) {
     volume = Math.max(0, Math.min(1, v));
-    if (master) {
+    if (master && unlocked) {
       try { master.gain.setTargetAtTime(MASTER_VOLUME * volume, now(), 0.02); } catch (e) { }
     }
   }
@@ -522,12 +538,12 @@ const SFX = (function () {
     '.result-btn, .result-skip-btn, .tutorial-skip-btn, .setting-row, .badge-half, .switch,' +
     '.loadout-widget-header, .build-slot, .upgrade-node, [data-sfx], [onclick]';
 
-  //  User Interface Event Listeners & Audio Unlocking
+  // User Interface Event Listeners & Audio Unlocking
   // [AUD.AJ]
   function installUiHooks() {
     // [AUD.AK]
     document.addEventListener('pointerdown', (ev) => {
-      if (!unlocked) { unlocked = true; ensureCtx(); resume(); }
+      if (!unlocked) { unlockAudioOutput(); }
       let el = ev.target;
       let hit = null;
       for (let i = 0; i < 5 && el && el !== document.body; i++) {
@@ -560,10 +576,10 @@ const SFX = (function () {
     setEnabled, setVolume, isEnabled,
     getAudioMetrics,
     installUiHooks,
-    unlock() { ensureCtx(); resume(); },
+    unlock() { unlockAudioOutput(); },
     loadSamples, registerBuffer, clearSample, hasSample, sampleNames,
 
-    //  Manifest Auto-Loader & Custom Synth Configuration
+    // Manifest Auto-Loader & Custom Synth Configuration
     autoload() {
       try {
         if (typeof window.SFX_MANIFEST !== 'undefined' && window.SFX_MANIFEST) {
