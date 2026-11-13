@@ -1,4 +1,4 @@
-//  Game Engine Module: Primary simulation state, game loop, persistent storage, and entity managers.
+// Game Engine Module: Primary simulation state, game loop, persistent storage, and entity managers.
 // Synth Wave Defense -- engine.js
 //
 // The simulation layer: everything about *what happens* in a match, with no
@@ -490,7 +490,7 @@ window.getEndlessEntryStatus = getEndlessEntryStatus;
 function generateEndlessWaveData(w) {
   const arena = (typeof currentLevelSection !== 'undefined') ? Math.min(5, Math.max(1, currentLevelSection)) : 1;
   const cWave = ((w - 1) % 20) + 1; // Позиция внутри 20-волнового цикла (1..20)
-  const isSecondHalf = cWave > 10;  // Вторые 10 волн цикла сложнее первых 10
+  const isSecondHalf = cWave > 10; // Вторые 10 волн цикла сложнее первых 10
 
   // 1. СТУПЕНЧАТАЯ КРИВАЯ HP С ЗАПАСОМ СЛОЖНОСТИ (Контрольные стены: 10 / 20 / 40 / 60 / 80 / <100)
   let hpScalingMult = 1.0;
@@ -570,7 +570,7 @@ function generateEndlessWaveData(w) {
       // Арена 5 (Главы 1–5, Альтернативная): W10 -> чередование Titan / Chronos, W20 -> EMP Overlord
       bossType = isMajorBoss ? 'emp_overlord' : ((Math.floor(w / 20) % 2 === 0) ? 'titan_core' : 'chronos_warp');
     }
-	const protoBoss = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[bossType]) ? ENEMY_CONFIGS[bossType] : null;
+    const protoBoss = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS[bossType]) ? ENEMY_CONFIGS[bossType] : null;
     let bColor = protoBoss ? protoBoss.color : '#a06fdc';
     let bGlow = protoBoss ? protoBoss.glow : bColor;
     let bShape = protoBoss ? protoBoss.shape : 'octagon';
@@ -631,7 +631,7 @@ function generateEndlessWaveData(w) {
   // ОБЫЧНЫЕ ВОЛНЫ: 20-ВОЛНОВОЙ ЦИКЛ ДЛЯ КАЖДОЙ ИЗ 5 КАРТ
   // ==========================================
   let g1Type = 'grunt', g1BaseCount = 5, g1Interval = 0.65, g1HpMod = 1.0;
-  let g2Type = null,    g2BaseCount = 0, g2Interval = 0.65, g2HpMod = 0.9;
+  let g2Type = null, g2BaseCount = 0, g2Interval = 0.65, g2HpMod = 0.9;
 
   // ------------------------------------------
   // АРЕНА 1 (Главы 1–2): ТОЛЬКО grunt, scout, tank, swarm
@@ -648,11 +648,11 @@ function generateEndlessWaveData(w) {
       } else if (step === 3) {
         g1Type = 'scout'; g1BaseCount = 7; g1Interval = 0.45;
       } else if (step === 0) {
-        g1Type = 'tank';  g1BaseCount = 2; g1Interval = 1.75; // Танки идут свободно
+        g1Type = 'tank'; g1BaseCount = 2; g1Interval = 1.75; // Танки идут свободно
         g2Type = 'grunt'; g2BaseCount = 5; g2Interval = 0.60;
       } else if (step === 1) {
         g1Type = 'swarm'; g1BaseCount = 12; g1Interval = 0.05; // Плотная пачка роя
-        g2Type = 'grunt'; g2BaseCount = 4;  g2Interval = 0.65;
+        g2Type = 'grunt'; g2BaseCount = 4; g2Interval = 0.65;
       } else {
         g1Type = 'grunt'; g1BaseCount = 7; g1Interval = 0.58;
         g2Type = 'scout'; g2BaseCount = 5; g2Interval = 0.45;
@@ -661,17 +661,17 @@ function generateEndlessWaveData(w) {
       // Волны 11–19 цикла (Посложнее): плотные комбо танков, быстрых скаутов и двойного роя
       const step = cWave % 4;
       if (step === 3) {
-        g1Type = 'tank';  g1BaseCount = 4; g1Interval = 1.65;
+        g1Type = 'tank'; g1BaseCount = 4; g1Interval = 1.65;
         g2Type = 'scout'; g2BaseCount = 8; g2Interval = 0.40;
       } else if (step === 0) {
         g1Type = 'swarm'; g1BaseCount = 22; g1Interval = 0.045;
-        g2Type = 'scout'; g2BaseCount = 7;  g2Interval = 0.42;
+        g2Type = 'scout'; g2BaseCount = 7; g2Interval = 0.42;
       } else if (step === 1) {
-        g1Type = 'tank';  g1BaseCount = 3;  g1Interval = 1.70;
+        g1Type = 'tank'; g1BaseCount = 3; g1Interval = 1.70;
         g2Type = 'swarm'; g2BaseCount = 16; g2Interval = 0.05;
       } else {
         g1Type = 'grunt'; g1BaseCount = 10; g1Interval = 0.50;
-        g2Type = 'tank';  g2BaseCount = 3;  g2Interval = 1.65;
+        g2Type = 'tank'; g2BaseCount = 3; g2Interval = 1.65;
       }
     }
   }
@@ -686,32 +686,32 @@ function generateEndlessWaveData(w) {
         g1Type = 'scout'; g1BaseCount = 6; g1Interval = 0.50;
       } else if (step === 2) {
         g1Type = 'swarm'; g1BaseCount = 14; g1Interval = 0.05;
-        g2Type = 'grunt'; g2BaseCount = 5;  g2Interval = 0.60;
+        g2Type = 'grunt'; g2BaseCount = 5; g2Interval = 0.60;
       } else if (step === 3) {
         g1Type = 'blinker'; g1BaseCount = 3; g1Interval = 0.95;
-        g2Type = 'scout';   g2BaseCount = 5; g2Interval = 0.45;
+        g2Type = 'scout'; g2BaseCount = 5; g2Interval = 0.45;
       } else if (step === 0) {
-        g1Type = 'tank';  g1BaseCount = 3; g1Interval = 1.70;
+        g1Type = 'tank'; g1BaseCount = 3; g1Interval = 1.70;
         g2Type = 'grunt'; g2BaseCount = 6; g2Interval = 0.58;
       } else {
         g1Type = 'blinker'; g1BaseCount = 4; g1Interval = 0.90;
-        g2Type = 'grunt';   g2BaseCount = 6; g2Interval = 0.58;
+        g2Type = 'grunt'; g2BaseCount = 6; g2Interval = 0.58;
       }
     } else {
       // Волны 11–19 цикла: массированные атаки блинкеров под прикрытием роя и танков
       const step = cWave % 4;
       if (step === 3) {
-        g1Type = 'blinker'; g1BaseCount = 6;  g1Interval = 0.82;
-        g2Type = 'swarm';   g2BaseCount = 20; g2Interval = 0.045;
+        g1Type = 'blinker'; g1BaseCount = 6; g1Interval = 0.82;
+        g2Type = 'swarm'; g2BaseCount = 20; g2Interval = 0.045;
       } else if (step === 0) {
-        g1Type = 'tank';    g1BaseCount = 4; g1Interval = 1.65;
+        g1Type = 'tank'; g1BaseCount = 4; g1Interval = 1.65;
         g2Type = 'blinker'; g2BaseCount = 5; g2Interval = 0.85;
       } else if (step === 1) {
         g1Type = 'swarm'; g1BaseCount = 26; g1Interval = 0.045;
-        g2Type = 'scout'; g2BaseCount = 9;  g2Interval = 0.38;
+        g2Type = 'scout'; g2BaseCount = 9; g2Interval = 0.38;
       } else {
         g1Type = 'blinker'; g1BaseCount = 6; g1Interval = 0.80;
-        g2Type = 'scout';   g2BaseCount = 8; g2Interval = 0.40;
+        g2Type = 'scout'; g2BaseCount = 8; g2Interval = 0.40;
       }
     }
   }
@@ -726,7 +726,7 @@ function generateEndlessWaveData(w) {
         g1Type = 'grunt'; g1BaseCount = 6; g1Interval = 0.60;
         g2Type = 'scout'; g2BaseCount = 4; g2Interval = 0.48;
       } else if (step === 3) {
-        g1Type = 'tank';  g1BaseCount = 3; g1Interval = 1.70;
+        g1Type = 'tank'; g1BaseCount = 3; g1Interval = 1.70;
         g2Type = 'scout'; g2BaseCount = 6; g2Interval = 0.45;
       } else if (step === 0) {
         g1Type = (cWave >= 6) ? 'goliath' : 'tank';
@@ -734,10 +734,10 @@ function generateEndlessWaveData(w) {
         g1Interval = (g1Type === 'goliath') ? 2.30 : 1.70;
         g2Type = 'grunt'; g2BaseCount = 6; g2Interval = 0.58;
       } else if (step === 1) {
-        g1Type = 'blinker'; g1BaseCount = 4;  g1Interval = 0.88;
-        g2Type = 'swarm';   g2BaseCount = 15; g2Interval = 0.05;
+        g1Type = 'blinker'; g1BaseCount = 4; g1Interval = 0.88;
+        g2Type = 'swarm'; g2BaseCount = 15; g2Interval = 0.05;
       } else {
-        g1Type = 'tank';    g1BaseCount = 3; g1Interval = 1.65;
+        g1Type = 'tank'; g1BaseCount = 3; g1Interval = 1.65;
         g2Type = 'blinker'; g2BaseCount = 4; g2Interval = 0.90;
       }
     } else {
@@ -748,12 +748,12 @@ function generateEndlessWaveData(w) {
         g2Type = 'blinker'; g2BaseCount = 5; g2Interval = 0.82;
       } else if (step === 0) {
         g1Type = 'goliath'; g1BaseCount = 2; g1Interval = 2.30;
-        g2Type = 'tank';    g2BaseCount = 4; g2Interval = 1.65;
+        g2Type = 'tank'; g2BaseCount = 4; g2Interval = 1.65;
       } else if (step === 1) {
-        g1Type = 'swarm';   g1BaseCount = 24; g1Interval = 0.045;
-        g2Type = 'goliath'; g2BaseCount = 2;  g2Interval = 2.20;
+        g1Type = 'swarm'; g1BaseCount = 24; g1Interval = 0.045;
+        g2Type = 'goliath'; g2BaseCount = 2; g2Interval = 2.20;
       } else {
-        g1Type = 'tank';  g1BaseCount = 5; g1Interval = 1.60;
+        g1Type = 'tank'; g1BaseCount = 5; g1Interval = 1.60;
         g2Type = 'scout'; g2BaseCount = 9; g2Interval = 0.38;
       }
     }
@@ -769,31 +769,31 @@ function generateEndlessWaveData(w) {
         g1Type = 'grunt'; g1BaseCount = 7; g1Interval = 0.58;
       } else if (step === 2) {
         g1Type = 'blinker'; g1BaseCount = 4; g1Interval = 0.85;
-        g2Type = 'scout';   g2BaseCount = 6; g2Interval = 0.42;
+        g2Type = 'scout'; g2BaseCount = 6; g2Interval = 0.42;
       } else if (step === 3) {
         g1Type = 'goliath'; g1BaseCount = 2; g1Interval = 2.25;
-        g2Type = 'grunt';   g2BaseCount = 6; g2Interval = 0.55;
+        g2Type = 'grunt'; g2BaseCount = 6; g2Interval = 0.55;
       } else if (step === 0) {
         g1Type = 'swarm'; g1BaseCount = 18; g1Interval = 0.045;
-        g2Type = 'tank';  g2BaseCount = 3;  g2Interval = 1.70;
+        g2Type = 'tank'; g2BaseCount = 3; g2Interval = 1.70;
       } else {
-        g1Type = 'tank';    g1BaseCount = 4; g1Interval = 1.65;
+        g1Type = 'tank'; g1BaseCount = 4; g1Interval = 1.65;
         g2Type = 'blinker'; g2BaseCount = 4; g2Interval = 0.85;
       }
     } else {
       // Волны 11–19 цикла: подключаются EMP Bomber (строго дозированно, с интервалом 2.5с)
       const step = cWave % 4;
       if (step === 3) {
-        g1Type = 'goliath';    g1BaseCount = 3; g1Interval = 2.20;
+        g1Type = 'goliath'; g1BaseCount = 3; g1Interval = 2.20;
         g2Type = 'emp_bomber'; g2BaseCount = 2; g2Interval = 2.50;
       } else if (step === 0) {
-        g1Type = 'blinker';    g1BaseCount = 6; g1Interval = 0.80;
+        g1Type = 'blinker'; g1BaseCount = 6; g1Interval = 0.80;
         g2Type = 'emp_bomber'; g2BaseCount = 2; g2Interval = 2.60;
       } else if (step === 1) {
-        g1Type = 'swarm';   g1BaseCount = 26; g1Interval = 0.045;
-        g2Type = 'blinker'; g2BaseCount = 5;  g2Interval = 0.82;
+        g1Type = 'swarm'; g1BaseCount = 26; g1Interval = 0.045;
+        g2Type = 'blinker'; g2BaseCount = 5; g2Interval = 0.82;
       } else {
-        g1Type = 'tank';    g1BaseCount = 5; g1Interval = 1.60;
+        g1Type = 'tank'; g1BaseCount = 5; g1Interval = 1.60;
         g2Type = 'goliath'; g2BaseCount = 2; g2Interval = 2.20;
       }
     }
@@ -808,33 +808,33 @@ function generateEndlessWaveData(w) {
       if (cWave === 1) {
         g1Type = 'scout'; g1BaseCount = 8; g1Interval = 0.45;
       } else if (step === 2) {
-        g1Type = 'tank';    g1BaseCount = 3; g1Interval = 1.65;
+        g1Type = 'tank'; g1BaseCount = 3; g1Interval = 1.65;
         g2Type = 'blinker'; g2BaseCount = 4; g2Interval = 0.85;
       } else if (step === 3) {
         g1Type = 'swarm'; g1BaseCount = 20; g1Interval = 0.045;
-        g2Type = 'scout'; g2BaseCount = 6;  g2Interval = 0.40;
+        g2Type = 'scout'; g2BaseCount = 6; g2Interval = 0.40;
       } else if (step === 0) {
-        g1Type = 'goliath';    g1BaseCount = 2; g1Interval = 2.20;
+        g1Type = 'goliath'; g1BaseCount = 2; g1Interval = 2.20;
         g2Type = 'emp_bomber'; g2BaseCount = 1; g2Interval = 2.60;
       } else {
         g1Type = 'blinker'; g1BaseCount = 5; g1Interval = 0.82;
-        g2Type = 'grunt';   g2BaseCount = 7; g2Interval = 0.52;
+        g2Type = 'grunt'; g2BaseCount = 7; g2Interval = 0.52;
       }
     } else {
       // Волны 11–19 цикла: тотальный штурм всеми типами войск
       const step = cWave % 4;
       if (step === 3) {
-        g1Type = 'swarm';      g1BaseCount = 30; g1Interval = 0.04;
-        g2Type = 'emp_bomber'; g2BaseCount = 2;  g2Interval = 2.50;
+        g1Type = 'swarm'; g1BaseCount = 30; g1Interval = 0.04;
+        g2Type = 'emp_bomber'; g2BaseCount = 2; g2Interval = 2.50;
       } else if (step === 0) {
         g1Type = 'goliath'; g1BaseCount = 4; g1Interval = 2.10;
         g2Type = 'blinker'; g2BaseCount = 6; g2Interval = 0.78;
       } else if (step === 1) {
-        g1Type = 'tank';       g1BaseCount = 5; g1Interval = 1.55;
+        g1Type = 'tank'; g1BaseCount = 5; g1Interval = 1.55;
         g2Type = 'emp_bomber'; g2BaseCount = 2; g2Interval = 2.50;
       } else {
-        g1Type = 'goliath'; g1BaseCount = 3;  g1Interval = 2.15;
-        g2Type = 'swarm';   g2BaseCount = 24; g2Interval = 0.045;
+        g1Type = 'goliath'; g1BaseCount = 3; g1Interval = 2.15;
+        g2Type = 'swarm'; g2BaseCount = 24; g2Interval = 0.045;
       }
     }
   }
@@ -1117,7 +1117,7 @@ function applyPaletteColors(paletteId) {
   const c4Light = mixHexWithWhite(c4, 0.45);
   const c5Light = mixHexWithWhite(c5, 0.45);
 
-// Для правой части туманности: в Cyber Gold берем теплый оранж/фуксию (c4/c3), в Blood Moon и Sakura — c3 (вместо фиолетового слота призм c2)
+  // Для правой части туманности: в Cyber Gold берем теплый оранж/фуксию (c4/c3), в Blood Moon и Sakura — c3 (вместо фиолетового слота призм c2)
   const nebRightRgb = (pId === 'cyber_gold') ? rgb4 : ((pId === 'blood_moon' || pId === 'sakura_wave') ? rgb3 : rgb2);
 
   // Сохраняем глобальный объект текущей темы для Canvas (ui.js и engine.js)
@@ -1171,24 +1171,24 @@ function applyPaletteColors(paletteId) {
   // Индивидуальные цвета для всех 7 башен (в default — оригинальные цвета, в других темах — сдвиг оттенков в RGB)
   if (typeof TOWER_CONFIGS !== 'undefined' && TOWER_CONFIGS.gun) {
     if (pId === 'default') {
-      TOWER_CONFIGS.gun.color = '#00e5ff';     TOWER_CONFIGS.gun.glow = '#00e5ff';
-      TOWER_CONFIGS.laser.color = '#f05f9f';   TOWER_CONFIGS.laser.glow = '#f05f9f';
-      TOWER_CONFIGS.mortar.color = '#ff9100';  TOWER_CONFIGS.mortar.glow = '#ff9100';
-      TOWER_CONFIGS.tesla.color = '#00ffcc';   TOWER_CONFIGS.tesla.glow = '#00ffcc';
-      TOWER_CONFIGS.stasis.color = '#38bdf8';  TOWER_CONFIGS.stasis.glow = '#38bdf8';
-      TOWER_CONFIGS.melter.color = '#e85268';  TOWER_CONFIGS.melter.glow = '#e477a3';
+      TOWER_CONFIGS.gun.color = '#00e5ff'; TOWER_CONFIGS.gun.glow = '#00e5ff';
+      TOWER_CONFIGS.laser.color = '#f05f9f'; TOWER_CONFIGS.laser.glow = '#f05f9f';
+      TOWER_CONFIGS.mortar.color = '#ff9100'; TOWER_CONFIGS.mortar.glow = '#ff9100';
+      TOWER_CONFIGS.tesla.color = '#00ffcc'; TOWER_CONFIGS.tesla.glow = '#00ffcc';
+      TOWER_CONFIGS.stasis.color = '#38bdf8'; TOWER_CONFIGS.stasis.glow = '#38bdf8';
+      TOWER_CONFIGS.melter.color = '#e85268'; TOWER_CONFIGS.melter.glow = '#e477a3';
       TOWER_CONFIGS.railgun.color = '#a275df'; TOWER_CONFIGS.railgun.glow = '#b57fdd';
     } else {
       // В кастомных темах разводим башни по оттенкам, чтобы все 7 отличались друг от друга:
-      const teslaCol = mixHexColors(c1, '#00ffcc', 0.45);   // сдвиг от основного в мятно-изумрудный
-      const stasisCol = mixHexColors(c5, '#38bdf8', 0.35);  // холодный ледяной оттенок c5
-      const melterCol = mixHexColors(c3, c4, 0.38);         // кораллово-алый между Laser (c3) и Splash (c4)
+      const teslaCol = mixHexColors(c1, '#00ffcc', 0.45); // сдвиг от основного в мятно-изумрудный
+      const stasisCol = mixHexColors(c5, '#38bdf8', 0.35); // холодный ледяной оттенок c5
+      const melterCol = mixHexColors(c3, c4, 0.38); // кораллово-алый между Laser (c3) и Splash (c4)
       const railgunCol = mixHexColors(c2, '#a275df', 0.30); // благородный фиолетовый сдвиг от c2
 
-      TOWER_CONFIGS.gun.color = c1;          TOWER_CONFIGS.gun.glow = c1Light;
-      TOWER_CONFIGS.laser.color = c3;        TOWER_CONFIGS.laser.glow = c3Light;
-      TOWER_CONFIGS.mortar.color = c4;       TOWER_CONFIGS.mortar.glow = c4Light;
-      TOWER_CONFIGS.tesla.color = teslaCol;  TOWER_CONFIGS.tesla.glow = mixHexWithWhite(teslaCol, 0.35);
+      TOWER_CONFIGS.gun.color = c1; TOWER_CONFIGS.gun.glow = c1Light;
+      TOWER_CONFIGS.laser.color = c3; TOWER_CONFIGS.laser.glow = c3Light;
+      TOWER_CONFIGS.mortar.color = c4; TOWER_CONFIGS.mortar.glow = c4Light;
+      TOWER_CONFIGS.tesla.color = teslaCol; TOWER_CONFIGS.tesla.glow = mixHexWithWhite(teslaCol, 0.35);
       TOWER_CONFIGS.stasis.color = stasisCol;TOWER_CONFIGS.stasis.glow = mixHexWithWhite(stasisCol, 0.40);
       TOWER_CONFIGS.melter.color = melterCol;TOWER_CONFIGS.melter.glow = mixHexWithWhite(melterCol, 0.35);
       TOWER_CONFIGS.railgun.color = railgunCol; TOWER_CONFIGS.railgun.glow = mixHexWithWhite(railgunCol, 0.38);
@@ -1208,28 +1208,28 @@ function applyPaletteColors(paletteId) {
   // Цвета мобов и боссов: в default — оригинальные цвета из data.js, в других темах — стандартизированные слоты c1..c5
   if (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS.grunt) {
     if (pId === 'default') {
-      ENEMY_CONFIGS.grunt.color = '#f05f9f';        ENEMY_CONFIGS.grunt.glow = '#f05f9f';
-      ENEMY_CONFIGS.scout.color = '#ff9100';        ENEMY_CONFIGS.scout.glow = '#ffaa33';
-      ENEMY_CONFIGS.tank.color = '#a06fdc';         ENEMY_CONFIGS.tank.glow = '#825cc2';
-      ENEMY_CONFIGS.swarm.color = '#00ffcc';        ENEMY_CONFIGS.swarm.glow = '#00ffcc';
-      ENEMY_CONFIGS.blinker.color = '#3b82f6';      ENEMY_CONFIGS.blinker.glow = '#60a5fa';
-      ENEMY_CONFIGS.goliath.color = '#8964c4';      ENEMY_CONFIGS.goliath.glow = '#7050a4';
-      ENEMY_CONFIGS.emp_bomber.color = '#38bdf8';   ENEMY_CONFIGS.emp_bomber.glow = '#f05f9f';
+      ENEMY_CONFIGS.grunt.color = '#f05f9f'; ENEMY_CONFIGS.grunt.glow = '#f05f9f';
+      ENEMY_CONFIGS.scout.color = '#ff9100'; ENEMY_CONFIGS.scout.glow = '#ffaa33';
+      ENEMY_CONFIGS.tank.color = '#a06fdc'; ENEMY_CONFIGS.tank.glow = '#825cc2';
+      ENEMY_CONFIGS.swarm.color = '#00ffcc'; ENEMY_CONFIGS.swarm.glow = '#00ffcc';
+      ENEMY_CONFIGS.blinker.color = '#3b82f6'; ENEMY_CONFIGS.blinker.glow = '#60a5fa';
+      ENEMY_CONFIGS.goliath.color = '#8964c4'; ENEMY_CONFIGS.goliath.glow = '#7050a4';
+      ENEMY_CONFIGS.emp_bomber.color = '#38bdf8'; ENEMY_CONFIGS.emp_bomber.glow = '#f05f9f';
       ENEMY_CONFIGS.hive_empress.color = '#00ffcc'; ENEMY_CONFIGS.hive_empress.glow = '#00ffcc';
       ENEMY_CONFIGS.chronos_warp.color = '#3b82f6'; ENEMY_CONFIGS.chronos_warp.glow = '#60a5fa';
-      ENEMY_CONFIGS.titan_core.color = '#f97316';   ENEMY_CONFIGS.titan_core.glow = '#fb923c';
+      ENEMY_CONFIGS.titan_core.color = '#f97316'; ENEMY_CONFIGS.titan_core.glow = '#fb923c';
       ENEMY_CONFIGS.emp_overlord.color = '#38bdf8'; ENEMY_CONFIGS.emp_overlord.glow = '#f05f9f';
     } else {
-      ENEMY_CONFIGS.grunt.color = c3;        ENEMY_CONFIGS.grunt.glow = c3;
-      ENEMY_CONFIGS.scout.color = c4;        ENEMY_CONFIGS.scout.glow = c4Light;
-      ENEMY_CONFIGS.tank.color = c2;         ENEMY_CONFIGS.tank.glow = c2;
-      ENEMY_CONFIGS.swarm.color = c5;        ENEMY_CONFIGS.swarm.glow = c5;
-      ENEMY_CONFIGS.blinker.color = c5;      ENEMY_CONFIGS.blinker.glow = c5Light;
-      ENEMY_CONFIGS.goliath.color = c2;      ENEMY_CONFIGS.goliath.glow = c2;
-      ENEMY_CONFIGS.emp_bomber.color = c1;   ENEMY_CONFIGS.emp_bomber.glow = c3;
+      ENEMY_CONFIGS.grunt.color = c3; ENEMY_CONFIGS.grunt.glow = c3;
+      ENEMY_CONFIGS.scout.color = c4; ENEMY_CONFIGS.scout.glow = c4Light;
+      ENEMY_CONFIGS.tank.color = c2; ENEMY_CONFIGS.tank.glow = c2;
+      ENEMY_CONFIGS.swarm.color = c5; ENEMY_CONFIGS.swarm.glow = c5;
+      ENEMY_CONFIGS.blinker.color = c5; ENEMY_CONFIGS.blinker.glow = c5Light;
+      ENEMY_CONFIGS.goliath.color = c2; ENEMY_CONFIGS.goliath.glow = c2;
+      ENEMY_CONFIGS.emp_bomber.color = c1; ENEMY_CONFIGS.emp_bomber.glow = c3;
       ENEMY_CONFIGS.hive_empress.color = c5; ENEMY_CONFIGS.hive_empress.glow = c5;
       ENEMY_CONFIGS.chronos_warp.color = c1; ENEMY_CONFIGS.chronos_warp.glow = c5Light;
-      ENEMY_CONFIGS.titan_core.color = c4;   ENEMY_CONFIGS.titan_core.glow = c4Light;
+      ENEMY_CONFIGS.titan_core.color = c4; ENEMY_CONFIGS.titan_core.glow = c4Light;
       ENEMY_CONFIGS.emp_overlord.color = c1; ENEMY_CONFIGS.emp_overlord.glow = c3;
     }
   }
@@ -1312,18 +1312,18 @@ let saveGameTimer = null;
 let waveStartGold = 100;
 
 // Настройки разгона времени после паузы/загрузки
-const RESUME_RAMP_DURATION = 1.5;     // Длительность разгона всей игры в секундах (1.0 - 2.0)
-const RESUME_RAMP_START_MULT = 0.5;   // Начальный множитель скорости игры (0.5 = 50% от текущей скорости)
+const RESUME_RAMP_DURATION = 1.5; // Длительность разгона всей игры в секундах (1.0 - 2.0)
+const RESUME_RAMP_START_MULT = 0.5; // Начальный множитель скорости игры (0.5 = 50% от текущей скорости)
 
-let resumeRampTimer = 0;              // Таймер разгона игрового времени
+let resumeRampTimer = 0; // Таймер разгона игрового времени
 
 // Локальная разморозка мобов (оставляем для микро-задержки мобов, если нужно)
-const RESUME_THAW_DURATION = 0.3;     
+const RESUME_THAW_DURATION = 0.3; 
 const RESUME_START_SPEED_MULT = 0.2;
 
 let activeBattleSave = null;
 let battleUpgradeSnapshot = null; // Замороженный слепок Tech Tree для текущего боя
-let resumeThawTimer = 0;          // Таймер текущей разморозки
+let resumeThawTimer = 0; // Таймер текущей разморозки
 
 // [ENG.AF]
 function getBattleUpgradeEffectiveLevel(key) {
@@ -1588,9 +1588,18 @@ function resumeSavedBattle() {
 window.resumeSavedBattle = resumeSavedBattle;
 
 // [ENG.AK]
+let lastSaveTimestamp = 0;
+let lastCloudPushTimestamp = 0;
+let cloudSyncTimer = null;
+const CLOUD_PUSH_THROTTLE_MS = 30000; // Не чаще 1 раза в 30 сек для фоновых автосейвов
+
 function serializeSaveData() {
+  lastSaveTimestamp = Date.now();
   return {
     version: 1,
+    updatedAt: lastSaveTimestamp,
+    clientId: (typeof getAnalyticsClientId === 'function') ? getAnalyticsClientId() : 'local',
+    uid: (window.CloudBackend && window.CloudBackend.uid) ? window.CloudBackend.uid : null,
     diamonds,
     prisms,
     maxUnlockedLevel,
@@ -1620,15 +1629,42 @@ function serializeSaveData() {
   };
 }
 
+// [ENG.AKM] Фоновая отправка сейва в Firebase (с защитой от частых вызовов)
+function scheduleCloudSavePush(forceImmediate = false) {
+  if (!window.CloudBackend || !window.CloudBackend.isConfigured()) return;
+
+  if (cloudSyncTimer) {
+    clearTimeout(cloudSyncTimer);
+    cloudSyncTimer = null;
+  }
+
+  const now = Date.now();
+  const elapsed = now - lastCloudPushTimestamp;
+
+  if (forceImmediate || elapsed >= CLOUD_PUSH_THROTTLE_MS) {
+    lastCloudPushTimestamp = now;
+    window.CloudBackend.pushCloudSave(serializeSaveData());
+  } else {
+    cloudSyncTimer = setTimeout(() => {
+      cloudSyncTimer = null;
+      lastCloudPushTimestamp = Date.now();
+      window.CloudBackend.pushCloudSave(serializeSaveData());
+    }, CLOUD_PUSH_THROTTLE_MS - elapsed);
+  }
+}
+window.scheduleCloudSavePush = scheduleCloudSavePush;
+
 // [ENG.AL]
-function saveGame() {
+function saveGame(forceCloud = false) {
   try {
-    const dataStr = JSON.stringify(serializeSaveData());
+    const payload = serializeSaveData();
+    const dataStr = JSON.stringify(payload);
     localStorage.setItem(SAVE_KEY, dataStr);
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
       window.Capacitor.Plugins.Preferences.set({ key: SAVE_KEY, value: dataStr })
         .catch(err => console.warn('Capacitor save error:', err));
     }
+    scheduleCloudSavePush(!!forceCloud);
   } catch (e) {
     console.warn('SectorDefenseTD: save failed', e);
   }
@@ -1637,43 +1673,14 @@ function saveGame() {
 // [ENG.AM]
 function saveGameSoon() {
   if (saveGameTimer) clearTimeout(saveGameTimer);
-  saveGameTimer = setTimeout(saveGame, 300);
+  saveGameTimer = setTimeout(() => saveGame(false), 300);
 }
 
-// [ENG.AN]
-async function loadGame() {
-  let raw = null;
-
-  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
-    try {
-      const { value } = await window.Capacitor.Plugins.Preferences.get({ key: SAVE_KEY });
-      if (value) raw = value;
-    } catch (e) {
-      console.warn('Capacitor load error:', e);
-    }
-  }
-
-  if (!raw) {
-    try {
-      raw = localStorage.getItem(SAVE_KEY);
-    } catch (e) {
-      console.warn('SectorDefenseTD: localStorage unavailable, starting fresh', e);
-      return false;
-    }
-  }
-
-  if (!raw) return false;
-
-  let data;
-  try {
-    data = JSON.parse(raw);
-  } catch (e) {
-    console.warn('SectorDefenseTD: save data corrupt, starting fresh', e);
-    return false;
-  }
-
+// [ENG.AMM] Применение распакованного объекта сохранения к состоянию движка
+function applyParsedSaveData(data) {
   if (!data || typeof data !== 'object') return false;
 
+  if (typeof data.updatedAt === 'number') lastSaveTimestamp = data.updatedAt;
   if (typeof data.dailyGiftsClaimedDate === 'string') dailyGiftsClaimedDate = data.dailyGiftsClaimedDate;
   if (typeof data.dailyGiftsClaimedCount === 'number') dailyGiftsClaimedCount = data.dailyGiftsClaimedCount;
   if (typeof data.timeModTier === 'number') timeModTier = data.timeModTier;
@@ -1746,6 +1753,82 @@ async function loadGame() {
 
   return true;
 }
+
+// [ENG.AMN] Умная синхронизация с Firebase после старта игры (не блокирует UI)
+async function syncWithCloudSaveIfNeeded() {
+  if (!window.CloudBackend || !window.CloudBackend.isConfigured()) return false;
+  try {
+    const cloudData = await window.CloudBackend.pullCloudSave();
+    if (!cloudData || typeof cloudData !== 'object') {
+      // В облаке ещё пусто — отправляем текущий локальный прогресс
+      scheduleCloudSavePush(true);
+      return false;
+    }
+
+    const cloudLvl = Number(cloudData.maxUnlockedLevel) || 1;
+    const localLvl = Number(maxUnlockedLevel) || 1;
+    const cloudXp = Number(cloudData.bpXp) || 0;
+    const localXp = Number(bpXp) || 0;
+    const cloudTs = Number(cloudData.updatedAt) || 0;
+    const localTs = Number(lastSaveTimestamp) || 0;
+
+    // Принимаем облачный сейв, если там открыт более высокий уровень, больше опыта BP или он свежее при равном прогрессе
+    const isCloudAhead = (cloudLvl > localLvl) ||
+      (cloudLvl === localLvl && cloudXp > localXp) ||
+      (cloudLvl === localLvl && cloudXp === localXp && cloudTs > localTs + 5000);
+
+    if (isCloudAhead && gameState === 'START') {
+      applyParsedSaveData(cloudData);
+      saveGame(false);
+      if (typeof updateDiamondUI === 'function') updateDiamondUI();
+      if (typeof updatePrismUI === 'function') updatePrismUI();
+      if (typeof renderLevelsGrid === 'function') renderLevelsGrid();
+      if (typeof updateUpgradeButtonsLock === 'function') updateUpgradeButtonsLock();
+      if (typeof updateBpProgressUI === 'function') updateBpProgressUI();
+      return true;
+    } else if (localLvl > cloudLvl || localXp > cloudXp) {
+      // Локальный сейв прогрессивнее облачного — обновляем облако
+      scheduleCloudSavePush(true);
+    }
+  } catch (e) {}
+  return false;
+}
+window.syncWithCloudSaveIfNeeded = syncWithCloudSaveIfNeeded;
+
+// [ENG.AN]
+async function loadGame() {
+  let raw = null;
+
+  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
+    try {
+      const { value } = await window.Capacitor.Plugins.Preferences.get({ key: SAVE_KEY });
+      if (value) raw = value;
+    } catch (e) {
+      console.warn('Capacitor load error:', e);
+    }
+  }
+
+  if (!raw) {
+    try {
+      raw = localStorage.getItem(SAVE_KEY);
+    } catch (e) {
+      console.warn('SectorDefenseTD: localStorage unavailable, starting fresh', e);
+      return false;
+    }
+  }
+
+  if (!raw) return false;
+
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch (e) {
+    console.warn('SectorDefenseTD: save data corrupt, starting fresh', e);
+    return false;
+  }
+
+  return applyParsedSaveData(data);
+}
 // [ENG.AO]
 function safeTrack(name, params) {
   try {
@@ -1753,7 +1836,7 @@ function safeTrack(name, params) {
   } catch (e) { }
 }
 
-//  Map Geometry & Path Grid Construction: Path nodes, cell blocking, and grid topology initialization.
+// Map Geometry & Path Grid Construction: Path nodes, cell blocking, and grid topology initialization.
 // [ENG.AP]
 function buildLevelGeometry(pathNodes, colsCount, rowsCount, blockedCells) {
   COLS = colsCount || 10;
@@ -1834,14 +1917,14 @@ function buildLevelGeometry(pathNodes, colsCount, rowsCount, blockedCells) {
     } else {
       // Вектор внутрь поворота (outDir) и наружу поворота (-inDir)
       const innerR = half - D; // 12px — внутренний угол
-      const outerR = 16;       // 16px — аккуратное малое скругление внешнего угла (вместо 58px)
+      const outerR = 16; // 16px — аккуратное малое скругление внешнего угла (вместо 58px)
 
       const makeCornerCurve = (sideSign, rCorner) => {
         // sideSign: +1 = внутренний рельс (смещение к outDir), -1 = внешний рельс (смещение к -outDir)
         const startX = cx - inDir.x * half + outDir.x * (sideSign * D);
         const startY = cy - inDir.y * half + outDir.y * (sideSign * D);
-        const endX   = cx + outDir.x * half - inDir.x * (sideSign * D);
-        const endY   = cy + outDir.y * half - inDir.y * (sideSign * D);
+        const endX = cx + outDir.x * half - inDir.x * (sideSign * D);
+        const endY = cy + outDir.y * half - inDir.y * (sideSign * D);
         // Вершина угла пересечения двух прямых рельсов
         const cornerX = cx - inDir.x * (sideSign * D) + outDir.x * (sideSign * D);
         const cornerY = cy - inDir.y * (sideSign * D) + outDir.y * (sideSign * D);
@@ -1884,7 +1967,7 @@ let perfDecided = false;
 let perfSampleFrames = 0;
 let perfSampleTime = 0;
 
-//  Meta-Upgrade Tech Tree & Player Loadout Management: Tower unlocks, loadout slots, and skill tree node handlers.
+// Meta-Upgrade Tech Tree & Player Loadout Management: Tower unlocks, loadout slots, and skill tree node handlers.
 // [ENG.AQ]
 function getMaxUpgradeStep() {
   const lvl = getLoadoutReferenceLevel();
@@ -2107,7 +2190,7 @@ function refreshLoadoutForProgress() {
   }
 }
 
-//  Game Match Lifecycle & State Controller: Level start, pause, hardware back button, and level reset routines.
+// Game Match Lifecycle & State Controller: Level start, pause, hardware back button, and level reset routines.
 // [ENG.BA]
 function startSpecificLevel(lvl) {
   refreshLoadoutForProgress();
@@ -2177,7 +2260,7 @@ function startEndlessMatch() {
 // [ENG.BC]
 function reallyStartLevel(lvl) {
   isEndlessMode = false;
-	// Сброс анимации дорожки для нового боя:
+  // Сброс анимации дорожки для нового боя:
   if (typeof battleStartedOnce !== 'undefined') battleStartedOnce = false;
   if (typeof battlePathAlpha !== 'undefined') battlePathAlpha = 1.0;
   
@@ -2307,15 +2390,15 @@ function retryLevel() {
         launch();
       }
     } else if (status.type === 'diamonds' || status.type === 'diamond') {
-  const cost = status.cost || 25;
-  if (diamonds < cost) {
-    if (typeof showHintToast === 'function') showHintToast(`Need ${cost} Diamonds for entry!`);
-    return;
-  }
-  diamonds -= cost;
-  updateDiamondUI();
-  launch();
-}
+      const cost = status.cost || 25;
+      if (diamonds < cost) {
+        if (typeof showHintToast === 'function') showHintToast(`Need ${cost} Diamonds for entry!`);
+        return;
+      }
+      diamonds -= cost;
+      updateDiamondUI();
+      launch();
+    }
   } else {
     reallyStartLevel(currentLevel);
   }
@@ -2445,7 +2528,7 @@ function handleHardwareBack() {
 }
 window.handleHardwareBack = handleHardwareBack;
 
-//  Match Result & Victory/Defeat Handlers: Star calculations, rewards, revive prompt, and victory/defeat sequences.
+// Match Result & Victory/Defeat Handlers: Star calculations, rewards, revive prompt, and victory/defeat sequences.
 // [ENG.BK]
 function calculateLevelStarsAndReward(lvl, currentHp, startingHp) {
   let earnedStars = 1;
@@ -3393,7 +3476,7 @@ function acceptEmergencyRevive() {
   showAdPlaceholder(executeRevive, null);
 }
 
-//  Tower Construction & Inspection Management: Build, upgrade, sell, and drag-and-drop placement logic.
+// Tower Construction & Inspection Management: Build, upgrade, sell, and drag-and-drop placement logic.
 // [ENG.CR]
 function buildTowerAt(type, c, r) {
   const conf = TOWER_CONFIGS[type];
@@ -3420,7 +3503,7 @@ function buildTowerAt(type, c, r) {
       : undefined;
 
     sfx('build');
-	vibrate('light');
+    vibrate('light');
     const newTower = {
       c, r,
       x: c * TILE_SIZE + TILE_SIZE / 2,
@@ -3454,7 +3537,7 @@ function buildTowerAt(type, c, r) {
     towers.push(newTower);
     createShockwave(newTower.x, newTower.y, 40, conf.color);
     updateUI();
-	saveActiveBattleSnapshot();
+    saveActiveBattleSnapshot();
     saveGameSoon();
 
     if (tutorialActive && tutorialLevel === 1 && tutorialStep === 0) {
@@ -3548,7 +3631,7 @@ function upgradeSelectedTower() {
     createShockwave(selectedTower.x, selectedTower.y, 60, selectedTower.color);
     createDamageShards(selectedTower.x, selectedTower.y, selectedTower.color, 40, false);
     updateUI();
-	saveActiveBattleSnapshot();
+    saveActiveBattleSnapshot();
     saveGameSoon();
 
     if (tutorialActive && tutorialLevel === 2 && tutorialStep === 1) {
@@ -3586,7 +3669,7 @@ function sellSelectedTower() {
   saveGameSoon();
 }
 
-//  Wave Spawning & Enemy Queue Management: Auto/manual wave triggers, miniboss/boss delays, and spawn timers.
+// Wave Spawning & Enemy Queue Management: Auto/manual wave triggers, miniboss/boss delays, and spawn timers.
 // [ENG.CW]
 function getAutoWaveDelay() {
   if (currentLevel >= 40) return 9.0;
@@ -3832,7 +3915,7 @@ function startWave() {
   saveGameSoon();
 }
 
-//  Developer Tools & Spawner Integration: Custom spawner injections, dev controls, and cheat handlers.
+// Developer Tools & Spawner Integration: Custom spawner injections, dev controls, and cheat handlers.
 // [ENG.DB]
 function handleDevSpawnClick() {
   if (!devMode || gameState !== 'PLAYING') return;
@@ -3927,7 +4010,7 @@ function injectCustomSpawn(type, count, interval, hpMult, speedMult) {
 
 let lastTime = performance.now();
 
-//  Performance Monitor & Main Game Loop: Dynamic performance downgrades and main requestAnimationFrame loop.
+// Performance Monitor & Main Game Loop: Dynamic performance downgrades and main requestAnimationFrame loop.
 // [ENG.DE]
 function samplePerfAndMaybeDowngrade(rawDt) {
   if (perfDecided) return;
@@ -4114,107 +4197,107 @@ function claimDailyGiftsPack() {
 
 // [ENG.DM]
 function synthesizePrism() {
-    const isUnlocked = (typeof devMode !== 'undefined' && devMode) ||
-        (typeof maxUnlockedLevel !== 'undefined' && maxUnlockedLevel >= 21) ||
-        (typeof clearedLevels !== 'undefined' && clearedLevels.includes(20));
-    if (!isUnlocked) {
-        showHintToast(typeof t === 'function' ? t('unlocks_on_level_n', { n: 21 }) : 'Unlocks on Level 21');
-        sfx('denied');
-        return;
-    }
-    if (diamonds < 20) {
-        showHintToast(typeof t === 'function' ? t('not_enough_diamonds_cost', { cost: 20 }) : 'Not enough Diamonds! (20 required)');
-        sfx('denied');
-        return;
-    }
-    diamonds -= 20;
-    prisms = (prisms || 0) + 1;
-    updateDiamondUI();
-    if (typeof updatePrismUI === 'function') updatePrismUI();
-    saveGame();
-    sfx('reward');
-    if (typeof renderShopScreen === 'function') renderShopScreen();
-    showHintToast(typeof t === 'function' ? t('prism_synthesized') : '+1 Prism synthesized!');
+  const isUnlocked = (typeof devMode !== 'undefined' && devMode) ||
+    (typeof maxUnlockedLevel !== 'undefined' && maxUnlockedLevel >= 21) ||
+    (typeof clearedLevels !== 'undefined' && clearedLevels.includes(20));
+  if (!isUnlocked) {
+    showHintToast(typeof t === 'function' ? t('unlocks_on_level_n', { n: 21 }) : 'Unlocks on Level 21');
+    sfx('denied');
+    return;
+  }
+  if (diamonds < 20) {
+    showHintToast(typeof t === 'function' ? t('not_enough_diamonds_cost', { cost: 20 }) : 'Not enough Diamonds! (20 required)');
+    sfx('denied');
+    return;
+  }
+  diamonds -= 20;
+  prisms = (prisms || 0) + 1;
+  updateDiamondUI();
+  if (typeof updatePrismUI === 'function') updatePrismUI();
+  saveGame();
+  sfx('reward');
+  if (typeof renderShopScreen === 'function') renderShopScreen();
+  showHintToast(typeof t === 'function' ? t('prism_synthesized') : '+1 Prism synthesized!');
 }
 
 // [ENG.DN]
 function deconstructPrism() {
-    const isUnlocked = (typeof devMode !== 'undefined' && devMode) ||
-        (typeof maxUnlockedLevel !== 'undefined' && maxUnlockedLevel >= 21) ||
-        (typeof clearedLevels !== 'undefined' && clearedLevels.includes(20));
-    if (!isUnlocked) {
-        showHintToast(typeof t === 'function' ? t('unlocks_on_level_n', { n: 21 }) : 'Unlocks on Level 21');
-        sfx('denied');
-        return;
-    }
-    if (prisms < 1) {
-        showHintToast(typeof t === 'function' ? t('not_enough_prisms_cost', { cost: 1 }) : 'Not enough Prisms! (1 required)');
-        sfx('denied');
-        return;
-    }
-    prisms -= 1;
-    diamonds = (diamonds || 0) + 15;
-    updateDiamondUI();
-    if (typeof updatePrismUI === 'function') updatePrismUI();
-    saveGame();
-    sfx('reward');
-    if (typeof renderShopScreen === 'function') renderShopScreen();
-    showHintToast(typeof t === 'function' ? t('diamonds_deconstructed') : '+15 Diamonds deconstructed!');
+  const isUnlocked = (typeof devMode !== 'undefined' && devMode) ||
+    (typeof maxUnlockedLevel !== 'undefined' && maxUnlockedLevel >= 21) ||
+    (typeof clearedLevels !== 'undefined' && clearedLevels.includes(20));
+  if (!isUnlocked) {
+    showHintToast(typeof t === 'function' ? t('unlocks_on_level_n', { n: 21 }) : 'Unlocks on Level 21');
+    sfx('denied');
+    return;
+  }
+  if (prisms < 1) {
+    showHintToast(typeof t === 'function' ? t('not_enough_prisms_cost', { cost: 1 }) : 'Not enough Prisms! (1 required)');
+    sfx('denied');
+    return;
+  }
+  prisms -= 1;
+  diamonds = (diamonds || 0) + 15;
+  updateDiamondUI();
+  if (typeof updatePrismUI === 'function') updatePrismUI();
+  saveGame();
+  sfx('reward');
+  if (typeof renderShopScreen === 'function') renderShopScreen();
+  showHintToast(typeof t === 'function' ? t('diamonds_deconstructed') : '+15 Diamonds deconstructed!');
 }
 
 // [ENG.DO] Покупки только внутриигровых перков за кристаллы
 function buyShopIAP(productId) {
-    sfx('confirm');
+  sfx('confirm');
 
-    if (productId === 'time_mod_t1') {
-        if (timeModTier >= 1) {
-            showHintToast(typeof t === 'function' ? t('already_unlocked') : 'Already unlocked!');
-            return;
-        }
-        if (diamonds < 50) {
-            sfx('denied');
-            showHintToast(typeof t === 'function' ? t('not_enough_diamonds_cost', { cost: 50 }) : 'Not enough Diamonds! (50 required)');
-            return;
-        }
-        diamonds -= 50;
-        timeModTier = 1;
-        updateDiamondUI();
-        saveGame();
-        sfx('reward');
-        if (typeof renderShopScreen === 'function') renderShopScreen();
-        showHintToast(typeof t === 'function' ? t('time_mod_t1_unlocked') : 'Time Control Tier 1 unlocked!');
-        return;
+  if (productId === 'time_mod_t1') {
+    if (timeModTier >= 1) {
+      showHintToast(typeof t === 'function' ? t('already_unlocked') : 'Already unlocked!');
+      return;
     }
+    if (diamonds < 50) {
+      sfx('denied');
+      showHintToast(typeof t === 'function' ? t('not_enough_diamonds_cost', { cost: 50 }) : 'Not enough Diamonds! (50 required)');
+      return;
+    }
+    diamonds -= 50;
+    timeModTier = 1;
+    updateDiamondUI();
+    saveGame();
+    sfx('reward');
+    if (typeof renderShopScreen === 'function') renderShopScreen();
+    showHintToast(typeof t === 'function' ? t('time_mod_t1_unlocked') : 'Time Control Tier 1 unlocked!');
+    return;
+  }
 
-    if (productId === 'time_mod_t2') {
-        if (timeModTier >= 2) {
-            showHintToast(typeof t === 'function' ? t('already_maxed') : 'Already maxed!');
-            return;
-        }
-        if (timeModTier < 1) {
-            sfx('denied');
-            showHintToast(typeof t === 'function' ? t('unlock_tier_1_first') : 'Unlock Tier 1 first!');
-            return;
-        }
-        if (diamonds < 200) {
-            sfx('denied');
-            showHintToast(typeof t === 'function' ? t('not_enough_diamonds_cost', { cost: 200 }) : 'Not enough Diamonds! (200 required)');
-            return;
-        }
-        diamonds -= 200;
-        timeModTier = 2;
-        updateDiamondUI();
-        saveGame();
-        sfx('reward');
-        if (typeof renderShopScreen === 'function') renderShopScreen();
-        showHintToast(typeof t === 'function' ? t('time_mod_t2_unlocked') : 'Time Control Tier 2 unlocked!');
-        return;
+  if (productId === 'time_mod_t2') {
+    if (timeModTier >= 2) {
+      showHintToast(typeof t === 'function' ? t('already_maxed') : 'Already maxed!');
+      return;
     }
+    if (timeModTier < 1) {
+      sfx('denied');
+      showHintToast(typeof t === 'function' ? t('unlock_tier_1_first') : 'Unlock Tier 1 first!');
+      return;
+    }
+    if (diamonds < 200) {
+      sfx('denied');
+      showHintToast(typeof t === 'function' ? t('not_enough_diamonds_cost', { cost: 200 }) : 'Not enough Diamonds! (200 required)');
+      return;
+    }
+    diamonds -= 200;
+    timeModTier = 2;
+    updateDiamondUI();
+    saveGame();
+    sfx('reward');
+    if (typeof renderShopScreen === 'function') renderShopScreen();
+    showHintToast(typeof t === 'function' ? t('time_mod_t2_unlocked') : 'Time Control Tier 2 unlocked!');
+    return;
+  }
 }
 window.buyShopIAP = buyShopIAP;
 
-//  Navigation & Screen Transition Helpers: Start screen, level selection, and chapter label controllers.
-//  Simulation Step Update Pipeline: Enemy movement, tower targeting, projectile physics, and status effects.
+// Navigation & Screen Transition Helpers: Start screen, level selection, and chapter label controllers.
+// Simulation Step Update Pipeline: Enemy movement, tower targeting, projectile physics, and status effects.
 // javascript-obfuscator: disable
 // [ENG.DQ]
 function update(dt) {
@@ -4493,7 +4576,7 @@ function update(dt) {
         let simY = e.y;
         let simWp = e.wpIndex;
         const isEndlessArena1 = (typeof isEndlessMode !== 'undefined' && isEndlessMode) && 
-                                ((typeof currentLevelSection === 'undefined') || currentLevelSection === 1);
+          ((typeof currentLevelSection === 'undefined') || currentLevelSection === 1);
         let dashRemaining = isEndlessArena1 ? 70 : 140;
 
         while (dashRemaining > 0 && simWp < WAYPOINTS.length) {
