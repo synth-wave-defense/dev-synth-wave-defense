@@ -540,6 +540,23 @@
     }, 500);
   }
 
+function syncScreensForDevState() {
+    if (typeof updateDiamondUI === 'function') updateDiamondUI();
+    if (typeof updatePrismUI === 'function') updatePrismUI();
+    if (typeof updateUpgradeButtonsLock === 'function') updateUpgradeButtonsLock();
+    if (typeof updatePaletteSelectDropdown === 'function') {
+      updatePaletteSelectDropdown('settingPaletteSelect');
+      updatePaletteSelectDropdown('bpPaletteSelect');
+    }
+    if (typeof renderLevelsGrid === 'function') renderLevelsGrid();
+    if (typeof renderEndlessDashboardUI === 'function') renderEndlessDashboardUI();
+    if (typeof renderUpgradeTree === 'function') renderUpgradeTree();
+    if (typeof renderShopScreen === 'function') renderShopScreen();
+    if (typeof renderBattlePassScreen === 'function') renderBattlePassScreen();
+    if (typeof renderLoadoutWidgetBody === 'function') renderLoadoutWidgetBody();
+    if (typeof initBuildPanel === 'function' && gameState === 'PLAYING') initBuildPanel();
+  }
+
   window.openDevMode = function () {
     ensureDevBarDom();
     isDevModeActive = true;
@@ -568,13 +585,7 @@
       waveEl.onclick = window.devPromptWaveSelect;
     }
 
-    if (typeof updateDiamondUI === 'function') updateDiamondUI();
-    if (typeof updatePrismUI === 'function') updatePrismUI();
-    if (typeof updatePaletteSelectDropdown === 'function') {
-      updatePaletteSelectDropdown('settingPaletteSelect');
-      updatePaletteSelectDropdown('bpPaletteSelect');
-    }
-
+    syncScreensForDevState();
     startDevTelemetryLoop();
   };
 
@@ -615,8 +626,7 @@
       if (a) a.textContent = '▾';
     });
 
-    if (typeof updateDiamondUI === 'function') updateDiamondUI();
-    if (typeof updatePrismUI === 'function') updatePrismUI();
+    syncScreensForDevState();
   };
 
   window.toggleDevPanelExpand = function () {
@@ -682,7 +692,4 @@
   };
 
   window.mountRuntimeMetadata = window.openDevMode;
-
-  // Автоматический запуск при загрузке файла
-  window.openDevMode();
 })();

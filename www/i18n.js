@@ -185,9 +185,9 @@ const I18N_DICT = {
     run_complete: 'RUN COMPLETE',
     rewards: 'REWARDS',
     not_enough_gold: 'Not enough Gold!',
-	tap_back_exit: 'Tap Back one more time to close game',
+    tap_back_exit: 'Tap Back one more time to close game',
     ad_not_ready: 'Video is loading, please check your network connection.',
-	not_enough_diamonds: 'Not enough Diamonds!',
+    not_enough_diamonds: 'Not enough Diamonds!',
     not_enough_prisms: 'Not enough Prisms!',
     not_enough_diamonds_prisms: 'Not enough Diamonds & Prisms!',
     not_enough_diamonds_cost: 'Not enough Diamonds! ({cost} required)',
@@ -451,9 +451,9 @@ const I18N_DICT = {
     run_complete: 'БОЙ ЗАВЕРШЕН',
     rewards: 'НАГРАДЫ',
     not_enough_gold: 'Недостаточно золота!',
-	tap_back_exit: 'Нажмите «Назад» ещё раз для выхода',
+    tap_back_exit: 'Нажмите «Назад» ещё раз для выхода',
     ad_not_ready: 'Видео еще загружается, проверьте подключение к сети.',
-	not_enough_diamonds: 'Недостаточно алмазов!',
+    not_enough_diamonds: 'Недостаточно алмазов!',
     not_enough_prisms: 'Недостаточно призм!',
     not_enough_diamonds_prisms: 'Недостаточно алмазов и призм!',
     not_enough_diamonds_cost: 'Недостаточно алмазов! (нужно {cost})',
@@ -620,6 +620,7 @@ const I18N_DICT = {
     music_audio: 'Música',
     sound_fx: 'Efectos de Sonido',
     visual: 'Tema',
+    language: 'Idioma',
     version_label: 'Versión: {v}',
     privacy_policy: 'Política de Privacidad',
     off: 'OFF',
@@ -716,7 +717,9 @@ const I18N_DICT = {
     endless_arena: 'ARENA INFINITA',
     run_complete: 'PARTIDA TERMINADA',
     rewards: 'RECOMPENSAS',
+    not_enough_gold: '¡Falta Oro!',
     tap_back_exit: 'Toca Atrás otra vez para salir',
+    ad_not_ready: 'El video se está cargando, revisa tu conexión.',
     not_enough_diamonds: '¡Faltan Diamantes!',
     not_enough_prisms: '¡Faltan Prismas!',
     not_enough_diamonds_prisms: '¡Faltan Diamantes y Prismas!',
@@ -981,7 +984,9 @@ const I18N_DICT = {
     endless_arena: 'ARENA INFINITA',
     run_complete: 'FIM DA PARTIDA',
     rewards: 'RECOMPENSAS',
+    not_enough_gold: 'Ouro insuficiente!',
     tap_back_exit: 'Toque em Voltar novamente para sair',
+    ad_not_ready: 'O vídeo está carregando, verifique sua conexão.',
     not_enough_diamonds: 'Diamantes insuficientes!',
     not_enough_prisms: 'Prismas insuficientes!',
     not_enough_diamonds_prisms: 'Diamantes e Prismas insuficientes!',
@@ -1152,7 +1157,6 @@ const I18N_DICT = {
     language: 'Sprache',
     version_label: 'Version: {v}',
     privacy_policy: 'Datenschutzerklärung',
-    privacy_policy: 'Privacy Policy',
     off: 'AUS',
     mode: 'MODUS',
     normal: 'NORMAL',
@@ -1247,7 +1251,9 @@ const I18N_DICT = {
     endless_arena: 'ENDLOS-ARENA',
     run_complete: 'DURCHLAUF BEENDET',
     rewards: 'BELOHNUNGEN',
+    not_enough_gold: 'Nicht genug Gold!',
     tap_back_exit: 'Nochmal Zurück tippen zum Beenden',
+    ad_not_ready: 'Video wird geladen, bitte prüfe deine Internetverbindung.',
     not_enough_diamonds: 'Nicht genug Diamanten!',
     not_enough_prisms: 'Nicht genug Prismen!',
     not_enough_diamonds_prisms: 'Nicht genug Diamanten & Prismen!',
@@ -1344,9 +1350,9 @@ const I18N_DICT = {
     cost: 'Kosten',
     sell_value: 'Verkauf'
   },
-  
- // [I18.BF]
-fr: {
+
+// [I18.BF]
+  fr: {
     loading: 'CHARGEMENT...',
     ready: 'PRÊT',
     go: 'GO',
@@ -1512,7 +1518,9 @@ fr: {
     endless_arena: 'ARÈNE INFINIE',
     run_complete: 'COMBAT TERMINÉ',
     rewards: 'RÉCOMPENSES',
+    not_enough_gold: 'Pas assez d’Or !',
     tap_back_exit: 'Appuyez encore sur Retour pour quitter',
+    ad_not_ready: 'La vidéo charge, vérifiez votre connexion.',
     not_enough_diamonds: 'Pas assez de Diamants !',
     not_enough_prisms: 'Pas assez de Prismes !',
     not_enough_diamonds_prisms: 'Pas assez de Diamants et de Prismes !',
@@ -1610,7 +1618,7 @@ fr: {
     sell_value: 'Vente'
   },
 
-  // [I18.BG]
+// [I18.BG]
   it: {
     loading: 'CARICAMENTO...',
     ready: 'PRONTO',
@@ -1777,7 +1785,9 @@ fr: {
     endless_arena: 'ARENA INFINITA',
     run_complete: 'PARTITA CONCLUSA',
     rewards: 'PREMI',
+    not_enough_gold: 'Oro insufficiente!',
     tap_back_exit: 'Tocca ancora Indietro per uscire',
+    ad_not_ready: 'Il video si sta caricando, controlla la connessione.',
     not_enough_diamonds: 'Diamanti insufficienti!',
     not_enough_prisms: 'Prismi insufficienti!',
     not_enough_diamonds_prisms: 'Diamanti e Prismi insufficienti!',
@@ -1874,6 +1884,7 @@ fr: {
     cost: 'Costo',
     sell_value: 'Vendita'
   },
+
 // [I18.BH]
   tr: {
     loading: 'YÜKLENİYOR...',
@@ -2041,7 +2052,9 @@ fr: {
     endless_arena: 'SONSUZ ARENA',
     run_complete: 'TUR TAMAMLANDI',
     rewards: 'ÖDÜLLER',
+    not_enough_gold: 'Yeterli Altın yok!',
     tap_back_exit: 'Çıkmak için tekrar Geri tuşuna basın',
+    ad_not_ready: 'Video yükleniyor, lütfen ağ bağlantınızı kontrol edin.',
     not_enough_diamonds: 'Yeterli Elmas yok!',
     not_enough_prisms: 'Yeterli Prizma yok!',
     not_enough_diamonds_prisms: 'Yeterli Elmas ve Prizma yok!',
@@ -2138,6 +2151,7 @@ fr: {
     cost: 'Maliyet',
     sell_value: 'Satış'
   },
+
 // [I18.BI]
   pl: {
     loading: 'ŁADOWANIE...',
@@ -2305,7 +2319,9 @@ fr: {
     endless_arena: 'ARENA NIESKOŃCZONA',
     run_complete: 'KONIEC BITWY',
     rewards: 'NAGRODY',
+    not_enough_gold: 'Za mało Złota!',
     tap_back_exit: 'Naciśnij Wstecz jeszcze raz, aby wyjść',
+    ad_not_ready: 'Wideo się ładuje, sprawdź połączenie z siecią.',
     not_enough_diamonds: 'Za mało Diamentów!',
     not_enough_prisms: 'Za mało Pryzmatów!',
     not_enough_diamonds_prisms: 'Za mało Diamentów i Pryzmatów!',
@@ -2569,7 +2585,9 @@ fr: {
     endless_arena: 'НЕСКІНЧЕННА АРЕНА',
     run_complete: 'БІЙ ЗАВЕРШЕНО',
     rewards: 'НАГОРОДИ',
+    not_enough_gold: 'Недостатньо золота!',
     tap_back_exit: 'Натисніть «Назад» ще раз для виходу',
+    ad_not_ready: 'Відео ще завантажується, перевірте підключення до мережі.',
     not_enough_diamonds: 'Недостатньо алмазів!',
     not_enough_prisms: 'Недостатньо призм!',
     not_enough_diamonds_prisms: 'Недостатньо алмазів і призм!',
@@ -2825,13 +2843,3 @@ function populateLanguageDropdown(selectId = 'settingLangSelect') {
 currentLang = detectInitialLanguage();
 
 // Экспорт в глобальную область видимости (window)
-if (typeof window !== 'undefined') {
-  window.SUPPORTED_LANGUAGES = SUPPORTED_LANGUAGES;
-  window.I18N_DICT = I18N_DICT;
-  window.t = t;
-  window.setLanguage = setLanguage;
-  window.detectInitialLanguage = detectInitialLanguage;
-  window.applyStaticTranslations = applyStaticTranslations;
-  window.populateLanguageDropdown = populateLanguageDropdown;
-  window.getCurrentLanguage = () => currentLang;
-}

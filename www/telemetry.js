@@ -1,7 +1,7 @@
 // Telemetry, Analytics & Firebase Cloud Backend Adapter: Best-effort crash reporting, event logging, and cloud save foundation.
 
 // Единая версия сборки (используется как фоллбэк в UI и в телеметрии)
-window.APP_VERSION = '1.38.35';
+window.APP_VERSION = '1.38.36';
 
 // Флаг среды выполнения ('development' | 'production')
 window.__APP_STAGE__ = window.__APP_STAGE__ || 'development';
@@ -45,7 +45,7 @@ window.reportErrorToWebhook = function (info) {
   if (!info) return;
   const ver = (window.SyncTelemetry && window.SyncTelemetry.localVersion && window.SyncTelemetry.localVersion !== '—')
     ? window.SyncTelemetry.localVersion
-    : (window.APP_VERSION || '1.38.35');
+    : (window.APP_VERSION || '1.38.36');
 
   // Если подключен нативный мост Firebase Crashlytics — дублируем стек туда
   if (window.NativeFirebaseBridge && typeof window.NativeFirebaseBridge.recordException === 'function') {
@@ -85,7 +85,7 @@ window.reportErrorToWebhook = function (info) {
 function trackEvent(name, params) {
   const ver = (window.SyncTelemetry && window.SyncTelemetry.localVersion && window.SyncTelemetry.localVersion !== '—')
     ? window.SyncTelemetry.localVersion
-    : (window.APP_VERSION || '1.38.35');
+    : (window.APP_VERSION || '1.38.36');
 
   const enrichedParams = Object.assign({ app_version: ver }, params || {});
 
@@ -251,7 +251,7 @@ const CloudBackend = {
       const body = {
         fields: {
           clientId: { stringValue: getAnalyticsClientId() },
-          appVersion: { stringValue: String(window.APP_VERSION || '1.38.35') },
+          appVersion: { stringValue: String(window.APP_VERSION || '1.38.36') },
           updatedAt: { integerValue: String(savePayloadObj.updatedAt || Date.now()) },
           maxUnlockedLevel: { integerValue: String(savePayloadObj.maxUnlockedLevel || 1) },
           diamonds: { integerValue: String(savePayloadObj.diamonds || 0) },

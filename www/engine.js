@@ -2358,7 +2358,7 @@ function resetLevelState() {
   if (btnText) btnText.textContent = (typeof t === 'function' ? t('go') : 'Go');
   updateWaveCircle(0);
   updateUI();
-  if (devMode) refreshDevDropdowns();
+  if (devMode && typeof refreshDevDropdowns === 'function') refreshDevDropdowns();
 }
 
 // [ENG.BE]
@@ -3815,7 +3815,7 @@ function startWave() {
 
     updateWaveCircle(0);
     updateUI();
-    if (devMode) refreshDevDropdowns();
+    if (devMode && typeof refreshDevDropdowns === 'function') refreshDevDropdowns();
     saveActiveBattleSnapshot();
     saveGameSoon();
     return;
@@ -3910,7 +3910,7 @@ function startWave() {
 
   updateWaveCircle(0);
   updateUI();
-  if (devMode) refreshDevDropdowns();
+  if (devMode && typeof refreshDevDropdowns === 'function') refreshDevDropdowns();
   saveActiveBattleSnapshot();
   saveGameSoon();
 }
