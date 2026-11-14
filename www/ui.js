@@ -358,7 +358,7 @@ function addReliableTouchListener(element, callback) {
 
   element.addEventListener('pointermove', (e) => {
     if (!isPointerDown) return;
-    const moveThreshold = 10; // допустимый сдвиг в пикселях
+    const moveThreshold = 20; // допустимый сдвиг в пикселях
     const dx = Math.abs(e.clientX - startX);
     const dy = Math.abs(e.clientY - startY);
     
