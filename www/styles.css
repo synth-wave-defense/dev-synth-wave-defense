@@ -6964,3 +6964,9 @@ body:not([data-theme="default"]) .bp-btn-buy-tier {
   border-color: var(--c1);
   color: #ffffff;
 }
+
+/* [STY.H] */
+/* свойство, чтобы при небольшом сдвиге клик срабатывал по кнопке */
+button, .interactive-btn {
+  touch-action: manipulation;
+}

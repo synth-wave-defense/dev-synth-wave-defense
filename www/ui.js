@@ -343,6 +343,44 @@ function getGlowSprite(color) {
   return GLOW_SPRITES[color];
 }
 
+// [UI.KK]
+// Универсальный хелпер для надежного тапа с защитой от микро-сдвигов пальца
+function addReliableTouchListener(element, callback) {
+  let startX = 0;
+  let startY = 0;
+  let isPointerDown = false;
+
+  element.addEventListener('pointerdown', (e) => {
+    isPointerDown = true;
+    startX = e.clientX;
+    startY = e.clientY;
+  });
+
+  element.addEventListener('pointermove', (e) => {
+    if (!isPointerDown) return;
+    const moveThreshold = 10; // допустимый сдвиг в пикселях
+    const dx = Math.abs(e.clientX - startX);
+    const dy = Math.abs(e.clientY - startY);
+    
+    // Если палец ушел слишком далеко — это скролл, отменяем клик
+    if (dx > moveThreshold || dy > moveThreshold) {
+      isPointerDown = false;
+    }
+  });
+
+  element.addEventListener('pointerup', (e) => {
+    if (!isPointerDown) return;
+    isPointerDown = false;
+    
+    // Вызываем вашу логику нажатия
+    callback(e);
+  });
+
+  element.addEventListener('pointercancel', () => {
+    isPointerDown = false;
+  });
+}
+
 //  Banner and incoming threat alert visual indicators.
 // [UI.L]
 function showNewTowerBanner(type) {
