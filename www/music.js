@@ -71,31 +71,41 @@ const MusicManager = (function () {
 
   // [MUS.B]
   function loadTrackBuffer(path) {
-    if (bufferCache[path]) return Promise.resolve(bufferCache[path]);
+    if (bufferCache[path]) return Promise.resolve({ buffer: bufferCache[path], actualPath: path });
     if (loadingPromises[path]) return loadingPromises[path];
 
     const ctx = ensureAudioCtx();
     if (!ctx) return Promise.reject(new Error('No AudioContext available'));
 
     loadingPromises[path] = resolveUrl(path)
-      .then(actualUrl => fetch(actualUrl))
-      // [MUS.C]
-      .then(res => {
-        if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + path);
-        return res.arrayBuffer();
-      })
-      // [MUS.D]
-      .then(arrayBuffer => {
-        // [MUS.E]
-        return new Promise((resolve, reject) => {
-          ctx.decodeAudioData(arrayBuffer, resolve, reject);
-        });
+      .then(actualUrl => {
+        const isFallback = (actualUrl === 'music/menu_01.ogg' || actualUrl === 'music/battle_01.ogg') && actualUrl !== path;
+        const effectivePath = isFallback ? actualUrl : path;
+
+        if (bufferCache[effectivePath]) {
+          return { audioBuffer: bufferCache[effectivePath], effectivePath, isFallback };
+        }
+
+        return fetch(actualUrl)
+          // [MUS.C]
+          .then(res => {
+            if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + actualUrl);
+            return res.arrayBuffer();
+          })
+          // [MUS.D]
+          .then(arrayBuffer => {
+            // [MUS.E]
+            return new Promise((resolve, reject) => {
+              ctx.decodeAudioData(arrayBuffer, resolve, reject);
+            });
+          })
+          .then(audioBuffer => ({ audioBuffer, effectivePath, isFallback }));
       })
       // [MUS.F]
-      .then(audioBuffer => {
-        bufferCache[path] = audioBuffer;
+      .then(({ audioBuffer, effectivePath }) => {
+        bufferCache[effectivePath] = audioBuffer;
         delete loadingPromises[path];
-        return audioBuffer;
+        return { buffer: audioBuffer, actualPath: effectivePath };
       })
       // [MUS.G]
       .catch(err => {
@@ -105,7 +115,7 @@ const MusicManager = (function () {
 
     return loadingPromises[path];
   }
-
+  
   // Декодируем во время экрана LOADING... только треки меню, чтобы при нажатии GO не было фризов CPU
   // [MUS.H]
   async function warmUpMenuAudio() {
@@ -282,7 +292,10 @@ const MusicManager = (function () {
     loadingCategory = cat;
 
     // [MUS.T]
-    loadTrackBuffer(path).then(audioBuffer => {
+    loadTrackBuffer(path).then(loaded => {
+      const audioBuffer = loaded.buffer;
+      const actualPath = loaded.actualPath || path;
+
       // Если за время загрузки пришёл другой валидный запрос или категория сменилась — отменяем устаревший запуск
       if (reqId !== currentRequestId || category !== cat || !enabled) return;
 
@@ -332,7 +345,7 @@ const MusicManager = (function () {
       trackGain.gain.linearRampToValueAtTime(Math.max(0.0001, targetVol), now + fadeInDur);
 
       activeTrack = {
-        path: path,
+        path: actualPath,
         category: cat,
         cfg: cfg,
         sourceNode: source,
@@ -349,7 +362,7 @@ const MusicManager = (function () {
           loadTrackBuffer(nextInQueue).catch(() => {});
         }, 1500);
       }
-    // [MUS.W]
+      // [MUS.W]
     }).catch(err => {
       loadingCategory = null;
       console.warn('[music] Failed to play track buffer:', path, err);
@@ -358,7 +371,7 @@ const MusicManager = (function () {
       }
     });
   }
-
+  
   // [MUS.X]
   function advance(cat, cfg, reqId) {
     if (!playlist.length) playlist = shuffle(TRACKS[cat] || []);

@@ -106,36 +106,37 @@
 
       const filename = relativePath.split('/').pop();
       // [MUSD.C]
-      const trackEntry = activeManifest.music.find(t => (t.filename === filename || `${t.id}.ogg` === filename));
+    const trackEntry = activeManifest.music.find(t => (t.filename === filename || `${t.id}.ogg` === filename));
 
-      // Bundled tracks play directly from assets
-      if (!trackEntry || trackEntry.bundled) {
-        return relativePath;
-      }
-
-      const fs = await getFilesystemPlugin();
-      if (!fs) return relativePath;
-
-      const localPath = `downloaded_music/${filename}`;
-      const exists = await checkFileExists(fs, localPath);
-
-      if (exists) {
-        try {
-          const uriResult = await fs.getUri({
-            path: localPath,
-            directory: 'DATA'
-          });
-          return window.Capacitor.convertFileSrc(uriResult.uri);
-        } catch (e) {
-          console.warn('[MusicDownloader] Error resolving local file URI:', e);
-        }
-      }
-
-      // Track is not ready yet: fallback to the default starter track
-      console.warn(`[MusicDownloader] Track ${filename} not available locally yet. Using fallback.`);
-      return 'music/battle_01.ogg';
+    // Bundled tracks play directly from assets
+    if (!trackEntry || trackEntry.bundled) {
+      return relativePath;
     }
-  };
 
-  window.MusicDownloader = MusicDownloader;
+    const fs = await getFilesystemPlugin();
+    if (!fs) return relativePath;
+
+    const localPath = `downloaded_music/${filename}`;
+    const exists = await checkFileExists(fs, localPath);
+
+    if (exists) {
+      try {
+        const uriResult = await fs.getUri({
+          path: localPath,
+          directory: 'DATA'
+        });
+        return window.Capacitor.convertFileSrc(uriResult.uri);
+      } catch (e) {
+        console.warn('[MusicDownloader] Error resolving local file URI:', e);
+      }
+    }
+
+    // Track is not ready yet: fallback to the bundled starter track of the matching category
+    const fallbackTrack = filename.startsWith('menu_') ? 'music/menu_01.ogg' : 'music/battle_01.ogg';
+    console.warn(`[MusicDownloader] Track ${filename} not available locally yet. Using fallback: ${fallbackTrack}`);
+    return fallbackTrack;
+  }
+};
+
+window.MusicDownloader = MusicDownloader;
 })();
