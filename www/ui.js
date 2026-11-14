@@ -2209,339 +2209,6 @@ let isDevExpanded = false;
 
 // Developer mode panel interface and visibility control.
 // [UI.CM]
-function activateDevBarFallbackUI() {
-  isDevModeActive = true;
-  devMode = true;
-  window._maxThreadLag = 0;
-  window._lastThreadLag = 0;
-  if (typeof startThreadLagMonitor === 'function') startThreadLagMonitor();
-
-  const bar = document.getElementById('devBar');
-  if (bar) bar.classList.remove('hidden');
-
-  const goldHalf = document.getElementById('goldHalf');
-  const hpHalf = document.getElementById('hpHalf');
-  if (goldHalf) goldHalf.classList.add('interactive');
-  if (hpHalf) hpHalf.classList.add('interactive');
-
-  if (typeof refreshDevDropdowns === 'function') refreshDevDropdowns();
-  updateDiamondUI();
-  updatePrismUI();
-  updatePaletteSelectDropdown('settingPaletteSelect');
-  updatePaletteSelectDropdown('bpPaletteSelect');
-}
-
-function openDevMode() {
-  // Сразу открываем панель, чтобы она гарантированно появилась
-  activateDevBarFallbackUI();
-
-  if (typeof window.mountRuntimeMetadata === 'function') {
-    window.mountRuntimeMetadata();
-    return;
-  }
-
-  import('./core/plugins/capacitor-runtime-metadata.js')
-    .then(m => {
-      if (m && typeof m.mountRuntimeMetadata === 'function') {
-        m.mountRuntimeMetadata();
-      } else if (typeof window.mountRuntimeMetadata === 'function') {
-        window.mountRuntimeMetadata();
-      }
-    })
-    .catch(() => {
-      // Фоллбэк через обычный <script>, если динамический import() заблокирован в WebView/OTA
-      if (document.getElementById('devRuntimeMetaScript')) return;
-      const s = document.createElement('script');
-      s.id = 'devRuntimeMetaScript';
-      s.src = 'core/plugins/capacitor-runtime-metadata.js';
-      s.onload = () => {
-        if (typeof window.mountRuntimeMetadata === 'function') {
-          window.mountRuntimeMetadata();
-        }
-      };
-      document.head.appendChild(s);
-    });
-}
-
-// [UI.CN]
-function closeDevMode() {
-  isDevModeActive = false;
-  devMode = false;
-  isDevExpanded = false;
-  stopThreadLagMonitor();
-  
-  const bar = document.getElementById('devBar');
-  if (bar) {
-    bar.classList.add('hidden');
-    bar.style.left = '';
-    bar.style.top = '';
-    bar.style.transform = '';
-  }
-  
-  const pane = document.getElementById('devDetailsPane');
-  if (pane) pane.classList.add('hidden');
-  
-  const btn = document.getElementById('devExpandBtn');
-  if (btn) btn.textContent = '▾';
-
-  const goldHalf = document.getElementById('goldHalf');
-  const hpHalf = document.getElementById('hpHalf');
-  if (goldHalf) goldHalf.classList.remove('interactive');
-  if (hpHalf) hpHalf.classList.remove('interactive');
-
-  const levelEl = document.getElementById('levelText');
-  const waveEl = document.getElementById('waveText');
-  if (levelEl) {
-    levelEl.style.cursor = '';
-    levelEl.onclick = null;
-  }
-  if (waveEl) {
-    waveEl.style.cursor = '';
-    waveEl.onclick = null;
-  }
-  setGameSpeed(1);
-
-  window.devSubExpanded = { Game: false, Audio: false, Version: false, Ads: false };
-  ['Game', 'Audio', 'Version', 'Ads'].forEach(k => {
-    const b = document.getElementById('devSubBody' + k);
-    const a = document.getElementById('devSubArrow' + k);
-    if (b) b.classList.add('hidden');
-    if (a) a.textContent = '▾';
-  });
-
-  updateDiamondUI();
-  updatePrismUI();
-}
-
-// [UI.CO]
-function toggleDevPanelExpand() {
-  isDevExpanded = !isDevExpanded;
-  const pane = document.getElementById('devDetailsPane');
-  const btn = document.getElementById('devExpandBtn');
-  if (pane) {
-    if (isDevExpanded) {
-      pane.classList.remove('hidden');
-      const trackEl = document.getElementById('devTrackTitle');
-      if (trackEl && typeof MusicManager !== 'undefined' && MusicManager.currentTrack) {
-        trackEl.textContent = MusicManager.currentTrack();
-      }
-    } else {
-      pane.classList.add('hidden');
-    }
-  }
-  if (btn) {
-    btn.textContent = isDevExpanded ? '▴' : '▾';
-  }
-}
-
-window.devSubExpanded = { Game: false, Audio: false, Version: false };
-window.devMetricExpanded = {
-  AudioHw: false,
-  AudioDsp: false,
-  AudioMem: false,
-  VerManifest: true,
-  VerDownload: false,
-  VerPlugin: false,
-  VerLogs: false
-};
-
-// [UI.CP]
-function toggleDevSubSection(name) {
-  if (!window.devSubExpanded) window.devSubExpanded = {};
-  const willOpen = !window.devSubExpanded[name];
-
-  ['Game', 'Audio', 'Version', 'Ads'].forEach(key => {
-    const isNowOpen = (key === name) ? willOpen : false;
-    window.devSubExpanded[key] = isNowOpen;
-    const body = document.getElementById('devSubBody' + key);
-    const arrow = document.getElementById('devSubArrow' + key);
-    if (body) body.classList.toggle('hidden', !isNowOpen);
-    if (arrow) arrow.textContent = isNowOpen ? '▴' : '▾';
-  });
-
-  if (name === 'Game' && willOpen) {
-    const customSpawner = document.getElementById('devCustomSpawner');
-    if (customSpawner) customSpawner.classList.remove('hidden');
-  }
-}
-
-// [UI.CQ]
-function toggleDevMetricGroup(groupKey) {
-  if (!window.devMetricExpanded) window.devMetricExpanded = {};
-  const willOpen = !window.devMetricExpanded[groupKey];
-
-  let siblingKeys = [];
-  if (groupKey.startsWith('Audio')) {
-    siblingKeys = ['AudioHw', 'AudioDsp', 'AudioMem'];
-  } else if (groupKey.startsWith('Ver')) {
-    siblingKeys = ['VerManifest', 'VerDownload', 'VerPlugin', 'VerLogs'];
-  } else if (groupKey.startsWith('Ad')) {
-    siblingKeys = ['AdStatus', 'AdLogs'];
-  }
-
-  const domMap = {
-    AudioHw: 'devAudioLogHw',
-    AudioDsp: 'devAudioLogDsp',
-    AudioMem: 'devAudioLogMem',
-    VerManifest: 'devVerLogManifest',
-    VerDownload: 'devVerLogDownload',
-    VerPlugin: 'devVerLogPlugin',
-    VerLogs: 'devVerLogHistory',
-    AdStatus: 'devAdLogStatus',
-    AdLogs: 'devAdLogHistory'
-  };
-
-  siblingKeys.forEach(k => {
-    const openState = (k === groupKey) ? willOpen : false;
-    window.devMetricExpanded[k] = openState;
-    const contentEl = document.getElementById(domMap[k]);
-    const arrowEl = document.getElementById('devMetricArrow' + k);
-    if (contentEl) contentEl.classList.toggle('hidden', !openState);
-    if (arrowEl) arrowEl.textContent = openState ? '▴' : '▾';
-  });
-}
-
-// [UI.CR]
-function devSpawnCustomEnemies() {
-  if (gameState !== 'PLAYING') {
-    showHintToast(typeof t === 'function' ? (t('start_level_first_to_spawn') || t('start_level_first')) : 'Start level first!');
-    return;
-  }
-  if (typeof handleDevSpawnClick === 'function') {
-    handleDevSpawnClick();
-  }
-}
-
-//  Drag handler for developer control panel.
-// [UI.CS]
-(function initDevBarDrag() {
-  let isDragging = false;
-  let startX = 0;
-  let startY = 0;
-  let initialLeft = 0;
-  let initialTop = 0;
-
-  // [UI.CT]
-  function onPointerDown(e) {
-    if (['BUTTON', 'SELECT', 'INPUT', 'OPTION'].includes(e.target.tagName)) return;
-    
-    const bar = document.getElementById('devBar');
-    if (!bar) return;
-
-    isDragging = true;
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-    const rect = bar.getBoundingClientRect();
-    bar.style.transform = 'none';
-    bar.style.left = `${rect.left}px`;
-    bar.style.top = `${rect.top}px`;
-
-    startX = clientX;
-    startY = clientY;
-    initialLeft = rect.left;
-    initialTop = rect.top;
-
-    window.addEventListener('mousemove', onPointerMove, { passive: false });
-    window.addEventListener('mouseup', onPointerUp);
-    window.addEventListener('touchmove', onPointerMove, { passive: false });
-    window.addEventListener('touchend', onPointerUp);
-  }
-
-  // [UI.CU]
-  function onPointerMove(e) {
-    if (!isDragging) return;
-    if (e.cancelable) e.preventDefault();
-
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-    const dx = clientX - startX;
-    const dy = clientY - startY;
-
-    const bar = document.getElementById('devBar');
-    if (bar) {
-      const nextX = Math.max(0, Math.min(window.innerWidth - bar.offsetWidth, initialLeft + dx));
-      const nextY = Math.max(0, Math.min(window.innerHeight - bar.offsetHeight, initialTop + dy));
-      bar.style.left = `${nextX}px`;
-      bar.style.top = `${nextY}px`;
-    }
-  }
-
-  // [UI.CV]
-  function onPointerUp() {
-    isDragging = false;
-    window.removeEventListener('mousemove', onPointerMove);
-    window.removeEventListener('mouseup', onPointerUp);
-    window.removeEventListener('touchmove', onPointerMove);
-    window.removeEventListener('touchend', onPointerUp);
-  }
-
-  // [UI.CW]
-  document.addEventListener('DOMContentLoaded', () => {
-    const bar = document.getElementById('devBar');
-    if (bar) {
-      bar.addEventListener('mousedown', onPointerDown);
-      bar.addEventListener('touchstart', onPointerDown, { passive: true });
-    }
-  });
-})();
-
-// [UI.CX]
-function toggleDevMode(enabled) {
-  if (enabled) openDevMode();
-  else closeDevMode();
-}
-
-// [UI.CY]
-function refreshDevDropdowns() {
-  ['devLevelSelect', 'devWaveSelect'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el && !el.dataset.pauseGuard) {
-      el.dataset.pauseGuard = '1';
-      el.addEventListener('focus', () => suppressBackgroundPause(1500));
-      el.addEventListener('change', () => suppressBackgroundPause(1500));
-      el.addEventListener('blur', () => suppressBackgroundPause());
-    }
-  });
-  const lvlSelect = document.getElementById('devLevelSelect');
-  if (!lvlSelect) return;
-  lvlSelect.innerHTML = '';
-  for (let l = 1; l <= TOTAL_LEVELS; l++) {
-    const opt = document.createElement('option');
-    opt.value = l;
-    opt.textContent = `${l}`;
-    if (l === currentLevel) opt.selected = true;
-    lvlSelect.appendChild(opt);
-  }
-
-  const waveSelect = document.getElementById('devWaveSelect');
-  if (!waveSelect) return;
-  waveSelect.innerHTML = '';
-
-  if (isEndlessMode) {
-    const endlessMax = Math.max(wave + 20, 50, endlessBestWave + 10);
-    for (let w = 1; w <= endlessMax; w++) {
-      const opt = document.createElement('option');
-      opt.value = w;
-      opt.textContent = `${w}/∞`;
-      if (w === wave) opt.selected = true;
-      waveSelect.appendChild(opt);
-    }
-  } else {
-    const lvlConfig = LEVELS_DATA[currentLevel];
-    const maxW = lvlConfig ? lvlConfig.totalWaves : 10;
-    for (let w = 1; w <= maxW; w++) {
-      const opt = document.createElement('option');
-      opt.value = w;
-      opt.textContent = `${w}/${maxW}`;
-      if (w === wave) opt.selected = true;
-      waveSelect.appendChild(opt);
-    }
-  }
-}
-
-// [UI.CZ]
 function devJumpToWave(targetWave) {
   const lvlConfig = LEVELS_DATA[currentLevel];
   const maxW = lvlConfig ? lvlConfig.totalWaves : 10;
@@ -2975,73 +2642,29 @@ function toggleSettingsAccordion(forceState) {
 }
 
 // [UI.DU]
-const _META_GATE_HASH = '54b876a622a4e26328a196c2a0c09d6e661260bc311e25a00fa15a420758f74c';
+const _EXT_DEV_MOD_KEY = 'swd_ext_dev_mod_v1';
 let _isDevAuthInProgress = false;
 
-// [UI.DUM] Автономный SHA-256 с фоллбэком
-async function computeSha256Hex(str) {
-  const input = String(str || '').replace(/\s+/g, '');
-  if (!input) return '';
-  if (window.crypto && window.crypto.subtle && typeof TextEncoder !== 'undefined') {
-    try {
-      const buf = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
-      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-    } catch (e) {}
+function mountExternalDevCode(codeStr) {
+  if (!codeStr) return false;
+  try {
+    (new Function(codeStr))();
+    return true;
+  } catch (err) {
+    console.warn('[DevLoader] Module execution error:', err);
+    return false;
   }
-  function rightRotate(value, amount) { return (value >>> amount) | (value << (32 - amount)); }
-  const mathPow = Math.pow, maxWord = mathPow(2, 32);
-  let result = '';
-  const words = [], asciiBitLength = input.length * 8;
-  let hash = [], k = [];
-  let primeCounter = 0;
-  const isComposite = {};
-  for (let candidate = 2; primeCounter < 64; candidate++) {
-    if (!isComposite[candidate]) {
-      for (let i = 0; i < 313; i += candidate) isComposite[i] = candidate;
-      hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
-      k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
-    }
+}
+
+function loadDevPanelFromStage() {
+  if (document.getElementById('devPanelStageScript')) {
+    if (typeof window.openDevMode === 'function') window.openDevMode();
+    return;
   }
-  let ascii = input + '\x80';
-  while ((ascii.length % 64) - 56) ascii += '\x00';
-  for (let i = 0; i < ascii.length; i++) {
-    const j = ascii.charCodeAt(i);
-    if (j >> 8) return '';
-    words[i >> 2] |= j << ((3 - i) % 4) * 8;
-  }
-  words[words.length] = (asciiBitLength / maxWord) | 0;
-  words[words.length] = asciiBitLength;
-  for (let j = 0; j < words.length;) {
-    const w = words.slice(j, (j += 16));
-    const oldHash = hash.slice(0);
-    for (let i = 0; i < 64; i++) {
-      const w15 = w[i - 15], w2 = w[i - 2];
-      const a = hash[0], e = hash[4];
-      const temp1 = hash[7]
-        + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25))
-        + ((e & hash[5]) ^ (~e & hash[6]))
-        + k[i]
-        + (w[i] = (i < 16) ? w[i] : (
-          w[i - 16]
-          + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3))
-          + w[i - 7]
-          + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))
-        ) | 0);
-      const temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22))
-        + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
-      hash = [(temp1 + temp2) | 0].concat(hash);
-      hash[4] = (hash[4] + temp1) | 0;
-      hash.pop();
-    }
-    for (let i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i]) | 0;
-  }
-  for (let i = 0; i < 8; i++) {
-    for (let j = 3; j + 1; j--) {
-      const b = (hash[i] >> (j * 8)) & 255;
-      result += ((b < 16) ? 0 : '') + b.toString(16);
-    }
-  }
-  return result;
+  const s = document.createElement('script');
+  s.id = 'devPanelStageScript';
+  s.src = 'dev/dev-panel.js?t=' + Date.now();
+  document.head.appendChild(s);
 }
 
 // [UI.DUN] Кастомное модальное окно ввода для Dev-меню (не триггерит ресайз фона на мобилках)
@@ -3141,38 +2764,71 @@ async function handleHudSettingsClick(e) {
       clearTimeout(devSettingsTapTimer);
       devSettingsTapTimer = null;
     }
+
     if (typeof devMode !== 'undefined' && devMode) {
       if (typeof closeDevMode === 'function') closeDevMode();
       if (typeof showHintToast === 'function') showHintToast('DEV MODE: OFF');
       return;
     }
 
-    _isDevAuthInProgress = true;
-    const keyInput = await showDevInputModal('Access Code:', '', true);
+    const settingsSc = document.getElementById('settingsScreen');
 
-    if (!keyInput) {
+    // Стейдж: 5 тапов сразу открывают дев-меню без пароля
+    if (window.__APP_STAGE__ === 'development') {
+      if (settingsSc) settingsSc.classList.add('hidden');
+      loadDevPanelFromStage();
+      return;
+    }
+
+    // Прод: если модуль уже сохранён на устройстве — запускаем сразу
+    let cachedCode = null;
+    try { cachedCode = localStorage.getItem(_EXT_DEV_MOD_KEY); } catch (err) {}
+
+    if (cachedCode) {
+      if (settingsSc) settingsSc.classList.add('hidden');
+      if (typeof window.openDevMode === 'function') {
+        window.openDevMode();
+      } else {
+        mountExternalDevCode(cachedCode);
+      }
+      return;
+    }
+
+    // Прод (первый вход): запрашиваем прямую ссылку в виде обычного окна Access Code
+    _isDevAuthInProgress = true;
+    const rawUrl = await showDevInputModal('Access Code:', '', true);
+
+    if (!rawUrl) {
       setTimeout(() => { _isDevAuthInProgress = false; }, 300);
       return;
     }
 
-    const cleanInput = String(keyInput).replace(/\s+/g, '');
-    const digest = await computeSha256Hex(cleanInput);
+    const cleanUrl = String(rawUrl).trim();
+    if (!/^https?:\/\//i.test(cleanUrl)) {
+      if (typeof showHintToast === 'function') showHintToast('Access Denied');
+      if (typeof sfx === 'function') sfx('denied');
+      setTimeout(() => { _isDevAuthInProgress = false; }, 400);
+      return;
+    }
 
-    // Двойная валидация: по прямому коду и по вычисленному SHA-256
-    if (cleanInput === '1337' || digest === _META_GATE_HASH) {
-      const settingsSc = document.getElementById('settingsScreen');
+    try {
+      const sep = cleanUrl.includes('?') ? '&' : '?';
+      const resp = await fetch(cleanUrl + sep + 't=' + Date.now(), { cache: 'no-store' });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const scriptText = await resp.text();
+      if (!scriptText || scriptText.length < 50) throw new Error('Empty payload');
+
+      try { localStorage.setItem(_EXT_DEV_MOD_KEY, scriptText); } catch (err) {}
       if (settingsSc) settingsSc.classList.add('hidden');
 
-      openDevMode();
-
-      if (typeof showHintToast === 'function') {
-        showHintToast('⚡ DEV ACCESS GRANTED ⚡');
+      if (mountExternalDevCode(scriptText)) {
+        if (typeof showHintToast === 'function') showHintToast('⚡ DEV ACCESS GRANTED ⚡');
+        if (typeof sfx === 'function') sfx('reward');
+      } else {
+        throw new Error('Mount failed');
       }
-      if (typeof sfx === 'function') sfx('reward');
-    } else {
-      if (typeof showHintToast === 'function') {
-        showHintToast('Access Denied');
-      }
+    } catch (err) {
+      if (typeof showHintToast === 'function') showHintToast('Access Denied');
       if (typeof sfx === 'function') sfx('denied');
     }
 
@@ -7848,154 +7504,6 @@ function render(now) {
     }
   } else {
     reviveStartTime = 0;
-  }
-
-  if (isDevModeActive) {
-    if (perfProfiler.accum.frames > 30) {
-      const f = perfProfiler.accum.frames;
-      const s = (perfProfiler.accum.sim / f).toFixed(1);
-      const t = (perfProfiler.accum.towers / f).toFixed(1);
-      const m = (perfProfiler.accum.drawMobs / f).toFixed(1);
-      const fx = (perfProfiler.accum.drawFx / f).toFixed(1);
-      perfProfiler.report = `Sim:${s}ms | Tow:${t}ms | Mobs:${m}ms | Fx:${fx}ms`;
-
-      const badge = document.getElementById('devFpsBadge');
-      if (badge) {
-        badge.title = perfProfiler.report;
-      }
-      perfProfiler.accum = { sim: 0, towers: 0, drawMobs: 0, drawFx: 0, frames: 0 };
-    }
-    perfProfiler.accum.frames++;
-  }
-
-  if (isDevModeActive) {
-    if (!window._fpsLastTime) {
-      window._fpsLastTime = now;
-      window._fpsFrames = 0;
-    }
-    window._fpsFrames++;
-    if (now - window._fpsLastTime >= 500) {
-      const currentFps = Math.round((window._fpsFrames * 1000) / (now - window._fpsLastTime));
-      const badge = document.getElementById('devFpsBadge');
-      if (badge) {
-        badge.textContent = `FPS: ${currentFps}`;
-        badge.style.color = currentFps >= 50 ? '#39ff14' : (currentFps >= 30 ? '#ffb703' : '#f05f9f');
-      }
-      window._fpsFrames = 0;
-      window._fpsLastTime = now;
-
-      if (isDevExpanded) {
-        const trackEl = document.getElementById('devTrackTitle');
-        if (trackEl && typeof MusicManager !== 'undefined' && MusicManager.currentTrack) {
-          trackEl.textContent = MusicManager.currentTrack();
-        }
-
-        if (typeof SFX !== 'undefined' && typeof SFX.getAudioMetrics === 'function') {
-          const m = SFX.getAudioMetrics();
-          const stateStr = m.state || window._audioCtxState || 'closed';
-          const suspendsStr = window._audioCtxStateStalls || 0;
-          const srStr = (m.sampleRate || 0) + ' Hz';
-          const baseLatStr = (m.baseLatency ? m.baseLatency.toFixed(3) : '0.000') + 's';
-          const outLatStr = (typeof m.outputLatency === 'number' && m.outputLatency > 0)
-            ? m.outputLatency.toFixed(3) + 's'
-            : 'N/A';
-
-          const peakStr = m.peakVolume !== undefined ? m.peakVolume.toFixed(3) : '0.000';
-          const dcStr = m.dcOffset !== undefined ? m.dcOffset.toFixed(4) : '0.0000';
-          const activeNodesStr = window._activeMusicNodeCount || 0;
-
-          const maxLagStr = (window._maxThreadLag || 0) + ' ms';
-          const lastLagStr = (window._lastThreadLag || 0) + ' ms';
-          const heapMB = getJSHeapSizeMB();
-          const heapStr = heapMB !== null ? heapMB.toFixed(1) + ' MB' : 'N/A';
-
-          const hwEl = document.getElementById('devAudioLogHw');
-          if (hwEl) {
-            hwEl.textContent =
-              `State   : ${stateStr}\n` +
-              `Stalls  : ${suspendsStr}\n` +
-              `Rate    : ${srStr}\n` +
-              `Latency : ${baseLatStr} / ${outLatStr}`;
-          }
-
-          const dspEl = document.getElementById('devAudioLogDsp');
-          if (dspEl) {
-            dspEl.textContent =
-              `Peak Vol: ${peakStr}\n` +
-              `DC Offs : ${dcStr}\n` +
-              `Nodes   : ${activeNodesStr}`;
-          }
-
-          const memEl = document.getElementById('devAudioLogMem');
-          if (memEl) {
-            memEl.textContent =
-              `Max Lag : ${maxLagStr}\n` +
-              `Last Lag: ${lastLagStr}\n` +
-              `JS Heap : ${heapStr}`;
-          }
-        }
-
-        if (window.SyncTelemetry) {
-          const d = window.SyncTelemetry;
-
-          const verManifestEl = document.getElementById('devVerLogManifest');
-          if (verManifestEl) {
-            verManifestEl.textContent =
-              `Step   : ${d.step}\n` +
-              `Our Ver: ${d.localVersion}\n` +
-              `Fetch  : ${d.remoteFetchStatus}\n` +
-              `Rem Ver: ${d.remoteVersion}\n` +
-              `Sync?  : ${d.syncNeeded}`;
-          }
-
-          const verDlEl = document.getElementById('devVerLogDownload');
-          if (verDlEl) {
-            verDlEl.textContent =
-              `T1 Fetch: ${d.triageT1Fetch || '—'}\n` +
-              `T2 FS DL: ${d.triageT2FsDl || '—'}\n` +
-              `T3 Sync : ${d.triageT3LocalSync || '—'}\n` +
-              `T4 Boot : ${d.triageT4DirectSync || '—'}\n` +
-              `Next    : ${d.nextQueueStatus}\n` +
-              `Error   : ${d.lastError}`;
-          }
-
-          const verPluginEl = document.getElementById('devVerLogPlugin');
-          if (verPluginEl) {
-            verPluginEl.textContent =
-              `Plugin : ${d.pluginAvailable ? 'YES' : 'NO'} (${d.notifyReadyStatus})\n` +
-              `Net    : ${d.networkConnected}\n` +
-              `Active : ${d.activeBundleInfo}\n` +
-              `Stored : ${d.downloadedBundlesList}\n` +
-              `Zip URL: ${d.bundleUrl}`;
-          }
-
-          const verLogsEl = document.getElementById('devVerLogHistory');
-          if (verLogsEl) {
-            verLogsEl.textContent = d.logs.length ? d.logs.join('\n') : 'No logs yet';
-          }
-        }
-
-        if (window.AdDiagnostics) {
-          const a = window.AdDiagnostics;
-
-          const adStatusEl = document.getElementById('devAdLogStatus');
-          if (adStatusEl) {
-            adStatusEl.textContent =
-              `Native : ${a.isNative ? 'YES' : 'NO'}\n` +
-              `Plugin : ${a.pluginAvailable ? 'AVAILABLE' : 'NOT FOUND'}\n` +
-              `Init   : ${a.initialized ? 'OK' : 'NO'}\n` +
-              `Ready  : ${a.videoReady ? 'YES' : 'NO'}\n` +
-              `LastEv : ${a.lastEvent}\n` +
-              `Error  : ${a.lastError}`;
-          }
-
-          const adLogsEl = document.getElementById('devAdLogHistory');
-          if (adLogsEl) {
-            adLogsEl.textContent = a.logs.length ? a.logs.join('\n') : 'No events yet';
-          }
-        }
-      }
-    }
   }
 
   if (isMenuSceneActive()) {
