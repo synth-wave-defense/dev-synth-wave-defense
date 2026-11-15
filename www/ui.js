@@ -3795,6 +3795,16 @@ function toggleSettingPerf(isChecked) {
   let isSwiping = false;
   let swipeTriggered = false;
   let isPointerDown = false;
+  let swipeResetTimer = null;
+
+  function scheduleSwipeStateReset(delayMs = 120) {
+    if (swipeResetTimer) clearTimeout(swipeResetTimer);
+    swipeResetTimer = setTimeout(() => {
+      isSwiping = false;
+      swipeTriggered = false;
+      swipeResetTimer = null;
+    }, delayMs);
+  }
 
   // [UI.FB]
   function onPointerDown(e) {
@@ -3802,7 +3812,15 @@ function toggleSettingPerf(isChecked) {
     const levelsScreen = document.getElementById('levelsScreen');
     if (!levelsScreen || levelsScreen.classList.contains('hidden')) return;
 
-    if (e.target && e.target.closest && e.target.closest('.mode-3way-tab, .levels-main-menu-btn, .hud-gear-btn')) {
+    // Любое новое касание экрана — это новый жест; сбрасываем хвост от предыдущего свайпа
+    if (swipeResetTimer) {
+      clearTimeout(swipeResetTimer);
+      swipeResetTimer = null;
+    }
+    isSwiping = false;
+    swipeTriggered = false;
+
+    if (e.target && e.target.closest && e.target.closest('.mode-3way-tab, .levels-main-menu-btn, .hud-gear-btn, .part-nav-btn, .loadout-widget')) {
       isPointerDown = false;
       return;
     }
@@ -3814,8 +3832,6 @@ function toggleSettingPerf(isChecked) {
     touchStartX = clientX;
     touchStartY = clientY;
     touchStartTime = performance.now();
-    isSwiping = false;
-    swipeTriggered = false;
   }
 
   // [UI.FC]
@@ -3840,6 +3856,7 @@ function toggleSettingPerf(isChecked) {
       swipeTriggered = true;
       isSwiping = true;
       isPointerDown = false;
+      scheduleSwipeStateReset(180);
       if (deltaX < 0) {
         navLevelSection(1);
       } else {
@@ -3850,12 +3867,16 @@ function toggleSettingPerf(isChecked) {
 
   // [UI.FD]
   function onPointerUp(e) {
+    if (swipeTriggered || isSwiping) {
+      isPointerDown = false;
+      scheduleSwipeStateReset(80);
+      return;
+    }
     if (!isPointerDown || gameState !== 'LEVELS') {
       isPointerDown = false;
       return;
     }
     isPointerDown = false;
-    if (swipeTriggered) return;
 
     const levelsScreen = document.getElementById('levelsScreen');
     if (!levelsScreen || levelsScreen.classList.contains('hidden')) return;
@@ -3873,6 +3894,7 @@ function toggleSettingPerf(isChecked) {
     if (duration <= maxDuration && Math.abs(deltaX) >= minDistance && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
       swipeTriggered = true;
       isSwiping = true;
+      scheduleSwipeStateReset(80);
       if (deltaX < 0) {
         navLevelSection(1);
       } else {
@@ -3883,13 +3905,16 @@ function toggleSettingPerf(isChecked) {
 
   // [UI.FE]
   function onClickCapture(e) {
+    // Никогда не блокируем нажатия на навигационные кнопки
+    if (e.target && e.target.closest && e.target.closest('.levels-main-menu-btn, .mode-3way-tab, .hud-gear-btn, .part-nav-btn')) {
+      isSwiping = false;
+      swipeTriggered = false;
+      return;
+    }
     if (isSwiping || swipeTriggered) {
       e.stopPropagation();
       e.preventDefault();
-      setTimeout(() => {
-        isSwiping = false;
-        swipeTriggered = false;
-      }, 50);
+      scheduleSwipeStateReset(30);
     }
   }
 
@@ -3900,7 +3925,10 @@ function toggleSettingPerf(isChecked) {
       levelsScreen.addEventListener('touchstart', onPointerDown, { passive: true });
       levelsScreen.addEventListener('touchmove', onPointerMove, { passive: true });
       levelsScreen.addEventListener('touchend', onPointerUp, { passive: true });
-      levelsScreen.addEventListener('touchcancel', () => { isPointerDown = false; }, { passive: true });
+      levelsScreen.addEventListener('touchcancel', () => {
+        isPointerDown = false;
+        scheduleSwipeStateReset(50);
+      }, { passive: true });
       levelsScreen.addEventListener('mousedown', onPointerDown);
       levelsScreen.addEventListener('mousemove', onPointerMove);
       levelsScreen.addEventListener('mouseup', onPointerUp);
