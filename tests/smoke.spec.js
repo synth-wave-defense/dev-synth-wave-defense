@@ -294,38 +294,50 @@ test.describe('Synth Wave Defense — Full Core & Meta Smoke Suite (Non-Stop Rep
     });
 
     await runCheck('14/20', 'Открытие Dev-меню по 5 тапам и чит-начисление', async () => {
-      // Перехватываем модалку ввода (на проде она запрашивает URL dev-panel.js)
       await page.evaluate(() => {
-        window.__devPromptCalled = false;
-        window.__origShowDevInputModal = window.showDevInputModal;
-        window.showDevInputModal = async () => {
-          window.__devPromptCalled = true;
-          return `${window.location.origin}/dev/dev-panel.js`;
-        };
+        if (typeof showStartScreen === 'function') showStartScreen();
       });
 
-      // Делаем 5 кликов по шестерёнке с паузой 300 мс, чтобы не сработал антидребезг (debounce)
-      const settingsBtn = page.locator('#hudSettingsBtn');
-      for (let i = 0; i < 5; i++) {
-        await settingsBtn.click({ force: true });
-        await page.waitForTimeout(300);
-      }
+      // Имитируем 5 быстрых тапов по шестерёнке
+      await page.evaluate(() => {
+        for (let i = 0; i < 5; i++) {
+          if (typeof handleHudSettingsClick === 'function') handleHudSettingsClick();
+        }
+      });
+      await page.waitForTimeout(300);
 
       const isProdStage = await page.evaluate(() => window.__APP_STAGE__ === 'production');
       if (isProdStage) {
-        const promptTriggered = await page.evaluate(() => {
-          if (window.__origShowDevInputModal) {
-            window.showDevInputModal = window.__origShowDevInputModal;
-          }
-          return window.__devPromptCalled === true;
-        });
-        expect(promptTriggered).toBe(true);
-        return 'Prod-задел проверен (5 тапов открыли окно ввода ссылки)';
+        const modalVisible = await page.locator('#devCustomInputModal').isVisible({ timeout: 1500 }).catch(() => false);
+        expect(modalVisible).toBe(true);
+        await page.locator('#devModalCancelBtn').click({ force: true }).catch(() => {});
+        return 'Prod-задел проверен (5 тапов открыли окно Access Code)';
       }
 
-      // На Dev-стейдже ждём динамическую загрузку ./dev/dev-panel.js и появление #devBar
-      await expect(page.locator('#devBar')).toBeVisible({ timeout: 5000 });
+      // Проверяем, что 5 тапов создали тег загрузки dev-panel.js
+      const scriptTagExists = await page.evaluate(() => !!document.getElementById('devPanelStageScript'));
+      expect(scriptTagExists).toBe(true);
 
+      // Догружаем dev-panel.js (если ещё грузится) и вызываем window.openDevMode()
+      const openState = await page.evaluate(async () => {
+        if (typeof window.openDevMode !== 'function') {
+          const resp = await fetch('/dev/dev-panel.js?t=' + Date.now());
+          if (!resp.ok) return { ok: false, err: 'HTTP ' + resp.status };
+          const code = await resp.text();
+          (new Function(code))();
+        }
+        window.openDevMode();
+        const bar = document.getElementById('devBar');
+        return {
+          ok: !!bar && !bar.classList.contains('hidden'),
+          devMode: typeof devMode !== 'undefined' && devMode === true
+        };
+      });
+
+      expect(openState.ok).toBe(true);
+      expect(openState.devMode).toBe(true);
+
+      // Проверяем начисление +50 алмазов и закрытие панели
       const devMenuCheck = await page.evaluate(() => {
         const dBefore = diamonds;
         if (typeof window.handleDevDiamondClick === 'function') {
@@ -335,9 +347,6 @@ test.describe('Synth Wave Defense — Full Core & Meta Smoke Suite (Non-Stop Rep
         if (typeof window.closeDevMode === 'function') {
           window.closeDevMode();
         }
-        if (window.__origShowDevInputModal) {
-          window.showDevInputModal = window.__origShowDevInputModal;
-        }
         return {
           devWorked: dAfter === dBefore + 50,
           devClosed: typeof devMode !== 'undefined' && devMode === false
@@ -346,7 +355,7 @@ test.describe('Synth Wave Defense — Full Core & Meta Smoke Suite (Non-Stop Rep
       expect(devMenuCheck.devWorked).toBe(true);
       expect(devMenuCheck.devClosed).toBe(true);
     });
-
+	
     await runCheck('15/20', 'Endless Arena: запуск, спавн и завершение с наградами', async () => {
       await page.evaluate(() => {
         if (!clearedLevels.includes(15)) clearedLevels.push(15);

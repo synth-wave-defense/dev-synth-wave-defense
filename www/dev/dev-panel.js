@@ -559,7 +559,7 @@ function syncScreensForDevState() {
 
   window.openDevMode = function () {
     ensureDevBarDom();
-    isDevModeActive = true;
+    window.isDevModeActive = true;
     devMode = true;
     window._maxThreadLag = 0;
     window._lastThreadLag = 0;
@@ -590,7 +590,7 @@ function syncScreensForDevState() {
   };
 
   window.closeDevMode = function () {
-    isDevModeActive = false;
+    window.isDevModeActive = false;
     devMode = false;
     isDevExpanded = false;
     if (typeof stopThreadLagMonitor === 'function') stopThreadLagMonitor();
