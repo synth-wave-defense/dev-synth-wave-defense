@@ -1915,17 +1915,14 @@ function buildLevelGeometry(pathNodes, colsCount, rowsCount, blockedCells) {
         { x1: cx - inDir.x * half + nx * D, y1: cy - inDir.y * half + ny * D, x2: cx + inDir.x * half + nx * D, y2: cy + inDir.y * half + ny * D }
       ];
     } else {
-      // Вектор внутрь поворота (outDir) и наружу поворота (-inDir)
       const innerR = half - D; // 12px — внутренний угол
-      const outerR = 16; // 16px — аккуратное малое скругление внешнего угла (вместо 58px)
+      const outerR = half + D; // 58px — концентрический внешний угол (ширина коридора 2*D = 46px)
 
       const makeCornerCurve = (sideSign, rCorner) => {
-        // sideSign: +1 = внутренний рельс (смещение к outDir), -1 = внешний рельс (смещение к -outDir)
         const startX = cx - inDir.x * half + outDir.x * (sideSign * D);
         const startY = cy - inDir.y * half + outDir.y * (sideSign * D);
         const endX = cx + outDir.x * half - inDir.x * (sideSign * D);
         const endY = cy + outDir.y * half - inDir.y * (sideSign * D);
-        // Вершина угла пересечения двух прямых рельсов
         const cornerX = cx - inDir.x * (sideSign * D) + outDir.x * (sideSign * D);
         const cornerY = cy - inDir.y * (sideSign * D) + outDir.y * (sideSign * D);
         return { startX, startY, cornerX, cornerY, endX, endY, r: rCorner };
@@ -1938,10 +1935,61 @@ function buildLevelGeometry(pathNodes, colsCount, rowsCount, blockedCells) {
     }
   }
 
-  WAYPOINTS = pathNodes.map(p => ({
+  // Строим гладкую траекторию: каждый поворот разбиваем на 24 микро-сегмента Безье (R = 28px),
+  // чтобы кривизна поворота была абсолютно непрерывной без угловых ступенек
+  const rawWaypoints = pathNodes.map(p => ({
     x: p.c * TILE_SIZE + TILE_SIZE / 2,
     y: p.r * TILE_SIZE + TILE_SIZE / 2
   }));
+
+  if (rawWaypoints.length <= 2) {
+    WAYPOINTS = rawWaypoints;
+  } else {
+    const smoothWps = [rawWaypoints[0]];
+    const CORNER_CUT = 28;
+    const ARC_SEGMENTS = 24;
+
+    for (let i = 1; i < rawWaypoints.length - 1; i++) {
+      const prev = rawWaypoints[i - 1];
+      const curr = rawWaypoints[i];
+      const next = rawWaypoints[i + 1];
+
+      const v1x = curr.x - prev.x;
+      const v1y = curr.y - prev.y;
+      const len1 = Math.hypot(v1x, v1y) || 1;
+
+      const v2x = next.x - curr.x;
+      const v2y = next.y - curr.y;
+      const len2 = Math.hypot(v2x, v2y) || 1;
+
+      const cut = Math.min(CORNER_CUT, len1 * 0.45, len2 * 0.45);
+      if (cut < 2) {
+        smoothWps.push(curr);
+        continue;
+      }
+
+      const pStart = {
+        x: curr.x - (v1x / len1) * cut,
+        y: curr.y - (v1y / len1) * cut
+      };
+      const pEnd = {
+        x: curr.x + (v2x / len2) * cut,
+        y: curr.y + (v2y / len2) * cut
+      };
+
+      for (let s = 0; s <= ARC_SEGMENTS; s++) {
+        const t = s / ARC_SEGMENTS;
+        const invT = 1 - t;
+        smoothWps.push({
+          x: invT * invT * pStart.x + 2 * invT * t * curr.x + t * t * pEnd.x,
+          y: invT * invT * pStart.y + 2 * invT * t * curr.y + t * t * pEnd.y
+        });
+      }
+    }
+
+    smoothWps.push(rawWaypoints[rawWaypoints.length - 1]);
+    WAYPOINTS = smoothWps;
+  }
 
   if (Array.isArray(blockedCells)) {
     blockedCells.forEach(bc => {
@@ -4398,12 +4446,13 @@ function update(dt) {
           spawnY += ny * eData.laneOffset;
         }
 
-        const spawnedEnemy = {
-          x: spawnX,
-          y: spawnY,
-          laneOffset: eData.laneOffset || 0,
-          angle: 0,
-          wpIndex: 1,
+      const initAngle = Math.atan2(WAYPOINTS[1].y - WAYPOINTS[0].y, WAYPOINTS[1].x - WAYPOINTS[0].x);
+      const spawnedEnemy = {
+        x: spawnX,
+        y: spawnY,
+        laneOffset: eData.laneOffset || 0,
+        angle: initAngle,
+        wpIndex: 1,
           type: eData.type,
           isBoss: !!eData.isBoss,
           isMiniBoss: !!eData.isMiniBoss,
@@ -4682,41 +4731,122 @@ function update(dt) {
       targetY += offY * e.laneOffset;
     }
 
-    const dx = targetX - e.x;
-    const dy = targetY - e.y;
-    const dist = Math.hypot(dx, dy);
     const effectiveSpeed = e.speed * (isOverdriveMode ? 1.2 : 1.0) * thawMult;
-    const step = effectiveSpeed * dt;
-    e.angle = Math.atan2(dy, dx);
+    let remainingStep = effectiveSpeed * dt;
+    let reachedBase = false;
 
-    if (dist <= step) {
-      e.x = targetX;
-      e.y = targetY;
-      e.wpIndex++;
-      if (e.wpIndex >= WAYPOINTS.length) {
-        const damageToBasePath = getBaseDamageFor(e);
-        baseHp = Math.max(0, baseHp - damageToBasePath);
-        saveActiveBattleSnapshot();
-        saveGameSoon();
-        sfx('baseHit');
-        vibrate('warning');
-        createShockwave(e.x, e.y, e.isBoss ? 80 : (e.isMiniBoss ? 50 : 35), '#f05f9f');
-        enemies.splice(i, 1);
-        updateUI();
-        if (baseHp <= 0) {
-          baseHp = 0;
-          if (!reviveUsedThisMatch && !isOverdriveMode) {
-            triggerEmergencyRevivePrompt();
-            return;
-          }
-          triggerDefeat();
+    const getWpPosWithOffset = (idx) => {
+      const wpCurr = WAYPOINTS[idx];
+      let tx = wpCurr.x;
+      let ty = wpCurr.y;
+      if (e.laneOffset) {
+        const prevWp = WAYPOINTS[idx - 1] || WAYPOINTS[0];
+        const nextWp = WAYPOINTS[idx + 1];
+        const segDx = wpCurr.x - prevWp.x;
+        const segDy = wpCurr.y - prevWp.y;
+        const segLen = Math.hypot(segDx, segDy) || 1;
+        let offX = -segDy / segLen;
+        let offY = segDx / segLen;
+        if (nextWp) {
+          const seg2Dx = nextWp.x - wpCurr.x;
+          const seg2Dy = nextWp.y - wpCurr.y;
+          const seg2Len = Math.hypot(seg2Dx, seg2Dy) || 1;
+          offX += -seg2Dy / seg2Len;
+          offY += seg2Dx / seg2Len;
+        }
+        const offLen = Math.hypot(offX, offY);
+        if (offLen > 1e-4) {
+          tx += (offX / offLen) * e.laneOffset;
+          ty += (offY / offLen) * e.laneOffset;
+        }
+      }
+      return { x: tx, y: ty };
+    };
+
+    while (remainingStep > 0 && e.wpIndex < WAYPOINTS.length) {
+      const targetPt = getWpPosWithOffset(e.wpIndex);
+      const dx = targetPt.x - e.x;
+      const dy = targetPt.y - e.y;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist <= remainingStep) {
+        e.x = targetPt.x;
+        e.y = targetPt.y;
+        remainingStep -= dist;
+        e.wpIndex++;
+        if (e.wpIndex >= WAYPOINTS.length) {
+          reachedBase = true;
+          break;
+        }
+      } else {
+        e.x += (dx / dist) * remainingStep;
+        e.y += (dy / dist) * remainingStep;
+        remainingStep = 0;
+      }
+    }
+
+    // Непрерывное сглаживание угла корпуса с упреждением на 14px вперёд по траектории (без ступенек)
+    if (!reachedBase && e.wpIndex < WAYPOINTS.length) {
+      let lookDist = 14.0;
+      let lx = e.x;
+      let ly = e.y;
+      let lIdx = e.wpIndex;
+
+      while (lookDist > 0 && lIdx < WAYPOINTS.length) {
+        const pt = getWpPosWithOffset(lIdx);
+        const ldx = pt.x - lx;
+        const ldy = pt.y - ly;
+        const ld = Math.hypot(ldx, ldy);
+        if (ld <= lookDist) {
+          lx = pt.x;
+          ly = pt.y;
+          lookDist -= ld;
+          lIdx++;
+        } else {
+          lx += (ldx / ld) * lookDist;
+          ly += (ldy / ld) * lookDist;
+          lookDist = 0;
+        }
+      }
+
+      const aimDx = lx - e.x;
+      const aimDy = ly - e.y;
+      if (aimDx * aimDx + aimDy * aimDy > 0.0001) {
+        const desiredAngle = Math.atan2(aimDy, aimDx);
+        if (typeof e.angle !== 'number' || !isFinite(e.angle)) {
+          e.angle = desiredAngle;
+        } else {
+          let diff = desiredAngle - e.angle;
+          while (diff > Math.PI) diff -= Math.PI * 2;
+          while (diff < -Math.PI) diff += Math.PI * 2;
+          // Экспоненциальный фильтр: поворот пропорционален скорости моба и абсолютно плавный на каждом кадре
+          const turnRate = Math.max(8.0, (effectiveSpeed / 45) * 9.5);
+          const blend = 1 - Math.exp(-turnRate * dt);
+          e.angle += diff * blend;
+        }
+      }
+    }
+
+    if (reachedBase) {
+      const damageToBasePath = getBaseDamageFor(e);
+      baseHp = Math.max(0, baseHp - damageToBasePath);
+      saveActiveBattleSnapshot();
+      saveGameSoon();
+      sfx('baseHit');
+      vibrate('warning');
+      createShockwave(e.x, e.y, e.isBoss ? 80 : (e.isMiniBoss ? 50 : 35), '#f05f9f');
+      enemies.splice(i, 1);
+      updateUI();
+      if (baseHp <= 0) {
+        baseHp = 0;
+        if (!reviveUsedThisMatch && !isOverdriveMode) {
+          triggerEmergencyRevivePrompt();
           return;
         }
-        continue;
+        triggerDefeat();
+        return;
       }
-    } else {
-      e.x += (dx / dist) * step;
-      e.y += (dy / dist) * step;
+      continue;
     }
   }
 
