@@ -131,30 +131,29 @@ function updateOffscreenGrid() {
 
   const th = getTheme();
   const c1Rgb = th.rgb1 ? th.rgb1.cssRgb : '0, 229, 255';
-  const c2Rgb = th.rgb2 ? th.rgb2.cssRgb : '217, 70, 239';
 
-  //  Static grid cell background rendering.
+  // Static grid cell background rendering.
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       const cellVal = grid[r] ? grid[r][c] : 0;
       oCtx.fillStyle = (cellVal === 1)
-        ? `rgba(${c1Rgb}, 0.14)`
+        ? `rgba(${c1Rgb}, 0.08)`
         : (cellVal === 3 ? 'rgba(0, 0, 0, 0.78)' : 'rgba(8, 12, 26, 0.40)');
       oCtx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
       oCtx.strokeStyle = (cellVal === 1)
-        ? `rgba(${c1Rgb}, 0.48)`
-        : (cellVal === 3 ? 'rgba(0, 0, 0, 0.90)' : `rgba(${c1Rgb}, 0.16)`);
+        ? `rgba(${c1Rgb}, 0.18)`
+        : (cellVal === 3 ? 'rgba(0, 0, 0, 0.90)' : `rgba(${c1Rgb}, 0.14)`);
       oCtx.lineWidth = 1;
       oCtx.strokeRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
     }
   }
 
   oCtx.save();
-  oCtx.strokeStyle = `rgba(${c1Rgb}, 0.22)`;
-  oCtx.lineWidth = 1.5;
+  oCtx.strokeStyle = `rgba(${c1Rgb}, 0.34)`;
+  oCtx.lineWidth = 1.6;
 
-  //  Static track side rails rendering.
+  // Static track side rails rendering.
   if (typeof pathCells !== 'undefined' && Array.isArray(pathCells)) {
     pathCells.forEach(cell => {
       if (cell.rails) {
