@@ -344,42 +344,97 @@ function getGlowSprite(color) {
 }
 
 // [UI.KK]
-// Универсальный хелпер для надежного тапа с защитой от микро-сдвигов пальца
-function addReliableTouchListener(element, callback) {
+(function initGlobalReliableTouch() {
+  const INTERACTIVE_SELECTOR = [
+    'button',
+    '[role="button"]',
+    '.mode-3way-tab',
+    '.level-btn',
+    '.synth-pass-widget',
+    '.loadout-widget-header',
+    '.settings-collapsible-header',
+    '.tactical-tips-widget',
+    '.custom-palette-trigger',
+    '.custom-palette-option',
+    '.badge-half.interactive'
+  ].join(',');
+
+  const MOVE_THRESHOLD_PX = 24;
+  let activeTarget = null;
   let startX = 0;
   let startY = 0;
-  let isPointerDown = false;
+  let movedTooFar = false;
+  let lastNativeClickTime = 0;
+  let syntheticClickInFlight = false;
 
-  element.addEventListener('pointerdown', (e) => {
-    isPointerDown = true;
+  // Отслеживаем, сработал ли обычный нативный click сам по себе
+  document.addEventListener('click', (e) => {
+    if (syntheticClickInFlight) return;
+    lastNativeClickTime = performance.now();
+  }, true);
+
+  document.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    const target = e.target && e.target.closest ? e.target.closest(INTERACTIVE_SELECTOR) : null;
+    if (!target || target.disabled || target.classList.contains('is-disabled')) {
+      activeTarget = null;
+      return;
+    }
+    activeTarget = target;
     startX = e.clientX;
     startY = e.clientY;
-  });
+    movedTooFar = false;
+  }, { capture: true, passive: true });
 
-  element.addEventListener('pointermove', (e) => {
-    if (!isPointerDown) return;
-    const moveThreshold = 20; // допустимый сдвиг в пикселях
+  document.addEventListener('pointermove', (e) => {
+    if (!activeTarget || movedTooFar) return;
     const dx = Math.abs(e.clientX - startX);
     const dy = Math.abs(e.clientY - startY);
-    
-    // Если палец ушел слишком далеко — это скролл, отменяем клик
-    if (dx > moveThreshold || dy > moveThreshold) {
-      isPointerDown = false;
+    if (dx > MOVE_THRESHOLD_PX || dy > MOVE_THRESHOLD_PX) {
+      movedTooFar = true;
     }
-  });
+  }, { capture: true, passive: true });
 
-  element.addEventListener('pointerup', (e) => {
-    if (!isPointerDown) return;
-    isPointerDown = false;
-    
-    // Вызываем вашу логику нажатия
-    callback(e);
-  });
+  document.addEventListener('pointerup', (e) => {
+    if (!activeTarget) return;
+    const target = activeTarget;
+    const wasMoved = movedTooFar;
+    activeTarget = null;
+    movedTooFar = false;
 
-  element.addEventListener('pointercancel', () => {
-    isPointerDown = false;
-  });
-}
+    if (wasMoved || target.disabled) return;
+
+    // Проверяем, что палец при отпускании всё ещё находится в пределах кнопки (или рядом с ней)
+    const rect = target.getBoundingClientRect();
+    const pad = 12;
+    const inside = (
+      e.clientX >= rect.left - pad &&
+      e.clientX <= rect.right + pad &&
+      e.clientY >= rect.top - pad &&
+      e.clientY <= rect.bottom + pad
+    );
+    if (!inside) return;
+
+    const upTime = performance.now();
+    // Даем браузеру 35мс на генерацию штатного click.
+    // Если WebView проглотил click (после свайпа или из-за микро-сдвига пальца) — вызываем его принудительно!
+    setTimeout(() => {
+      if (lastNativeClickTime >= upTime - 15) return;
+      if (target.disabled || !document.body.contains(target)) return;
+      syntheticClickInFlight = true;
+      try {
+        target.click();
+      } finally {
+        syntheticClickInFlight = false;
+      }
+    }, 35);
+  }, { capture: true, passive: true });
+
+  document.addEventListener('pointercancel', () => {
+    activeTarget = null;
+    movedTooFar = false;
+  }, { capture: true, passive: true });
+})();
 
 //  Banner and incoming threat alert visual indicators.
 // [UI.L]

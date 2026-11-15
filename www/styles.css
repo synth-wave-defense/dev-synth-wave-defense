@@ -6965,6 +6965,29 @@ body:not([data-theme="default"]) .bp-btn-buy-tier {
   color: #ffffff;
 }
 
+/* [STY.GC] */
+#levelsScreen,
+.upgrades-row-list,
+.overlay-screen {
+  overscroll-behavior: none;
+}
+
+#levelsCampaignView,
+#endlessDashboardView {
+  touch-action: pan-y;
+}
+
+button,
+.mode-3way-tab,
+.level-btn,
+.synth-pass-widget,
+.loadout-widget-header,
+.settings-collapsible-header,
+.tactical-tips-widget {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* [STY.H] */
 /* свойство, чтобы при небольшом сдвиге клик срабатывал по кнопке */
 button, .interactive-btn {
