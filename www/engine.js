@@ -2362,6 +2362,8 @@ function reallyStartLevel(lvl) {
 }
 
 // [ENG.BD]
+let finalWaveSpawned = false;
+
 function resetLevelState() {
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
   reviveUsedThisMatch = false;
@@ -2376,6 +2378,7 @@ function resetLevelState() {
 
   wave = 1;
   waveInProgress = false;
+  finalWaveSpawned = false;
   autoWaveTimeRemaining = 0;
   waveTimerActive = false;
   victoryDelayTimer = 0;
@@ -3734,6 +3737,10 @@ function triggerManualWave() {
   const lvlConfig = LEVELS_DATA[currentLevel];
   const maxW = lvlConfig ? lvlConfig.totalWaves : 10;
 
+  if (!isEndlessMode && finalWaveSpawned) {
+    return;
+  }
+
   if (waveTimerActive) {
     const secondsSaved = autoWaveTimeRemaining;
     waveTimerActive = false;
@@ -3768,7 +3775,7 @@ function triggerManualWave() {
       startWave();
     }
   } else if (!waveInProgress && spawnQueue.length === 0) {
-    if (isEndlessMode || wave <= maxW) startWave();
+    if (isEndlessMode || (wave <= maxW && !finalWaveSpawned)) startWave();
   }
 }
 

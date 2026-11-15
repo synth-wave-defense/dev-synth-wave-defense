@@ -5923,7 +5923,9 @@ function updateUI() {
 
   const waveBtn = el('waveBtn');
   if (waveBtn) {
-    const shouldDisable = (waveInProgress || spawnQueue.length > 0 || (!(typeof isEndlessMode !== 'undefined' && isEndlessMode) && wave >= maxW));
+    const isEndMode = (typeof isEndlessMode !== 'undefined' && isEndlessMode);
+    const isFinalDone = !isEndMode && ((typeof finalWaveSpawned !== 'undefined' && finalWaveSpawned) || (wave >= maxW && !waveTimerActive));
+    const shouldDisable = (waveInProgress || spawnQueue.length > 0 || isFinalDone);
     if (_hudStateCache.waveBtnDisabled !== shouldDisable) {
       _hudStateCache.waveBtnDisabled = shouldDisable;
       waveBtn.disabled = shouldDisable;
