@@ -462,6 +462,11 @@ function showIncomingAlert(type) {
   if (!banner || !textEl) return;
 
   banner.className = 'incoming-alert-banner';
+  banner.style.backdropFilter = 'none';
+  banner.style.webkitBackdropFilter = 'none';
+  banner.style.background = 'rgba(10, 12, 24, 0.92)';
+  banner.style.willChange = 'transform, opacity';
+
   if (type === 'boss') {
     banner.classList.add('boss');
     textEl.textContent = t('boss_incoming');
@@ -7213,17 +7218,24 @@ function drawChevron(centerX, centerY, angle, size, color, glowColor) {
   ctx.save();
   ctx.translate(centerX, centerY);
   ctx.rotate(angle);
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 3.2;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
-  if (glowColor) {
-    setGlow(glowColor, 8);
-  }
+
   ctx.beginPath();
   ctx.moveTo(-size * 0.8, -size);
   ctx.lineTo(size * 0.9, 0);
   ctx.lineTo(-size * 0.8, size);
+
+  if (glowColor && perfMode !== 'low') {
+    ctx.strokeStyle = glowColor;
+    ctx.globalAlpha = 0.28;
+    ctx.lineWidth = 7.5;
+    ctx.stroke();
+    ctx.globalAlpha = 1.0;
+  }
+
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3.0;
   ctx.stroke();
   ctx.restore();
 }
@@ -7240,11 +7252,12 @@ function drawPathPortals() {
 
   const spawnCol = th.c1;
   const spawnOffsets = [-14, 0, 14];
-  spawnOffsets.forEach(off => {
+  for (let i = 0; i < 3; i++) {
+    const off = spawnOffsets[i];
     const px = spawnX + 35 + Math.cos(spawnAngle) * off;
     const py = spawnY + 35 + Math.sin(spawnAngle) * off;
     drawChevron(px, py, spawnAngle, 13, spawnCol, spawnCol);
-  });
+  }
 
   const prevTile = activePathTiles[activePathTiles.length - 2];
   const endTile = activePathTiles[activePathTiles.length - 1];
@@ -7254,11 +7267,12 @@ function drawPathPortals() {
 
   const baseCol = th.c3;
   const baseOffsets = [-14, 0, 14];
-  baseOffsets.forEach(off => {
+  for (let i = 0; i < 3; i++) {
+    const off = baseOffsets[i];
     const px = baseX + 35 + Math.cos(baseAngle) * off;
     const py = baseY + 35 + Math.sin(baseAngle) * off;
     drawChevron(px, py, baseAngle, 13, baseCol, baseCol);
-  });
+  }
 }
 
 // [UI.JL]
@@ -7394,21 +7408,16 @@ function drawTowerModel(type, angle, color, level = 1, glow = '#00e5ff', isDisab
   const lvl = Math.max(1, Math.min(3, level));
   const ringColor = isDisabled ? '#64748b' : glow;
 
-  const radGrad = ctx.createRadialGradient(0, 0, 8, 0, 0, 32);
-  radGrad.addColorStop(0, glow + '66');
-  radGrad.addColorStop(0.6, glow + '1a');
-  radGrad.addColorStop(1, 'transparent');
-  ctx.fillStyle = radGrad;
-  ctx.beginPath();
-  ctx.arc(0, 0, 32, 0, Math.PI * 2);
-  ctx.fill();
+  if (!isDisabled && typeof getGlowSprite === 'function') {
+    const haloSprite = getGlowSprite(glow + '44');
+    ctx.drawImage(haloSprite, -30, -30, 60, 60);
+  }
 
   ctx.fillStyle = TOWER_GLYPH_DARK;
   ctx.beginPath();
   ctx.arc(0, 0, 17, 0, Math.PI * 2);
   ctx.fill();
 
-  setGlow(isDisabled ? 'transparent' : glow, isShooting ? 8 : 6);
   ctx.strokeStyle = ringColor;
   ctx.lineWidth = 1.6;
   ctx.beginPath();
@@ -7423,11 +7432,12 @@ function drawTowerModel(type, angle, color, level = 1, glow = '#00e5ff', isDisab
   ctx.globalAlpha = isDisabled ? 0.45 : 1;
 
   ctx.lineWidth = 1.6;
-  TOWER_GLYPH_RINGS[lvl].forEach(r => {
+  const rings = TOWER_GLYPH_RINGS[lvl];
+  for (let i = 0; i < rings.length; i++) {
     ctx.beginPath();
-    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.arc(0, 0, rings[i], 0, Math.PI * 2);
     ctx.stroke();
-  });
+  }
 
   const effectiveAngle = (type === 'stasis') ? 0 : angle;
   ctx.rotate(effectiveAngle);
@@ -7461,11 +7471,15 @@ function drawTowerModel(type, angle, color, level = 1, glow = '#00e5ff', isDisab
     }
   }
 
-  setGlow(isDisabled ? 'transparent' : glow, 8);
+  if (isShooting && !isDisabled) {
+    setGlow(glow, 7);
+  }
   if (spec && spec.flakes) {
     ctx.strokeStyle = isDisabled ? '#475569' : color;
     ctx.lineCap = 'round';
-    TOWER_GLYPH_FLAKES[lvl].forEach(fl => {
+    const flakes = TOWER_GLYPH_FLAKES[lvl];
+    for (let f = 0; f < flakes.length; f++) {
+      const fl = flakes[f];
       ctx.save();
       ctx.translate(fl.cx, fl.cy);
       ctx.scale(fl.scale, fl.scale);
@@ -7478,15 +7492,18 @@ function drawTowerModel(type, angle, color, level = 1, glow = '#00e5ff', isDisab
         ctx.rotate(Math.PI / 3);
       }
       ctx.restore();
-    });
+    }
   } else {
     ctx.fillStyle = isDisabled ? '#475569' : color;
-    TOWER_GLYPH_CORES[lvl].forEach(d => {
+    const cores = TOWER_GLYPH_CORES[lvl];
+    for (let c = 0; c < cores.length; c++) {
+      const d = cores[c];
       ctx.beginPath();
       ctx.arc(d.cx, d.cy, d.r, 0, Math.PI * 2);
       ctx.fill();
-    });
+    }
   }
+  ctx.shadowBlur = 0;
 
   ctx.rotate(-effectiveAngle);
 
@@ -7504,7 +7521,6 @@ function drawTowerModel(type, angle, color, level = 1, glow = '#00e5ff', isDisab
     const heatColor = isOverheated ? '#ffffff' : (isCooling ? '#fb923c' : '#f05f9f');
     ctx.beginPath();
     ctx.strokeStyle = heatColor;
-    setGlow(heatColor, isOverheated ? 8 : 5);
     ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.rotate(-Math.PI / 2);

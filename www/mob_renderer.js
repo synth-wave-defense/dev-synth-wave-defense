@@ -831,15 +831,36 @@ function drawVariant4MobUnit(ctx, e, cfg, time, crowdLevel = 0) {
 }
 
 // [MOB.J] Главная функция отрисовки врага для вызова из ui.js
+let _stasisSnowflakeSprite = null;
+function getStasisSnowflakeSprite() {
+  if (_stasisSnowflakeSprite) return _stasisSnowflakeSprite;
+  const c = document.createElement('canvas');
+  c.width = 24;
+  c.height = 24;
+  const sCtx = c.getContext('2d');
+  sCtx.strokeStyle = '#38bdf8';
+  sCtx.lineWidth = 1.6;
+  sCtx.lineCap = 'round';
+  sCtx.translate(12, 12);
+  for (let k = 0; k < 3; k++) {
+    sCtx.beginPath();
+    sCtx.moveTo(-5, 0);
+    sCtx.lineTo(5, 0);
+    sCtx.stroke();
+    sCtx.rotate(Math.PI / 3);
+  }
+  _stasisSnowflakeSprite = c;
+  return c;
+}
+
 function renderConfiguredEnemyModel(e, showHpBar = true) {
   if (!e || typeof e.x !== 'number' || typeof e.y !== 'number') return;
   const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
   const cfg = resolveMobBeautificationConfig();
   const time = performance.now() / 1000;
 
-  // Оцениваем плотность толпы на экране для адаптивного троттлинга GPU
   const totalEnemies = (typeof enemies !== 'undefined' && enemies) ? enemies.length : 0;
-  const crowdLevel = totalEnemies >= 28 ? 2 : (totalEnemies >= 16 ? 1 : 0);
+  const crowdLevel = totalEnemies >= 24 ? 2 : (totalEnemies >= 14 ? 1 : 0);
 
   ctx.save();
   ctx.translate(e.x, e.y);
@@ -852,7 +873,7 @@ function renderConfiguredEnemyModel(e, showHpBar = true) {
 
     ctx.strokeStyle = col1;
     ctx.lineWidth = 2.0;
-    ctx.shadowBlur = crowdLevel === 0 ? 7 : 0;
+    ctx.shadowBlur = crowdLevel === 0 ? 6 : 0;
     if (ctx.shadowBlur > 0) ctx.shadowColor = col1;
     ctx.beginPath();
     ctx.arc(0, 0, eRad * 1.35, 0, Math.PI * 2);
@@ -870,12 +891,11 @@ function renderConfiguredEnemyModel(e, showHpBar = true) {
   // 2. Отрисовка самого моба со всеми выбранными слоями Варианта 4
   drawVariant4MobUnit(ctx, e, cfg, time, crowdLevel);
 
-  // 3. Индикатор замедления Stasis (❄)
+  // 3. Индикатор замедления Stasis (кэшированная снежинка вместо дорогого fillText)
   if (e.slowTimer > 0) {
-    ctx.fillStyle = '#38bdf8';
-    ctx.font = 'bold 11px Montserrat, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('❄', (e.radius || 12) * 0.85, -(e.radius || 12) * 0.85);
+    const rad = e.radius || 12;
+    const snowSprite = getStasisSnowflakeSprite();
+    ctx.drawImage(snowSprite, rad * 0.85 - 8, -rad * 0.85 - 8, 16, 16);
   }
 
   // 4. Эффект рывка босса (dashLineMoving)
@@ -884,7 +904,7 @@ function renderConfiguredEnemyModel(e, showHpBar = true) {
     ctx.rotate(e.angle || 0);
     ctx.strokeStyle = e.glow || '#fb923c';
     ctx.lineWidth = 4;
-    if (typeof setGlow === 'function') setGlow(e.color || '#f97316', 12);
+    if (typeof setGlow === 'function') setGlow(e.color || '#f97316', 10);
     ctx.beginPath();
     ctx.moveTo(-50, 0);
     ctx.lineTo(0, 0);
@@ -898,7 +918,7 @@ function renderConfiguredEnemyModel(e, showHpBar = true) {
     ctx.save();
     ctx.strokeStyle = e.glow || '#fb923c';
     ctx.lineWidth = 4;
-    if (typeof setGlow === 'function') setGlow(e.glow || '#fb923c', 16 * prog);
+    if (typeof setGlow === 'function') setGlow(e.glow || '#fb923c', 12 * prog);
     ctx.beginPath();
     ctx.arc(0, 0, (e.radius || 17) * (1.2 + (1.0 - prog) * 0.6), 0, Math.PI * 2);
     ctx.stroke();
