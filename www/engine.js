@@ -1286,6 +1286,12 @@ function applyPaletteColors(paletteId) {
   if (typeof ENEMY_SPRITE_CACHE !== 'undefined' && ENEMY_SPRITE_CACHE) {
     for (const k in ENEMY_SPRITE_CACHE) delete ENEMY_SPRITE_CACHE[k];
   }
+  if (typeof TOWER_BASE_SPRITE_CACHE !== 'undefined' && TOWER_BASE_SPRITE_CACHE) {
+    for (const k in TOWER_BASE_SPRITE_CACHE) delete TOWER_BASE_SPRITE_CACHE[k];
+  }
+  if (typeof clearVariant4HullCache === 'function') {
+    clearVariant4HullCache();
+  }
 }
 
 let reviveUsedThisMatch = false;
@@ -4911,11 +4917,15 @@ function update(dt) {
       t.lastFire += dt;
       if (target && isLockedOn && t.lastFire >= t.fireRate) {
         t.lastFire = 0;
+        t.shotIndex = ((t.shotIndex || 0) + 1) % 2;
         sfx('gun');
+        const barrelSide = (t.shotIndex === 0) ? -3.6 : 3.6;
+        const cosA = Math.cos(t.angle);
+        const sinA = Math.sin(t.angle);
         projectiles.push({
           type: 'bullet',
-          x: t.x + Math.cos(t.angle) * 22,
-          y: t.y + Math.sin(t.angle) * 22,
+          x: t.x + cosA * 24 - sinA * barrelSide,
+          y: t.y + sinA * 24 + cosA * barrelSide,
           target: target,
           damage: t.damage,
           speed: 460,

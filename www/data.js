@@ -203,7 +203,7 @@ const TOWER_NAMES = {
   railgun: 'Railgun'
 };
 
-// Tower Visual Geometry: Geometric rendering specs for tower turrets, barrels, and levels.
+// Tower Visual Geometry: Geometric rendering specs aligned with V8 Round Tower Design.
 const TOWER_GLYPH_DARK = '#0a0e1c';
 
 const TOWER_GLYPH_SPECS = {
@@ -213,18 +213,21 @@ const TOWER_GLYPH_SPECS = {
   mortar: { elevationDeg: 55,
             barrel: [ { t: 'rect', x: 9, y: -6, w: 14, h: 12, r: 3, f: 'c' } ],
             muzzle: { atX: 23, rx: 3.0, ry: 5.2 } },
-  tesla: { barrel: [ { t: 'rect', x: 9, y: -7.5, w: 19, h: 15, r: 3, f: 'd', s: 'c', sw: 1.6 },
-                     { t: 'bolt', cx: 18.5, rot: 90, scale: 0.62,
-                       pts: [2.5, -12, -6.5, 1.5, -0.5, 1.5, -3.5, 12, 7, -2.5, 1, -2.5], f: 'c' } ] },
+  tesla: { barrel: [ { t: 'poly', pts: [8.5, -6.8, 22.5, -5.8, 24.5, -3.6, 24.5, 3.6, 22.5, 5.8, 8.5, 6.8], f: 'd', s: 'c', sw: 1.6 },
+                     { t: 'bolt', cx: 16.8, rot: 90, scale: 0.56,
+                       pts: [2.5, -11, -6.0, 1.2, -0.4, 1.2, -3.2, 11, 6.5, -2.2, 0.8, -2.2], f: 'w' } ] },
   stasis: { barrel: [], flakes: true },
-  melter: { barrel: [ { t: 'pline', pts: [9, -7, 22, 0, 9, 7], sw: 2.6 },
-                      { t: 'circle', cx: 24, cy: 0, r: 2.6, f: 'c' } ] },
-  railgun: { barrel: [ { t: 'rect', x: 9, y: -2.2, w: 19, h: 4.4, f: 'c', s: 'd', sw: 1 },
-                       { t: 'rect', x: 12, y: -6, w: 2.8, h: 12, r: 1, f: 'c', s: 'd', sw: 1 },
-                       { t: 'rect', x: 18, y: -6, w: 2.8, h: 12, r: 1, f: 'c', s: 'd', sw: 1 } ] }
+  melter: { barrel: [ { t: 'pline', pts: [9.0, -5.2, 20.5, -2.2], sw: 2.5 },
+                      { t: 'pline', pts: [9.0, 5.2, 20.5, 2.2], sw: 2.5 },
+                      { t: 'rect', x: 19.0, y: -4.5, w: 3.6, h: 9.0, r: 1.2, f: 'd', s: 'w', sw: 1.3 },
+                      { t: 'poly', pts: [22.6, -2.5, 28.2, 0, 22.6, 2.5], f: 'c' } ] },
+  railgun: { barrel: [ { t: 'rect', x: 10.0, y: -1.3, w: 12.5, h: 2.6, f: 'c' },
+                       { t: 'poly', pts: [8.5, -4.4, 23.0, -3.6, 21.0, -1.8, 8.5, -1.8], f: 'd', s: 'c', sw: 1.45 },
+                       { t: 'poly', pts: [8.5, 4.4, 23.0, 3.6, 21.0, 1.8, 8.5, 1.8], f: 'd', s: 'c', sw: 1.45 },
+                       { t: 'rect', x: 10.7, y: -5.0, w: 2.2, h: 10.0, f: 'w' } ] }
 };
 
-const TOWER_GLYPH_RINGS = { 1: [], 2: [22], 3: [22, 26] };
+const TOWER_GLYPH_RINGS = { 1: [], 2: [21.5], 3: [21.5, 26.0] };
 const TOWER_GLYPH_CORES = {
   1: [{ cx: 0, cy: 0, r: 3.2 }],
   2: [{ cx: 0, cy: -4.2, r: 3 }, { cx: 0, cy: 4.2, r: 3 }],
@@ -238,58 +241,147 @@ const TOWER_GLYPH_FLAKES = {
       { cx: 5.5, cy: 0.5, scale: 0.85, sw: 2.24 }]
 };
 
-// Tower SVG Generator: Generates standalone SVG strings for tower icons across UI surfaces.
+// Tower SVG Generator: Generates standalone SVG strings aligned with V8 Round Tower Design & Level Evolution.
 // [DAT.B]
 function buildTowerIconSvg(type, level = 1, size = 28, angleDeg = 0) {
-  const spec = TOWER_GLYPH_SPECS[type];
   const conf = TOWER_CONFIGS[type];
-  if (!spec || !conf) return '';
+  if (!conf) return '';
   const c = conf.color;
   const lvl = Math.max(1, Math.min(3, level));
-  const fillOf = (f) => (f === 'd' ? TOWER_GLYPH_DARK : c);
 
   let out = `<svg width="${size}" height="${size}" viewBox="-32 -32 64 64">`;
-  out += `<circle cx="0" cy="0" r="17" fill="none" stroke="${c}" stroke-width="1.6"/>`;
-  out += `<circle cx="0" cy="0" r="11" fill="none" stroke="${c}" stroke-width="1" opacity=".35"/>`;
-  TOWER_GLYPH_RINGS[lvl].forEach(r => {
-    out += `<circle cx="0" cy="0" r="${r}" fill="none" stroke="${c}" stroke-width="1.6"/>`;
+
+  // 1. 4 широкие диагональные опоры (эволюция Lv.1 -> Lv.2 -> Lv.3)
+  [45, 135, 225, 315].forEach(deg => {
+    out += `<g transform="rotate(${deg})">`;
+    if (lvl === 1) {
+      out += `<polygon points="13.0,-5.6 20.2,-4.6 20.2,4.6 13.0,5.6" fill="${c}" fill-opacity="0.35" stroke="${c}" stroke-width="1.4" stroke-linejoin="round"/>`;
+    } else if (lvl === 2) {
+      out += `<polygon points="13.0,-5.6 20.2,-4.6 20.2,4.6 13.0,5.6" fill="#080d1e" stroke="${c}" stroke-width="1.45" stroke-linejoin="round"/>`;
+      out += `<rect x="15.2" y="-2.3" width="3.8" height="4.6" fill="${c}" fill-opacity="0.6"/>`;
+      out += `<polygon points="20.2,-4.3 25.2,-3.1 26.4,-1.8 26.4,1.8 25.2,3.1 20.2,4.3" fill="${c}" fill-opacity="0.32" stroke="${c}" stroke-width="1.45" stroke-linejoin="round"/>`;
+    } else {
+      out += `<polygon points="13.0,-5.6 20.2,-4.6 20.2,4.6 13.0,5.6" fill="#070b19" stroke="#ffffff" stroke-width="1.65" stroke-linejoin="round"/>`;
+      out += `<rect x="15.2" y="-2.4" width="3.8" height="4.8" fill="${c}"/>`;
+      out += `<polygon points="20.2,-4.3 25.2,-3.1 26.4,-1.8 26.4,1.8 25.2,3.1 20.2,4.3" fill="${c}" fill-opacity="0.88" stroke="#ffffff" stroke-width="1.65" stroke-linejoin="round"/>`;
+    }
+    out += `</g>`;
   });
 
-  const rot = angleDeg ? ` transform="rotate(${angleDeg})"` : '';
-  out += `<g${rot}>`;
-  const fore = spec.elevationDeg ? Math.cos(spec.elevationDeg * Math.PI / 180) : 1;
-  if (spec.elevationDeg) out += `<g transform="scale(${fore.toFixed(3)},1)">`;
-  spec.barrel.forEach(op => {
-    const stroke = op.s ? ` stroke="${fillOf(op.s)}" stroke-width="${op.sw || 1}"` : '';
-    if (op.t === 'rect') {
-      out += `<rect x="${op.x}" y="${op.y}" width="${op.w}" height="${op.h}"${op.r ? ` rx="${op.r}"` : ''} fill="${fillOf(op.f)}"${stroke}/>`;
-    } else if (op.t === 'poly') {
-      out += `<polygon points="${op.pts.join(' ')}" fill="${fillOf(op.f)}"${stroke}/>`;
-    } else if (op.t === 'circle') {
-      out += `<circle cx="${op.cx}" cy="${op.cy}" r="${op.r}" fill="${fillOf(op.f)}"${stroke}/>`;
-    } else if (op.t === 'pline') {
-      out += `<polyline points="${op.pts.join(' ')}" fill="none" stroke="${c}" stroke-width="${op.sw}" stroke-linejoin="round" stroke-linecap="round"/>`;
-    } else if (op.t === 'bolt') {
-      out += `<g transform="translate(${op.cx},0) rotate(${op.rot}) scale(${op.scale})"><polygon points="${op.pts.join(' ')}" fill="${fillOf(op.f)}"/></g>`;
+  // 2. Внешние кольца эволюции Lv.2 (r=21.5) и Lv.3 (r=26.0 с белым сердечником)
+  if (lvl >= 2) {
+    out += `<circle cx="0" cy="0" r="21.5" fill="none" stroke="${c}" stroke-width="1.7" stroke-opacity="0.72"/>`;
+  }
+  if (lvl >= 3) {
+    out += `<circle cx="0" cy="0" r="26.0" fill="none" stroke="${c}" stroke-width="3.0" stroke-opacity="0.95"/>`;
+    out += `<circle cx="0" cy="0" r="26.0" fill="none" stroke="#ffffff" stroke-width="1.4"/>`;
+  }
+
+  // 3. Круглый корпус + Outrun-полосы + белый неоновый обод
+  out += `<circle cx="0" cy="0" r="16.8" fill="${TOWER_GLYPH_DARK}"/>`;
+  [-11.4, -7.6, -3.8, 0, 3.8, 7.6, 11.4].forEach(sy => {
+    const halfChord = Math.sqrt(Math.max(0, 14.8 * 14.8 - sy * sy));
+    if (halfChord > 2) {
+      out += `<line x1="${(-halfChord).toFixed(1)}" y1="${sy}" x2="${halfChord.toFixed(1)}" y2="${sy}" stroke="${c}" stroke-width="1.2" stroke-opacity="0.42"/>`;
     }
   });
-  if (spec.elevationDeg) {
-    out += `</g>`;
-    if (spec.muzzle) {
-      const mx = spec.muzzle.atX * fore;
-      out += `<ellipse cx="${mx.toFixed(2)}" cy="0" rx="${spec.muzzle.rx}" ry="${spec.muzzle.ry}" fill="${TOWER_GLYPH_DARK}" stroke="${c}" stroke-width="1.6"/>`;
-    }
+  out += `<circle cx="0" cy="0" r="16.8" fill="none" stroke="${c}" stroke-width="2.8"/>`;
+  out += `<circle cx="0" cy="0" r="16.8" fill="none" stroke="#ffffff" stroke-width="1.35"/>`;
+
+  // Декоративная дуга перегрева для Melter
+  if (type === 'melter') {
+    out += `<path d="M 0,-13.8 A 13.8,13.8 0 1,1 -11.8,7.1" fill="none" stroke="#fb923c" stroke-width="2.4" stroke-linecap="round"/>`;
   }
-  if (spec.flakes) {
-    TOWER_GLYPH_FLAKES[lvl].forEach(fl => {
-      out += `<g transform="translate(${fl.cx},${fl.cy}) scale(${fl.scale})" stroke="${c}" stroke-width="${fl.sw}" stroke-linecap="round">`;
-      out += `<line x1="-5" y1="0" x2="5" y2="0"/><line x1="-5" y1="0" x2="5" y2="0" transform="rotate(60)"/><line x1="-5" y1="0" x2="5" y2="0" transform="rotate(120)"/></g>`;
-    });
+
+  // 4. Поворотная башня (ствол + ядро)
+  const effDeg = (type === 'stasis') ? 0 : angleDeg;
+  const rot = effDeg ? ` transform="rotate(${effDeg})"` : '';
+  out += `<g${rot}>`;
+
+  if (type === 'gun') {
+    out += `<rect x="7" y="-6.2" width="8.5" height="12.4" fill="${TOWER_GLYPH_DARK}" stroke="${c}" stroke-width="1.4"/>`;
+    out += `<rect x="11.5" y="-5.0" width="${14 + lvl}" height="2.7" fill="${c}"/>`;
+    out += `<rect x="11.5" y="2.3" width="${14 + lvl}" height="2.7" fill="${c}"/>`;
+    out += `<rect x="${23.2 + lvl}" y="-4.6" width="2.4" height="1.9" fill="#ffffff"/>`;
+    out += `<rect x="${23.2 + lvl}" y="2.7" width="2.4" height="1.9" fill="#ffffff"/>`;
+  } else if (type === 'laser') {
+    const tipX = 24 + lvl;
+    out += `<polygon points="8,-6.5 ${tipX},-2.0 ${tipX},2.0 8,6.5" fill="${TOWER_GLYPH_DARK}" stroke="${c}" stroke-width="1.6" stroke-linejoin="round"/>`;
+    out += `<line x1="10" y1="0" x2="${tipX - 1}" y2="0" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>`;
+    out += `<circle cx="${tipX}" cy="0" r="2.2" fill="${c}"/>`;
+  } else if (type === 'mortar' || type === 'splash') {
+    const fore = Math.cos(55 * Math.PI / 180);
+    const len = 16 + lvl;
+    out += `<g transform="scale(${fore.toFixed(3)},1)">`;
+    out += `<rect x="7" y="-7.2" width="${len}" height="14.4" rx="3" fill="${TOWER_GLYPH_DARK}" stroke="${c}" stroke-width="2"/>`;
+    out += `<rect x="11" y="-5.2" width="${9 + lvl}" height="10.4" fill="${c}"/>`;
+    out += `</g>`;
+    const mx = (23 + lvl) * fore;
+    out += `<ellipse cx="${mx.toFixed(2)}" cy="0" rx="3.2" ry="5.5" fill="${TOWER_GLYPH_DARK}" stroke="${c}" stroke-width="1.8"/>`;
+  } else if (type === 'tesla') {
+    out += `<polygon points="8.5,-6.8 22.5,-5.8 24.5,-3.6 24.5,3.6 22.5,5.8 8.5,6.8" fill="${TOWER_GLYPH_DARK}" stroke="${c}" stroke-width="1.6" stroke-linejoin="round"/>`;
+    out += `<line x1="10.5" y1="-4.4" x2="21.5" y2="-3.8" stroke="#ffffff" stroke-opacity="0.55" stroke-width="0.95" stroke-linecap="round"/>`;
+    out += `<line x1="10.5" y1="4.4" x2="21.5" y2="3.8" stroke="#ffffff" stroke-opacity="0.55" stroke-width="0.95" stroke-linecap="round"/>`;
+    out += `<g transform="translate(16.8,0) rotate(90) scale(0.56)"><polygon points="2.5,-11 -6.0,1.2 -0.4,1.2 -3.2,11 6.5,-2.2 0.8,-2.2" fill="#ffffff" stroke="${c}" stroke-width="1.3" stroke-linejoin="round"/></g>`;
+  } else if (type === 'melter') {
+    out += `<line x1="9.0" y1="-5.2" x2="20.5" y2="-2.2" stroke="${c}" stroke-width="2.6" stroke-linecap="round"/>`;
+    out += `<line x1="9.0" y1="5.2" x2="20.5" y2="2.2" stroke="${c}" stroke-width="2.6" stroke-linecap="round"/>`;
+    out += `<line x1="10.5" y1="-4.8" x2="19.8" y2="-2.4" stroke="#fb923c" stroke-width="1.15" stroke-linecap="round"/>`;
+    out += `<line x1="10.5" y1="4.8" x2="19.8" y2="2.4" stroke="#fb923c" stroke-width="1.15" stroke-linecap="round"/>`;
+    out += `<rect x="19.0" y="-4.5" width="3.6" height="9.0" rx="1.2" fill="${TOWER_GLYPH_DARK}" stroke="#ffffff" stroke-width="1.3"/>`;
+    out += `<polygon points="22.6,-2.5 28.2,0 22.6,2.5" fill="#fb923c"/>`;
+  } else if (type === 'railgun') {
+    const railLen = 13.5 + lvl * 0.8;
+    const endX = 8.5 + railLen;
+    out += `<rect x="10.0" y="-1.3" width="${(railLen - 2.0).toFixed(1)}" height="2.6" fill="${c}" fill-opacity="0.55"/>`;
+    out += `<polygon points="8.5,-4.4 ${endX.toFixed(1)},-3.6 ${(endX - 2.0).toFixed(1)},-1.8 8.5,-1.8" fill="${TOWER_GLYPH_DARK}" stroke="${c}" stroke-width="1.45" stroke-linejoin="round"/>`;
+    out += `<polygon points="8.5,4.4 ${endX.toFixed(1)},3.6 ${(endX - 2.0).toFixed(1)},1.8 8.5,1.8" fill="${TOWER_GLYPH_DARK}" stroke="${c}" stroke-width="1.45" stroke-linejoin="round"/>`;
+    out += `<rect x="10.7" y="-5.0" width="2.2" height="10.0" fill="#ffffff"/>`;
+  }
+
+  // 5. Ядро (снежинка для Stasis или 1/2/3 энерго-ячейки с белым центром)
+  if (type === 'stasis') {
+    const mainR = lvl === 1 ? 10.2 : (lvl === 2 ? 11.4 : 12.6);
+    const sw = lvl === 1 ? 1.65 : 1.85;
+    for (let i = 0; i < 6; i++) {
+      const deg = i * 60;
+      const tipPos = mainR * 0.62;
+      const tipLen = lvl === 1 ? 3.5 : 4.2;
+      out += `<g transform="rotate(${deg})" stroke="#ffffff" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" fill="none">`;
+      out += `<line x1="0" y1="0" x2="${mainR}" y2="0"/>`;
+      out += `<polyline points="${(tipPos + tipLen * 0.68).toFixed(1)},${(-tipLen * 0.75).toFixed(1)} ${tipPos.toFixed(1)},0 ${(tipPos + tipLen * 0.68).toFixed(1)},${(tipLen * 0.75).toFixed(1)}"/>`;
+      if (lvl >= 2) {
+        const midPos = mainR * 0.36;
+        out += `<polyline points="${(midPos + 1.95).toFixed(1)},-2.16 ${midPos.toFixed(1)},0 ${(midPos + 1.95).toFixed(1)},2.16"/>`;
+      }
+      if (lvl >= 3) {
+        out += `<circle cx="${(mainR + 1.1).toFixed(1)}" cy="0" r="1.25" fill="#ffffff" stroke="none"/>`;
+      }
+      out += `</g>`;
+    }
+    if (lvl >= 2) {
+      const hr = mainR * 0.44;
+      const hexPts = [0, 1, 2, 3, 4, 5].map(k => {
+        const a = Math.PI / 6 + (k * Math.PI) / 3;
+        return `${(Math.cos(a) * hr).toFixed(1)},${(Math.sin(a) * hr).toFixed(1)}`;
+      }).join(' ');
+      out += `<polygon points="${hexPts}" fill="none" stroke="${c}" stroke-width="1.25"/>`;
+    }
+    if (lvl >= 3) {
+      for (let i = 0; i < 6; i++) {
+        out += `<g transform="rotate(${30 + i * 60})" stroke="${c}" stroke-width="1.35" stroke-linecap="round" fill="none">`;
+        out += `<line x1="3.2" y1="0" x2="8.4" y2="0"/><polyline points="8.0,-2.0 6.2,0 8.0,2.0"/>`;
+        out += `</g>`;
+      }
+    }
+    out += `<circle cx="0" cy="0" r="2.8" fill="${c}"/><circle cx="0" cy="0" r="1.35" fill="#ffffff"/>`;
   } else {
     TOWER_GLYPH_CORES[lvl].forEach(d => {
-      out += `<circle cx="${d.cx}" cy="${d.cy}" r="${d.r}" fill="${c}"/>`;
+      out += `<circle cx="${d.cx}" cy="${d.cy}" r="${(d.r + 0.5).toFixed(1)}" fill="${c}"/>`;
+      out += `<circle cx="${d.cx}" cy="${d.cy}" r="${(d.r * 0.5).toFixed(1)}" fill="#ffffff"/>`;
     });
   }
+
   out += `</g></svg>`;
   return out;
 }

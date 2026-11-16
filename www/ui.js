@@ -177,6 +177,60 @@ function updateOffscreenGrid() {
   }
   oCtx.restore();
 
+  // Static spawn & base portal chevrons baked directly into offscreenGridCanvas
+  if (typeof activePathTiles !== 'undefined' && activePathTiles && activePathTiles.length >= 2) {
+    const drawBakedChevron = (cx, cy, ang, size, col) => {
+      oCtx.save();
+      oCtx.translate(cx, cy);
+      oCtx.rotate(ang);
+      oCtx.lineCap = 'round';
+      oCtx.lineJoin = 'round';
+
+      oCtx.beginPath();
+      oCtx.moveTo(-size * 0.8, -size);
+      oCtx.lineTo(size * 0.9, 0);
+      oCtx.lineTo(-size * 0.8, size);
+
+      oCtx.strokeStyle = col;
+      oCtx.globalAlpha = 0.30;
+      oCtx.lineWidth = 7.5;
+      oCtx.stroke();
+
+      oCtx.globalAlpha = 1.0;
+      oCtx.lineWidth = 3.0;
+      oCtx.stroke();
+
+      oCtx.strokeStyle = '#ffffff';
+      oCtx.globalAlpha = 0.55;
+      oCtx.lineWidth = 1.1;
+      oCtx.stroke();
+      oCtx.restore();
+    };
+
+    const startTile = activePathTiles[0];
+    const nextTile = activePathTiles[1];
+    const spawnX = startTile.c * TILE_SIZE;
+    const spawnY = startTile.r * TILE_SIZE;
+    const spawnAngle = Math.atan2(nextTile.r - startTile.r, nextTile.c - startTile.c);
+    const offsets = [-14, 0, 14];
+
+    for (let i = 0; i < 3; i++) {
+      const off = offsets[i];
+      drawBakedChevron(spawnX + 35 + Math.cos(spawnAngle) * off, spawnY + 35 + Math.sin(spawnAngle) * off, spawnAngle, 13, th.c1);
+    }
+
+    const prevTile = activePathTiles[activePathTiles.length - 2];
+    const endTile = activePathTiles[activePathTiles.length - 1];
+    const baseX = endTile.c * TILE_SIZE;
+    const baseY = endTile.r * TILE_SIZE;
+    const baseAngle = Math.atan2(endTile.r - prevTile.r, endTile.c - prevTile.c);
+
+    for (let i = 0; i < 3; i++) {
+      const off = offsets[i];
+      drawBakedChevron(baseX + 35 + Math.cos(baseAngle) * off, baseY + 35 + Math.sin(baseAngle) * off, baseAngle, 13, th.c3);
+    }
+  }
+
   offscreenGridDirty = false;
 }
 
@@ -7215,66 +7269,80 @@ function drawSynthWavePerspectiveScene(now) {
   drawSynthWaveTriangleLogo5C(w, horizonY, time);
 }
 
-// [UI.JJ]
-function drawChevron(centerX, centerY, angle, size, color, glowColor) {
-  ctx.save();
-  ctx.translate(centerX, centerY);
-  ctx.rotate(angle);
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
+// [UI.JJ] Offscreen-кэш полноэкранного градиента для режимов Endless и Hardcore
+let _modeOverlayCache = null;
+let _modeOverlayKey = '';
 
-  ctx.beginPath();
-  ctx.moveTo(-size * 0.8, -size);
-  ctx.lineTo(size * 0.9, 0);
-  ctx.lineTo(-size * 0.8, size);
+function getModeOverlayCanvas(w, h, modeName) {
+  const key = `${Math.round(w)}x${Math.round(h)}_${modeName}`;
+  if (_modeOverlayCache && _modeOverlayKey === key) return _modeOverlayCache;
 
-  if (glowColor && perfMode !== 'low') {
-    ctx.strokeStyle = glowColor;
-    ctx.globalAlpha = 0.28;
-    ctx.lineWidth = 7.5;
-    ctx.stroke();
-    ctx.globalAlpha = 1.0;
+  const off = document.createElement('canvas');
+  off.width = Math.max(1, Math.round(w));
+  off.height = Math.max(1, Math.round(h));
+  const mCtx = off.getContext('2d');
+
+  const maxDim = Math.max(100, Math.max(w, h) * 0.75);
+  const grad = mCtx.createRadialGradient(w * 0.5, h * 0.35, 10, w * 0.5, h * 0.45, maxDim);
+  if (modeName === 'endless') {
+    grad.addColorStop(0, 'rgba(110, 15, 140, 0.28)');
+    grad.addColorStop(0.5, 'rgba(55, 8, 75, 0.18)');
+    grad.addColorStop(1, 'rgba(4, 5, 14, 0.05)');
+  } else {
+    grad.addColorStop(0, 'rgba(120, 10, 60, 0.26)');
+    grad.addColorStop(0.5, 'rgba(60, 5, 30, 0.16)');
+    grad.addColorStop(1, 'rgba(4, 5, 14, 0.05)');
   }
+  mCtx.fillStyle = grad;
+  mCtx.fillRect(0, 0, off.width, off.height);
 
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 3.0;
-  ctx.stroke();
-  ctx.restore();
+  _modeOverlayCache = off;
+  _modeOverlayKey = key;
+  return off;
 }
 
-// [UI.JK]
-function drawPathPortals() {
-  if (!activePathTiles || activePathTiles.length < 2) return;
-  const th = getTheme();
-  const startTile = activePathTiles[0];
-  const nextTile = activePathTiles[1];
-  const spawnX = startTile.c * TILE_SIZE;
-  const spawnY = startTile.r * TILE_SIZE;
-  const spawnAngle = Math.atan2(nextTile.r - startTile.r, nextTile.c - startTile.c);
+// [UI.JK] Порталы теперь запекаются 1 раз в offscreenGridCanvas (оставлено для обратной совместимости)
+function drawPathPortals() {}
 
-  const spawnCol = th.c1;
-  const spawnOffsets = [-14, 0, 14];
-  for (let i = 0; i < 3; i++) {
-    const off = spawnOffsets[i];
-    const px = spawnX + 35 + Math.cos(spawnAngle) * off;
-    const py = spawnY + 35 + Math.sin(spawnAngle) * off;
-    drawChevron(px, py, spawnAngle, 13, spawnCol, spawnCol);
-  }
+// [UI.JKM] Offscreen-спрайт индикатора оглушения EMP над башней (3x разрешение)
+let _empDisabledSprite = null;
+function getEmpDisabledSprite() {
+  if (_empDisabledSprite) return _empDisabledSprite;
+  const texScale = 3.0;
+  const logicalSize = 24;
+  const half = logicalSize / 2;
+  const off = document.createElement('canvas');
+  off.width = logicalSize * texScale;
+  off.height = logicalSize * texScale;
+  const eCtx = off.getContext('2d');
 
-  const prevTile = activePathTiles[activePathTiles.length - 2];
-  const endTile = activePathTiles[activePathTiles.length - 1];
-  const baseX = endTile.c * TILE_SIZE;
-  const baseY = endTile.r * TILE_SIZE;
-  const baseAngle = Math.atan2(endTile.r - prevTile.r, endTile.c - prevTile.c);
+  eCtx.scale(texScale, texScale);
+  eCtx.translate(half, half);
 
-  const baseCol = th.c3;
-  const baseOffsets = [-14, 0, 14];
-  for (let i = 0; i < 3; i++) {
-    const off = baseOffsets[i];
-    const px = baseX + 35 + Math.cos(baseAngle) * off;
-    const py = baseY + 35 + Math.sin(baseAngle) * off;
-    drawChevron(px, py, baseAngle, 13, baseCol, baseCol);
-  }
+  eCtx.fillStyle = '#0a0e1c';
+  eCtx.beginPath();
+  eCtx.arc(0, 0, 8, 0, Math.PI * 2);
+  eCtx.fill();
+
+  eCtx.strokeStyle = '#f05f9f';
+  eCtx.lineWidth = 1.5;
+  eCtx.stroke();
+
+  eCtx.lineCap = 'round';
+  eCtx.lineJoin = 'round';
+  eCtx.beginPath();
+  eCtx.moveTo(1, -4);
+  eCtx.lineTo(-3, 1);
+  eCtx.lineTo(0, 1);
+  eCtx.lineTo(-1, 4);
+  eCtx.lineTo(3, -1);
+  eCtx.lineTo(0, -1);
+  eCtx.closePath();
+  eCtx.fillStyle = '#f05f9f';
+  eCtx.fill();
+
+  _empDisabledSprite = { canvas: off, half, size: logicalSize };
+  return _empDisabledSprite;
 }
 
 // [UI.JL]
@@ -7401,7 +7469,7 @@ function drawTowerGlyphOps(ops, color, isDisabled, isCooling) {
   });
 }
 
-// [UI.JP] Tower Beautification Renderer V8 (Offscreen Base Cache + Zero-Blur Dynamic Turrets)
+// [UI.JP] Tower Beautification Renderer V8 (3x Retina Offscreen Base Cache + Zero-Blur Dynamic Turrets)
 const TOWER_DARK = '#0a0e1c';
 
 const TOWER_CORES_BY_LEVEL = {
@@ -7539,23 +7607,25 @@ function drawTowerWideLegsToCtx(c, lvl, col, glow, glowMult, isDisabled) {
   c.restore();
 }
 
-// [UI.JPD] Offscreen-кэш статичного корпуса башни (гало, опоры, кольца эволюции, обод, Outrun-полосы)
+// [UI.JPD] Offscreen-кэш статичного корпуса башни в 3x разрешении (без размытия при зуме!)
 function getTowerBaseSprite(lvl, col, glowCol, isDisabled, isLowPerf) {
   const cfg = TOWER_VISUAL_CFG;
   const key = `${cfg.hullShape}_${lvl}_${col}_${glowCol}_${isDisabled ? 1 : 0}_${isLowPerf ? 1 : 0}`;
   if (TOWER_BASE_SPRITE_CACHE[key]) return TOWER_BASE_SPRITE_CACHE[key];
 
-  const size = 96;
-  const half = size / 2;
+  const texScale = isLowPerf ? 1.5 : 3.0;
+  const logicalSize = 96;
+  const half = logicalSize / 2;
   const off = document.createElement('canvas');
-  off.width = size;
-  off.height = size;
+  off.width = Math.round(logicalSize * texScale);
+  off.height = Math.round(logicalSize * texScale);
   const c = off.getContext('2d');
 
   const glowMult = (isLowPerf || isDisabled) ? 0.4 : (cfg.glowIntensity || 2.2);
   const lvlHaloScale = lvl === 1 ? 0.45 : (lvl === 2 ? 0.72 : 1.0);
 
   c.save();
+  c.scale(texScale, texScale);
   c.translate(half, half);
   c.lineJoin = 'round';
   c.lineCap = 'round';
@@ -7663,7 +7733,7 @@ function getTowerBaseSprite(lvl, col, glowCol, isDisabled, isLowPerf) {
 
   c.restore();
 
-  const sprite = { canvas: off, half };
+  const sprite = { canvas: off, half, size: logicalSize };
   TOWER_BASE_SPRITE_CACHE[key] = sprite;
   return sprite;
 }
@@ -7677,7 +7747,6 @@ function drawStasisSnowflake(c, lvl, time, col, isDisabled) {
 
   const mainR = lvl === 1 ? 10.2 : (lvl === 2 ? 11.4 : 12.6);
 
-  // Мягкая цветная подложка вместо shadowBlur
   if (!isDisabled) {
     c.strokeStyle = col;
     c.globalAlpha = lvl === 3 ? 0.45 : 0.28;
@@ -7729,7 +7798,7 @@ function drawStasisSnowflake(c, lvl, time, col, isDisabled) {
       c.fill();
     }
 
-    c.restore();
+    ctx.restore();
   }
 
   if (lvl >= 2) {
@@ -7799,7 +7868,6 @@ function drawMelterOverheatGauge(c, heat, time, col, isCooling) {
       : (clamped > 0.45 ? '#fb923c' : col);
 
     c.lineCap = 'round';
-    // Мягкий неоновый ореол дуги без shadowBlur
     c.strokeStyle = arcCol;
     c.globalAlpha = 0.35;
     c.lineWidth = 6.2;
@@ -7823,7 +7891,7 @@ function drawMelterOverheatGauge(c, heat, time, col, isCooling) {
   c.restore();
 }
 
-// [UI.JPG] Главная функция отрисовки башни (выводит закэшированный корпус + динамические стволы и ядро)
+// [UI.JPG] Главная функция отрисовки башни
 function drawTowerModel(type, angle, color, level = 1, glow = '#00e5ff', isDisabled = false, isCooling = false, isShooting = false, heatProgress = 0, extra = null) {
   const cfg = TOWER_VISUAL_CFG;
   const id = type || 'gun';
@@ -7846,9 +7914,9 @@ function drawTowerModel(type, angle, color, level = 1, glow = '#00e5ff', isDisab
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
 
-  // 1. Статичный корпус башни (гало, 4 опоры, кольца Lv.2-3, обод, Outrun-полосы) из Offscreen-кэша
+  // 1. Статичный корпус башни (3x Retina Offscreen-кэш)
   const baseSprite = getTowerBaseSprite(lvl, col, glowCol, isDisabled, isLowPerf);
-  ctx.drawImage(baseSprite.canvas, -baseSprite.half, -baseSprite.half);
+  ctx.drawImage(baseSprite.canvas, -baseSprite.half, -baseSprite.half, baseSprite.size, baseSprite.size);
 
   // 2. Круговой прогресс-бар перегрева Melter
   if (id === 'melter' && (heat > 0 || isCooling)) {
@@ -7860,7 +7928,7 @@ function drawTowerModel(type, angle, color, level = 1, glow = '#00e5ff', isDisab
   ctx.save();
   ctx.rotate(effAngle);
 
-  // Лазерный целеуказатель на захваченную цель (Zero-Blur)
+  // Лазерный целеуказатель на захваченную цель
   if (cfg.laserSight && id !== 'stasis' && target && !isDisabled && !isCooling) {
     const dist = Math.hypot(target.x - towerX, target.y - towerY);
     const sightEnd = Math.max(26, dist);
@@ -7886,7 +7954,14 @@ function drawTowerModel(type, angle, color, level = 1, glow = '#00e5ff', isDisab
   const recShift = -recoil * 4.0;
 
   if (id === 'gun') {
-    const alt = isFiring ? Math.sin(time * 45) * 2.0 : 0;
+    const sinceShot = (extra && typeof extra.lastFire === 'number') ? extra.lastFire : 999;
+    const shotIdx = (extra && typeof extra.shotIndex === 'number') ? extra.shotIndex : 0;
+    const kickT = (sinceShot >= 0 && sinceShot < 0.16) ? (1 - sinceShot / 0.16) : 0;
+    const kickOffset = -(kickT * kickT) * 3.4;
+
+    const topShift = (shotIdx === 0) ? kickOffset : 0;
+    const botShift = (shotIdx === 1) ? kickOffset : 0;
+
     ctx.fillStyle = TOWER_DARK;
     ctx.strokeStyle = col;
     ctx.lineWidth = 1.4;
@@ -7894,11 +7969,11 @@ function drawTowerModel(type, angle, color, level = 1, glow = '#00e5ff', isDisab
     ctx.strokeRect(7, -6.2, 8.5, 12.4);
 
     ctx.fillStyle = col;
-    ctx.fillRect(11.5 + recShift + alt, -5.0, 14 + lvl * 1.1, 2.7);
-    ctx.fillRect(11.5 + recShift - alt, 2.3, 14 + lvl * 1.1, 2.7);
+    ctx.fillRect(11.5 + recShift + topShift, -5.0, 14 + lvl * 1.1, 2.7);
+    ctx.fillRect(11.5 + recShift + botShift, 2.3, 14 + lvl * 1.1, 2.7);
     ctx.fillStyle = isDisabled ? '#64748b' : '#ffffff';
-    ctx.fillRect(23.5 + recShift + alt, -4.6, 2.4, 1.9);
-    ctx.fillRect(23.5 + recShift - alt, 2.7, 2.4, 1.9);
+    ctx.fillRect(23.5 + recShift + topShift, -4.6, 2.4, 1.9);
+    ctx.fillRect(23.5 + recShift + botShift, 2.7, 2.4, 1.9);
   } else if (id === 'laser') {
     ctx.fillStyle = TOWER_DARK;
     ctx.strokeStyle = col;
@@ -8070,7 +8145,7 @@ function drawTowerModel(type, angle, color, level = 1, glow = '#00e5ff', isDisab
     ctx.fillRect(rStart + 2.2, -5.0, 2.2, 10.0);
   }
 
-  // 4. Индикаторы в центре ядра (Zero-Blur)
+  // 4. Индикаторы в центре ядра
   if (id === 'stasis') {
     drawStasisSnowflake(ctx, lvl, time, col, isDisabled);
   } else {
@@ -8133,36 +8208,47 @@ function drawJaggedLightning(x1, y1, x2, y3, color, alpha, progress = 1.0) {
   }
   points.push({ x: endX, y: endY });
 
+  const safeAlpha = Math.max(0, Math.min(1, alpha));
+  const zapCol = color || '#00ffcc';
+
   ctx.save();
-  ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
+  ctx.globalCompositeOperation = 'lighter';
 
-  const zapCol = color || '#00ffcc';
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  for (let i = 1; i < points.length; i++) {
+    ctx.lineTo(points[i].x, points[i].y);
+  }
+
+  // 1. Внешний мягкий неоновый ореол (Zero-Blur)
+  if (perfMode !== 'low') {
+    ctx.strokeStyle = zapCol;
+    ctx.globalAlpha = safeAlpha * 0.28;
+    ctx.lineWidth = 9.0;
+    ctx.stroke();
+  }
+
+  // 2. Основной цветной разряд
   ctx.strokeStyle = zapCol;
-  setGlow(zapCol, 8);
-  ctx.lineWidth = 4.5;
-  ctx.beginPath();
-  ctx.moveTo(points[0].x, points[0].y);
-  for (let i = 1; i < points.length; i++) {
-    ctx.lineTo(points[i].x, points[i].y);
-  }
+  ctx.globalAlpha = safeAlpha * 0.85;
+  ctx.lineWidth = 4.2;
   ctx.stroke();
 
+  // 3. Яркий белый сердечник молнии
   ctx.strokeStyle = '#ffffff';
-  setGlow(zapCol, 6);
+  ctx.globalAlpha = safeAlpha;
   ctx.lineWidth = 1.8;
-  ctx.beginPath();
-  ctx.moveTo(points[0].x, points[0].y);
-  for (let i = 1; i < points.length; i++) {
-    ctx.lineTo(points[i].x, points[i].y);
-  }
   ctx.stroke();
 
-  if (points.length >= 4) {
+  // 4. Ответвления дуги
+  if (points.length >= 4 && perfMode !== 'low') {
     ctx.lineWidth = 1.2;
     ctx.strokeStyle = zapCol;
+    ctx.globalAlpha = safeAlpha * 0.75;
     const numForks = Math.min(3, Math.floor(points.length / 3));
+    ctx.beginPath();
     for (let f = 0; f < numForks; f++) {
       const idx = 1 + Math.floor(Math.random() * (points.length - 2));
       const pt = points[idx];
@@ -8172,17 +8258,15 @@ function drawJaggedLightning(x1, y1, x2, y3, color, alpha, progress = 1.0) {
       const forkMidY = pt.y + Math.sin(forkAngle) * (forkLen * 0.5) + (Math.random() - 0.5) * 6;
       const forkEndX = pt.x + Math.cos(forkAngle) * forkLen;
       const forkEndY = pt.y + Math.sin(forkAngle) * forkLen;
-      ctx.beginPath();
       ctx.moveTo(pt.x, pt.y);
       ctx.lineTo(forkMidX, forkMidY);
       ctx.lineTo(forkEndX, forkEndY);
-      ctx.stroke();
     }
+    ctx.stroke();
   }
 
   ctx.restore();
 }
-
 //  Master gameplay canvas graphics rendering pipeline.
 let reviveStartTime = 0;
 
@@ -8210,38 +8294,20 @@ function render(now) {
     return;
   }
 
-  drawCosmicNebulaBackground(window.innerWidth, window.innerHeight);
-  updateAndDrawStars(window.innerWidth, window.innerHeight, now);
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  drawCosmicNebulaBackground(w, h);
+  updateAndDrawStars(w, h, now);
 
   if (typeof isEndlessMode !== 'undefined' && isEndlessMode) {
-    ctx.save();
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    const maxDim = Math.max(100, Math.max(w, h) * 0.75);
-    const endlessTint = ctx.createRadialGradient(w * 0.5, h * 0.35, 10, w * 0.5, h * 0.45, maxDim);
-    endlessTint.addColorStop(0, 'rgba(110, 15, 140, 0.28)');
-    endlessTint.addColorStop(0.5, 'rgba(55, 8, 75, 0.18)');
-    endlessTint.addColorStop(1, 'rgba(4, 5, 14, 0.05)');
-    ctx.fillStyle = endlessTint;
-    ctx.fillRect(0, 0, w, h);
-    ctx.restore();
+    ctx.drawImage(getModeOverlayCanvas(w, h, 'endless'), 0, 0, w, h);
   } else if (typeof isOverdriveMode !== 'undefined' && isOverdriveMode) {
-    ctx.save();
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    const maxDim = Math.max(100, Math.max(w, h) * 0.75);
-    const hardcoreTint = ctx.createRadialGradient(w * 0.5, h * 0.35, 10, w * 0.5, h * 0.45, maxDim);
-    hardcoreTint.addColorStop(0, 'rgba(120, 10, 60, 0.26)');
-    hardcoreTint.addColorStop(0.5, 'rgba(60, 5, 30, 0.16)');
-    hardcoreTint.addColorStop(1, 'rgba(4, 5, 14, 0.05)');
-    ctx.fillStyle = hardcoreTint;
-    ctx.fillRect(0, 0, w, h);
-    ctx.restore();
+    ctx.drawImage(getModeOverlayCanvas(w, h, 'overdrive'), 0, 0, w, h);
   }
 
   let shakeX = 0;
   let shakeY = 0;
-  
+
   if (typeof cameraShakeTimer !== 'undefined' && cameraShakeTimer > 0) {
     shakeX = (Math.random() - 0.5) * cameraShakeIntensity;
     shakeY = (Math.random() - 0.5) * cameraShakeIntensity;
@@ -8259,7 +8325,6 @@ function render(now) {
   ctx.drawImage(offscreenGridCanvas, 0, 0);
 
   drawPathRails(now);
-  drawPathPortals();
 
   towers.forEach(t => {
     if (t.type === 'stasis') {
@@ -8304,42 +8369,27 @@ function render(now) {
     ctx.restore();
   }
 
+  const nowSec = now * 0.001;
+  const empBadge = getEmpDisabledSprite();
+
   towers.forEach(t => {
     ctx.save();
     ctx.translate(t.x, t.y);
     const isCooling = (t.type === 'melter' && t.melterCoolingTimer > 0);
     const isTeslaShooting = (t.type === 'tesla' && lightningBolts.some(lb => lb.x1 === t.x && lb.life > 0.04));
+    const isBeamShooting = ((t.type === 'laser' || t.type === 'melter') && t.target && t.isLockedOn && !isCooling && t.disabledTimer <= 0);
     const melterRampT = (t.type === 'melter') ? (t.melterRampTime || TOWER_CONFIGS.melter.rampTime || 4.0) : 4.0;
     const meltHeatProgress = (t.type === 'melter')
       ? (isCooling ? (t.melterCoolingTimer / melterRampT) : Math.min(1, (t.melterFireTimer || 0) / melterRampT))
       : 0;
-    drawTowerModel(t.type, t.angle, t.color, t.level, t.glow, t.disabledTimer > 0, isCooling, isTeslaShooting, meltHeatProgress);
+    drawTowerModel(
+      t.type, t.angle, t.color, t.level, t.glow,
+      t.disabledTimer > 0, isCooling, isTeslaShooting || isBeamShooting, meltHeatProgress,
+      { x: t.x, y: t.y, target: t.target, time: nowSec, lastFire: t.lastFire, shotIndex: t.shotIndex || 0 }
+    );
 
     if (t.disabledTimer > 0) {
-      ctx.save();
-      ctx.translate(16, -16);
-      ctx.fillStyle = '#0a0e1c';
-      ctx.beginPath();
-      ctx.arc(0, 0, 8, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = '#f05f9f';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-      ctx.strokeStyle = '#f05f9f';
-      ctx.lineWidth = 1.8;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.beginPath();
-      ctx.moveTo(1, -4);
-      ctx.lineTo(-3, 1);
-      ctx.lineTo(0, 1);
-      ctx.lineTo(-1, 4);
-      ctx.lineTo(3, -1);
-      ctx.lineTo(0, -1);
-      ctx.closePath();
-      ctx.fillStyle = '#f05f9f';
-      ctx.fill();
-      ctx.restore();
+      ctx.drawImage(empBadge.canvas, 16 - empBadge.half, -16 - empBadge.half, empBadge.size, empBadge.size);
     }
     ctx.restore();
 
@@ -8353,7 +8403,7 @@ function render(now) {
       ctx.moveTo(muzzleX, muzzleY);
       ctx.lineTo(t.target.x, t.target.y);
       ctx.strokeStyle = laserBeamCol;
-      ctx.lineWidth = 3.5 + Math.sin(Date.now() * 0.02) * 1.5;
+      ctx.lineWidth = 3.5 + Math.sin(now * 0.02) * 1.5;
       ctx.stroke();
       ctx.restore();
     }
@@ -8377,8 +8427,8 @@ function render(now) {
 
   const viewLeft = -camX / camZoom - TILE_SIZE;
   const viewTop = -camY / camZoom - TILE_SIZE;
-  const viewRight = (window.innerWidth - camX) / camZoom + TILE_SIZE;
-  const viewBottom = (window.innerHeight - camY) / camZoom + TILE_SIZE;
+  const viewRight = (w - camX) / camZoom + TILE_SIZE;
+  const viewBottom = (h - camY) / camZoom + TILE_SIZE;
 
   const _tMobsStart = performance.now();
 
@@ -8423,23 +8473,29 @@ function render(now) {
     const alpha = lb.life / lb.maxLife;
     if (lb.isRail) {
       ctx.save();
-      ctx.globalAlpha = alpha;
+      ctx.lineCap = 'round';
+      ctx.globalCompositeOperation = 'lighter';
       const railGlowColor = lb.color || '#a275df';
 
-      ctx.strokeStyle = railGlowColor;
-      setGlow(railGlowColor, 12);
-      ctx.lineWidth = 6;
       ctx.beginPath();
       ctx.moveTo(lb.x1, lb.y1);
       ctx.lineTo(lb.x2, lb.y2);
+
+      if (perfMode !== 'low') {
+        ctx.strokeStyle = railGlowColor;
+        ctx.globalAlpha = alpha * 0.32;
+        ctx.lineWidth = 14;
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = railGlowColor;
+      ctx.globalAlpha = alpha * 0.85;
+      ctx.lineWidth = 6;
       ctx.stroke();
 
       ctx.strokeStyle = '#ffffff';
-      setGlow('#ffffff', 6);
+      ctx.globalAlpha = alpha;
       ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(lb.x1, lb.y1);
-      ctx.lineTo(lb.x2, lb.y2);
       ctx.stroke();
 
       ctx.restore();
@@ -8452,17 +8508,25 @@ function render(now) {
   shockwaves.forEach(sw => {
     const prog = sw.elapsed / sw.duration;
     const currentR = sw.maxRadius * Math.sin(prog * (Math.PI / 2));
+    const safeAlpha = Math.max(0, 1 - prog);
     ctx.save();
-    ctx.strokeStyle = sw.color;
-    ctx.globalAlpha = Math.max(0, 1 - prog);
-    setGlow(sw.color, 8);
-    ctx.lineWidth = 2.5 * (1 - prog);
     ctx.beginPath();
     ctx.arc(sw.x, sw.y, currentR, 0, Math.PI * 2);
+
+    if (perfMode !== 'low') {
+      ctx.strokeStyle = sw.color;
+      ctx.globalAlpha = safeAlpha * 0.28;
+      ctx.lineWidth = 6.5 * (1 - prog);
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = sw.color;
+    ctx.globalAlpha = safeAlpha;
+    ctx.lineWidth = 2.5 * (1 - prog);
     ctx.stroke();
     ctx.restore();
   });
-
+  
   const _tFxStart = performance.now();
   
   ctx.globalCompositeOperation = 'source-over';

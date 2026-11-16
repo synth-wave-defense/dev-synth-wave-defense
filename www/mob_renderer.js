@@ -199,14 +199,21 @@ function traceVariant4HullPath(ctx, id, r) {
   }
 }
 
-// [MOB.H] Offscreen-кэш статических слоёв корпуса Варианта 4 (убирает shadowBlur, clip и createRadialGradient из боевого цикла)
+// [MOB.H] Offscreen-кэш статических слоёв корпуса Варианта 4 в 3x Retina-разрешении (без мыла при зуме)
 const _variant4HullSpriteCache = Object.create(null);
 let _variant4HullSpriteCount = 0;
+
+function clearVariant4HullCache() {
+  for (const k in _variant4HullSpriteCache) delete _variant4HullSpriteCache[k];
+  _variant4HullSpriteCount = 0;
+}
+window.clearVariant4HullCache = clearVariant4HullCache;
 
 function getVariant4HullSprite(id, baseR, col, glowCol, isBoss, cfg) {
   const qR = Math.max(6, Math.round(baseR));
   const glowDist = cfg.glowDistance !== undefined ? cfg.glowDistance : 1.3;
   const qGlow = Math.round(glowDist * 10);
+  const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low');
   const flags =
     (cfg.darkGlassFill ? 1 : 0) |
     (cfg.outrunStripes ? 2 : 0) |
@@ -216,7 +223,8 @@ function getVariant4HullSprite(id, baseR, col, glowCol, isBoss, cfg) {
     (cfg.cornerBrackets ? 32 : 0) |
     (cfg.cyberVisor ? 64 : 0) |
     (cfg.rgbChromatic ? 128 : 0) |
-    (isBoss ? 256 : 0);
+    (isBoss ? 256 : 0) |
+    (isLowPerf ? 512 : 0);
 
   const key = `${id}_${qR}_${col}_${glowCol}_${qGlow}_${flags}`;
   const cached = _variant4HullSpriteCache[key];
@@ -224,20 +232,20 @@ function getVariant4HullSprite(id, baseR, col, glowCol, isBoss, cfg) {
 
   // Защита от разрастания кэша при смене тем/режимов
   if (_variant4HullSpriteCount > 180) {
-    for (const k in _variant4HullSpriteCache) delete _variant4HullSpriteCache[k];
-    _variant4HullSpriteCount = 0;
+    clearVariant4HullCache();
   }
 
-  const dpr = Math.min(typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1, 1.5);
+  // 3x разрешение для бритвенной резкости при максимальном зуме камеры (1.5x в режиме Low Perf)
+  const texScale = isLowPerf ? 1.5 : 3.0;
   const blurPad = Math.ceil((isBoss ? 14 : 10) * Math.max(0.8, glowDist)) + 8;
   const halfSize = Math.ceil(qR * 1.45 + blurPad);
-  const sizePx = Math.max(8, Math.round(halfSize * 2 * dpr));
+  const sizePx = Math.max(8, Math.round(halfSize * 2 * texScale));
 
   const off = document.createElement('canvas');
   off.width = sizePx;
   off.height = sizePx;
   const sCtx = off.getContext('2d');
-  sCtx.scale(dpr, dpr);
+  sCtx.scale(texScale, texScale);
   sCtx.translate(halfSize, halfSize);
   sCtx.lineJoin = 'round';
   sCtx.lineCap = 'round';
@@ -279,9 +287,9 @@ function getVariant4HullSprite(id, baseR, col, glowCol, isBoss, cfg) {
     const innerR = Math.max(0.05, r * 0.12 * glowDist);
     const outerR = Math.max(innerR + 1, r * Math.min(2.2, Math.max(0.65, glowDist)));
     const grad = sCtx.createRadialGradient(0, 0, innerR, 0, 0, outerR);
-    grad.addColorStop(0, '#0c183a');
-    grad.addColorStop(Math.min(0.85, 0.48 * glowDist), '#060b18');
-    grad.addColorStop(1, '#03040a');
+    grad.addColorStop(0, 'rgba(12, 24, 58, 0.46)');
+    grad.addColorStop(Math.min(0.85, 0.48 * glowDist), 'rgba(6, 11, 24, 0.62)');
+    grad.addColorStop(1, 'rgba(3, 4, 10, 0.76)');
     sCtx.fillStyle = grad;
     sCtx.fill();
   } else {
