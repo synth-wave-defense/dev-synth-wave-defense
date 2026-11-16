@@ -7401,136 +7401,697 @@ function drawTowerGlyphOps(ops, color, isDisabled, isCooling) {
   });
 }
 
-// [UI.JP]
-function drawTowerModel(type, angle, color, level = 1, glow = '#00e5ff', isDisabled = false, isCooling = false, isShooting = false, heatProgress = 0) {
-  ctx.save();
-  if (isDisabled) ctx.globalAlpha = 0.45;
+// [UI.JP] Tower Beautification Renderer V8 (Offscreen Base Cache + Zero-Blur Dynamic Turrets)
+const TOWER_DARK = '#0a0e1c';
 
-  const spec = TOWER_GLYPH_SPECS[type];
-  const lvl = Math.max(1, Math.min(3, level));
-  const ringColor = isDisabled ? '#64748b' : glow;
+const TOWER_CORES_BY_LEVEL = {
+  1: [{ cx: 0, cy: 0, r: 3.2 }],
+  2: [{ cx: 0, cy: -4.2, r: 3 }, { cx: 0, cy: 4.2, r: 3 }],
+  3: [{ cx: -3.4, cy: -4.2, r: 3 }, { cx: -3.4, cy: 4.2, r: 3 }, { cx: 4.2, cy: 0, r: 3 }]
+};
 
-  if (!isDisabled && typeof getGlowSprite === 'function') {
-    const haloSprite = getGlowSprite(glow + '44');
-    ctx.drawImage(haloSprite, -30, -30, 60, 60);
+const TOWER_VISUAL_CFG = {
+  hullShape: 'round',       // Круглые основания башен
+  roundRingStyle: 'solid',  // Ровное сплошное 3-е кольцо на Lv.3
+  wideLegs: true,           // 4 широкие опоры (ноги) с эволюцией Lv.1 -> Lv.2 -> Lv.3
+  whiteNeonRim: true,       // Белый неоновый контур с цветным свечением
+  outrunStripes: true,      // Outrun-полосы внутри корпуса
+  outerEvolution: true,     // Внешние кольца эволюции Lv.2 и Lv.3
+  powerCellsGlow: true,     // Яркие энерго-ячейки с белым центром
+  laserSight: true,         // Пунктирный лазерный целеуказатель на цель
+  recoil: false,
+  glowIntensity: 2.2
+};
+
+const TOWER_BASE_SPRITE_CACHE = Object.create(null);
+
+// [UI.JPA]
+function traceTowerPolygon(c, sides, r, rot = 0) {
+  c.beginPath();
+  for (let i = 0; i < sides; i++) {
+    const a = rot + (i * Math.PI * 2) / sides;
+    const px = Math.cos(a) * r;
+    const py = Math.sin(a) * r;
+    if (i === 0) c.moveTo(px, py);
+    else c.lineTo(px, py);
   }
+  c.closePath();
+}
 
-  ctx.fillStyle = TOWER_GLYPH_DARK;
-  ctx.beginPath();
-  ctx.arc(0, 0, 17, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.strokeStyle = ringColor;
-  ctx.lineWidth = 1.6;
-  ctx.beginPath();
-  ctx.arc(0, 0, 17, 0, Math.PI * 2);
-  ctx.stroke();
-
-  ctx.globalAlpha *= 0.35;
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.arc(0, 0, 11, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.globalAlpha = isDisabled ? 0.45 : 1;
-
-  ctx.lineWidth = 1.6;
-  const rings = TOWER_GLYPH_RINGS[lvl];
-  for (let i = 0; i < rings.length; i++) {
-    ctx.beginPath();
-    ctx.arc(0, 0, rings[i], 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  const effectiveAngle = (type === 'stasis') ? 0 : angle;
-  ctx.rotate(effectiveAngle);
-
-  if (spec) {
-    const fore = spec.elevationDeg ? Math.cos(spec.elevationDeg * Math.PI / 180) : 1;
-    if (spec.elevationDeg) {
-      ctx.save();
-      ctx.globalAlpha *= 0.35;
-      ctx.fillStyle = '#000000';
-      ctx.beginPath();
-      ctx.ellipse(6, 3, 11, 5.5, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-      ctx.save();
-      ctx.scale(fore, 1);
-    }
-    drawTowerGlyphOps(spec.barrel, color, isDisabled, isCooling);
-    if (spec.elevationDeg) {
-      ctx.restore();
-      if (spec.muzzle) {
-        const mx = spec.muzzle.atX * fore;
-        ctx.beginPath();
-        ctx.ellipse(mx, 0, spec.muzzle.rx, spec.muzzle.ry, 0, 0, Math.PI * 2);
-        ctx.fillStyle = TOWER_GLYPH_DARK;
-        ctx.fill();
-        ctx.strokeStyle = isDisabled ? '#475569' : color;
-        ctx.lineWidth = 1.6;
-        ctx.stroke();
-      }
-    }
-  }
-
-  if (isShooting && !isDisabled) {
-    setGlow(glow, 7);
-  }
-  if (spec && spec.flakes) {
-    ctx.strokeStyle = isDisabled ? '#475569' : color;
-    ctx.lineCap = 'round';
-    const flakes = TOWER_GLYPH_FLAKES[lvl];
-    for (let f = 0; f < flakes.length; f++) {
-      const fl = flakes[f];
-      ctx.save();
-      ctx.translate(fl.cx, fl.cy);
-      ctx.scale(fl.scale, fl.scale);
-      ctx.lineWidth = fl.sw;
-      for (let k = 0; k < 3; k++) {
-        ctx.beginPath();
-        ctx.moveTo(-5, 0);
-        ctx.lineTo(5, 0);
-        ctx.stroke();
-        ctx.rotate(Math.PI / 3);
-      }
-      ctx.restore();
-    }
+// [UI.JPB]
+function traceTowerHullShape(c, lvl, r, cfg = TOWER_VISUAL_CFG) {
+  if (cfg.hullShape === 'poly6816') {
+    const sides = (lvl === 1) ? 6 : 8;
+    const baseRot = (sides === 8) ? Math.PI / 8 : 0;
+    traceTowerPolygon(c, sides, r * 1.04, baseRot);
   } else {
-    ctx.fillStyle = isDisabled ? '#475569' : color;
-    const cores = TOWER_GLYPH_CORES[lvl];
-    for (let c = 0; c < cores.length; c++) {
-      const d = cores[c];
-      ctx.beginPath();
-      ctx.arc(d.cx, d.cy, d.r, 0, Math.PI * 2);
-      ctx.fill();
+    c.beginPath();
+    c.arc(0, 0, r, 0, Math.PI * 2);
+  }
+}
+
+// [UI.JPC] Ступенчатая эволюция 4 широких опор (ног) Lv.1 -> Lv.2 -> Lv.3 (рисуется в кэш-спрайт)
+function drawTowerWideLegsToCtx(c, lvl, col, glow, glowMult, isDisabled) {
+  c.save();
+  for (let i = 0; i < 4; i++) {
+    c.save();
+    c.rotate(Math.PI / 4 + i * (Math.PI / 2));
+
+    // 1. Внутренняя секция ноги (Lv.1, Lv.2, Lv.3)
+    c.beginPath();
+    c.moveTo(13.0, -5.6);
+    c.lineTo(20.2, -4.6);
+    c.lineTo(20.2, 4.6);
+    c.lineTo(13.0, 5.6);
+    c.closePath();
+
+    if (lvl === 1 || isDisabled) {
+      c.shadowBlur = 0;
+      c.fillStyle = col;
+      c.globalAlpha = 0.35;
+      c.fill();
+      c.globalAlpha = 0.85;
+      c.strokeStyle = col;
+      c.lineWidth = 1.4;
+      c.stroke();
+    } else if (lvl === 2) {
+      c.shadowBlur = 0;
+      c.fillStyle = '#080d1e';
+      c.globalAlpha = 1;
+      c.fill();
+      c.strokeStyle = col;
+      c.globalAlpha = 0.82;
+      c.lineWidth = 1.45;
+      c.stroke();
+      c.fillStyle = col;
+      c.globalAlpha = 0.55;
+      c.fillRect(15.2, -2.3, 3.8, 4.6);
+    } else {
+      c.fillStyle = '#070b19';
+      c.shadowColor = glow;
+      c.shadowBlur = 9 * glowMult;
+      c.globalAlpha = 1;
+      c.fill();
+      c.strokeStyle = '#ffffff';
+      c.lineWidth = 1.65;
+      c.stroke();
+      c.shadowBlur = 0;
+      c.fillStyle = col;
+      c.fillRect(15.2, -2.4, 3.8, 4.8);
+    }
+
+    // 2. Внешняя секция ноги (Lv.2 без неона, Lv.3 с ярким неоном)
+    if (lvl >= 2) {
+      c.beginPath();
+      c.moveTo(20.2, -4.3);
+      c.lineTo(25.2, -3.1);
+      c.lineTo(26.4, -1.8);
+      c.lineTo(26.4, 1.8);
+      c.lineTo(25.2, 3.1);
+      c.lineTo(20.2, 4.3);
+      c.closePath();
+
+      if (lvl === 2 || isDisabled) {
+        c.shadowBlur = 0;
+        c.fillStyle = col;
+        c.globalAlpha = 0.30;
+        c.fill();
+        c.strokeStyle = col;
+        c.globalAlpha = 0.85;
+        c.lineWidth = 1.45;
+        c.stroke();
+      } else {
+        c.fillStyle = col;
+        c.shadowColor = glow;
+        c.shadowBlur = 11 * glowMult;
+        c.globalAlpha = 0.85;
+        c.fill();
+        c.strokeStyle = '#ffffff';
+        c.globalAlpha = 1;
+        c.lineWidth = 1.65;
+        c.stroke();
+        c.shadowBlur = 0;
+      }
+    }
+
+    c.restore();
+  }
+  c.restore();
+}
+
+// [UI.JPD] Offscreen-кэш статичного корпуса башни (гало, опоры, кольца эволюции, обод, Outrun-полосы)
+function getTowerBaseSprite(lvl, col, glowCol, isDisabled, isLowPerf) {
+  const cfg = TOWER_VISUAL_CFG;
+  const key = `${cfg.hullShape}_${lvl}_${col}_${glowCol}_${isDisabled ? 1 : 0}_${isLowPerf ? 1 : 0}`;
+  if (TOWER_BASE_SPRITE_CACHE[key]) return TOWER_BASE_SPRITE_CACHE[key];
+
+  const size = 96;
+  const half = size / 2;
+  const off = document.createElement('canvas');
+  off.width = size;
+  off.height = size;
+  const c = off.getContext('2d');
+
+  const glowMult = (isLowPerf || isDisabled) ? 0.4 : (cfg.glowIntensity || 2.2);
+  const lvlHaloScale = lvl === 1 ? 0.45 : (lvl === 2 ? 0.72 : 1.0);
+
+  c.save();
+  c.translate(half, half);
+  c.lineJoin = 'round';
+  c.lineCap = 'round';
+
+  // 1. Внешнее неоновое гало
+  if (!isDisabled) {
+    const haloR = (27 + lvl * 3.8) * Math.min(1.45, Math.max(0.7, glowMult * 0.62));
+    const radGrad = c.createRadialGradient(0, 0, 5, 0, 0, haloR);
+    radGrad.addColorStop(0, glowCol + (lvl === 3 ? '77' : (lvl === 2 ? '44' : '24')));
+    radGrad.addColorStop(0.6, glowCol + (lvl === 3 ? '24' : '0c'));
+    radGrad.addColorStop(1, 'transparent');
+    c.fillStyle = radGrad;
+    c.beginPath();
+    c.arc(0, 0, haloR, 0, Math.PI * 2);
+    c.fill();
+  }
+
+  // 2. 4 широкие опоры (ноги)
+  if (cfg.wideLegs) {
+    drawTowerWideLegsToCtx(c, lvl, col, glowCol, glowMult * lvlHaloScale, isDisabled);
+  }
+
+  // 3. Внешние кольца эволюции Lv.2 и Lv.3
+  if (cfg.outerEvolution) {
+    if (lvl >= 2) {
+      c.save();
+      c.shadowBlur = 0;
+      c.strokeStyle = col;
+      c.globalAlpha = 0.68;
+      c.lineWidth = 1.7;
+      c.beginPath();
+      c.arc(0, 0, 21.5, 0, Math.PI * 2);
+      c.stroke();
+      c.restore();
+    }
+    if (lvl >= 3) {
+      c.save();
+      if (!isDisabled) {
+        c.shadowColor = glowCol;
+        c.shadowBlur = 11 * glowMult;
+      }
+      c.globalAlpha = 0.96;
+
+      c.strokeStyle = col;
+      c.lineWidth = 3.0;
+      c.beginPath();
+      c.arc(0, 0, 26.0, 0, Math.PI * 2);
+      c.stroke();
+
+      c.shadowBlur = 0;
+      c.strokeStyle = isDisabled ? '#64748b' : '#ffffff';
+      c.lineWidth = 1.45;
+      c.beginPath();
+      c.arc(0, 0, 26.0, 0, Math.PI * 2);
+      c.stroke();
+      c.restore();
     }
   }
-  ctx.shadowBlur = 0;
 
-  ctx.rotate(-effectiveAngle);
+  // 4. Главный круглый корпус + белый неоновый обод
+  c.save();
+  c.fillStyle = TOWER_DARK;
+  traceTowerHullShape(c, lvl, 16.8, cfg);
+  c.fill();
 
-  if (type === 'melter' && heatProgress > 0) {
-    const ringR = 13;
-    const clampedHeat = Math.max(0, Math.min(1, heatProgress));
+  if (cfg.whiteNeonRim) {
+    c.strokeStyle = col;
+    if (!isDisabled) {
+      c.shadowColor = glowCol;
+      c.shadowBlur = (lvl === 3 ? 13 : (lvl === 2 ? 7 : 3)) * glowMult * 0.65;
+    }
+    c.lineWidth = 3.0;
+    c.stroke();
+
+    c.strokeStyle = isDisabled ? '#64748b' : '#ffffff';
+    if (!isDisabled) {
+      c.shadowColor = '#ffffff';
+      c.shadowBlur = (lvl === 3 ? 4 : 1.5) * glowMult * 0.5;
+    }
+    c.lineWidth = 1.45;
+    c.stroke();
+  } else {
+    c.strokeStyle = col;
+    c.lineWidth = 2.0;
+    c.stroke();
+  }
+  c.restore();
+
+  // 5. Outrun-полосы внутри корпуса (запекаются 1 раз в текстуру, без clip() в бою!)
+  if (cfg.outrunStripes) {
+    c.save();
+    traceTowerHullShape(c, lvl, 15.2, cfg);
+    c.clip();
+    c.strokeStyle = col;
+    c.globalAlpha = 0.48;
+    c.lineWidth = 1.35;
+    c.beginPath();
+    for (let sy = -14; sy <= 14; sy += 3.8) {
+      c.moveTo(-16, sy);
+      c.lineTo(16, sy);
+    }
+    c.stroke();
+    c.restore();
+  }
+
+  c.restore();
+
+  const sprite = { canvas: off, half };
+  TOWER_BASE_SPRITE_CACHE[key] = sprite;
+  return sprite;
+}
+
+// [UI.JPE] Единая снежинка Stasis (Zero-Blur двойной штрих)
+function drawStasisSnowflake(c, lvl, time, col, isDisabled) {
+  c.save();
+  if (!isDisabled) c.rotate(time * 0.42);
+  c.lineCap = 'round';
+  c.lineJoin = 'round';
+
+  const mainR = lvl === 1 ? 10.2 : (lvl === 2 ? 11.4 : 12.6);
+
+  // Мягкая цветная подложка вместо shadowBlur
+  if (!isDisabled) {
+    c.strokeStyle = col;
+    c.globalAlpha = lvl === 3 ? 0.45 : 0.28;
+    c.lineWidth = (lvl === 1 ? 1.65 : 1.85) + 2.2;
+    c.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = (i * Math.PI) / 3;
+      c.moveTo(0, 0);
+      c.lineTo(Math.cos(a) * mainR, Math.sin(a) * mainR);
+    }
+    c.stroke();
+    c.globalAlpha = 1;
+  }
+
+  c.strokeStyle = isDisabled ? '#64748b' : '#ffffff';
+  c.lineWidth = lvl === 1 ? 1.65 : 1.85;
+
+  for (let i = 0; i < 6; i++) {
+    c.save();
+    c.rotate((i * Math.PI) / 3);
+
+    c.beginPath();
+    c.moveTo(0, 0);
+    c.lineTo(mainR, 0);
+    c.stroke();
+
+    const tipBranchPos = mainR * 0.62;
+    const tipBranchLen = lvl === 1 ? 3.5 : 4.2;
+    c.beginPath();
+    c.moveTo(tipBranchPos + tipBranchLen * 0.68, -tipBranchLen * 0.75);
+    c.lineTo(tipBranchPos, 0);
+    c.lineTo(tipBranchPos + tipBranchLen * 0.68, tipBranchLen * 0.75);
+    c.stroke();
+
+    if (lvl >= 2) {
+      const midBranchPos = mainR * 0.36;
+      const midBranchLen = 3.0;
+      c.beginPath();
+      c.moveTo(midBranchPos + midBranchLen * 0.65, -midBranchLen * 0.72);
+      c.lineTo(midBranchPos, 0);
+      c.lineTo(midBranchPos + midBranchLen * 0.65, midBranchLen * 0.72);
+      c.stroke();
+    }
+
+    if (lvl >= 3) {
+      c.fillStyle = isDisabled ? '#64748b' : '#ffffff';
+      c.beginPath();
+      c.arc(mainR + 1.1, 0, 1.25, 0, Math.PI * 2);
+      c.fill();
+    }
+
+    c.restore();
+  }
+
+  if (lvl >= 2) {
+    c.strokeStyle = col;
+    c.lineWidth = 1.25;
+    traceTowerPolygon(c, 6, mainR * 0.44, Math.PI / 6);
+    c.stroke();
+  }
+
+  if (lvl >= 3) {
+    c.save();
+    if (!isDisabled) c.rotate(-time * 0.8 + Math.PI / 6);
+    c.strokeStyle = col;
+    c.lineWidth = 1.35;
+    for (let i = 0; i < 6; i++) {
+      c.save();
+      c.rotate((i * Math.PI) / 3);
+      c.beginPath();
+      c.moveTo(3.2, 0);
+      c.lineTo(8.4, 0);
+      c.moveTo(6.2 + 1.8, -2.0);
+      c.lineTo(6.2, 0);
+      c.lineTo(6.2 + 1.8, 2.0);
+      c.stroke();
+      c.restore();
+    }
+    c.restore();
+  }
+
+  c.fillStyle = col;
+  traceTowerPolygon(c, 6, 3.0, 0);
+  c.fill();
+  c.fillStyle = isDisabled ? '#64748b' : '#ffffff';
+  c.beginPath();
+  c.arc(0, 0, 1.4, 0, Math.PI * 2);
+  c.fill();
+
+  c.restore();
+}
+
+// [UI.JPF] Круговой прогресс-бар перегрева Melter (Zero-Blur)
+function drawMelterOverheatGauge(c, heat, time, col, isCooling) {
+  const clamped = Math.max(0, Math.min(1, heat));
+  const gaugeR = 13.8;
+
+  c.save();
+  c.rotate(-Math.PI / 2);
+
+  c.strokeStyle = 'rgba(15, 23, 42, 0.88)';
+  c.lineWidth = 3.4;
+  c.beginPath();
+  c.arc(0, 0, gaugeR, 0, Math.PI * 2);
+  c.stroke();
+
+  c.strokeStyle = 'rgba(232, 82, 104, 0.28)';
+  c.lineWidth = 1;
+  c.setLineDash([2, 4.2]);
+  c.beginPath();
+  c.arc(0, 0, gaugeR, 0, Math.PI * 2);
+  c.stroke();
+  c.setLineDash([]);
+
+  if (clamped > 0.01) {
+    const isMaxHeat = clamped > 0.88 || isCooling;
+    const arcCol = isMaxHeat
+      ? (Math.sin(time * 30) > 0 ? '#ffffff' : '#fde047')
+      : (clamped > 0.45 ? '#fb923c' : col);
+
+    c.lineCap = 'round';
+    // Мягкий неоновый ореол дуги без shadowBlur
+    c.strokeStyle = arcCol;
+    c.globalAlpha = 0.35;
+    c.lineWidth = 6.2;
+    c.beginPath();
+    c.arc(0, 0, gaugeR, 0, Math.PI * 2 * clamped);
+    c.stroke();
+
+    c.globalAlpha = 1;
+    c.lineWidth = 3.2;
+    c.beginPath();
+    c.arc(0, 0, gaugeR, 0, Math.PI * 2 * clamped);
+    c.stroke();
+
+    const tipAngle = Math.PI * 2 * clamped;
+    c.fillStyle = '#ffffff';
+    c.beginPath();
+    c.arc(Math.cos(tipAngle) * gaugeR, Math.sin(tipAngle) * gaugeR, 2.0, 0, Math.PI * 2);
+    c.fill();
+  }
+
+  c.restore();
+}
+
+// [UI.JPG] Главная функция отрисовки башни (выводит закэшированный корпус + динамические стволы и ядро)
+function drawTowerModel(type, angle, color, level = 1, glow = '#00e5ff', isDisabled = false, isCooling = false, isShooting = false, heatProgress = 0, extra = null) {
+  const cfg = TOWER_VISUAL_CFG;
+  const id = type || 'gun';
+  const baseCol = color || '#00e5ff';
+  const col = isDisabled ? '#475569' : baseCol;
+  const glowCol = isDisabled ? '#64748b' : (glow || baseCol);
+  const lvl = Math.max(1, Math.min(3, level || 1));
+
+  const time = (extra && typeof extra.time === 'number') ? extra.time : (performance.now() * 0.001);
+  const target = extra ? extra.target : null;
+  const towerX = extra ? extra.x : 0;
+  const towerY = extra ? extra.y : 0;
+  const isFiring = !!(isShooting || (target && !isDisabled && !isCooling));
+  const recoil = (cfg.recoil && extra && extra.recoil) ? extra.recoil : 0;
+  const heat = Math.max(0, Math.min(1, heatProgress || 0));
+  const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low');
+
+  ctx.save();
+  if (isDisabled) ctx.globalAlpha = 0.55;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+
+  // 1. Статичный корпус башни (гало, 4 опоры, кольца Lv.2-3, обод, Outrun-полосы) из Offscreen-кэша
+  const baseSprite = getTowerBaseSprite(lvl, col, glowCol, isDisabled, isLowPerf);
+  ctx.drawImage(baseSprite.canvas, -baseSprite.half, -baseSprite.half);
+
+  // 2. Круговой прогресс-бар перегрева Melter
+  if (id === 'melter' && (heat > 0 || isCooling)) {
+    drawMelterOverheatGauge(ctx, heat, time, col, isCooling);
+  }
+
+  // 3. Поворотная башня, прицел, стволы и ядро
+  const effAngle = (id === 'stasis') ? 0 : (angle || 0);
+  ctx.save();
+  ctx.rotate(effAngle);
+
+  // Лазерный целеуказатель на захваченную цель (Zero-Blur)
+  if (cfg.laserSight && id !== 'stasis' && target && !isDisabled && !isCooling) {
+    const dist = Math.hypot(target.x - towerX, target.y - towerY);
+    const sightEnd = Math.max(26, dist);
     ctx.save();
+    ctx.strokeStyle = col;
+    ctx.globalAlpha = 0.65;
+    ctx.lineWidth = 1.3;
+    ctx.setLineDash([5, 4]);
+    ctx.lineDashOffset = -time * 24;
     ctx.beginPath();
-    ctx.strokeStyle = 'rgba(51, 65, 85, 0.65)';
-    ctx.lineWidth = 3;
-    ctx.arc(0, 0, ringR, 0, Math.PI * 2);
+    ctx.moveTo(22, 0);
+    ctx.lineTo(sightEnd, 0);
     ctx.stroke();
+    ctx.setLineDash([]);
 
-    const isOverheated = clampedHeat >= 0.999;
-    const heatColor = isOverheated ? '#ffffff' : (isCooling ? '#fb923c' : '#f05f9f');
+    ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.strokeStyle = heatColor;
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    ctx.rotate(-Math.PI / 2);
-    ctx.arc(0, 0, ringR, 0, Math.PI * 2 * clampedHeat);
-    ctx.stroke();
+    ctx.arc(sightEnd, 0, 1.8, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
   }
 
+  const recShift = -recoil * 4.0;
+
+  if (id === 'gun') {
+    const alt = isFiring ? Math.sin(time * 45) * 2.0 : 0;
+    ctx.fillStyle = TOWER_DARK;
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1.4;
+    ctx.fillRect(7, -6.2, 8.5, 12.4);
+    ctx.strokeRect(7, -6.2, 8.5, 12.4);
+
+    ctx.fillStyle = col;
+    ctx.fillRect(11.5 + recShift + alt, -5.0, 14 + lvl * 1.1, 2.7);
+    ctx.fillRect(11.5 + recShift - alt, 2.3, 14 + lvl * 1.1, 2.7);
+    ctx.fillStyle = isDisabled ? '#64748b' : '#ffffff';
+    ctx.fillRect(23.5 + recShift + alt, -4.6, 2.4, 1.9);
+    ctx.fillRect(23.5 + recShift - alt, 2.7, 2.4, 1.9);
+  } else if (id === 'laser') {
+    ctx.fillStyle = TOWER_DARK;
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(8, -6.5);
+    ctx.lineTo(24 + lvl, -2.0);
+    ctx.lineTo(24 + lvl, 2.0);
+    ctx.lineTo(8, 6.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = isDisabled ? '#64748b' : '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(10, 0);
+    ctx.lineTo(23 + lvl, 0);
+    ctx.stroke();
+
+    ctx.fillStyle = (isFiring && !isDisabled) ? '#ffffff' : col;
+    ctx.beginPath();
+    ctx.arc(24 + lvl, 0, isFiring ? 3.0 : 2.1, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (id === 'mortar' || id === 'splash') {
+    const fore = Math.cos(55 * Math.PI / 180);
+    ctx.save();
+    ctx.scale(fore, 1);
+    ctx.fillStyle = TOWER_DARK;
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    if (typeof ctx.roundRect === 'function') {
+      ctx.roundRect(7 + recShift * 1.4, -7.2, 16 + lvl, 14.4, 3);
+    } else {
+      ctx.rect(7 + recShift * 1.4, -7.2, 16 + lvl, 14.4);
+    }
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = col;
+    ctx.fillRect(11 + recShift * 1.4, -5.2, 9 + lvl, 10.4);
+    ctx.restore();
+
+    const mx = (23 + lvl + recShift * 1.4) * fore;
+    ctx.beginPath();
+    ctx.ellipse(mx, 0, 3.2, 5.5, 0, 0, Math.PI * 2);
+    ctx.fillStyle = (isFiring && !isDisabled) ? '#ffffff' : TOWER_DARK;
+    ctx.fill();
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1.8;
+    ctx.stroke();
+  } else if (id === 'tesla') {
+    const bStart = 8.5 + recShift * 0.7;
+    ctx.fillStyle = TOWER_DARK;
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(bStart, -6.8);
+    ctx.lineTo(bStart + 14.0, -5.8);
+    ctx.lineTo(bStart + 16.0, -3.6);
+    ctx.lineTo(bStart + 16.0, 3.6);
+    ctx.lineTo(bStart + 14.0, 5.8);
+    ctx.lineTo(bStart, 6.8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = isDisabled ? 'rgba(100, 116, 139, 0.45)' : 'rgba(255, 255, 255, 0.55)';
+    ctx.lineWidth = 0.95;
+    ctx.beginPath();
+    ctx.moveTo(bStart + 2.0, -4.4);
+    ctx.lineTo(bStart + 13.0, -3.8);
+    ctx.moveTo(bStart + 2.0, 4.4);
+    ctx.lineTo(bStart + 13.0, 3.8);
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(bStart + 8.3, 0);
+    ctx.rotate(Math.PI / 2);
+    ctx.scale(0.56, 0.56);
+    ctx.fillStyle = isDisabled ? '#64748b' : '#ffffff';
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    const boltPts = [2.5, -11, -6.0, 1.2, -0.4, 1.2, -3.2, 11, 6.5, -2.2, 0.8, -2.2];
+    ctx.moveTo(boltPts[0], boltPts[1]);
+    for (let i = 2; i < boltPts.length; i += 2) ctx.lineTo(boltPts[i], boltPts[i + 1]);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.fill();
+    ctx.restore();
+  } else if (id === 'melter') {
+    const hotCol = isDisabled ? '#475569' : (heat > 0.75 ? '#ffffff' : (heat > 0.32 ? '#fb923c' : col));
+    const innerPipeCol = isDisabled ? '#64748b' : (heat > 0.55 ? '#ffffff' : '#fb923c');
+
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    ctx.moveTo(9.0, -5.2);
+    ctx.lineTo(20.5, -2.2);
+    ctx.moveTo(9.0, 5.2);
+    ctx.lineTo(20.5, 2.2);
+    ctx.stroke();
+
+    ctx.strokeStyle = innerPipeCol;
+    ctx.lineWidth = 1.15;
+    ctx.beginPath();
+    ctx.moveTo(10.5, -4.8);
+    ctx.lineTo(19.8, -2.4);
+    ctx.moveTo(10.5, 4.8);
+    ctx.lineTo(19.8, 2.4);
+    ctx.stroke();
+
+    ctx.fillStyle = TOWER_DARK;
+    ctx.strokeStyle = isDisabled ? '#64748b' : '#ffffff';
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    if (typeof ctx.roundRect === 'function') {
+      ctx.roundRect(19.0, -4.5, 3.6, 9.0, 1.2);
+    } else {
+      ctx.rect(19.0, -4.5, 3.6, 9.0);
+    }
+    ctx.fill();
+    ctx.stroke();
+
+    if (!isCooling && !isDisabled) {
+      const flameTip = 27.5 + heat * 2.5 + (isFiring ? Math.sin(time * 35) * 0.8 : 0);
+      ctx.fillStyle = hotCol;
+      ctx.beginPath();
+      ctx.moveTo(22.6, -2.5);
+      ctx.lineTo(flameTip, 0);
+      ctx.lineTo(22.6, 2.5);
+      ctx.closePath();
+      ctx.fill();
+    }
+  } else if (id === 'railgun') {
+    const railLen = 13.5 + lvl * 0.8;
+    const rStart = 8.5 + recShift * 0.85;
+
+    ctx.fillStyle = (isFiring && !isDisabled) ? '#ffffff' : col;
+    ctx.globalAlpha = (isFiring && !isDisabled) ? 0.95 : 0.45;
+    ctx.fillRect(rStart + 1.5, -1.3, railLen - 2.0, 2.6);
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = TOWER_DARK;
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1.45;
+
+    ctx.beginPath();
+    ctx.moveTo(rStart, -4.4);
+    ctx.lineTo(rStart + railLen, -3.6);
+    ctx.lineTo(rStart + railLen - 2.0, -1.8);
+    ctx.lineTo(rStart, -1.8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(rStart, 4.4);
+    ctx.lineTo(rStart + railLen, 3.6);
+    ctx.lineTo(rStart + railLen - 2.0, 1.8);
+    ctx.lineTo(rStart, 1.8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = isDisabled ? '#64748b' : '#ffffff';
+    ctx.fillRect(rStart + 2.2, -5.0, 2.2, 10.0);
+  }
+
+  // 4. Индикаторы в центре ядра (Zero-Blur)
+  if (id === 'stasis') {
+    drawStasisSnowflake(ctx, lvl, time, col, isDisabled);
+  } else {
+    const cells = TOWER_CORES_BY_LEVEL[lvl];
+    for (let i = 0; i < cells.length; i++) {
+      const d = cells[i];
+      const coreCol = (!isDisabled && id === 'melter' && heat > 0.65) ? '#ffffff' : col;
+      ctx.fillStyle = coreCol;
+      ctx.beginPath();
+      ctx.arc(d.cx, d.cy, d.r + (cfg.powerCellsGlow ? 0.6 : 0), 0, Math.PI * 2);
+      ctx.fill();
+      if (cfg.powerCellsGlow && !isDisabled) {
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(d.cx, d.cy, d.r * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  ctx.restore();
   ctx.restore();
 }
 
