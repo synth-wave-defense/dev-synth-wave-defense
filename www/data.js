@@ -273,8 +273,8 @@ function buildTowerIconSvg(type, level = 1, size = 28, angleDeg = 0) {
     out += `<circle cx="0" cy="0" r="21.5" fill="none" stroke="${c}" stroke-width="1.7" stroke-opacity="0.72"/>`;
   }
   if (lvl >= 3) {
-    out += `<circle cx="0" cy="0" r="26.0" fill="none" stroke="${c}" stroke-width="3.0" stroke-opacity="0.95"/>`;
-    out += `<circle cx="0" cy="0" r="26.0" fill="none" stroke="#ffffff" stroke-width="1.4"/>`;
+    out += `<circle cx="0" cy="0" r="26.0" fill="none" stroke="${c}" stroke-width="3.2" stroke-opacity="0.95"/>`;
+    out += `<circle cx="0" cy="0" r="26.0" fill="none" stroke="#ffffff" stroke-width="0.9" stroke-opacity="0.72"/>`;
   }
 
   // 3. Круглый корпус + Outrun-полосы + белый неоновый обод
@@ -282,11 +282,11 @@ function buildTowerIconSvg(type, level = 1, size = 28, angleDeg = 0) {
   [-11.4, -7.6, -3.8, 0, 3.8, 7.6, 11.4].forEach(sy => {
     const halfChord = Math.sqrt(Math.max(0, 14.8 * 14.8 - sy * sy));
     if (halfChord > 2) {
-      out += `<line x1="${(-halfChord).toFixed(1)}" y1="${sy}" x2="${halfChord.toFixed(1)}" y2="${sy}" stroke="${c}" stroke-width="1.2" stroke-opacity="0.42"/>`;
+      out += `<line x1="${(-halfChord).toFixed(1)}" y1="${sy}" x2="${halfChord.toFixed(1)}" y2="${sy}" stroke="${c}" stroke-width="1.2" stroke-opacity="0.24"/>`;
     }
   });
-  out += `<circle cx="0" cy="0" r="16.8" fill="none" stroke="${c}" stroke-width="2.8"/>`;
-  out += `<circle cx="0" cy="0" r="16.8" fill="none" stroke="#ffffff" stroke-width="1.35"/>`;
+  out += `<circle cx="0" cy="0" r="16.8" fill="none" stroke="${c}" stroke-width="3.2" stroke-opacity="0.95"/>`;
+  out += `<circle cx="0" cy="0" r="16.8" fill="none" stroke="#ffffff" stroke-width="0.9" stroke-opacity="0.72"/>`;
 
   // Декоративная дуга перегрева для Melter
   if (type === 'melter') {
@@ -307,7 +307,7 @@ function buildTowerIconSvg(type, level = 1, size = 28, angleDeg = 0) {
   } else if (type === 'laser') {
     const tipX = 24 + lvl;
     out += `<polygon points="8,-6.5 ${tipX},-2.0 ${tipX},2.0 8,6.5" fill="${TOWER_GLYPH_DARK}" stroke="${c}" stroke-width="1.6" stroke-linejoin="round"/>`;
-    out += `<line x1="10" y1="0" x2="${tipX - 1}" y2="0" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>`;
+    out += `<line x1="10" y1="0" x2="${tipX - 1}" y2="0" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round"/>`;
     out += `<circle cx="${tipX}" cy="0" r="2.2" fill="${c}"/>`;
   } else if (type === 'mortar' || type === 'splash') {
     const fore = Math.cos(55 * Math.PI / 180);
@@ -333,7 +333,7 @@ function buildTowerIconSvg(type, level = 1, size = 28, angleDeg = 0) {
   } else if (type === 'railgun') {
     const railLen = 13.5 + lvl * 0.8;
     const endX = 8.5 + railLen;
-    out += `<rect x="10.0" y="-1.3" width="${(railLen - 2.0).toFixed(1)}" height="2.6" fill="${c}" fill-opacity="0.55"/>`;
+    out += `<rect x="10.0" y="-1.3" width="${(railLen - 2.0).toFixed(1)}" height="2.6" fill="${c}" fill-opacity="0.68"/>`;
     out += `<polygon points="8.5,-4.4 ${endX.toFixed(1)},-3.6 ${(endX - 2.0).toFixed(1)},-1.8 8.5,-1.8" fill="${TOWER_GLYPH_DARK}" stroke="${c}" stroke-width="1.45" stroke-linejoin="round"/>`;
     out += `<polygon points="8.5,4.4 ${endX.toFixed(1)},3.6 ${(endX - 2.0).toFixed(1)},1.8 8.5,1.8" fill="${TOWER_GLYPH_DARK}" stroke="${c}" stroke-width="1.45" stroke-linejoin="round"/>`;
     out += `<rect x="10.7" y="-5.0" width="2.2" height="10.0" fill="#ffffff"/>`;
@@ -374,11 +374,11 @@ function buildTowerIconSvg(type, level = 1, size = 28, angleDeg = 0) {
         out += `</g>`;
       }
     }
-    out += `<circle cx="0" cy="0" r="2.8" fill="${c}"/><circle cx="0" cy="0" r="1.35" fill="#ffffff"/>`;
+    out += `<circle cx="0" cy="0" r="2.8" fill="${c}"/><circle cx="0" cy="0" r="0.95" fill="#ffffff"/>`;
   } else {
     TOWER_GLYPH_CORES[lvl].forEach(d => {
       out += `<circle cx="${d.cx}" cy="${d.cy}" r="${(d.r + 0.5).toFixed(1)}" fill="${c}"/>`;
-      out += `<circle cx="${d.cx}" cy="${d.cy}" r="${(d.r * 0.5).toFixed(1)}" fill="#ffffff"/>`;
+      out += `<circle cx="${d.cx}" cy="${d.cy}" r="${(d.r * 0.30).toFixed(2)}" fill="#ffffff"/>`;
     });
   }
 

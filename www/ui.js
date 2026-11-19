@@ -6095,9 +6095,33 @@ function createDamageShards(x, y, color, damage = 16, isDeath = false) {
 // [UI.HWF] Конфигурация спецэффектов v11 (1-в-1 из Hit & Explosion FX Sandbox v11) + Offscreen-кэширование
 const ENEMY_REACTIONS = {"knockback": true, "jitter": true, "hitTilt": true};
 const TOWER_FX = {"gun": {"blastScale": 1, "layers": [{"uid": "L62", "type": "bulletTrails", "name": "Трассеры пуль #1", "enabled": true, "params": {"size": 2.25, "speed": 1.6, "opacity": 0.55, "colorMode": "tower", "customColor": "#ff0000"}}, {"uid": "L63", "type": "muzzleFlash", "name": "Дульная вспышка #1", "enabled": true, "params": {"size": 0.9, "speed": 2.5, "opacity": 0.55, "duration": 0.32, "smooth": 2.5, "shape": "default", "customPoly": [{"x": 0.01, "y": -0.9}, {"x": 0.581, "y": -0.614}, {"x": 0.881, "y": -0.029}, {"x": 0.596, "y": 0.586}, {"x": -0.004, "y": 0.886}], "colorMode": "white", "customColor": "#ffffff"}}, {"uid": "L64", "type": "deepGlow", "name": "Глубокий Glow #1", "enabled": true, "params": {"size": 1.85, "speed": 1.9, "opacity": 1, "duration": 0.66, "smooth": 0.2, "flicker": false, "colorMode": "tower", "customColor": "#ff9100"}}, {"uid": "L65", "type": "volumeHalo", "name": "Объёмный ореол #1", "enabled": true, "params": {"size": 0.7, "speed": 1.6, "opacity": 0.85, "duration": 0.7, "smooth": 1.9, "flicker": false, "colorMode": "tower", "customColor": "#38bdf8"}}, {"uid": "L66", "type": "sparks", "name": "Искры #2", "enabled": true, "params": {"size": 1, "speed": 0.7, "opacity": 1, "count": 14, "stretch": 1, "range": 1.1, "centerFade": 0.1, "duration": 0.32, "directionalCone": true, "velocityStretch": false, "tempGradient": false, "shape": "default", "customPoly": [{"x": 0, "y": -0.9}, {"x": 0.3, "y": -0.25}, {"x": 0.9, "y": 0}, {"x": 0.3, "y": 0.25}, {"x": 0, "y": 0.9}, {"x": -0.3, "y": 0.25}, {"x": -0.9, "y": 0}, {"x": -0.3, "y": -0.25}], "colorMode": "tower", "customColor": "#ff9100"}}, {"uid": "L67", "type": "energyMotes", "name": "Энерго-пыльца #1", "enabled": true, "params": {"size": 1, "speed": 1, "opacity": 1, "count": 10, "spread": 0.45, "duration": 0.95, "smooth": 1, "shape": "default", "customPoly": [{"x": 0, "y": -0.9}, {"x": 0.3, "y": -0.25}, {"x": 0.9, "y": 0}, {"x": 0.3, "y": 0.25}, {"x": 0, "y": 0.9}, {"x": -0.3, "y": 0.25}, {"x": -0.9, "y": 0}, {"x": -0.3, "y": -0.25}], "colorMode": "tower", "customColor": "#38bdf8"}}]}, "laser": {"blastScale": 1, "layers": [{"uid": "L68", "type": "sparks", "name": "Искры #1", "enabled": true, "params": {"size": 1, "speed": 1, "opacity": 1, "count": 6, "stretch": 0.2, "range": 1, "centerFade": 0, "duration": 0.28, "directionalCone": true, "velocityStretch": true, "tempGradient": false, "shape": "default", "customPoly": [{"x": 0, "y": -0.9}, {"x": 0.3, "y": -0.25}, {"x": 0.9, "y": 0}, {"x": 0.3, "y": 0.25}, {"x": 0, "y": 0.9}, {"x": -0.3, "y": 0.25}, {"x": -0.9, "y": 0}, {"x": -0.3, "y": -0.25}], "colorMode": "tower", "customColor": "#ff9100"}}, {"uid": "L69", "type": "deepGlow", "name": "Глубокий Glow", "enabled": true, "params": {"size": 1.45, "speed": 1, "opacity": 0.6, "duration": 0.24, "smooth": 0.6, "flicker": true, "colorMode": "tower", "customColor": "#ff9100"}}, {"uid": "L70", "type": "deepGlow", "name": "Глубокий Glow #2", "enabled": true, "params": {"size": 3, "speed": 1, "opacity": 0.05, "duration": 0.24, "smooth": 1.6, "flicker": true, "colorMode": "tower", "customColor": "#ff9100"}}, {"uid": "L71", "type": "volumeHalo", "name": "Объёмный ореол #1", "enabled": false, "params": {"size": 1.7, "speed": 1.35, "opacity": 0.1, "duration": 0.34, "smooth": 1.45, "flicker": true, "colorMode": "tower", "customColor": "#38bdf8"}}]}, "mortar": {"blastScale": 1, "layers": [{"uid": "L72", "type": "muzzleFlash", "name": "Дульная вспышка #1", "enabled": true, "params": {"size": 0.9, "speed": 2.4, "opacity": 0.55, "duration": 0.32, "smooth": 2.5, "shape": "default", "customPoly": [{"x": 0, "y": -0.9}, {"x": 0.3, "y": -0.25}, {"x": 0.9, "y": 0}, {"x": 0.3, "y": 0.25}, {"x": 0, "y": 0.9}, {"x": -0.3, "y": 0.25}, {"x": -0.9, "y": 0}, {"x": -0.3, "y": -0.25}], "colorMode": "tower", "customColor": "#ffffff"}}, {"uid": "L73", "type": "plasmaVortex", "name": "Плазменный вихрь #1", "enabled": true, "params": {"size": 1.75, "speed": 1, "opacity": 0.85, "count": 12, "spread": 1, "duration": 0.32, "thickness": 2.2, "colorMode": "tower", "customColor": "#ff9100"}}, {"uid": "L74", "type": "threePhaseCore", "name": "Трехфазное ядро #1", "enabled": true, "params": {"size": 0.55, "speed": 1, "opacity": 1, "count": 1, "duration": 0.84, "smooth": 2.5, "flicker": false, "fakeGlow": true, "shape": "default", "customPoly": [{"x": 0, "y": -0.9}, {"x": 0.3, "y": -0.25}, {"x": 0.9, "y": 0}, {"x": 0.3, "y": 0.25}, {"x": 0, "y": 0.9}, {"x": -0.3, "y": 0.25}, {"x": -0.9, "y": 0}, {"x": -0.3, "y": -0.25}], "colorMode": "tower", "customColor": "#ff9100"}}, {"uid": "L75", "type": "threePhaseCore", "name": "Трехфазное ядро #2", "enabled": true, "params": {"size": 1.35, "speed": 0.8, "opacity": 0.75, "count": 1, "duration": 0.48, "smooth": 2.5, "flicker": false, "fakeGlow": true, "shape": "default", "customPoly": [{"x": 0, "y": -0.9}, {"x": 0.3, "y": -0.25}, {"x": 0.9, "y": 0}, {"x": 0.3, "y": 0.25}, {"x": 0, "y": 0.9}, {"x": -0.3, "y": 0.25}, {"x": -0.9, "y": 0}, {"x": -0.3, "y": -0.25}], "colorMode": "tower", "customColor": "#ff9100"}}, {"uid": "L76", "type": "threePhaseCore", "name": "Трехфазное ядро #3", "enabled": true, "params": {"size": 2.1, "speed": 0.8, "opacity": 0.3, "count": 1, "duration": 0.26, "smooth": 2.5, "flicker": false, "fakeGlow": true, "shape": "default", "customPoly": [{"x": 0, "y": -0.9}, {"x": 0.3, "y": -0.25}, {"x": 0.9, "y": 0}, {"x": 0.3, "y": 0.25}, {"x": 0, "y": 0.9}, {"x": -0.3, "y": 0.25}, {"x": -0.9, "y": 0}, {"x": -0.3, "y": -0.25}], "colorMode": "tower", "customColor": "#ff9100"}}, {"uid": "L77", "type": "sineEmbers", "name": "Угли 360° #1", "enabled": true, "params": {"size": 1.3, "speed": 2.05, "opacity": 1, "count": 10, "spread": 1.25, "waveAmp": 22, "duration": 1, "shape": "default", "customPoly": [{"x": 0, "y": -0.9}, {"x": 0.3, "y": -0.25}, {"x": 0.9, "y": 0}, {"x": 0.3, "y": 0.25}, {"x": 0, "y": 0.9}, {"x": -0.3, "y": 0.25}, {"x": -0.9, "y": 0}, {"x": -0.3, "y": -0.25}], "colorMode": "tower", "customColor": "#ff9100"}}, {"uid": "L78", "type": "volumeHalo", "name": "Объёмный ореол #1", "enabled": true, "params": {"size": 1.55, "speed": 2.8, "opacity": 0.85, "duration": 1.2, "smooth": 0.65, "flicker": false, "colorMode": "tower", "customColor": "#38bdf8"}}]}, "tesla": {"blastScale": 1, "layers": [{"uid": "L79", "type": "arcLightning", "name": "Плазменные дуги", "enabled": true, "params": {"size": 1, "speed": 1, "opacity": 1, "count": 3, "duration": 0.18, "thickness": 1, "colorMode": "tower", "customColor": "#00ffcc"}}, {"uid": "L80", "type": "rgbRing", "name": "Хроматик-кольцо", "enabled": true, "params": {"size": 0.6, "speed": 1, "opacity": 1, "duration": 0.3, "thickness": 1.5, "offset": 1.8, "shape": "default", "customPoly": [{"x": 0, "y": -0.9}, {"x": 0.3, "y": -0.25}, {"x": 0.9, "y": 0}, {"x": 0.3, "y": 0.25}, {"x": 0, "y": 0.9}, {"x": -0.3, "y": 0.25}, {"x": -0.9, "y": 0}, {"x": -0.3, "y": -0.25}], "colorMode": "tower", "customColor": "#00e5ff"}}, {"uid": "L81", "type": "deepGlow", "name": "Глубокий Glow", "enabled": true, "params": {"size": 0.7, "speed": 1, "opacity": 0.75, "duration": 0.62, "smooth": 2.3, "flicker": true, "colorMode": "tower", "customColor": "#ff9100"}}, {"uid": "L82", "type": "volumeHalo", "name": "Объёмный ореол", "enabled": true, "params": {"size": 2.4, "speed": 1, "opacity": 0.85, "duration": 0.62, "smooth": 1, "flicker": true, "colorMode": "tower", "customColor": "#38bdf8"}}, {"uid": "L83", "type": "energyMotes", "name": "Энерго-пыльца #1", "enabled": false, "params": {"size": 1.85, "speed": 1, "opacity": 1, "count": 28, "spread": 0.45, "duration": 0.95, "smooth": 0.9, "shape": "default", "customPoly": [{"x": 0, "y": -0.9}, {"x": 0.3, "y": -0.25}, {"x": 0.9, "y": 0}, {"x": 0.3, "y": 0.25}, {"x": 0, "y": 0.9}, {"x": -0.3, "y": 0.25}, {"x": -0.9, "y": 0}, {"x": -0.3, "y": -0.25}], "colorMode": "tower", "customColor": "#38bdf8"}}, {"uid": "L84", "type": "coolingEmbers", "name": "Остывающие точки #1", "enabled": true, "params": {"size": 0.65, "speed": 3, "opacity": 1, "count": 7, "spread": 0.55, "duration": 0.8, "shape": "default", "customPoly": [{"x": 0, "y": -0.9}, {"x": 0.3, "y": -0.25}, {"x": 0.9, "y": 0}, {"x": 0.3, "y": 0.25}, {"x": 0, "y": 0.9}, {"x": -0.3, "y": 0.25}, {"x": -0.9, "y": 0}, {"x": -0.3, "y": -0.25}], "colorMode": "tower", "customColor": "#ff9100"}}]}, "stasis": {"blastScale": 1, "layers": [{"uid": "L85", "type": "deepGlow", "name": "Глубокий Glow", "enabled": true, "params": {"size": 0.85, "speed": 2.35, "opacity": 0.5, "duration": 1.2, "smooth": 2.5, "flicker": false, "colorMode": "tower", "customColor": "#ff9100"}}, {"uid": "L86", "type": "implosionLines", "name": "Воронка имплозии", "enabled": true, "params": {"size": 0.75, "speed": 1, "opacity": 1, "count": 6, "duration": 0.24, "thickness": 1.5, "colorMode": "tower", "customColor": "#38bdf8"}}, {"uid": "L87", "type": "volumeHalo", "name": "Объёмный ореол", "enabled": true, "params": {"size": 3, "speed": 1, "opacity": 0.5, "duration": 0.22, "smooth": 1, "flicker": false, "colorMode": "tower", "customColor": "#38bdf8"}}, {"uid": "L88", "type": "energyMotes", "name": "Энерго-пыльца", "enabled": true, "params": {"size": 1, "speed": 1, "opacity": 1, "count": 8, "spread": 0.45, "duration": 0.7, "smooth": 1, "shape": "default", "customPoly": [{"x": 0, "y": -0.9}, {"x": 0.3, "y": -0.25}, {"x": 0.9, "y": 0}, {"x": 0.3, "y": 0.25}, {"x": 0, "y": 0.9}, {"x": -0.3, "y": 0.25}, {"x": -0.9, "y": 0}, {"x": -0.3, "y": -0.25}], "colorMode": "tower", "customColor": "#38bdf8"}}]}, "melter": {"blastScale": 1, "layers": [{"uid": "L89", "type": "sparks", "name": "Искры #1", "enabled": true, "params": {"size": 1, "speed": 1, "opacity": 1, "count": 6, "stretch": 1, "range": 1, "centerFade": 0, "duration": 0.28, "directionalCone": true, "velocityStretch": true, "tempGradient": true, "shape": "default", "customPoly": [{"x": 0, "y": -0.9}, {"x": 0.3, "y": -0.25}, {"x": 0.9, "y": 0}, {"x": 0.3, "y": 0.25}, {"x": 0, "y": 0.9}, {"x": -0.3, "y": 0.25}, {"x": -0.9, "y": 0}, {"x": -0.3, "y": -0.25}], "colorMode": "tower", "customColor": "#ff9100"}}, {"uid": "L90", "type": "deepGlow", "name": "Глубокий Glow", "enabled": true, "params": {"size": 0.25, "speed": 1, "opacity": 1, "duration": 0.22, "smooth": 2.5, "flicker": true, "colorMode": "tower", "customColor": "#ff9100"}}, {"uid": "L91", "type": "deepGlow", "name": "Глубокий Glow #2", "enabled": true, "params": {"size": 1, "speed": 1, "opacity": 0.1, "duration": 0.22, "smooth": 2.5, "flicker": true, "colorMode": "tower", "customColor": "#ff9100"}}, {"uid": "L92", "type": "deepGlow", "name": "Глубокий Glow #3", "enabled": true, "params": {"size": 2.5, "speed": 1, "opacity": 0.05, "duration": 0.22, "smooth": 2.5, "flicker": true, "colorMode": "tower", "customColor": "#ff9100"}}, {"uid": "L93", "type": "coolingEmbers", "name": "Остывающие точки #1", "enabled": true, "params": {"size": 0.55, "speed": 1, "opacity": 1, "count": 3, "spread": 0.4, "duration": 0.6, "shape": "default", "customPoly": [{"x": 0, "y": -0.9}, {"x": 0.3, "y": -0.25}, {"x": 0.9, "y": 0}, {"x": 0.3, "y": 0.25}, {"x": 0, "y": 0.9}, {"x": -0.3, "y": 0.25}, {"x": -0.9, "y": 0}, {"x": -0.3, "y": -0.25}], "colorMode": "tower", "customColor": "#ff9100"}}, {"uid": "L94", "type": "plasmaVortex", "name": "Плазменный вихрь #1", "enabled": true, "params": {"size": 1.7, "speed": 1, "opacity": 0.25, "count": 4, "spread": 1, "duration": 0.32, "thickness": 2.2, "colorMode": "tower", "customColor": "#ff9100"}}, {"uid": "L95", "type": "volumeHalo", "name": "Объёмный ореол #1", "enabled": true, "params": {"size": 2.15, "speed": 1, "opacity": 0.1, "duration": 0.34, "smooth": 1, "flicker": false, "colorMode": "tower", "customColor": "#38bdf8"}}]}, "railgun": {"blastScale": 1, "layers": [{"uid": "L96", "type": "muzzleFlash", "name": "Дульная вспышка", "enabled": true, "params": {"size": 0.9, "speed": 2.5, "opacity": 0.55, "duration": 0.32, "smooth": 2.5, "shape": "default", "customPoly": [{"x": 0, "y": -0.9}, {"x": 0.3, "y": -0.25}, {"x": 0.9, "y": 0}, {"x": 0.3, "y": 0.25}, {"x": 0, "y": 0.9}, {"x": -0.3, "y": 0.25}, {"x": -0.9, "y": 0}, {"x": -0.3, "y": -0.25}], "colorMode": "tower", "customColor": "#ffffff"}}, {"uid": "L97", "type": "arcLightning", "name": "Плазменные дуги", "enabled": true, "params": {"size": 1.9, "speed": 1, "opacity": 1, "count": 3, "duration": 0.18, "thickness": 1, "colorMode": "tower", "customColor": "#00ffcc"}}, {"uid": "L98", "type": "rgbRing", "name": "Хроматик-кольцо", "enabled": true, "params": {"size": 0.95, "speed": 1, "opacity": 1, "duration": 0.3, "thickness": 1.5, "offset": 1.8, "shape": "default", "customPoly": [{"x": 0, "y": -0.9}, {"x": 0.3, "y": -0.25}, {"x": 0.9, "y": 0}, {"x": 0.3, "y": 0.25}, {"x": 0, "y": 0.9}, {"x": -0.3, "y": 0.25}, {"x": -0.9, "y": 0}, {"x": -0.3, "y": -0.25}], "colorMode": "tower", "customColor": "#00e5ff"}}, {"uid": "L99", "type": "deepGlow", "name": "Глубокий Glow", "enabled": true, "params": {"size": 0.65, "speed": 1, "opacity": 1, "duration": 0.22, "smooth": 1, "flicker": false, "colorMode": "tower", "customColor": "#ff9100"}}, {"uid": "L100", "type": "volumeHalo", "name": "Объёмный ореол", "enabled": true, "params": {"size": 1.1, "speed": 1, "opacity": 1, "duration": 0.8, "smooth": 2.5, "flicker": true, "colorMode": "tower", "customColor": "#38bdf8"}}, {"uid": "L101", "type": "energyMotes", "name": "Энерго-пыльца", "enabled": true, "params": {"size": 2.4, "speed": 2.25, "opacity": 1, "count": 28, "spread": 0.75, "duration": 0.75, "smooth": 0.95, "shape": "default", "customPoly": [{"x": 0, "y": -0.9}, {"x": 0.3, "y": -0.25}, {"x": 0.9, "y": 0}, {"x": 0.3, "y": 0.25}, {"x": 0, "y": 0.9}, {"x": -0.3, "y": 0.25}, {"x": -0.9, "y": 0}, {"x": -0.3, "y": -0.25}], "colorMode": "tower", "customColor": "#38bdf8"}}, {"uid": "L102", "type": "sineEmbers", "name": "Угли 360° #1", "enabled": true, "params": {"size": 1.1, "speed": 2.15, "opacity": 1, "count": 11, "spread": 1.35, "waveAmp": 14, "duration": 0.85, "shape": "default", "customPoly": [{"x": 0, "y": -0.9}, {"x": 0.3, "y": -0.25}, {"x": 0.9, "y": 0}, {"x": 0.3, "y": 0.25}, {"x": 0, "y": 0.9}, {"x": -0.3, "y": 0.25}, {"x": -0.9, "y": 0}, {"x": -0.3, "y": -0.25}], "colorMode": "tower", "customColor": "#ff9100"}}]}};
+const MOB_SPAWN_FX = {
+  blastScale: 1,
+  layers: [
+    { uid: 'L62', type: 'implosionLines', name: 'Воронка имплозии', enabled: true, params: { size: 1.25, speed: 1, opacity: 1, count: 7, duration: 0.24, thickness: 2, colorMode: 'enemy', customColor: '#f05f9f' } },
+    { uid: 'L63', type: 'deepGlow', name: 'Ядро вспышки', enabled: true, params: { size: 1.05, speed: 1, opacity: 1, duration: 0.54, smooth: 1, flicker: false, colorMode: 'white', customColor: '#ffffff' } },
+    { uid: 'L64', type: 'deepGlow', name: 'Внешний ореол', enabled: true, params: { size: 2.2, speed: 1, opacity: 1, duration: 0.28, smooth: 1, flicker: false, colorMode: 'enemy', customColor: '#f05f9f' } }
+  ]
+};
+const MOB_BASE_HIT_FX = {
+  blastScale: 1,
+  layers: [
+    { uid: 'L63', type: 'deepGlow', name: 'Белый сердечник', enabled: true, params: { size: 1.5, speed: 1, opacity: 1, duration: 0.42, smooth: 1.4, flicker: false, colorMode: 'white', customColor: '#ffffff' } },
+    { uid: 'L67', type: 'plasmaVortex', name: 'Плазменный вихрь #1', enabled: true, params: { size: 1.4, speed: 1.2, opacity: 0.9, count: 6, spread: 1.0, duration: 0.36, thickness: 2.2, colorMode: 'themeBaseShield', customColor: '#00e5ff' } },
+    { uid: 'L70', type: 'plasmaVortex', name: 'Плазменный вихрь #2', enabled: true, params: { size: 2.1, speed: 0.85, opacity: 0.55, count: 4, spread: 1.3, duration: 0.44, thickness: 1.8, colorMode: 'themeBaseShield', customColor: '#00e5ff' } },
+    { uid: 'L68', type: 'threePhaseCore', name: 'Трехфазное ядро', enabled: true, params: { size: 1.25, speed: 0.9, opacity: 0.95, count: 3, duration: 0.45, smooth: 1.6, flicker: true, fakeGlow: true, shape: 'default', colorMode: 'themeBaseDmgLight', customColor: '#ff8fb0' } },
+    { uid: 'L69', type: 'rgbRing', name: 'Хроматик-кольцо', enabled: true, params: { size: 1.35, speed: 1.0, opacity: 0.95, duration: 0.38, thickness: 2.0, offset: 2.4, shape: 'default', colorMode: 'themeBaseShield', customColor: '#00e5ff' } },
+    { uid: 'L73', type: 'volumeHalo', name: 'Объёмный ореол', enabled: true, params: { size: 2.3, speed: 1.0, opacity: 0.85, duration: 0.55, smooth: 1.2, flicker: false, colorMode: 'themeBaseDmg', customColor: '#f05f9f' } },
+    { uid: 'L75', type: 'coolingEmbers', name: 'Остывающие точки #1', enabled: true, params: { size: 0.9, speed: 1.1, opacity: 0.95, count: 9, spread: 0.75, duration: 0.95, shape: 'default', colorMode: 'themeBaseDmg', customColor: '#f05f9f' } },
+    { uid: 'L76', type: 'coolingEmbers', name: 'Остывающие точки #2', enabled: true, params: { size: 0.75, speed: 1.3, opacity: 0.9, count: 7, spread: 0.9, duration: 0.85, shape: 'default', colorMode: 'themeBaseShield', customColor: '#00e5ff' } },
+    { uid: 'L77', type: 'sparks', name: 'Искры щита', enabled: true, params: { size: 1.05, speed: 1.15, opacity: 1.0, count: 40, stretch: 1.25, range: 1.2, centerFade: 0.05, duration: 0.36, directionalCone: false, velocityStretch: true, tempGradient: false, shape: 'default', colorMode: 'themeBaseShield', customColor: '#00e5ff' } }
+  ]
+};
 if (typeof window !== 'undefined') {
   window.ENEMY_REACTIONS = ENEMY_REACTIONS;
   window.TOWER_FX = TOWER_FX;
+  window.MOB_SPAWN_FX = MOB_SPAWN_FX;
+  window.MOB_BASE_HIT_FX = MOB_BASE_HIT_FX;
 }
 
 const TOWER_FX_BASE_R = {
@@ -6748,6 +6772,265 @@ function spawnFxHitLayers(x, y, profileKey, towerColor, dirAngle = null, mobR = 
       }
     }
   }
+}
+
+function spawnEnemySpawnFx(x, y, enemy) {
+  if (typeof MOB_SPAWN_FX === 'undefined' || !Array.isArray(MOB_SPAWN_FX.layers)) return;
+  const isLow = (typeof perfMode !== 'undefined' && perfMode === 'low');
+  const enemyColor = (enemy && enemy.color) ? enemy.color : '#f05f9f';
+  const isBoss = !!(enemy && enemy.isBoss);
+  const isMiniBoss = !!(enemy && !isBoss && (enemy.isMiniBoss || enemy.type === 'goliath'));
+  const isSwarm = !!(enemy && !isBoss && !isMiniBoss && enemy.type === 'swarm');
+
+  let countMult = 1.0;
+  let lineScale = 1.0;
+  let glowScale = 1.0;
+  let alphaMult = 1.0;
+
+  if (isSwarm) {
+    countMult = 0.5;
+    lineScale = 0.6;
+    glowScale = 0.5;
+    alphaMult = 0.45;
+  } else if (isMiniBoss) {
+    countMult = 1.65;
+    lineScale = 1.35;
+    glowScale = 1.4;
+    alphaMult = 1.0;
+  } else if (isBoss) {
+    countMult = 2.4;
+    lineScale = 1.75;
+    glowScale = 1.85;
+    alphaMult = 1.0;
+  }
+
+  const cntPerfScale = isLow ? 0.55 : 1.0;
+  const baseR = 24 * (MOB_SPAWN_FX.blastScale || 1.0);
+
+  for (let i = 0; i < MOB_SPAWN_FX.layers.length; i++) {
+    const layer = MOB_SPAWN_FX.layers[i];
+    if (!layer || !layer.enabled) continue;
+    const p = layer.params || {};
+    const col = (p.colorMode === 'white')
+      ? '#ffffff'
+      : ((p.colorMode === 'custom' && p.customColor) ? p.customColor : enemyColor);
+    const sz = Math.max(0.1, p.size !== undefined ? p.size : 1.0);
+    const spdM = Math.max(0.15, p.speed !== undefined ? p.speed : 1.0);
+    const op = Math.max(0, Math.min(1, (p.opacity !== undefined ? p.opacity : 1.0) * alphaMult));
+
+    if (layer.type === 'implosionLines') {
+      const cnt = Math.max(2, Math.round((p.count || 7) * countMult * cntPerfScale));
+      const life = Math.max(0.06, (p.duration || 0.24) / spdM);
+      const lw = (p.thickness || 2.0) * (isBoss ? 1.25 : (isSwarm ? 0.75 : 1.0));
+      for (let k = 0; k < cnt; k++) {
+        const ang = (k / cnt) * 6.283 + Math.random() * 0.3;
+        const startR = baseR * (1.2 + Math.random() * 0.4) * sz * lineScale;
+        const len = (14 + Math.random() * 12) * sz * lineScale;
+        addFxPart({
+          kind: 'implode', x, y, col, ang, startR, len,
+          lw, alpha: op, life, max: life
+        });
+      }
+    } else if (layer.type === 'deepGlow') {
+      const life = Math.max(0.04, (p.duration || 0.28) / spdM);
+      addFxPart({
+        kind: 'glow', x, y, col,
+        r: baseR * 1.05 * sz * glowScale,
+        smooth: p.smooth || 1.0,
+        flicker: !!p.flicker,
+        alpha: op,
+        life, max: life
+      });
+    }
+  }
+}
+if (typeof window !== 'undefined') {
+  window.spawnEnemySpawnFx = spawnEnemySpawnFx;
+}
+
+function spawnEnemyBaseHitFx(x, y, enemy) {
+  if (typeof MOB_BASE_HIT_FX === 'undefined' || !Array.isArray(MOB_BASE_HIT_FX.layers)) return;
+  const isLow = (typeof perfMode !== 'undefined' && perfMode === 'low');
+  const th = (typeof getTheme === 'function')
+    ? getTheme()
+    : { c1: '#00e5ff', c3: '#f05f9f', c3Light: '#ff8fb0' };
+  const primaryCol = th.c1 || '#00e5ff';
+  const dmgCol = th.c3 || '#f05f9f';
+  const dmgLightCol = th.c3Light || dmgCol;
+
+  const isBoss = !!(enemy && enemy.isBoss);
+  const isMiniBoss = !!(enemy && !isBoss && (enemy.isMiniBoss || enemy.type === 'goliath'));
+  const isSwarm = !!(enemy && !isBoss && !isMiniBoss && enemy.type === 'swarm');
+
+  let sizeMult = 1.0;
+  let countMult = 1.0;
+  let durMult = 1.0;
+  let alphaMult = 1.0;
+
+  if (isSwarm) {
+    sizeMult = 0.55;
+    countMult = 0.30;
+    durMult = 0.75;
+    alphaMult = 0.75;
+  } else if (isMiniBoss) {
+    sizeMult = 1.35;
+    countMult = 1.40;
+    durMult = 1.25;
+    alphaMult = 1.0;
+  } else if (isBoss) {
+    sizeMult = 1.75;
+    countMult = 1.85;
+    durMult = 1.50;
+    alphaMult = 1.0;
+  }
+
+  const cntPerfScale = isLow ? 0.50 : 1.0;
+  const scale = (MOB_BASE_HIT_FX.blastScale || 1.0) * sizeMult;
+  const R = 34 * scale;
+
+  const resolveBaseHitColor = (p) => {
+    if (!p) return dmgCol;
+    if (p.colorMode === 'white') return '#ffffff';
+    if (p.colorMode === 'themeBaseDmg') return dmgCol;
+    if (p.colorMode === 'themeBaseDmgLight') return dmgLightCol;
+    if (p.colorMode === 'themeBaseShield') return primaryCol;
+    return p.customColor || dmgCol;
+  };
+
+  for (let i = 0; i < MOB_BASE_HIT_FX.layers.length; i++) {
+    const layer = MOB_BASE_HIT_FX.layers[i];
+    if (!layer || !layer.enabled) continue;
+    const p = layer.params || {};
+    const col = resolveBaseHitColor(p);
+    const sz = Math.max(0.1, p.size !== undefined ? p.size : 1.0);
+    const spdM = Math.max(0.15, p.speed !== undefined ? p.speed : 1.0);
+    const op = Math.max(0, Math.min(1, (p.opacity !== undefined ? p.opacity : 1.0) * alphaMult));
+    const sh = p.shape || 'default';
+    const poly = p.customPoly;
+
+    switch (layer.type) {
+      case 'deepGlow': {
+        const life = Math.max(0.05, ((p.duration || 0.42) * durMult) / spdM);
+        addFxPart({
+          kind: 'glow', x, y, col,
+          r: R * 1.05 * sz,
+          smooth: p.smooth || 1.0,
+          flicker: !!p.flicker,
+          alpha: op,
+          life, max: life
+        });
+        break;
+      }
+      case 'volumeHalo': {
+        const life = Math.max(0.05, ((p.duration || 0.55) * durMult) / spdM);
+        addFxPart({
+          kind: 'volhalo', x, y, col,
+          r: R * 1.35 * sz,
+          smooth: p.smooth || 1.0,
+          flicker: !!p.flicker,
+          alpha: op,
+          life, max: life
+        });
+        break;
+      }
+      case 'threePhaseCore': {
+        const cnt = Math.max(1, Math.round((p.count || 3) * (isLow ? 0.65 : 1.0)));
+        const baseLife = Math.max(0.06, ((p.duration || 0.45) * durMult) / spdM);
+        for (let b = 0; b < cnt; b++) {
+          const a = b === 0 ? 0 : (b / (cnt - 1)) * 6.283;
+          const d = b === 0 ? 0 : R * 0.25 * sz;
+          const spd = b === 0 ? 0 : 28 * spdM;
+          const life = b === 0 ? baseLife : baseLife * 0.85;
+          addFxPart({
+            kind: 'core3', x: x + Math.cos(a) * d, y: y + Math.sin(a) * d,
+            vx: Math.cos(a) * spd, vy: Math.sin(a) * spd, drag: 0.88,
+            col, r: (b === 0 ? R * 0.56 : R * 0.32) * sz,
+            smooth: p.smooth || 1.0, flicker: !!p.flicker, fakeGlow: p.fakeGlow !== false,
+            alpha: op, shape: sh, customPoly: poly, rot: a,
+            life, max: life
+          });
+        }
+        break;
+      }
+      case 'plasmaVortex': {
+        const arcCnt = Math.max(1, Math.round((p.count || 4) * Math.min(1.5, Math.max(0.6, countMult)) * cntPerfScale));
+        const vSpread = p.spread !== undefined ? p.spread : 1.0;
+        const vDur = Math.max(0.06, (p.duration || 0.36) * durMult);
+        for (let v = 0; v < arcCnt; v++) {
+          const ringStep = arcCnt > 1 ? (v / (arcCnt - 1)) : 0;
+          const radiusMult = 0.55 + ringStep * 0.65 * vSpread;
+          addFxPart({
+            kind: 'vortex', x, y, col,
+            r: R * 0.65 * radiusMult * sz,
+            ang: (v / arcCnt) * 6.283 + Math.random() * 0.4,
+            vRot: (v % 2 === 0 ? 1 : -1) * (6.5 + Math.random() * 3) * spdM,
+            span: 1.1 + Math.random() * 0.7,
+            lw: (p.thickness || 2.0) * (isBoss ? 1.2 : 1.0),
+            alpha: op,
+            life: vDur, max: vDur
+          });
+        }
+        break;
+      }
+      case 'rgbRing': {
+        const dur = Math.max(0.08, ((p.duration || 0.38) * durMult) / spdM);
+        const lw = (p.thickness || 2.0) * (isBoss ? 1.25 : 1.0);
+        const off = (p.offset !== undefined ? p.offset : 2.4) * Math.max(0.75, sizeMult);
+        fxLayerWaves.push({
+          x: x - off, y: y - off * 0.6,
+          maxR: R * 1.18 * sz, col: primaryCol, dur, t: 0, lw,
+          alpha: op, shape: sh, customPoly: poly
+        });
+        fxLayerWaves.push({
+          x: x + off, y: y + off * 0.6,
+          maxR: R * 1.10 * sz, col: dmgCol, dur: dur * 1.08, t: 0, lw,
+          alpha: op, shape: sh, customPoly: poly
+        });
+        break;
+      }
+      case 'coolingEmbers': {
+        const cnt = Math.max(1, Math.round((p.count || 8) * countMult * cntPerfScale));
+        const spread = p.spread !== undefined ? p.spread : 0.75;
+        const life = Math.max(0.12, ((p.duration || 0.90) * durMult) / Math.pow(spdM, 0.4));
+        for (let c = 0; c < cnt; c++) {
+          const a = Math.random() * 6.283;
+          const d = Math.random() * R * spread;
+          addFxPart({
+            kind: 'cool', x: x + Math.cos(a) * d, y: y + Math.sin(a) * d,
+            col, r: 1.7 * sz * Math.max(0.7, sizeMult * 0.85),
+            ph: Math.random() * 6.283, pulseSpd: 18 * spdM,
+            alpha: op, shape: sh, customPoly: poly,
+            life, max: life
+          });
+        }
+        break;
+      }
+      case 'sparks': {
+        const spCnt = Math.max(4, Math.round((p.count || 40) * countMult * cntPerfScale));
+        const sRng = Math.max(0.25, p.range !== undefined ? p.range : 1.2);
+        const sDrag = Math.pow(0.89, spdM / sRng);
+        const sLife = Math.max(0.06, ((p.duration || 0.36) * durMult) * (sRng / spdM));
+        for (let k = 0; k < spCnt; k++) {
+          const a = (k / spCnt) * 6.283 + (Math.random() - 0.5) * 0.4;
+          const spd = (95 + Math.random() * 165) * scale * spdM;
+          addFxPart({
+            kind: 'spark', x, y, px: x, py: y,
+            vx: Math.cos(a) * spd, vy: Math.sin(a) * spd, drag: sDrag,
+            col, temp: !!p.tempGradient, stretch: !!p.velocityStretch,
+            stretchMult: (p.stretch !== undefined ? p.stretch : 1.25) * (isBoss ? 1.25 : 1.0),
+            cf: p.centerFade !== undefined ? p.centerFade : 0.05,
+            r: 2.3 * sz * Math.max(0.75, Math.min(1.4, sizeMult)),
+            alpha: op, shape: sh, customPoly: poly,
+            life: sLife, max: sLife
+          });
+        }
+        break;
+      }
+    }
+  }
+}
+if (typeof window !== 'undefined') {
+  window.spawnEnemyBaseHitFx = spawnEnemyBaseHitFx;
 }
 
 function updateAndDrawFxLayers(dt, nowSec) {
@@ -9541,8 +9824,11 @@ function render(now) {
   let shakeY = 0;
 
   if (typeof cameraShakeTimer !== 'undefined' && cameraShakeTimer > 0) {
-    shakeX = (Math.random() - 0.5) * cameraShakeIntensity;
-    shakeY = (Math.random() - 0.5) * cameraShakeIntensity;
+    const maxDur = (typeof cameraShakeMaxDur !== 'undefined' && cameraShakeMaxDur > 0) ? cameraShakeMaxDur : 0.35;
+    const decay = Math.max(0, Math.min(1, cameraShakeTimer / maxDur));
+    const currentAmp = cameraShakeIntensity * decay;
+    shakeX = (Math.random() - 0.5) * currentAmp;
+    shakeY = (Math.random() - 0.5) * currentAmp;
   }
 
   const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');

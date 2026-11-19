@@ -545,6 +545,7 @@ function drawVariant4MobUnit(ctx, e, cfg, time, crowdLevel = 0) {
   const angle = ((cfg.pathRotation && typeof e.angle === 'number') ? e.angle : 0) + (e.hitTilt || 0);
 
   ctx.save();
+  const baseAlpha = ctx.globalAlpha;
   ctx.rotate(angle);
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
@@ -571,7 +572,7 @@ function drawVariant4MobUnit(ctx, e, cfg, time, crowdLevel = 0) {
   if (cfg.bossOrbitals && isBossOrMiniBoss) {
     ctx.save();
     ctx.strokeStyle = col;
-    ctx.globalAlpha = 0.55;
+    ctx.globalAlpha = baseAlpha * 0.55;
     ctx.lineWidth = 1.4;
     ctx.setLineDash([5, 4]);
     ctx.rotate(time * 1.1);
@@ -604,7 +605,7 @@ function drawVariant4MobUnit(ctx, e, cfg, time, crowdLevel = 0) {
       ctx.save();
       ctx.translate(-tIdx * 4.5, 0);
       ctx.scale(1 - tIdx * 0.08, 1 - tIdx * 0.08);
-      ctx.globalAlpha = 0.28 / tIdx;
+      ctx.globalAlpha = baseAlpha * (0.28 / tIdx);
       traceVariant4HullPath(ctx, id, r);
       ctx.stroke();
       ctx.restore();
@@ -621,10 +622,10 @@ function drawVariant4MobUnit(ctx, e, cfg, time, crowdLevel = 0) {
       const sx = -r * (0.85 + prog * 0.9);
       const sy = Math.sin(sp * 2.5 + time * 8) * r * 0.45 * (1 - prog * 0.5);
       const sz = (1 - prog) * 2.6;
-      ctx.globalAlpha = (1 - prog) * 0.75;
+      ctx.globalAlpha = baseAlpha * (1 - prog) * 0.75;
       ctx.fillRect(sx - sz * 0.5, sy - sz * 0.5, sz, sz);
     }
-    ctx.globalAlpha = 1.0;
+    ctx.globalAlpha = baseAlpha;
   }
 
   // --- #12. PLASMA THRUSTER PLUMES ---
@@ -634,7 +635,7 @@ function drawVariant4MobUnit(ctx, e, cfg, time, crowdLevel = 0) {
     ctx.fillStyle = thrustCol;
     ctx.shadowBlur = (allowLiveGlow && crowdLevel === 0) ? 5 : 0;
     if (ctx.shadowBlur > 0) ctx.shadowColor = thrustCol;
-    ctx.globalAlpha = 0.85;
+    ctx.globalAlpha = baseAlpha * 0.85;
 
     const drawNozzleFlame = (ny, nWidth) => {
       ctx.beginPath();
@@ -651,7 +652,7 @@ function drawVariant4MobUnit(ctx, e, cfg, time, crowdLevel = 0) {
     } else {
       drawNozzleFlame(0, r * 0.22);
     }
-    ctx.globalAlpha = 1.0;
+    ctx.globalAlpha = baseAlpha;
     ctx.shadowBlur = 0;
   }
 
@@ -660,12 +661,12 @@ function drawVariant4MobUnit(ctx, e, cfg, time, crowdLevel = 0) {
     const bowDist = r * (1.22 + ((time * 1.8) % 1) * 0.32);
     const bowAlpha = (1 - ((time * 1.8) % 1)) * 0.65;
     ctx.strokeStyle = '#ffffff';
-    ctx.globalAlpha = bowAlpha;
+    ctx.globalAlpha = baseAlpha * bowAlpha;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.arc(0, 0, bowDist, -0.55, 0.55);
     ctx.stroke();
-    ctx.globalAlpha = 1.0;
+    ctx.globalAlpha = baseAlpha;
   }
 
   // --- #4, #1, #3, #5, #14, #16, #17: БЫСТРЫЙ ВЫВОД ЗАКЭШИРОВАННОГО КОРПУСА ---
@@ -677,17 +678,17 @@ function drawVariant4MobUnit(ctx, e, cfg, time, crowdLevel = 0) {
   // --- #9. BEAT NEON BLOOM (лёгкая пульсация обводки на бит без shadowBlur) ---
   if (cfg.beatNeonBloom && kickEnv > 0.25 && crowdLevel < 2) {
     ctx.strokeStyle = '#ffffff';
-    ctx.globalAlpha = kickEnv * 0.35;
+    ctx.globalAlpha = baseAlpha * kickEnv * 0.35;
     ctx.lineWidth = 1.2;
     traceVariant4HullPath(ctx, id, r);
     ctx.stroke();
-    ctx.globalAlpha = 1.0;
+    ctx.globalAlpha = baseAlpha;
   }
 
   // --- #18. CORE TESLA ARCS ---
   if (cfg.coreTeslaArcs) {
     ctx.strokeStyle = (id === 'emp_bomber' || id === 'emp_overlord') ? '#f05f9f' : '#00e5ff';
-    ctx.globalAlpha = 0.78;
+    ctx.globalAlpha = baseAlpha * 0.78;
     ctx.lineWidth = 1.15;
     for (let k = 0; k < 2; k++) {
       const ang = time * 5.5 + k * Math.PI;
@@ -697,7 +698,7 @@ function drawVariant4MobUnit(ctx, e, cfg, time, crowdLevel = 0) {
       ctx.lineTo(Math.cos(ang) * r * 0.82, Math.sin(ang) * r * 0.82);
       ctx.stroke();
     }
-    ctx.globalAlpha = 1.0;
+    ctx.globalAlpha = baseAlpha;
   }
 
   // --- #7. VU-METER EQUALIZER BARS (Только у Боссов и Минибоссов) ---
@@ -903,6 +904,10 @@ function renderConfiguredEnemyModel(e, showHpBar = true) {
   const crowdLevel = totalEnemies >= 24 ? 2 : (totalEnemies >= 14 ? 1 : 0);
 
   ctx.save();
+  if (e.spawnTimer > 0) {
+    const spawnAlpha = Math.max(0, Math.min(1, 1 - e.spawnTimer / (e.spawnDuration || 0.22)));
+    ctx.globalAlpha *= spawnAlpha;
+  }
   const jx = (e.jitterTimer > 0) ? (Math.random() - 0.5) * 3.8 : 0;
   const jy = (e.jitterTimer > 0) ? (Math.random() - 0.5) * 3.8 : 0;
   ctx.translate(e.x + (e.kbX || 0) + jx, e.y + (e.kbY || 0) + jy);

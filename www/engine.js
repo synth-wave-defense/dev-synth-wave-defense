@@ -42,12 +42,55 @@ let bossAlertHideTimer = 0;
 let newTowerBannerHideTimer = 0;
 
 let cameraShakeTimer = 0;
+let cameraShakeMaxDur = 0;
 let cameraShakeIntensity = 0;
+let splashShakeCooldown = 0;
+let multiKillShakeCooldown = 0;
 
 // [ENG.A]
 function triggerCameraShake(dur = 0.5, intensity = 15) {
+  if (dur <= 0 || intensity <= 0) return;
+  const currentRemaining = (cameraShakeTimer > 0 && cameraShakeMaxDur > 0)
+    ? cameraShakeIntensity * (cameraShakeTimer / cameraShakeMaxDur)
+    : 0;
+  if (intensity < currentRemaining) return;
   cameraShakeTimer = dur;
+  cameraShakeMaxDur = dur;
   cameraShakeIntensity = intensity;
+}
+
+// [ENG.AM_SHAKE] Единый синхронизированный диспетчер тряски камеры и виброотклика
+function triggerImpactFeedback(shakeTier, hapticTier = 'none', options = {}) {
+  const opts = options || {};
+  if (opts.isSplash) {
+    if (splashShakeCooldown > 0) return;
+    if (typeof enemies !== 'undefined' && enemies.length > 25) return;
+    splashShakeCooldown = 0.35;
+  }
+  if (opts.isMultiKill) {
+    if (multiKillShakeCooldown > 0) return;
+    multiKillShakeCooldown = 0.60;
+  }
+
+  let dur = 0;
+  let intensity = 0;
+  if (shakeTier === 'light') {
+    dur = (typeof opts.dur === 'number') ? opts.dur : (opts.isSplash ? 0.13 : 0.14);
+    intensity = (typeof opts.intensity === 'number') ? opts.intensity : 3;
+  } else if (shakeTier === 'medium') {
+    dur = (typeof opts.dur === 'number') ? opts.dur : 0.24;
+    intensity = (typeof opts.intensity === 'number') ? opts.intensity : 7;
+  } else if (shakeTier === 'heavy') {
+    dur = (typeof opts.dur === 'number') ? opts.dur : 0.38;
+    intensity = (typeof opts.intensity === 'number') ? opts.intensity : 14;
+  }
+
+  if (shakeTier && shakeTier !== 'none' && dur > 0 && intensity > 0) {
+    triggerCameraShake(dur, intensity);
+  }
+  if (hapticTier && hapticTier !== 'none') {
+    vibrate(hapticTier);
+  }
 }
 
 // [ENG.AA_ADS] Диагностический объект рекламы для Dev-панели
@@ -368,8 +411,17 @@ function musicSetDucked(on, dur) {
 
 // Функция вибрации (должна быть доступна глобально):
 // [ENG.T]
+let lastLightVibrateTime = 0;
+
 function vibrate(type = 'light') {
   if (!settings || !settings.vibrationEnabled) return;
+  const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+  if (type === 'light') {
+    if (now - lastLightVibrateTime < 260) return;
+    lastLightVibrateTime = now;
+  } else if (type === 'heavy' || type === 'error' || type === 'warning') {
+    lastLightVibrateTime = now + 100;
+  }
   try {
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics) {
       const Haptics = window.Capacitor.Plugins.Haptics;
@@ -2374,6 +2426,11 @@ function resetLevelState() {
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
   reviveUsedThisMatch = false;
   sessionMobKillsCount = 0;
+  cameraShakeTimer = 0;
+  cameraShakeMaxDur = 0;
+  cameraShakeIntensity = 0;
+  splashShakeCooldown = 0;
+  multiKillShakeCooldown = 0;
 
   const lvlConfig = LEVELS_DATA[currentLevel];
   gold = lvlConfig ? lvlConfig.startGold : 100;
@@ -2822,7 +2879,7 @@ function triggerVictory() {
   sfxStopBeams();
   music('win');
   sfx('victory');
-  vibrate('medium');
+  vibrate('light');
   const { stars, reward, rewardLabel, rewardKey } = calculateLevelStarsAndReward(currentLevel, baseHp, matchStartBaseHp);
   lastVictoryDiamondsReward = reward;
   hasClaimedX2ThisLevel = false;
@@ -3307,8 +3364,11 @@ function updateRevivePromptHeadings() {
 }
 
 // [ENG.CK]
+let isReviveAdPending = false;
+
 function triggerEmergencyRevivePrompt() {
   gameState = 'DEFEAT';
+  isReviveAdPending = false;
   if (typeof syncTopHudVisibility === 'function') syncTopHudVisibility();
   musicSetDucked(true);
   reviveRemainingSeconds = 3;
@@ -3330,6 +3390,7 @@ function triggerEmergencyRevivePrompt() {
   const shopBtn = document.getElementById('defeatShopBtn');
   
   if (reviveBtn) {
+    reviveBtn.disabled = false;
     reviveBtn.classList.remove('hidden');
     const reviveIcon = getStandardAdIconSvg();
     const reviveText = (typeof t === 'function' ? t('revive') : 'REVIVE');
@@ -3367,6 +3428,7 @@ function triggerEmergencyRevivePrompt() {
   if (reviveTimerInterval) clearInterval(reviveTimerInterval);
   // [ENG.CM]
   reviveTimerInterval = setInterval(() => {
+    if (isReviveAdPending) return;
     reviveRemainingSeconds--;
     if (reviveBtn && reviveRemainingSeconds > 0) {
       setReviveBtnLabel(reviveRemainingSeconds);
@@ -3379,6 +3441,7 @@ function triggerEmergencyRevivePrompt() {
 
 // [ENG.CN]
 function finishRevivePromptWindow() {
+  isReviveAdPending = false;
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
   if (reviveSkipShowTimer) { clearTimeout(reviveSkipShowTimer); reviveSkipShowTimer = null; }
   musicSetDucked(false);
@@ -3401,7 +3464,10 @@ function finishRevivePromptWindow() {
   const levelsBtn = document.getElementById('defeatLevelsBtn');
   const shopBtn = document.getElementById('defeatShopBtn');
 
-  if (reviveBtn) reviveBtn.classList.add('hidden');
+  if (reviveBtn) {
+    reviveBtn.disabled = false;
+    reviveBtn.classList.add('hidden');
+  }
   if (skipBtn) skipBtn.classList.add('hidden');
   if (retryBtn) retryBtn.classList.toggle('hidden', !!isEndlessMode);
   if (upgBtn) upgBtn.classList.remove('hidden');
@@ -3417,18 +3483,27 @@ function finishRevivePromptWindow() {
 
 // [ENG.CO]
 function skipEmergencyRevive() {
+  if (isReviveAdPending) return;
   finishRevivePromptWindow();
 }
 
 // [ENG.CP]
 function acceptEmergencyRevive() {
+  if (isReviveAdPending) return;
+  isReviveAdPending = true;
+
+  const reviveBtn = document.getElementById('reviveBtn');
+  if (reviveBtn) reviveBtn.disabled = true;
   sfx('revive');
-  if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
-  if (reviveSkipShowTimer) { clearTimeout(reviveSkipShowTimer); reviveSkipShowTimer = null; }
-  document.getElementById('defeatScreen').classList.add('hidden');
 
   // [ENG.CQ]
   const executeRevive = () => {
+    isReviveAdPending = false;
+    if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
+    if (reviveSkipShowTimer) { clearTimeout(reviveSkipShowTimer); reviveSkipShowTimer = null; }
+    if (reviveBtn) reviveBtn.disabled = false;
+    const defeatScreen = document.getElementById('defeatScreen');
+    if (defeatScreen) defeatScreen.classList.add('hidden');
     musicSetDucked(false);
     baseHp = Math.max(3, Math.round(matchStartBaseHp * 0.5));
     reviveUsedThisMatch = true;
@@ -3442,8 +3517,7 @@ function acceptEmergencyRevive() {
       createShockwave(basePt.x, basePt.y, fw * 0.3, '#38bdf8');
       if (typeof createExplosion === 'function') createExplosion(basePt.x, basePt.y, 100);
       if (typeof createDamageShards === 'function') createDamageShards(basePt.x, basePt.y, '#00e5ff', 50, false);
-      triggerCameraShake(0.5, 16);
-      vibrate('heavy');
+      triggerImpactFeedback('heavy', 'heavy', { dur: 0.5, intensity: 16 });
       sfx('bossIncoming');
       sfx('revive');
 
@@ -3526,11 +3600,24 @@ function acceptEmergencyRevive() {
       });
     }
     gameState = 'PLAYING';
+    if (typeof syncTopHudVisibility === 'function') syncTopHudVisibility();
     updateUI();
     lastTime = performance.now();
   };
 
-  showAdPlaceholder(executeRevive, null);
+  const onNotRewarded = () => {
+    isReviveAdPending = false;
+    if (reviveBtn) reviveBtn.disabled = false;
+    if (reviveRemainingSeconds <= 0) {
+      finishRevivePromptWindow();
+      return;
+    }
+    const skipBtn = document.getElementById('reviveSkipBtn');
+    if (skipBtn) skipBtn.classList.remove('hidden');
+    if (reviveBtn) setReviveBtnLabel(reviveRemainingSeconds);
+  };
+
+  showAdPlaceholder(executeRevive, onNotRewarded);
 }
 
 // Tower Construction & Inspection Management: Build, upgrade, sell, and drag-and-drop placement logic.
@@ -4387,8 +4474,14 @@ function applyEnemyHitReaction(e, dirAngle, isBeam) {
 function update(dt) {
   if (cameraShakeTimer > 0) {
     cameraShakeTimer -= dt;
-    if (cameraShakeTimer < 0) cameraShakeTimer = 0;
+    if (cameraShakeTimer <= 0) {
+      cameraShakeTimer = 0;
+      cameraShakeMaxDur = 0;
+      cameraShakeIntensity = 0;
+    }
   }
+  if (splashShakeCooldown > 0) splashShakeCooldown = Math.max(0, splashShakeCooldown - dt);
+  if (multiKillShakeCooldown > 0) multiKillShakeCooldown = Math.max(0, multiKillShakeCooldown - dt);
 
   // Расчет плавной разморозки с защитой от NaN / деления на 0
   let thawMult = 1.0;
@@ -4507,7 +4600,9 @@ function update(dt) {
           dashTimer: 0,
           summonTimer: 0,
           empTimer: 0,
-          slowTimer: 0
+          slowTimer: 0,
+          spawnTimer: 0.22,
+          spawnDuration: 0.22
         };
 
         if (isOverdriveMode && !eData.isBoss && !eData.isMiniBoss) {
@@ -4521,6 +4616,9 @@ function update(dt) {
         }
 
         enemies.push(spawnedEnemy);
+        if (typeof spawnEnemySpawnFx === 'function') {
+          spawnEnemySpawnFx(spawnX, spawnY, spawnedEnemy);
+        }
       }
       spawnTimer += (eData.interval || 0.8);
 
@@ -4555,11 +4653,12 @@ function update(dt) {
   for (let i = enemies.length - 1; i >= 0; i--) {
     const e = enemies[i];
 
-    // Пружинящий возврат физических реакций (ENEMY_REACTIONS)
+    // Пружинящий возврат физических реакций (ENEMY_REACTIONS) и таймер материализации
     if (e.kbX) e.kbX *= Math.exp(-18 * dt);
     if (e.kbY) e.kbY *= Math.exp(-18 * dt);
     if (e.hitTilt) e.hitTilt *= Math.exp(-14 * dt);
     if (e.jitterTimer > 0) e.jitterTimer = Math.max(0, e.jitterTimer - dt);
+    if (e.spawnTimer > 0) e.spawnTimer = Math.max(0, e.spawnTimer - dt);
 
     // Анимация ударной волны базы при Revive
     if (e.revivePushAnim) {
@@ -4705,7 +4804,7 @@ function update(dt) {
         const swGlow = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS.swarm) ? ENEMY_CONFIGS.swarm.glow : swCol;
         createShockwave(e.x, e.y, 65, swCol);
         for (let s = 0; s < 3; s++) {
-          enemies.push({
+          const drone = {
             x: e.x + (Math.random() - 0.5) * 16,
             y: e.y + (Math.random() - 0.5) * 16,
             angle: e.angle,
@@ -4722,8 +4821,14 @@ function update(dt) {
             baseSpeed: 95,
             bounty: 3,
             radius: 8,
-            slowTimer: 0
-          });
+            slowTimer: 0,
+            spawnTimer: 0.22,
+            spawnDuration: 0.22
+          };
+          enemies.push(drone);
+          if (typeof spawnEnemySpawnFx === 'function') {
+            spawnEnemySpawnFx(drone.x, drone.y, drone);
+          }
         }
       }
     }
@@ -4875,8 +4980,18 @@ function update(dt) {
       saveActiveBattleSnapshot();
       saveGameSoon();
       sfx('baseHit');
-      vibrate('warning');
-      createShockwave(e.x, e.y, e.isBoss ? 80 : (e.isMiniBoss ? 50 : 35), '#f05f9f');
+      if (typeof spawnEnemyBaseHitFx === 'function') {
+        spawnEnemyBaseHitFx(e.x, e.y, e);
+      } else {
+        createShockwave(e.x, e.y, e.isBoss ? 80 : (e.isMiniBoss ? 50 : 35), '#f05f9f');
+      }
+      if (e.isBoss || damageToBasePath >= 4) {
+        triggerImpactFeedback('heavy', 'heavy', { dur: 0.40, intensity: 14 });
+      } else if (e.isMiniBoss || (damageToBasePath >= 2 && damageToBasePath <= 3)) {
+        triggerImpactFeedback('medium', 'heavy');
+      } else if (damageToBasePath === 1) {
+        triggerImpactFeedback('light', 'light');
+      }
       enemies.splice(i, 1);
       updateUI();
       if (baseHp <= 0) {
@@ -5237,6 +5352,7 @@ function update(dt) {
         const beamEndX = t.x + Math.cos(t.angle) * beamLength;
         const beamEndY = t.y + Math.sin(t.angle) * beamLength;
         let railShardCount = 0;
+        let nonSwarmKills = 0;
 
         for (let j = 0; j < enemies.length; j++) {
           const e = enemies[j];
@@ -5253,7 +5369,11 @@ function update(dt) {
           const hitR = e.radius + 14;
 
           if (distSq <= hitR * hitR && !e.isShielded) {
+            const wasAlive = e.hp > 0;
             e.hp -= t.damage;
+            if (wasAlive && e.hp <= 0 && e.type !== 'swarm') {
+              nonSwarmKills++;
+            }
             checkEnemyEnrage(e);
             applyEnemyHitReaction(e, t.angle, false);
             if (typeof createFloatingDamage === 'function') {
@@ -5272,6 +5392,12 @@ function update(dt) {
               }
             }
           }
+        }
+
+        if (nonSwarmKills >= 8) {
+          triggerImpactFeedback('heavy', 'light', { dur: 0.35, intensity: 12 });
+        } else if (nonSwarmKills >= 4) {
+          triggerImpactFeedback('medium', 'light', { isMultiKill: true });
         }
 
         if (typeof createRailBeamFx === 'function') {
@@ -5333,6 +5459,8 @@ function update(dt) {
         let hitEnemyColor = (p.targetRef && enemies.includes(p.targetRef)) ? p.targetRef.color : null;
         const splashSq = p.splash * p.splash;
         let shardSpawnCount = 0;
+        let hitCount = 0;
+        let nonSwarmKills = 0;
 
         for (let j = 0; j < enemies.length; j++) {
           const e = enemies[j];
@@ -5341,10 +5469,15 @@ function update(dt) {
           const distSq = dx * dx + dy * dy;
 
           if (distSq <= splashSq && !e.isShielded) {
+            hitCount++;
             if (!hitEnemyColor) hitEnemyColor = e.color;
             const d = Math.sqrt(distSq);
             const splashDmg = p.damage * (1 - d / (p.splash * 1.3));
+            const wasAlive = e.hp > 0;
             e.hp -= splashDmg;
+            if (wasAlive && e.hp <= 0 && e.type !== 'swarm') {
+              nonSwarmKills++;
+            }
             checkEnemyEnrage(e);
             const blastDir = Math.atan2(e.y - p.targetY, e.x - p.targetX);
             applyEnemyHitReaction(e, blastDir, false);
@@ -5358,6 +5491,13 @@ function update(dt) {
               shardSpawnCount++;
             }
           }
+        }
+        if (nonSwarmKills >= 8) {
+          triggerImpactFeedback('heavy', 'light', { dur: 0.35, intensity: 12 });
+        } else if (nonSwarmKills >= 4) {
+          triggerImpactFeedback('medium', 'light', { isMultiKill: true });
+        } else if (hitCount > 0) {
+          triggerImpactFeedback('light', 'light', { isSplash: true });
         }
         if (typeof spawnTowerHitFx === 'function') {
           spawnTowerHitFx('mortar', p.targetX, p.targetY, null, p.color, p.splash);
@@ -5399,11 +5539,14 @@ function update(dt) {
       }
 
       if (e.isBoss || e.isMiniBoss) {
-        vibrate('heavy');
-        if (e.isBoss && typeof triggerCameraShake === 'function') {
-          triggerCameraShake(0.32, 9);
+        if (e.isBoss) {
+          triggerImpactFeedback('heavy', 'heavy', { dur: 0.38, intensity: 14 });
+        } else {
+          triggerImpactFeedback('medium', 'light');
         }
         createExplosion(e.x, e.y, e.isBoss ? 52 : 28, e.color, e.glow || e.color, 'boss');
+      } else if (e.isElite) {
+        triggerImpactFeedback('medium', 'light');
       }
 
       createDamageShards(e.x, e.y, e.color, e.isBoss ? 120 : (e.isMiniBoss ? 60 : 35), true);
