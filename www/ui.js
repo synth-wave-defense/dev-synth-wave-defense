@@ -10071,12 +10071,12 @@ function render(now) {
         if (e._fxJitBeam) {
           e._fxJitStep = (e._fxJitStep || 0) - fxDt;
           if (e._fxJitStep <= 0) {
-            e._fxJitStep = 0.1;
-            e._fxJx = (Math.random() - 0.5) * 1.0;
-            e._fxJy = (Math.random() - 0.5) * 1.0;
+            e._fxJitStep = 1.0; // <-- частота смены позиции (раз в 0.1 сек = 10 Гц), тряска, дрожь при попадании
+            e._fxJx = (Math.random() - 0.5) * 8.0; // <-- амплитуда для лазера/мелтера
+            e._fxJy = (Math.random() - 0.5) * 8.0;
           }
         } else {
-          e._fxJx = (Math.random() - 0.5) * 3.8;
+          e._fxJx = (Math.random() - 0.5) * 3.8; // <-- амплитуда для обычных попаданий
           e._fxJy = (Math.random() - 0.5) * 3.8;
         }
       } else {

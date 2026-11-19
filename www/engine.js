@@ -44,8 +44,6 @@ let newTowerBannerHideTimer = 0;
 let cameraShakeTimer = 0;
 let cameraShakeMaxDur = 0;
 let cameraShakeIntensity = 0;
-let splashShakeCooldown = 0;
-let multiKillShakeCooldown = 0;
 
 // [ENG.A]
 function triggerCameraShake(dur = 0.5, intensity = 15) {
@@ -62,30 +60,25 @@ function triggerCameraShake(dur = 0.5, intensity = 15) {
 // [ENG.AM_SHAKE] Единый синхронизированный диспетчер тряски камеры и виброотклика
 function triggerImpactFeedback(shakeTier, hapticTier = 'none', options = {}) {
   const opts = options || {};
-  if (opts.isSplash) {
-    if (splashShakeCooldown > 0) return;
-    if (typeof enemies !== 'undefined' && enemies.length > 25) return;
-    splashShakeCooldown = 0.35;
-  }
-  if (opts.isMultiKill) {
-    if (multiKillShakeCooldown > 0) return;
-    multiKillShakeCooldown = 0.60;
+  let effectiveShakeTier = shakeTier;
+  if (opts.isSplash && typeof enemies !== 'undefined' && enemies.length > 18) {
+    effectiveShakeTier = 'none';
   }
 
   let dur = 0;
   let intensity = 0;
-  if (shakeTier === 'light') {
+  if (effectiveShakeTier === 'light') {
     dur = (typeof opts.dur === 'number') ? opts.dur : (opts.isSplash ? 0.13 : 0.14);
     intensity = (typeof opts.intensity === 'number') ? opts.intensity : 3;
-  } else if (shakeTier === 'medium') {
+  } else if (effectiveShakeTier === 'medium') {
     dur = (typeof opts.dur === 'number') ? opts.dur : 0.24;
     intensity = (typeof opts.intensity === 'number') ? opts.intensity : 7;
-  } else if (shakeTier === 'heavy') {
+  } else if (effectiveShakeTier === 'heavy') {
     dur = (typeof opts.dur === 'number') ? opts.dur : 0.38;
     intensity = (typeof opts.intensity === 'number') ? opts.intensity : 14;
   }
 
-  if (shakeTier && shakeTier !== 'none' && dur > 0 && intensity > 0) {
+  if (effectiveShakeTier && effectiveShakeTier !== 'none' && dur > 0 && intensity > 0) {
     triggerCameraShake(dur, intensity);
   }
   if (hapticTier && hapticTier !== 'none') {
@@ -411,17 +404,8 @@ function musicSetDucked(on, dur) {
 
 // Функция вибрации (должна быть доступна глобально):
 // [ENG.T]
-let lastLightVibrateTime = 0;
-
 function vibrate(type = 'light') {
   if (!settings || !settings.vibrationEnabled) return;
-  const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-  if (type === 'light') {
-    if (now - lastLightVibrateTime < 260) return;
-    lastLightVibrateTime = now;
-  } else if (type === 'heavy' || type === 'error' || type === 'warning') {
-    lastLightVibrateTime = now + 100;
-  }
   try {
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics) {
       const Haptics = window.Capacitor.Plugins.Haptics;
@@ -2429,8 +2413,6 @@ function resetLevelState() {
   cameraShakeTimer = 0;
   cameraShakeMaxDur = 0;
   cameraShakeIntensity = 0;
-  splashShakeCooldown = 0;
-  multiKillShakeCooldown = 0;
 
   const lvlConfig = LEVELS_DATA[currentLevel];
   gold = lvlConfig ? lvlConfig.startGold : 100;
@@ -4480,8 +4462,6 @@ function update(dt) {
       cameraShakeIntensity = 0;
     }
   }
-  if (splashShakeCooldown > 0) splashShakeCooldown = Math.max(0, splashShakeCooldown - dt);
-  if (multiKillShakeCooldown > 0) multiKillShakeCooldown = Math.max(0, multiKillShakeCooldown - dt);
 
   // Расчет плавной разморозки с защитой от NaN / деления на 0
   let thawMult = 1.0;
