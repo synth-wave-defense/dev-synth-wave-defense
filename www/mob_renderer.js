@@ -908,9 +908,8 @@ function renderConfiguredEnemyModel(e, showHpBar = true) {
     const spawnAlpha = Math.max(0, Math.min(1, 1 - e.spawnTimer / (e.spawnDuration || 0.22)));
     ctx.globalAlpha *= spawnAlpha;
   }
-  const jx = (e.jitterTimer > 0) ? (Math.random() - 0.5) * 3.8 : 0;
-  const jy = (e.jitterTimer > 0) ? (Math.random() - 0.5) * 3.8 : 0;
-  ctx.translate(e.x + (e.kbX || 0) + jx, e.y + (e.kbY || 0) + jy);
+  
+  ctx.translate(e.x + (e.kbX || 0), e.y + (e.kbY || 0));
 
   // 1. Аура элитного моба (isElite)
   if (e.isElite) {
