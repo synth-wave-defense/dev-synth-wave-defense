@@ -4360,6 +4360,29 @@ window.buyShopIAP = buyShopIAP;
 // Navigation & Screen Transition Helpers: Start screen, level selection, and chapter label controllers.
 // Simulation Step Update Pipeline: Enemy movement, tower targeting, projectile physics, and status effects.
 // javascript-obfuscator: disable
+// [ENG.DPM] Вспомогательные функции физических реакций врагов на попадание (ENEMY_REACTIONS)
+function normalizeAngle(a) {
+  while (a > Math.PI) a -= Math.PI * 2;
+  while (a < -Math.PI) a += Math.PI * 2;
+  return a;
+}
+
+function applyEnemyHitReaction(e, dirAngle, isBeam) {
+  if (!e || typeof ENEMY_REACTIONS === 'undefined' || !ENEMY_REACTIONS) return;
+  const hasAngle = (typeof dirAngle === 'number' && isFinite(dirAngle));
+  if (ENEMY_REACTIONS.knockback && !isBeam && !e.isBoss && hasAngle) {
+    e.kbX = Math.cos(dirAngle) * 3.5;
+    e.kbY = Math.sin(dirAngle) * 3.5;
+  }
+  if (ENEMY_REACTIONS.jitter) {
+    e.jitterTimer = 0.105;
+  }
+  if (ENEMY_REACTIONS.hitTilt && !isBeam && hasAngle) {
+    const relAngle = normalizeAngle(dirAngle - (e.angle || 0));
+    e.hitTilt = (relAngle >= 0 ? 1 : -1) * 0.14;
+  }
+}
+
 // [ENG.DQ]
 function update(dt) {
   if (cameraShakeTimer > 0) {
@@ -4531,6 +4554,12 @@ function update(dt) {
   // Обновление состояния и перемещение врагов
   for (let i = enemies.length - 1; i >= 0; i--) {
     const e = enemies[i];
+
+    // Пружинящий возврат физических реакций (ENEMY_REACTIONS)
+    if (e.kbX) e.kbX *= Math.exp(-18 * dt);
+    if (e.kbY) e.kbY *= Math.exp(-18 * dt);
+    if (e.hitTilt) e.hitTilt *= Math.exp(-14 * dt);
+    if (e.jitterTimer > 0) e.jitterTimer = Math.max(0, e.jitterTimer - dt);
 
     // Анимация ударной волны базы при Revive
     if (e.revivePushAnim) {
@@ -4922,14 +4951,20 @@ function update(dt) {
         const barrelSide = (t.shotIndex === 0) ? -3.6 : 3.6;
         const cosA = Math.cos(t.angle);
         const sinA = Math.sin(t.angle);
+        const mx = t.x + cosA * 24 - sinA * barrelSide;
+        const my = t.y + sinA * 24 + cosA * barrelSide;
+        if (typeof spawnTowerMuzzleFx === 'function') {
+          spawnTowerMuzzleFx('gun', mx, my, t.angle, t.color);
+        }
         projectiles.push({
           type: 'bullet',
-          x: t.x + cosA * 24 - sinA * barrelSide,
-          y: t.y + sinA * 24 + cosA * barrelSide,
+          x: mx,
+          y: my,
           target: target,
           damage: t.damage,
           speed: 460,
-          color: t.color
+          color: t.color,
+          hasTrail: true
         });
       }
     }
@@ -4965,12 +5000,25 @@ function update(dt) {
           t.accumTimer -= 1.0;
         }
 
-        if (Math.random() < 0.25) {
-          createDamageShards(target.x, target.y, target.color, dDmg * 4, false);
-          createImpactSmoke(target.x, target.y, 8);
+        applyEnemyHitReaction(target, t.angle, true);
+        t.fxAccum = (t.fxAccum || 0) + dt;
+        if (t.fxAccum >= 0.10) {
+          t.fxAccum -= 0.10;
+          if (t.fxAccum >= 0.10) t.fxAccum = 0;
+          if (typeof spawnTowerHitFx === 'function') {
+            spawnTowerHitFx('laser', target.x, target.y, t.angle, t.color, target.radius);
+          } else {
+            if (typeof createHitImpactFx === 'function') {
+              createHitImpactFx(target.x, target.y, t.color || '#f05f9f', 'bullet', t.angle);
+            } else {
+              createDamageShards(target.x, target.y, target.color, dDmg * 4, false);
+            }
+            if (Math.random() < 0.5) createImpactSmoke(target.x, target.y, 8);
+          }
         }
       } else {
         t.accumTarget = null;
+        t.fxAccum = 0;
       }
     }
 
@@ -4985,6 +5033,9 @@ function update(dt) {
         const launchX = t.x + Math.cos(t.angle) * muzzleDist;
         const launchY = t.y + Math.sin(t.angle) * muzzleDist;
         const range = Math.hypot(target.x - launchX, target.y - launchY);
+        if (typeof spawnTowerMuzzleFx === 'function') {
+          spawnTowerMuzzleFx('mortar', launchX, launchY, t.angle, t.color);
+        }
         projectiles.push({
           type: 'mortar_shell',
           x: launchX,
@@ -5056,7 +5107,11 @@ function update(dt) {
       if (t.lastFire >= t.fireRate) {
         t.lastFire = 0;
         sfx('stasis');
-        createShockwave(t.x, t.y, t.range, t.color);
+        if (typeof spawnTowerHitFx === 'function') {
+          spawnTowerHitFx('stasis', t.x, t.y, null, t.color, t.range);
+        } else {
+          createShockwave(t.x, t.y, t.range, t.color);
+        }
         enemies.forEach(e => {
           const dxS = e.x - t.x;
           const dyS = e.y - t.y;
@@ -5122,10 +5177,25 @@ function update(dt) {
             t.accumTimer -= 1.0;
           }
 
-          if (Math.random() < 0.3) {
-            createDamageShards(target.x, target.y, target.color, dDmg * 3, false);
-            createImpactSmoke(target.x, target.y, 9 + rampProgress * 5);
+          applyEnemyHitReaction(target, t.angle, true);
+          t.fxAccum = (t.fxAccum || 0) + dt;
+          if (t.fxAccum >= 0.10) {
+            t.fxAccum -= 0.10;
+            if (t.fxAccum >= 0.10) t.fxAccum = 0;
+            if (typeof spawnTowerHitFx === 'function') {
+              spawnTowerHitFx('melter', target.x, target.y, t.angle, t.color, target.radius);
+            } else {
+              const sparkCol = rampProgress > 0.7 ? '#ffffff' : (rampProgress > 0.35 ? '#fb923c' : (t.color || '#e85268'));
+              if (typeof createHitImpactFx === 'function') {
+                createHitImpactFx(target.x, target.y, sparkCol, 'bullet', t.angle);
+              } else {
+                createDamageShards(target.x, target.y, target.color, dDmg * 3, false);
+              }
+              createImpactSmoke(target.x, target.y, 9 + rampProgress * 6);
+            }
           }
+        } else {
+          t.fxAccum = 0;
         }
 
         checkEnemyEnrage(target);
@@ -5155,6 +5225,14 @@ function update(dt) {
         t.lastFire = 0;
         sfx('railgun');
 
+        const rMuzzleDist = (typeof TOWER_GLYPH_SPECS !== 'undefined' && TOWER_GLYPH_SPECS.railgun && TOWER_GLYPH_SPECS.railgun.muzzle)
+          ? TOWER_GLYPH_SPECS.railgun.muzzle.atX : 26;
+        const rMx = t.x + Math.cos(t.angle) * rMuzzleDist;
+        const rMy = t.y + Math.sin(t.angle) * rMuzzleDist;
+        if (typeof spawnTowerMuzzleFx === 'function') {
+          spawnTowerMuzzleFx('railgun', rMx, rMy, t.angle, t.color);
+        }
+
         const beamLength = 3500;
         const beamEndX = t.x + Math.cos(t.angle) * beamLength;
         const beamEndY = t.y + Math.sin(t.angle) * beamLength;
@@ -5177,13 +5255,21 @@ function update(dt) {
           if (distSq <= hitR * hitR && !e.isShielded) {
             e.hp -= t.damage;
             checkEnemyEnrage(e);
+            applyEnemyHitReaction(e, t.angle, false);
             if (typeof createFloatingDamage === 'function') {
               createFloatingDamage(e.x, e.y, t.damage, t.color || '#a275df');
             }
-            if (railShardCount < 4) {
-              createDamageShards(e.x, e.y, e.color, t.damage, false);
-              if (typeof createImpactSmoke === 'function') createImpactSmoke(e.x, e.y, 12);
-              railShardCount++;
+            if (typeof spawnTowerHitFx === 'function') {
+              spawnTowerHitFx('railgun', e.x, e.y, t.angle, t.color, e.radius);
+            } else {
+              if (typeof createHitImpactFx === 'function') {
+                createHitImpactFx(e.x, e.y, t.color || '#a275df', 'railgun', t.angle);
+              }
+              if (railShardCount < 4) {
+                createDamageShards(e.x, e.y, e.color, t.damage, false);
+                if (typeof createImpactSmoke === 'function') createImpactSmoke(e.x, e.y, 12);
+                railShardCount++;
+              }
             }
           }
         }
@@ -5195,7 +5281,7 @@ function update(dt) {
     }
   });
 
-  // Полет пуль и снарядов мортиры
+// Полет пуль и снарядов мортиры
   for (let i = projectiles.length - 1; i >= 0; i--) {
     const p = projectiles[i];
     if (p.type === 'bullet') {
@@ -5204,6 +5290,7 @@ function update(dt) {
       const dy = p.target.y - p.y;
       const dist = Math.hypot(dx, dy);
       const step = p.speed * dt;
+      const hitAngle = Math.atan2(dy, dx);
 
       if (dist <= step) {
         if (!p.target.isShielded) {
@@ -5212,10 +5299,22 @@ function update(dt) {
           if (typeof createFloatingDamage === 'function') {
             createFloatingDamage(p.target.x, p.target.y, p.damage, p.color || '#00e5ff');
           }
-          createShockwave(p.target.x, p.target.y, 14, p.color || '#00e5ff');
-          createDamageShards(p.target.x, p.target.y, p.target.color, p.damage, false);
-          createImpactSmoke(p.target.x, p.target.y, 11);
+          applyEnemyHitReaction(p.target, hitAngle, false);
+          if (typeof spawnTowerHitFx === 'function') {
+            spawnTowerHitFx('gun', p.target.x, p.target.y, hitAngle, p.color, p.target.radius);
+          } else {
+            if (typeof createHitImpactFx === 'function') {
+              createHitImpactFx(p.target.x, p.target.y, p.color || '#00e5ff', 'bullet', hitAngle);
+            } else {
+              createShockwave(p.target.x, p.target.y, 14, p.color || '#00e5ff');
+            }
+            createDamageShards(p.target.x, p.target.y, p.target.color, p.damage, false);
+            createImpactSmoke(p.target.x, p.target.y, 11);
+          }
         } else {
+          if (typeof createHitImpactFx === 'function') {
+            createHitImpactFx(p.target.x, p.target.y, '#60a5fa', 'shield', hitAngle);
+          }
           createDamageShards(p.target.x, p.target.y, '#60a5fa', 10, false);
         }
         projectiles.splice(i, 1);
@@ -5247,19 +5346,24 @@ function update(dt) {
             const splashDmg = p.damage * (1 - d / (p.splash * 1.3));
             e.hp -= splashDmg;
             checkEnemyEnrage(e);
+            const blastDir = Math.atan2(e.y - p.targetY, e.x - p.targetX);
+            applyEnemyHitReaction(e, blastDir, false);
             if (typeof createFloatingDamage === 'function') {
               createFloatingDamage(e.x, e.y, splashDmg, p.color || '#ff9100');
             }
 
-            if (shardSpawnCount < 3) {
+            if (typeof spawnTowerHitFx !== 'function' && shardSpawnCount < 3) {
               createDamageShards(e.x, e.y, e.color, splashDmg, false);
               if (typeof createImpactSmoke === 'function') createImpactSmoke(e.x, e.y, 10);
               shardSpawnCount++;
             }
           }
         }
-        createExplosion(p.targetX, p.targetY, p.splash, p.color || '#ff9100', '#f05f9f', 'mortar');
-        createShockwave(p.targetX, p.targetY, p.splash * 1.15, p.color || '#ff9100');
+        if (typeof spawnTowerHitFx === 'function') {
+          spawnTowerHitFx('mortar', p.targetX, p.targetY, null, p.color, p.splash);
+        } else {
+          createExplosion(p.targetX, p.targetY, p.splash, p.color || '#ff9100', '#f05f9f', 'mortar');
+        }
         projectiles.splice(i, 1);
       }
     }
@@ -5282,6 +5386,9 @@ function update(dt) {
       if (e.type === 'emp_bomber') {
         sfx('stasis');
         createShockwave(e.x, e.y, 110, '#f05f9f');
+        if (typeof createExplosion === 'function') {
+          createExplosion(e.x, e.y, 48, '#f05f9f', '#38bdf8', 'standard');
+        }
         towers.forEach(t => {
           if (Math.hypot(t.x - e.x, t.y - e.y) <= 110) {
             t.disabledTimer = Math.max(t.disabledTimer || 0, 3.0);
@@ -5293,8 +5400,10 @@ function update(dt) {
 
       if (e.isBoss || e.isMiniBoss) {
         vibrate('heavy');
-        createShockwave(e.x, e.y, e.isBoss ? 80 : 50, e.color);
-        createExplosion(e.x, e.y, e.isBoss ? 45 : 22, e.color, e.glow || e.color, 'boss');
+        if (e.isBoss && typeof triggerCameraShake === 'function') {
+          triggerCameraShake(0.32, 9);
+        }
+        createExplosion(e.x, e.y, e.isBoss ? 52 : 28, e.color, e.glow || e.color, 'boss');
       }
 
       createDamageShards(e.x, e.y, e.color, e.isBoss ? 120 : (e.isMiniBoss ? 60 : 35), true);
@@ -5305,9 +5414,14 @@ function update(dt) {
     updateUI();
   }
 
-  // Частицы
+  // Частицы (с физическим торможением drag для искр и осколков)
   for (let i = particles.length - 1; i >= 0; i--) {
     const pt = particles[i];
+    if (pt.drag) {
+      const damping = Math.pow(pt.drag, dt * 60);
+      pt.vx *= damping;
+      pt.vy *= damping;
+    }
     pt.x += pt.vx * dt;
     pt.y += pt.vy * dt;
     pt.life -= dt;
@@ -5340,11 +5454,21 @@ function update(dt) {
         createFloatingDamage(lb.targetRef.x, lb.targetRef.y, lb.damage, lb.towerColor || lb.color || '#00ffcc');
       }
 
-      if (Math.random() < 0.5) {
-        if (typeof createDamageShards === 'function') {
-          createDamageShards(lb.x2, lb.y2, lb.targetRef.color, lb.damage, false);
-        } else {
-          createSparks(lb.x2, lb.y2, lb.towerColor || lb.color || '#00ffcc', 3, lb.targetRef.color);
+      const chainDir = Math.atan2(lb.targetRef.y - lb.y1, lb.targetRef.x - lb.x1);
+      applyEnemyHitReaction(lb.targetRef, chainDir, false);
+      if (typeof spawnTowerHitFx === 'function') {
+        spawnTowerHitFx('tesla', lb.targetRef.x, lb.targetRef.y, chainDir, lb.towerColor || lb.color || '#00ffcc', lb.targetRef.radius);
+      } else {
+        if (typeof createHitImpactFx === 'function') {
+          createHitImpactFx(lb.x2, lb.y2, lb.towerColor || lb.color || '#00ffcc', 'tesla');
+        }
+
+        if (Math.random() < 0.6) {
+          if (typeof createDamageShards === 'function') {
+            createDamageShards(lb.x2, lb.y2, lb.targetRef.color, lb.damage, false);
+          } else {
+            createSparks(lb.x2, lb.y2, lb.towerColor || lb.color || '#00ffcc', 3, lb.targetRef.color);
+          }
         }
       }
     }

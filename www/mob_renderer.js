@@ -542,7 +542,7 @@ function drawVariant4MobUnit(ctx, e, cfg, time, crowdLevel = 0) {
 
   // Режим толпы: при 30+ мобах отключаем живой shadowBlur (свечение уже есть в кэше спрайта!)
   const allowLiveGlow = (crowdLevel < 2) || isBossOrMiniBoss;
-  const angle = (cfg.pathRotation && typeof e.angle === 'number') ? e.angle : 0;
+  const angle = ((cfg.pathRotation && typeof e.angle === 'number') ? e.angle : 0) + (e.hitTilt || 0);
 
   ctx.save();
   ctx.rotate(angle);
@@ -843,20 +843,52 @@ let _stasisSnowflakeSprite = null;
 function getStasisSnowflakeSprite() {
   if (_stasisSnowflakeSprite) return _stasisSnowflakeSprite;
   const c = document.createElement('canvas');
-  c.width = 24;
-  c.height = 24;
+  c.width = 48;
+  c.height = 48;
   const sCtx = c.getContext('2d');
-  sCtx.strokeStyle = '#38bdf8';
-  sCtx.lineWidth = 1.6;
-  sCtx.lineCap = 'round';
+  sCtx.scale(2, 2);
   sCtx.translate(12, 12);
-  for (let k = 0; k < 3; k++) {
-    sCtx.beginPath();
-    sCtx.moveTo(-5, 0);
-    sCtx.lineTo(5, 0);
-    sCtx.stroke();
-    sCtx.rotate(Math.PI / 3);
+  sCtx.lineCap = 'round';
+  sCtx.lineJoin = 'round';
+
+  const mainR = 9.0;
+  const tipPos = mainR * 0.56;
+  const branchLen = 3.2;
+
+  // Ледяное свечение #38bdf8 в стиле центральной снежинки Stasis
+  sCtx.strokeStyle = '#38bdf8';
+  sCtx.globalAlpha = 0.55;
+  sCtx.lineWidth = 3.4;
+  sCtx.beginPath();
+  for (let k = 0; k < 6; k++) {
+    const a = (k * Math.PI) / 3;
+    sCtx.moveTo(0, 0);
+    sCtx.lineTo(Math.cos(a) * mainR, Math.sin(a) * mainR);
   }
+  sCtx.stroke();
+
+  // Чёткий белый каркас с V-образными веточками на концах лучей
+  sCtx.globalAlpha = 1.0;
+  sCtx.strokeStyle = '#ffffff';
+  sCtx.lineWidth = 1.5;
+  for (let k = 0; k < 6; k++) {
+    sCtx.save();
+    sCtx.rotate((k * Math.PI) / 3);
+
+    sCtx.beginPath();
+    sCtx.moveTo(0, 0);
+    sCtx.lineTo(mainR, 0);
+    sCtx.stroke();
+
+    sCtx.beginPath();
+    sCtx.moveTo(tipPos + branchLen * 0.68, -branchLen * 0.75);
+    sCtx.lineTo(tipPos, 0);
+    sCtx.lineTo(tipPos + branchLen * 0.68, branchLen * 0.75);
+    sCtx.stroke();
+
+    sCtx.restore();
+  }
+
   _stasisSnowflakeSprite = c;
   return c;
 }
@@ -871,7 +903,9 @@ function renderConfiguredEnemyModel(e, showHpBar = true) {
   const crowdLevel = totalEnemies >= 24 ? 2 : (totalEnemies >= 14 ? 1 : 0);
 
   ctx.save();
-  ctx.translate(e.x, e.y);
+  const jx = (e.jitterTimer > 0) ? (Math.random() - 0.5) * 3.8 : 0;
+  const jy = (e.jitterTimer > 0) ? (Math.random() - 0.5) * 3.8 : 0;
+  ctx.translate(e.x + (e.kbX || 0) + jx, e.y + (e.kbY || 0) + jy);
 
   // 1. Аура элитного моба (isElite)
   if (e.isElite) {
