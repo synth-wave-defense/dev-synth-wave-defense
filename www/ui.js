@@ -9877,15 +9877,18 @@ function render(now) {
   });
 
   if (selectedTower) {
+    const thSel = getTheme();
+    const selMainRgb = isHyperion ? '255, 145, 0' : (thSel.rgb1 ? thSel.rgb1.cssRgb : '0, 229, 255');
+    const selStrokeRgb = isHyperion ? '255, 183, 0' : (thSel.rgb1 ? thSel.rgb1.cssRgb : '0, 229, 255');
     ctx.save();
     ctx.beginPath();
     ctx.arc(selectedTower.x, selectedTower.y, selectedTower.range, 0, Math.PI * 2);
-    ctx.strokeStyle = isHyperion ? 'rgba(255, 183, 0, 0.55)' : 'rgba(0, 229, 255, 0.5)';
+    ctx.strokeStyle = `rgba(${selStrokeRgb}, 0.5)`;
     ctx.lineWidth = 1.5;
     ctx.stroke();
-    ctx.fillStyle = isHyperion ? 'rgba(255, 145, 0, 0.10)' : 'rgba(0, 229, 255, 0.08)';
+    ctx.fillStyle = `rgba(${selMainRgb}, 0.09)`;
     ctx.fillRect(selectedTower.c * TILE_SIZE, selectedTower.r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-    ctx.strokeStyle = isHyperion ? 'rgba(255, 183, 0, 0.55)' : 'rgba(0, 229, 255, 0.5)';
+    ctx.strokeStyle = `rgba(${selStrokeRgb}, 0.5)`;
     ctx.strokeRect(selectedTower.c * TILE_SIZE, selectedTower.r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
     ctx.restore();
   }
@@ -10348,8 +10351,11 @@ function render(now) {
     const canBuild = isValidCell && grid[r][c] === 0;
     const conf = TOWER_CONFIGS[draggingTower.type];
 
-    const validStroke = isHyperion ? '#ff9100' : '#00e5ff';
-    const validFill = isHyperion ? 'rgba(255, 145, 0, 0.22)' : 'rgba(0, 229, 255, 0.2)';
+    const thDrag = getTheme();
+    const dragMainCol = isHyperion ? '#ff9100' : (thDrag.c1 || '#00e5ff');
+    const dragMainRgb = isHyperion ? '255, 145, 0' : (thDrag.rgb1 ? thDrag.rgb1.cssRgb : '0, 229, 255');
+    const validStroke = dragMainCol;
+    const validFill = `rgba(${dragMainRgb}, 0.20)`;
 
     if (isValidCell) {
       ctx.fillStyle = canBuild ? validFill : 'rgba(240, 95, 159, 0.3)';
@@ -10362,7 +10368,7 @@ function render(now) {
     ctx.beginPath();
     ctx.arc(draggingTower.worldX, draggingTower.worldY, conf.range, 0, Math.PI * 2);
     ctx.strokeStyle = canBuild
-      ? (isHyperion ? 'rgba(255, 183, 0, 0.5)' : 'rgba(0, 229, 255, 0.45)')
+      ? `rgba(${dragMainRgb}, 0.48)`
       : 'rgba(240, 95, 159, 0.5)';
     ctx.lineWidth = 1.5;
     ctx.stroke();

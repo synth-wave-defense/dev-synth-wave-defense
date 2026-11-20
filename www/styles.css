@@ -275,8 +275,8 @@ html, body {
 
 .daily-bonus-quick-btn:active {
   transform: scale(0.88) translateY(2px) !important;
-  border-color: #00e5ff !important;
-  box-shadow: 0 0 24px rgba(0, 229, 255, 0.85), inset 0 0 12px rgba(0, 229, 255, 0.4) !important;
+  border-color: var(--c1, #00e5ff) !important;
+  box-shadow: 0 0 24px rgba(var(--c1-rgb, 0, 229, 255), 0.85), inset 0 0 12px rgba(var(--c1-rgb, 0, 229, 255), 0.4) !important;
   color: #ffffff !important;
 }
 
@@ -348,15 +348,15 @@ html, body {
 .hud-gear-btn:active,
 .hud-gear-btn.btn-pushed {
   transform: scale(0.88) translateY(2px) !important;
-  border-color: #00e5ff !important;
-  box-shadow: 0 0 24px rgba(0, 229, 255, 0.85), inset 0 0 12px rgba(0, 229, 255, 0.4) !important;
+  border-color: var(--c1, #00e5ff) !important;
+  box-shadow: 0 0 24px rgba(var(--c1-rgb, 0, 229, 255), 0.85), inset 0 0 12px rgba(var(--c1-rgb, 0, 229, 255), 0.4) !important;
   color: #ffffff !important;
 }
 
 .hud-gear-btn:active .hud-gear-svg,
 .hud-gear-btn.btn-pushed .hud-gear-svg {
   transform: rotate(90deg) scale(0.95);
-  filter: drop-shadow(0 0 9px #00e5ff);
+  filter: drop-shadow(0 0 9px var(--c1, #00e5ff));
 }
 
 /* Wave notification alerts and banners */
@@ -824,7 +824,7 @@ html, body {
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
-  box-shadow: 0 0 14px rgba(0, 229, 255, 0.25);
+  box-shadow: 0 0 14px rgba(var(--c1-rgb, 0, 229, 255), 0.25);
   text-transform: uppercase;
   height: 100%;
 }
@@ -836,8 +836,9 @@ html, body {
 /* [STY.S] */
 .action-btn:active:not(:disabled) .wave-circle-wrap::before,
 .action-btn.btn-pushed:not(:disabled) .wave-circle-wrap::before {
-  box-shadow: 0 0 45px rgba(0, 229, 255, 0.95);
-  background: radial-gradient(circle at 50% 50%, rgba(0, 229, 255, 0.55), rgba(0, 229, 255, 0.2));
+  border-color: var(--c1-light, #8ef3ff);
+  box-shadow: 0 0 45px rgba(var(--c1-rgb, 0, 229, 255), 0.95);
+  background: radial-gradient(circle at 50% 50%, rgba(var(--c1-rgb, 0, 229, 255), 0.55), rgba(var(--c1-rgb, 0, 229, 255), 0.2));
 }
 .action-btn:disabled {
   background: #0d101d;
