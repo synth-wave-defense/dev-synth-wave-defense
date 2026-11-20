@@ -1327,8 +1327,8 @@ function handleDevGoldClick() {}
 function handleDevHpClick() {}
 
 const BASE_BRANCH_ICONS = {
-  base_hp: `<svg width="25" height="25" viewBox="-32 -32 64 64"><circle cx="0" cy="0" r="17" fill="none" stroke="#f05f9f" stroke-width="1.6"/><circle cx="0" cy="0" r="11" fill="none" stroke="#f05f9f" stroke-width="1" opacity=".35"/><path d="M 0 8 L -7.5 0.5 A 4.8 4.8 0 0 1 0 -6 A 4.8 4.8 0 0 1 7.5 0.5 Z" fill="#f05f9f"/></svg>`,
-  base_gold: `<svg width="25" height="25" viewBox="-32 -32 64 64"><circle cx="0" cy="0" r="17" fill="none" stroke="#ff9100" stroke-width="1.6"/><circle cx="0" cy="0" r="11" fill="none" stroke="#ff9100" stroke-width="1" opacity=".35"/><g transform="translate(-12, -12)"><circle cx="12" cy="12" r="11" fill="#ff9100"/><text x="12" y="17.5" font-size="16" font-weight="900" fill="#000000" text-anchor="middle" font-family="Montserrat, sans-serif">$</text></g></svg>`
+  base_hp: `<svg width="34" height="34" viewBox="-20 -20 40 40"><g transform="scale(1.35)"><path d="M 0 8 L -7.5 0.5 A 4.8 4.8 0 0 1 0 -6 A 4.8 4.8 0 0 1 7.5 0.5 Z" fill="#f05f9f"/></g></svg>`,
+  base_gold: `<svg width="34" height="34" viewBox="-20 -20 40 40"><g transform="translate(-12, -12)"><circle cx="12" cy="12" r="11" fill="#ff9100"/><text x="12" y="17.5" font-size="16" font-weight="900" fill="#000000" text-anchor="middle" font-family="Montserrat, sans-serif">$</text></g></svg>`
 };
 const BASE_BRANCH_COLORS = { base_hp: '#f05f9f', base_gold: '#ff9100' };
 
@@ -1509,8 +1509,8 @@ function renderUpgradeTree() {
   const primaryAccent = th.c1;
   BASE_BRANCH_COLORS.base_hp = th.c3;
   BASE_BRANCH_COLORS.base_gold = th.c4;
-  BASE_BRANCH_ICONS.base_hp = `<svg width="25" height="25" viewBox="-32 -32 64 64"><circle cx="0" cy="0" r="17" fill="none" stroke="${th.c3}" stroke-width="1.6"/><circle cx="0" cy="0" r="11" fill="none" stroke="${th.c3}" stroke-width="1" opacity=".35"/><path d="M 0 8 L -7.5 0.5 A 4.8 4.8 0 0 1 0 -6 A 4.8 4.8 0 0 1 7.5 0.5 Z" fill="${th.c3}"/></svg>`;
-  BASE_BRANCH_ICONS.base_gold = `<svg width="25" height="25" viewBox="-32 -32 64 64"><circle cx="0" cy="0" r="17" fill="none" stroke="${th.c4}" stroke-width="1.6"/><circle cx="0" cy="0" r="11" fill="none" stroke="${th.c4}" stroke-width="1" opacity=".35"/><g transform="translate(-12, -12)"><circle cx="12" cy="12" r="11" fill="${th.c4}"/><text x="12" y="17.5" font-size="16" font-weight="900" fill="#000000" text-anchor="middle" font-family="Montserrat, sans-serif">$</text></g></svg>`;
+  BASE_BRANCH_ICONS.base_hp = `<svg width="34" height="34" viewBox="-20 -20 40 40"><g transform="scale(1.35)"><path d="M 0 8 L -7.5 0.5 A 4.8 4.8 0 0 1 0 -6 A 4.8 4.8 0 0 1 7.5 0.5 Z" fill="${th.c3}"/></g></svg>`;
+  BASE_BRANCH_ICONS.base_gold = `<svg width="34" height="34" viewBox="-20 -20 40 40"><g transform="translate(-12, -12)"><circle cx="12" cy="12" r="11" fill="${th.c4}"/><text x="12" y="17.5" font-size="16" font-weight="900" fill="#000000" text-anchor="middle" font-family="Montserrat, sans-serif">$</text></g></svg>`;
 
   const maxStep = devMode ? 10 : getMaxUpgradeStep();
   const isPhase2UnlockedGlobally = devMode || getLoadoutReferenceLevel() >= 31 || maxUnlockedLevel >= 31 || (typeof clearedLevels !== 'undefined' && clearedLevels.includes(30));
@@ -1581,7 +1581,6 @@ function renderUpgradeTree() {
 
     const iconWrap = document.createElement('div');
     iconWrap.className = 'upgrade-row-icon' + (row.isLockedCard ? ' locked-icon' : '');
-    iconWrap.style.borderColor = row.isLockedCard ? 'rgba(140,200,255,0.18)' : row.color;
     iconWrap.innerHTML = row.iconHtml;
     card.appendChild(iconWrap);
 
