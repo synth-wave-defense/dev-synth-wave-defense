@@ -8179,11 +8179,12 @@ function warmUpNebulaAndHideLoader() {
 
       const horizonY = h * 0.44;
       if (typeof renderTriangleLogoCache === 'function') {
-        const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low') ? 'low' : 'high';
+        const isLowPerfFlag = (typeof perfMode !== 'undefined' && perfMode === 'low');
+        const texScale = isLowPerfFlag ? 1.5 : Math.min(3.0, Math.max(2.0, dpr * 1.5));
         const palKey = typeof activePalette !== 'undefined' ? activePalette : 'default';
-        const key = Math.round(w) + 'x' + Math.round(horizonY) + '@' + dpr + '_' + isLowPerf + '_' + palKey;
+        const key = Math.round(w) + 'x' + Math.round(horizonY) + '@' + texScale.toFixed(2) + '_' + (isLowPerfFlag ? 'low' : 'high') + '_' + palKey;
         if (!triangleLogoCache || triangleLogoCacheKey !== key) {
-          triangleLogoCache = renderTriangleLogoCache(w, horizonY, dpr);
+          triangleLogoCache = renderTriangleLogoCache(w, horizonY, texScale);
           triangleLogoCacheKey = key;
         }
       }
@@ -8348,17 +8349,17 @@ let triangleLogoCache = null;
 let triangleLogoCacheKey = '';
 
 // [UI.JB]
-function renderTriangleLogoCache(w, horizonY, dpr) {
+function renderTriangleLogoCache(w, horizonY, texScale) {
   const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low');
-  const effDpr = isLowPerf ? Math.min(1.25, dpr) : dpr;
+  const effScale = texScale || (isLowPerf ? 1.5 : Math.min(3.0, Math.max(2.0, getDpr() * 1.5)));
 
   const pad = 70;
   const ch = Math.ceil(horizonY + pad);
   const off = document.createElement('canvas');
-  off.width = Math.max(1, Math.round(w * effDpr));
-  off.height = Math.max(1, Math.round(ch * effDpr));
+  off.width = Math.max(1, Math.round(w * effScale));
+  off.height = Math.max(1, Math.round(ch * effScale));
   const c = off.getContext('2d');
-  c.scale(effDpr, effDpr);
+  c.scale(effScale, effScale);
 
   const cx = w * 0.5;
   const tipY = horizonY - 24;
@@ -8378,11 +8379,15 @@ function renderTriangleLogoCache(w, horizonY, dpr) {
   const inR = (halfW * (tipY - topY)) / (per / 2);
 
   // [UI.JC]
-  const triPath = (offset) => {
+  const triPoints = (offset) => {
     const k = 1 + offset / inR;
     // [UI.JD]
     const p = v => ({ x: inX + (v.x - inX) * k, y: inY + (v.y - inY) * k });
-    const a = p(A), b = p(B), d = p(C);
+    return [p(A), p(B), p(C)];
+  };
+
+  const triPath = (offset) => {
+    const [a, b, d] = triPoints(offset);
     c.beginPath();
     c.moveTo(a.x, a.y);
     c.lineTo(b.x, b.y);
@@ -8394,6 +8399,17 @@ function renderTriangleLogoCache(w, horizonY, dpr) {
   const c1Rgb = th.rgb1 ? th.rgb1.cssRgb : '0, 229, 255';
   const c2Rgb = th.rgb2 ? th.rgb2.cssRgb : '217, 70, 239';
   const c3Rgb = th.rgb3 ? th.rgb3.cssRgb : '240, 95, 159';
+
+  const drawRadialSpot = (x, y, r, stops) => {
+    const g = c.createRadialGradient(x, y, 0, x, y, r);
+    for (let i = 0; i < stops.length; i++) {
+      g.addColorStop(stops[i][0], stops[i][1]);
+    }
+    c.fillStyle = g;
+    c.beginPath();
+    c.arc(x, y, r, 0, Math.PI * 2);
+    c.fill();
+  };
 
   // [UI.JE]
   const makeGrad = (lighten) => {
@@ -8413,37 +8429,61 @@ function renderTriangleLogoCache(w, horizonY, dpr) {
   c.save();
   c.globalCompositeOperation = 'lighter';
 
-  const cornerR = halfW * 0.42;
-  const bGlow = c.createRadialGradient(B.x, B.y, 0, B.x, B.y, cornerR);
-  bGlow.addColorStop(0.0, `rgba(${c1Rgb}, 0.24)`);
-  bGlow.addColorStop(0.4, `rgba(${c1Rgb}, 0.10)`);
-  bGlow.addColorStop(1.0, `rgba(${c1Rgb}, 0)`);
-  c.fillStyle = bGlow;
-  c.beginPath();
-  c.arc(B.x, B.y, cornerR, 0, Math.PI * 2);
-  c.fill();
+  const cornerR = halfW * 0.30;
+  const cornerSpots = [
+    { x: B.x, y: B.y, r: cornerR, stops: [[0.0, `rgba(${c1Rgb}, 0.24)`], [0.4, `rgba(${c1Rgb}, 0.10)`], [1.0, `rgba(${c1Rgb}, 0)`]] },
+    { x: C.x, y: C.y, r: cornerR, stops: [[0.0, `rgba(${c3Rgb}, 0.24)`], [0.4, `rgba(${c2Rgb}, 0.10)`], [1.0, `rgba(${c2Rgb}, 0)`]] },
+    { x: A.x, y: A.y - 3, r: cornerR * 0.50, stops: [[0.0, 'rgba(255, 255, 255, 0.10)'], [0.30, `rgba(${c2Rgb}, 0.18)`], [0.65, `rgba(${c3Rgb}, 0.06)`], [1.0, `rgba(${c2Rgb}, 0)`]] }
+  ];
+  for (let i = 0; i < cornerSpots.length; i++) {
+    const s = cornerSpots[i];
+    drawRadialSpot(s.x, s.y, s.r, s.stops);
+  }
+  c.restore();
 
-  const cGlow = c.createRadialGradient(C.x, C.y, 0, C.x, C.y, cornerR);
-  cGlow.addColorStop(0.0, `rgba(${c3Rgb}, 0.24)`);
-  cGlow.addColorStop(0.4, `rgba(${c2Rgb}, 0.10)`);
-  cGlow.addColorStop(1.0, `rgba(${c2Rgb}, 0)`);
-  c.fillStyle = cGlow;
-  c.beginPath();
-  c.arc(C.x, C.y, cornerR, 0, Math.PI * 2);
-  c.fill();
+  // [UI.JEM] Soft inner tinting veil & volumetric neon mist inside outer triangle.
+  c.save();
+  triPath(0);
+  c.clip();
 
+  const veilGrad = c.createLinearGradient(0, topY, 0, tipY);
+  veilGrad.addColorStop(0.0, 'rgba(10, 14, 34, 0.36)');
+  veilGrad.addColorStop(0.55, 'rgba(14, 18, 46, 0.30)');
+  veilGrad.addColorStop(1.0, `rgba(${c2Rgb}, 0.28)`);
+  c.fillStyle = veilGrad;
+  c.fillRect(B.x - 10, B.y - 10, halfW * 2 + 20, (tipY - topY) + 20);
+
+  c.globalAlpha = 0.08;
+  c.fillStyle = makeGrad(false);
+  c.fillRect(B.x - 10, B.y - 10, halfW * 2 + 20, (tipY - topY) + 20);
+
+  c.globalCompositeOperation = 'lighter';
+  c.globalAlpha = 1.0;
+  drawRadialSpot(inX, inY, inR * 1.35, [
+    [0.0, `rgba(${c2Rgb}, 0.15)`],
+    [0.55, `rgba(${c1Rgb}, 0.07)`],
+    [1.0, 'rgba(0, 0, 0, 0)']
+  ]);
+
+  c.lineJoin = 'round';
+  c.lineCap = 'round';
+  c.strokeStyle = makeGrad(false);
+  c.globalAlpha = 0.09;
+  c.lineWidth = 24;
+  triPath(0);
+  c.stroke();
+  c.globalAlpha = 0.12;
+  c.lineWidth = 10;
+  triPath(0);
+  c.stroke();
   c.restore();
 
   const GLOW_FALLOFF = [
-    { mult: 9.5, alpha: 0.012 },
-    { mult: 7.8, alpha: 0.016 },
-    { mult: 6.3, alpha: 0.022 },
-    { mult: 5.0, alpha: 0.030 },
-    { mult: 3.9, alpha: 0.042 },
-    { mult: 3.0, alpha: 0.058 },
-    { mult: 2.3, alpha: 0.075 },
-    { mult: 1.7, alpha: 0.095 },
-    { mult: 1.3, alpha: 0.120 }
+    { mult: 5.8, alpha: 0.015 },
+    { mult: 4.3, alpha: 0.024 },
+    { mult: 3.1, alpha: 0.040 },
+    { mult: 2.1, alpha: 0.065 },
+    { mult: 1.3, alpha: 0.100 }
   ];
 
   // [UI.JF]
@@ -8465,26 +8505,50 @@ function renderTriangleLogoCache(w, horizonY, dpr) {
       c.stroke();
     }
 
-    c.globalCompositeOperation = 'source-over';
-    c.globalAlpha = 0.94;
+    c.globalCompositeOperation = 'screen';
+    c.globalAlpha = 0.92;
     c.strokeStyle = coreGrad;
     c.lineWidth = width;
     triPath(offset);
     c.stroke();
 
     c.globalCompositeOperation = 'lighter';
-    c.globalAlpha = 0.62 * strength;
+    c.globalAlpha = 0.48 * strength;
     c.strokeStyle = '#ffffff';
-    c.lineWidth = width * 0.36;
+    c.lineWidth = width * 0.34;
     triPath(offset);
     c.stroke();
 
     c.restore();
   };
 
-  neonTriSoft(-inR * 0.40, 4.2, false, 0.90);
-  neonTriSoft(-14,         4.8, false, 0.95);
-  neonTriSoft(0,           5.2, true,  1.15);
+  neonTriSoft(-inR * 0.40, 4.2, false, 0.88);
+  neonTriSoft(-14,         4.8, false, 0.94);
+  neonTriSoft(0,           5.2, true,  1.12);
+
+  // [UI.JFM] Post-line screen blooms positioned right inside each bottom V-tip to round out inner glow.
+  const r2 = th.rgb2 ? th.rgb2.r : 217;
+  const g2 = th.rgb2 ? th.rgb2.g : 70;
+  const b2 = th.rgb2 ? th.rgb2.b : 239;
+  const c2LightRgb = `${Math.round(r2 + (255 - r2) * 0.55)}, ${Math.round(g2 + (255 - g2) * 0.55)}, ${Math.round(b2 + (255 - b2) * 0.55)}`;
+
+  c.save();
+  triPath(0);
+  c.clip();
+  c.globalCompositeOperation = 'screen';
+
+  const postSpots = [
+    { x: A.x, y: inY + (A.y - inY) * 1.0 - 8,                  r: 20, stops: [[0.0, `rgba(${c2LightRgb}, 0.45)`], [0.45, `rgba(${c2Rgb}, 0.16)`], [1.0, `rgba(${c2Rgb}, 0)`]] },
+    { x: A.x, y: inY + (A.y - inY) * (1 - 14 / inR) - 12,      r: 26, stops: [[0.0, `rgba(${c2LightRgb}, 0.42)`], [0.45, `rgba(${c2Rgb}, 0.16)`], [1.0, `rgba(${c2Rgb}, 0)`]] },
+    { x: A.x, y: inY + (A.y - inY) * 0.60 - 14,                r: 34, stops: [[0.0, `rgba(${c2LightRgb}, 0.36)`], [0.45, `rgba(${c2Rgb}, 0.14)`], [1.0, `rgba(${c2Rgb}, 0)`]] },
+    { x: B.x + 12, y: B.y + 8, r: cornerR * 0.65, stops: [[0.0, `rgba(${c1Rgb}, 0.18)`], [0.5, `rgba(${c1Rgb}, 0.06)`], [1.0, `rgba(${c1Rgb}, 0)`]] },
+    { x: C.x - 12, y: C.y + 8, r: cornerR * 0.65, stops: [[0.0, `rgba(${c3Rgb}, 0.18)`], [0.5, `rgba(${c2Rgb}, 0.06)`], [1.0, `rgba(${c2Rgb}, 0)`]] }
+  ];
+  for (let i = 0; i < postSpots.length; i++) {
+    const s = postSpots[i];
+    drawRadialSpot(s.x, s.y, s.r, s.stops);
+  }
+  c.restore();
 
   return { canvas: off, height: ch };
 }
@@ -8492,141 +8556,190 @@ function renderTriangleLogoCache(w, horizonY, dpr) {
 // [UI.JG]
 function drawSynthWaveTriangleLogo5C(w, horizonY, time) {
   const dpr = getDpr();
-  const isLowPerf = (typeof perfMode !== 'undefined' && perfMode === 'low') ? 'low' : 'high';
+  const isLowPerfFlag = (typeof perfMode !== 'undefined' && perfMode === 'low');
+  const texScale = isLowPerfFlag ? 1.5 : Math.min(3.0, Math.max(2.0, dpr * 1.5));
   const palKey = typeof activePalette !== 'undefined' ? activePalette : 'default';
-  const key = Math.round(w) + 'x' + Math.round(horizonY) + '@' + dpr + '_' + isLowPerf + '_' + palKey;
+  const key = Math.round(w) + 'x' + Math.round(horizonY) + '@' + texScale.toFixed(2) + '_' + (isLowPerfFlag ? 'low' : 'high') + '_' + palKey;
 
   if (!triangleLogoCache || triangleLogoCacheKey !== key) {
-    triangleLogoCache = renderTriangleLogoCache(w, horizonY, dpr);
+    triangleLogoCache = renderTriangleLogoCache(w, horizonY, texScale);
     triangleLogoCacheKey = key;
   }
 
-  const flicker = 0.95 + 0.05 * Math.sin(time * 9.0) * Math.sin(time * 2.3 + 1.0);
   ctx.save();
-  ctx.globalAlpha = flicker;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(triangleLogoCache.canvas, 0, 0, w, triangleLogoCache.height);
   ctx.restore();
 }
 
-//  Multi-pass neon horizon beam renderer.
+//  Multi-pass neon horizon beam renderer (baked into menu stage cache).
 // [UI.JH]
-function drawSynthWaveHorizonBeam(w, horizonY, time) {
-  const cx = w * 0.5;
-  const pulse = 0.95 + 0.05 * Math.sin(time * 3.2);
+function drawSynthWaveHorizonBeam(w, horizonY, targetCtx) {
+  const tCtx = targetCtx || ctx;
   const th = getTheme();
   const c1Rgb = th.rgb1 ? th.rgb1.cssRgb : '0, 229, 255';
   const c2Rgb = th.rgb2 ? th.rgb2.cssRgb : '217, 70, 239';
   const c3Rgb = th.rgb3 ? th.rgb3.cssRgb : '240, 95, 159';
 
-  ctx.save();
-  ctx.globalCompositeOperation = 'lighter';
+  tCtx.save();
+  tCtx.globalCompositeOperation = 'lighter';
 
   const bloomR = 46;
-  const vBloom = ctx.createLinearGradient(0, horizonY - bloomR, 0, horizonY + bloomR);
+  const vBloom = tCtx.createLinearGradient(0, horizonY - bloomR, 0, horizonY + bloomR);
   vBloom.addColorStop(0.00, `rgba(${c2Rgb}, 0)`);
-  vBloom.addColorStop(0.22, `rgba(${c2Rgb}, ${0.04 * pulse})`);
-  vBloom.addColorStop(0.36, `rgba(${c2Rgb}, ${0.11 * pulse})`);
-  vBloom.addColorStop(0.45, `rgba(${c1Rgb}, ${0.25 * pulse})`);
-  vBloom.addColorStop(0.50, `rgba(240, 250, 255, ${0.44 * pulse})`);
-  vBloom.addColorStop(0.55, `rgba(${c1Rgb}, ${0.25 * pulse})`);
-  vBloom.addColorStop(0.64, `rgba(${c1Rgb}, ${0.11 * pulse})`);
-  vBloom.addColorStop(0.78, `rgba(${c1Rgb}, ${0.04 * pulse})`);
+  vBloom.addColorStop(0.22, `rgba(${c2Rgb}, 0.04)`);
+  vBloom.addColorStop(0.36, `rgba(${c2Rgb}, 0.11)`);
+  vBloom.addColorStop(0.45, `rgba(${c1Rgb}, 0.25)`);
+  vBloom.addColorStop(0.50, 'rgba(240, 250, 255, 0.44)');
+  vBloom.addColorStop(0.55, `rgba(${c1Rgb}, 0.25)`);
+  vBloom.addColorStop(0.64, `rgba(${c1Rgb}, 0.11)`);
+  vBloom.addColorStop(0.78, `rgba(${c1Rgb}, 0.04)`);
   vBloom.addColorStop(1.00, `rgba(${c1Rgb}, 0)`);
-  ctx.fillStyle = vBloom;
-  ctx.fillRect(0, horizonY - bloomR, w, bloomR * 2);
+  tCtx.fillStyle = vBloom;
+  tCtx.fillRect(0, horizonY - bloomR, w, bloomR * 2);
 
   const sideRx = w * 0.46;
   const sideRy = 26;
-
-  ctx.save();
-  ctx.translate(w * 0.27, horizonY);
-  ctx.scale(1, sideRy / sideRx);
-  const leftGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, sideRx);
-  leftGlow.addColorStop(0.00, `rgba(${c3Rgb}, ${0.38 * pulse})`);
-  leftGlow.addColorStop(0.35, `rgba(${c2Rgb}, ${0.18 * pulse})`);
-  leftGlow.addColorStop(0.70, `rgba(${c2Rgb}, ${0.05 * pulse})`);
-  leftGlow.addColorStop(1.00, `rgba(${c2Rgb}, 0)`);
-  ctx.fillStyle = leftGlow;
-  ctx.beginPath();
-  ctx.arc(0, 0, sideRx, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-
-  ctx.save();
-  ctx.translate(w * 0.73, horizonY);
-  ctx.scale(1, sideRy / sideRx);
-  const rightGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, sideRx);
-  rightGlow.addColorStop(0.00, `rgba(${c1Rgb}, ${0.38 * pulse})`);
-  rightGlow.addColorStop(0.35, `rgba(${c1Rgb}, ${0.18 * pulse})`);
-  rightGlow.addColorStop(0.70, `rgba(${c1Rgb}, ${0.05 * pulse})`);
-  rightGlow.addColorStop(1.00, `rgba(${c1Rgb}, 0)`);
-  ctx.fillStyle = rightGlow;
-  ctx.beginPath();
-  ctx.arc(0, 0, sideRx, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
+  const sideGlows = [
+    { x: w * 0.27, cStart: c1Rgb, cMid: c1Rgb },
+    { x: w * 0.73, cStart: c3Rgb, cMid: c2Rgb }
+  ];
+  for (let i = 0; i < sideGlows.length; i++) {
+    const sg = sideGlows[i];
+    tCtx.save();
+    tCtx.translate(sg.x, horizonY);
+    tCtx.scale(1, sideRy / sideRx);
+    const g = tCtx.createRadialGradient(0, 0, 0, 0, 0, sideRx);
+    g.addColorStop(0.00, `rgba(${sg.cStart}, 0.38)`);
+    g.addColorStop(0.35, `rgba(${sg.cMid}, 0.18)`);
+    g.addColorStop(0.70, `rgba(${sg.cMid}, 0.05)`);
+    g.addColorStop(1.00, `rgba(${sg.cMid}, 0)`);
+    tCtx.fillStyle = g;
+    tCtx.beginPath();
+    tCtx.arc(0, 0, sideRx, 0, Math.PI * 2);
+    tCtx.fill();
+    tCtx.restore();
+  }
 
   const tightR = 7;
-  const tightBloom = ctx.createLinearGradient(0, horizonY - tightR, 0, horizonY + tightR);
+  const tightBloom = tCtx.createLinearGradient(0, horizonY - tightR, 0, horizonY + tightR);
   tightBloom.addColorStop(0.00, 'rgba(255, 255, 255, 0)');
-  tightBloom.addColorStop(0.30, `rgba(${c2Rgb}, ${0.30 * pulse})`);
-  tightBloom.addColorStop(0.50, `rgba(255, 255, 255, ${0.78 * pulse})`);
-  tightBloom.addColorStop(0.70, `rgba(${c1Rgb}, ${0.30 * pulse})`);
+  tightBloom.addColorStop(0.30, `rgba(${c2Rgb}, 0.28)`);
+  tightBloom.addColorStop(0.50, 'rgba(255, 255, 255, 0.76)');
+  tightBloom.addColorStop(0.70, `rgba(${c1Rgb}, 0.28)`);
   tightBloom.addColorStop(1.00, 'rgba(255, 255, 255, 0)');
-  ctx.fillStyle = tightBloom;
-  ctx.fillRect(0, horizonY - tightR, w, tightR * 2);
+  tCtx.fillStyle = tightBloom;
+  tCtx.fillRect(0, horizonY - tightR, w, tightR * 2);
 
-  const hBeamGrad = ctx.createLinearGradient(0, 0, w, 0);
-  hBeamGrad.addColorStop(0.00, `rgba(${c1Rgb}, 0.05)`);
-  hBeamGrad.addColorStop(0.16, th.c1Light);
-  hBeamGrad.addColorStop(0.42, th.c1);
-  hBeamGrad.addColorStop(0.50, '#ffffff');
-  hBeamGrad.addColorStop(0.58, th.c2);
-  hBeamGrad.addColorStop(0.84, th.c3);
-  hBeamGrad.addColorStop(1.00, `rgba(${c3Rgb}, 0.05)`);
+  const hBeamGrad = tCtx.createLinearGradient(0, 0, w, 0);
+  hBeamGrad.addColorStop(0.00, th.c1);
+  hBeamGrad.addColorStop(0.22, th.c1Light);
+  hBeamGrad.addColorStop(0.50, th.c2);
+  hBeamGrad.addColorStop(0.78, th.c3Light || th.c3);
+  hBeamGrad.addColorStop(1.00, th.c3);
 
-  ctx.globalCompositeOperation = 'source-over';
-  ctx.strokeStyle = hBeamGrad;
-  ctx.globalAlpha = 0.95 * pulse;
-  ctx.lineWidth = 3.2;
-  ctx.beginPath();
-  ctx.moveTo(0, horizonY);
-  ctx.lineTo(w, horizonY);
-  ctx.stroke();
+  tCtx.globalCompositeOperation = 'source-over';
+  tCtx.strokeStyle = hBeamGrad;
+  tCtx.globalAlpha = 0.95;
+  tCtx.lineWidth = 3.2;
+  tCtx.beginPath();
+  tCtx.moveTo(0, horizonY);
+  tCtx.lineTo(w, horizonY);
+  tCtx.stroke();
 
-  const coreGrad = ctx.createLinearGradient(0, 0, w, 0);
-  coreGrad.addColorStop(0.00, 'rgba(255, 255, 255, 0)');
-  coreGrad.addColorStop(0.12, 'rgba(255, 255, 255, 0.82)');
-  coreGrad.addColorStop(0.50, 'rgba(255, 255, 255, 1)');
-  coreGrad.addColorStop(0.88, 'rgba(255, 255, 255, 0.82)');
-  coreGrad.addColorStop(1.00, 'rgba(255, 255, 255, 0)');
+  const coreGrad = tCtx.createLinearGradient(0, 0, w, 0);
+  coreGrad.addColorStop(0.00, 'rgba(255, 255, 255, 0.78)');
+  coreGrad.addColorStop(0.15, 'rgba(255, 255, 255, 0.94)');
+  coreGrad.addColorStop(0.50, 'rgba(255, 255, 255, 0.94)');
+  coreGrad.addColorStop(0.85, 'rgba(255, 255, 255, 0.94)');
+  coreGrad.addColorStop(1.00, 'rgba(255, 255, 255, 0.78)');
 
-  ctx.globalCompositeOperation = 'lighter';
-  ctx.strokeStyle = coreGrad;
-  ctx.globalAlpha = 0.95 * pulse;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(0, horizonY);
-  ctx.lineTo(w, horizonY);
-  ctx.stroke();
+  tCtx.globalCompositeOperation = 'lighter';
+  tCtx.strokeStyle = coreGrad;
+  tCtx.globalAlpha = 0.95;
+  tCtx.lineWidth = 1.6;
+  tCtx.beginPath();
+  tCtx.moveTo(0, horizonY);
+  tCtx.lineTo(w, horizonY);
+  tCtx.stroke();
 
-  const flareW = Math.min(w * 0.36, 220);
-  const flareH = 18;
-  ctx.save();
-  ctx.translate(cx, horizonY);
-  ctx.scale(1, flareH / flareW);
-  const centerFlare = ctx.createRadialGradient(0, 0, 0, 0, 0, flareW);
-  centerFlare.addColorStop(0.00, `rgba(255, 255, 255, ${0.72 * pulse})`);
-  centerFlare.addColorStop(0.25, `rgba(${c2Rgb}, ${0.42 * pulse})`);
-  centerFlare.addColorStop(0.60, `rgba(${c1Rgb}, ${0.14 * pulse})`);
-  centerFlare.addColorStop(1.00, `rgba(${c1Rgb}, 0)`);
-  ctx.fillStyle = centerFlare;
-  ctx.beginPath();
-  ctx.arc(0, 0, flareW, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
+  tCtx.restore();
+}
 
-  ctx.restore();
+let menuStageCache = null;
+let menuStageCacheKey = '';
+
+// [UI.JHM] Offscreen cache for static main menu stage (floor gradient, perspective rays, road, horizon beam).
+function renderMenuStageCache(w, h, horizonY, texScale) {
+  const off = document.createElement('canvas');
+  off.width = Math.max(1, Math.round(w * texScale));
+  off.height = Math.max(1, Math.round(h * texScale));
+  const mCtx = off.getContext('2d');
+  mCtx.scale(texScale, texScale);
+
+  const floorH = h - horizonY;
+  const vpX = w * 0.5;
+  const th = getTheme();
+  const c1Rgb = th.rgb1 ? th.rgb1.cssRgb : '0, 229, 255';
+
+  mCtx.save();
+  const planeGrad = mCtx.createLinearGradient(0, horizonY, 0, h);
+  planeGrad.addColorStop(0, 'rgba(14, 22, 48, 0.06)');
+  planeGrad.addColorStop(0.35, 'rgba(12, 20, 44, 0.18)');
+  planeGrad.addColorStop(1, 'rgba(8, 14, 32, 0.36)');
+  mCtx.fillStyle = planeGrad;
+  mCtx.fillRect(0, horizonY, w, floorH);
+
+  mCtx.beginPath();
+  mCtx.rect(0, horizonY, w, floorH);
+  mCtx.clip();
+
+  mCtx.shadowColor = th.c1;
+  mCtx.shadowBlur = 5;
+
+  const horizCount = 14;
+  const bottomStep = Math.max(34, (floorH / horizCount) * 1.5);
+  const targetBottomCellWidth = bottomStep * 1.1;
+  const numLines = Math.ceil((w * 1.4) / targetBottomCellWidth);
+
+  mCtx.lineWidth = 1.0;
+  mCtx.strokeStyle = `rgba(${c1Rgb}, 0.34)`;
+  for (let i = -numLines; i <= numLines; i++) {
+    const bottomX = vpX + (i + 0.5) * targetBottomCellWidth;
+    const topX = vpX + (i + 0.5) * (targetBottomCellWidth * 0.32);
+    mCtx.beginPath();
+    mCtx.moveTo(topX, horizonY);
+    mCtx.lineTo(bottomX, h);
+    mCtx.stroke();
+  }
+
+  const roadTopHalfW = targetBottomCellWidth * 0.16;
+  const roadBottomHalfW = targetBottomCellWidth * 0.50;
+
+  mCtx.shadowBlur = 0;
+  mCtx.fillStyle = 'rgba(12, 20, 44, 0.25)';
+  mCtx.beginPath();
+  mCtx.moveTo(vpX - roadTopHalfW, horizonY);
+  mCtx.lineTo(vpX + roadTopHalfW, horizonY);
+  mCtx.lineTo(vpX + roadBottomHalfW, h);
+  mCtx.lineTo(vpX - roadBottomHalfW, h);
+  mCtx.closePath();
+  mCtx.fill();
+
+  mCtx.lineWidth = 2.6;
+  mCtx.strokeStyle = `rgba(${c1Rgb}, 0.24)`;
+  mCtx.beginPath();
+  mCtx.moveTo(vpX - roadTopHalfW, horizonY);
+  mCtx.lineTo(vpX - roadBottomHalfW, h);
+  mCtx.moveTo(vpX + roadTopHalfW, horizonY);
+  mCtx.lineTo(vpX + roadBottomHalfW, h);
+  mCtx.stroke();
+
+  mCtx.restore();
+
+  drawSynthWaveHorizonBeam(w, horizonY, mCtx);
+  return { canvas: off, horizCount, targetBottomCellWidth, roadTopHalfW, roadBottomHalfW };
 }
 
 //  Synthwave background perspective grid scene renderer.
@@ -8646,53 +8759,34 @@ function drawSynthWavePerspectiveScene(now) {
   drawCosmicNebulaBackground(w, h);
   updateAndDrawStars(w, h, now);
 
-  ctx.save();
+  const dpr = getDpr();
+  const isLowPerfFlag = (typeof perfMode !== 'undefined' && perfMode === 'low');
+  const stageScale = isLowPerfFlag ? 1.25 : Math.min(3.0, Math.max(2.0, dpr));
+  const palKey = typeof activePalette !== 'undefined' ? activePalette : 'default';
+  const stageKey = Math.round(w) + 'x' + Math.round(h) + '@' + stageScale.toFixed(2) + '_' + (isLowPerfFlag ? 'low' : 'high') + '_' + palKey;
 
-  const planeGrad = ctx.createLinearGradient(0, horizonY, 0, h);
-  planeGrad.addColorStop(0, 'rgba(14, 22, 48, 0.06)');
-  planeGrad.addColorStop(0.35, 'rgba(12, 20, 44, 0.18)');
-  planeGrad.addColorStop(1, 'rgba(8, 14, 32, 0.36)');
-  ctx.fillStyle = planeGrad;
-  ctx.fillRect(0, horizonY, w, floorH);
+  if (!menuStageCache || menuStageCacheKey !== stageKey) {
+    menuStageCache = renderMenuStageCache(w, h, horizonY, stageScale);
+    menuStageCacheKey = stageKey;
+  }
+
+  ctx.save();
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(menuStageCache.canvas, 0, 0, w, h);
 
   ctx.beginPath();
   ctx.rect(0, horizonY, w, floorH);
   ctx.clip();
 
-  setGlow(th.c1, 5);
-
-  const horizCount = 14;
-  const bottomStep = Math.max(34, (floorH / horizCount) * 1.5);
-  const targetBottomCellWidth = bottomStep * 1.1;
-  const numLines = Math.ceil((w * 1.4) / targetBottomCellWidth);
-
+  const { horizCount, roadTopHalfW, roadBottomHalfW } = menuStageCache;
   const isDefaultTheme = (th.id === 'default');
 
-  ctx.lineWidth = 1.0;
-  ctx.strokeStyle = `rgba(${c1Rgb}, 0.34)`;
-  for (let i = -numLines; i <= numLines; i++) {
-    const bottomX = vpX + (i + 0.5) * targetBottomCellWidth;
-    const topX = vpX + (i + 0.5) * (targetBottomCellWidth * 0.32);
-    ctx.beginPath();
-    ctx.moveTo(topX, horizonY);
-    ctx.lineTo(bottomX, h);
-    ctx.stroke();
-  }
-
-  const roadTopHalfW = targetBottomCellWidth * 0.16;
-  const roadBottomHalfW = targetBottomCellWidth * 0.50;
-
-  ctx.fillStyle = 'rgba(12, 20, 44, 0.25)';
-  ctx.beginPath();
-  ctx.moveTo(vpX - roadTopHalfW, horizonY);
-  ctx.lineTo(vpX + roadTopHalfW, horizonY);
-  ctx.lineTo(vpX + roadBottomHalfW, h);
-  ctx.lineTo(vpX - roadBottomHalfW, h);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.lineWidth = 2.6;
-  ctx.setLineDash([]);
+  // Animated dashed road rails (no shadowBlur for 60+ FPS).
+  ctx.save();
+  ctx.setLineDash([12, 10]);
+  ctx.lineDashOffset = (time * 36);
+  ctx.lineWidth = 3.8;
   ctx.strokeStyle = `rgba(${c1Rgb}, 0.24)`;
   ctx.beginPath();
   ctx.moveTo(vpX - roadTopHalfW, horizonY);
@@ -8701,18 +8795,8 @@ function drawSynthWavePerspectiveScene(now) {
   ctx.lineTo(vpX + roadBottomHalfW, h);
   ctx.stroke();
 
-  ctx.save();
   ctx.lineWidth = 1.8;
-  ctx.setLineDash([12, 10]);
-  ctx.lineDashOffset = (time * 36);
-
-  setGlow(th.c1, 6);
   ctx.strokeStyle = th.c1Light;
-  ctx.beginPath();
-  ctx.moveTo(vpX - roadTopHalfW, horizonY);
-  ctx.lineTo(vpX - roadBottomHalfW, h);
-  ctx.moveTo(vpX + roadTopHalfW, horizonY);
-  ctx.lineTo(vpX + roadBottomHalfW, h);
   ctx.stroke();
   ctx.restore();
 
@@ -8735,9 +8819,8 @@ function drawSynthWavePerspectiveScene(now) {
     ctx.lineTo(w, currentY);
     ctx.stroke();
   }
-  
+
   const scoutColor = th.c4;
-  const scoutGlow = th.c4Light;
   const mobCycleDuration = 13.5;
   const mobLinearProgress = (time % mobCycleDuration) / mobCycleDuration;
   const u = 1 - mobLinearProgress;
@@ -8752,24 +8835,26 @@ function drawSynthWavePerspectiveScene(now) {
   ctx.globalAlpha = Math.max(0, mobFade);
   ctx.rotate(-Math.PI / 2);
 
-  setGlow(scoutGlow, 8 * mobScale);
-  ctx.fillStyle = `rgba(${c4Rgb}, 0.34)`;
-  ctx.strokeStyle = scoutColor;
-  ctx.lineWidth = 1.8 * mobScale;
-
-  ctx.beginPath();
   const R = scoutBaseR * 1.25;
+  ctx.beginPath();
   ctx.moveTo(R, 0);
   ctx.lineTo(-R * 0.5, R * 0.866);
   ctx.lineTo(-R * 0.5, -R * 0.866);
   ctx.closePath();
+
+  ctx.strokeStyle = `rgba(${c4Rgb}, 0.30)`;
+  ctx.lineWidth = 4.5 * mobScale;
+  ctx.stroke();
+
+  ctx.fillStyle = `rgba(${c4Rgb}, 0.34)`;
+  ctx.strokeStyle = scoutColor;
+  ctx.lineWidth = 1.8 * mobScale;
   ctx.fill();
   ctx.stroke();
 
   ctx.restore();
   ctx.restore();
 
-  drawSynthWaveHorizonBeam(w, horizonY, time);
   drawSynthWaveTriangleLogo5C(w, horizonY, time);
 }
 

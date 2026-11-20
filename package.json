@@ -1,6 +1,6 @@
 {
   "name": "37-cap",
-  "version": "1.38.54",
+  "version": "1.38.55",
   "description": "<!-- [DOC100] Synth Wave Defense repository documentation. --> # dev-synth-wave-defense",
   "main": "index.js",
   "scripts": {
