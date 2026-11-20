@@ -7,7 +7,7 @@
 // progress, save data) and the logic that changes it.
 
 const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+let ctx = canvas.getContext('2d');
 
 const TILE_SIZE = 70;
 const TOUCH_OFFSET_Y = 65;
@@ -2409,6 +2409,7 @@ function reallyStartLevel(lvl) {
 let finalWaveSpawned = false;
 
 function resetLevelState() {
+  if (typeof stopNormalModePreview === 'function') stopNormalModePreview();
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
   reviveUsedThisMatch = false;
   sessionMobKillsCount = 0;

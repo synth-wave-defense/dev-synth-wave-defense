@@ -1886,6 +1886,501 @@ function selectLevelMode(mode) {
   }
 }
 
+// [UI.CFM] Autonomous live battle preview controller for Normal Mode on levels screen.
+const NormalModePreview = (() => {
+  const COLS_P = 7;
+  const ROWS_P = 5;
+  const T_SIZE = 70;
+  const VIEW_X_MIN = 0.35 * T_SIZE; // 24.5
+  const VIEW_X_MAX = 6.65 * T_SIZE; // 465.5
+  const VIEW_Y_MIN = 0;             // 0
+  const VIEW_Y_MAX = 4.15 * T_SIZE; // 290.5
+  const VIEW_W = VIEW_X_MAX - VIEW_X_MIN; // 441
+  const VIEW_H = VIEW_Y_MAX - VIEW_Y_MIN; // 290.5
+
+  const WAYPOINTS = [
+    { x: 3.5 * T_SIZE, y: 5.5 * T_SIZE },
+    { x: 3.5 * T_SIZE, y: 1.5 * T_SIZE },
+    { x: 1.5 * T_SIZE, y: 1.5 * T_SIZE },
+    { x: 1.5 * T_SIZE, y: 3.5 * T_SIZE },
+    { x: 7.2 * T_SIZE, y: 3.5 * T_SIZE }
+  ];
+
+  const PATH_CELL_SET = new Set([
+    '3,4', '3,3', '3,2', '3,1',
+    '2,1', '1,1',
+    '1,2', '1,3',
+    '2,3', '3,3', '4,3', '5,3', '6,3'
+  ]);
+
+  let _gridCache = null;
+  let _gridCachePalKey = '';
+  let _rafId = null;
+  let _lastTs = 0;
+  let _lastDt = 0.016;
+  let _simTime = 0;
+  let _waveTimer = 0;
+  let _burstRemaining = 0;
+  let _burstTimer = 0;
+
+  let previewEnemies = [];
+  let previewProjectiles = [];
+
+  const tower = {
+    type: 'gun',
+    c: 2,
+    r: 2,
+    x: 2.5 * T_SIZE,
+    y: 2.5 * T_SIZE,
+    range: 155,
+    fireRate: 0.48,
+    damage: 16,
+    angle: -Math.PI / 2,
+    fireCooldown: 0.15,
+    lastFire: -10,
+    shotIndex: 0
+  };
+
+  function tracePreviewRails(tCtx) {
+    const hr = 18;
+    const rIn = 18;
+    const rOut = 52;
+    const p0 = WAYPOINTS[0], p1 = WAYPOINTS[1], p2 = WAYPOINTS[2], p3 = WAYPOINTS[3], p4 = WAYPOINTS[4];
+
+    // Outer rail (right of up, top of left, left of down, bottom of right)
+    tCtx.beginPath();
+    tCtx.moveTo(p0.x + hr, p0.y);
+    tCtx.arcTo(p1.x + hr, p1.y - hr, p2.x - hr, p2.y - hr, rOut);
+    tCtx.arcTo(p2.x - hr, p2.y - hr, p3.x - hr, p3.y + hr, rOut);
+    tCtx.arcTo(p3.x - hr, p3.y + hr, p4.x, p4.y + hr, rOut);
+    tCtx.lineTo(p4.x, p4.y + hr);
+    tCtx.stroke();
+
+    // Inner rail
+    tCtx.beginPath();
+    tCtx.moveTo(p0.x - hr, p0.y);
+    tCtx.arcTo(p1.x - hr, p1.y + hr, p2.x + hr, p2.y + hr, rIn);
+    tCtx.arcTo(p2.x + hr, p2.y + hr, p3.x + hr, p3.y - hr, rIn);
+    tCtx.arcTo(p3.x + hr, p3.y - hr, p4.x, p4.y - hr, rIn);
+    tCtx.lineTo(p4.x, p4.y - hr);
+    tCtx.stroke();
+  }
+
+  function buildGridCache(th) {
+    const c1Rgb = th.rgb1 ? th.rgb1.cssRgb : '0, 229, 255';
+    const off = document.createElement('canvas');
+    off.width = COLS_P * T_SIZE;
+    off.height = ROWS_P * T_SIZE + 70;
+    const oCtx = off.getContext('2d');
+
+    for (let r = 0; r < ROWS_P; r++) {
+      for (let c = 0; c < COLS_P; c++) {
+        const isPath = PATH_CELL_SET.has(c + ',' + r);
+        oCtx.fillStyle = isPath ? `rgba(${c1Rgb}, 0.08)` : 'rgba(8, 12, 26, 0.40)';
+        oCtx.fillRect(c * T_SIZE, r * T_SIZE, T_SIZE, T_SIZE);
+        oCtx.strokeStyle = isPath ? `rgba(${c1Rgb}, 0.18)` : `rgba(${c1Rgb}, 0.14)`;
+        oCtx.lineWidth = 1;
+        oCtx.strokeRect(c * T_SIZE, r * T_SIZE, T_SIZE, T_SIZE);
+      }
+    }
+
+    oCtx.save();
+    oCtx.strokeStyle = `rgba(${c1Rgb}, 0.34)`;
+    oCtx.lineWidth = 1.6;
+    oCtx.lineJoin = 'round';
+    oCtx.lineCap = 'round';
+    tracePreviewRails(oCtx);
+    oCtx.restore();
+
+    // Bake 3 spawn portal chevrons at (c = 3, r = 4.35, angle = -PI/2)
+    const drawBakedChevron = (cx, cy, ang, size, col) => {
+      oCtx.save();
+      oCtx.translate(cx, cy);
+      oCtx.rotate(ang);
+      oCtx.lineCap = 'round';
+      oCtx.lineJoin = 'round';
+      oCtx.beginPath();
+      oCtx.moveTo(-size * 0.8, -size);
+      oCtx.lineTo(size * 0.9, 0);
+      oCtx.lineTo(-size * 0.8, size);
+
+      oCtx.strokeStyle = col;
+      oCtx.globalAlpha = 0.30;
+      oCtx.lineWidth = 7.5;
+      oCtx.stroke();
+
+      oCtx.globalAlpha = 1.0;
+      oCtx.lineWidth = 3.0;
+      oCtx.stroke();
+
+      oCtx.strokeStyle = '#ffffff';
+      oCtx.globalAlpha = 0.55;
+      oCtx.lineWidth = 1.2;
+      oCtx.stroke();
+      oCtx.restore();
+    };
+
+    const spawnX = 3.5 * T_SIZE;
+    const spawnY = 4.35 * T_SIZE;
+    const spawnAng = -Math.PI / 2;
+    const offsets = [-14, 0, 14];
+    for (let i = 0; i < 3; i++) {
+      const offDist = offsets[i];
+      drawBakedChevron(spawnX + Math.cos(spawnAng) * offDist, spawnY + Math.sin(spawnAng) * offDist, spawnAng, 13, th.c1 || '#00e5ff');
+    }
+
+    return off;
+  }
+
+  function spawnGrunt(initialDistOffset) {
+    const gunCfg = (typeof ENEMY_CONFIGS !== 'undefined' && ENEMY_CONFIGS.grunt) ? ENEMY_CONFIGS.grunt : null;
+    const e = {
+      type: 'grunt',
+      color: (gunCfg && gunCfg.color) || '#f05f9f',
+      radius: 11,
+      speed: 56,
+      hp: 80,
+      maxHp: 80,
+      wpIndex: 1,
+      x: WAYPOINTS[0].x,
+      y: WAYPOINTS[0].y,
+      angle: -Math.PI / 2,
+      spawnTimer: (initialDistOffset && initialDistOffset > 0) ? 0 : 0.22,
+      spawnDuration: 0.22,
+      hitTilt: 0,
+      _fxKbX: 0,
+      _fxKbY: 0,
+      _fxJitT: 0
+    };
+    if (initialDistOffset && initialDistOffset > 0) {
+      advanceEnemy(e, initialDistOffset / e.speed);
+    }
+    previewEnemies.push(e);
+  }
+
+  function advanceEnemy(e, dt) {
+    let rem = e.speed * dt;
+    while (rem > 0 && e.wpIndex < WAYPOINTS.length) {
+      const target = WAYPOINTS[e.wpIndex];
+      const dx = target.x - e.x;
+      const dy = target.y - e.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist <= 0.001) {
+        e.wpIndex++;
+        continue;
+      }
+      e.angle = Math.atan2(dy, dx);
+      if (rem >= dist) {
+        e.x = target.x;
+        e.y = target.y;
+        rem -= dist;
+        e.wpIndex++;
+      } else {
+        e.x += (dx / dist) * rem;
+        e.y += (dy / dist) * rem;
+        rem = 0;
+      }
+    }
+  }
+
+  function findTarget() {
+    const rSq = tower.range * tower.range;
+    for (let i = 0; i < previewEnemies.length; i++) {
+      const e = previewEnemies[i];
+      const dx = e.x - tower.x;
+      const dy = e.y - tower.y;
+      if (dx * dx + dy * dy <= rSq) return e;
+    }
+    return null;
+  }
+
+  function step(dt) {
+    _lastDt = dt;
+    _simTime += dt;
+
+    _waveTimer -= dt;
+    if (_waveTimer <= 0) {
+      _waveTimer = 4.2;
+      _burstRemaining = 3;
+      _burstTimer = 0;
+    }
+    if (_burstRemaining > 0) {
+      _burstTimer -= dt;
+      if (_burstTimer <= 0) {
+        spawnGrunt(0);
+        _burstRemaining--;
+        _burstTimer = 0.65;
+      }
+    }
+
+    const kbDecay = Math.exp(-14 * dt);
+    for (let i = previewEnemies.length - 1; i >= 0; i--) {
+      const e = previewEnemies[i];
+      if (e.spawnTimer > 0) e.spawnTimer = Math.max(0, e.spawnTimer - dt);
+      advanceEnemy(e, dt);
+      if (e._fxJitT > 0) e._fxJitT = Math.max(0, e._fxJitT - dt);
+      e.hitTilt *= kbDecay;
+      e._fxKbX *= kbDecay;
+      e._fxKbY *= kbDecay;
+      if (e.wpIndex >= WAYPOINTS.length) {
+        previewEnemies.splice(i, 1);
+      }
+    }
+
+    const gunColor = (typeof TOWER_CONFIGS !== 'undefined' && TOWER_CONFIGS.gun && TOWER_CONFIGS.gun.color) || '#00e5ff';
+    const target = findTarget();
+    if (tower.fireCooldown > 0) tower.fireCooldown = Math.max(0, tower.fireCooldown - dt);
+
+    if (target) {
+      const desired = Math.atan2(target.y - tower.y, target.x - tower.x);
+      let diff = desired - tower.angle;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      const maxTurn = 12 * dt;
+      if (Math.abs(diff) <= maxTurn) tower.angle = desired;
+      else tower.angle += Math.sign(diff) * maxTurn;
+
+      if (tower.fireCooldown <= 0 && Math.abs(diff) < 0.35) {
+        tower.fireCooldown = tower.fireRate;
+        tower.lastFire = _simTime;
+        const cosA = Math.cos(tower.angle), sinA = Math.sin(tower.angle);
+        const side = (tower.shotIndex === 0) ? -3.5 : 3.5;
+        const mx = tower.x + cosA * 24 - sinA * side;
+        const my = tower.y + sinA * 24 + cosA * side;
+        tower.shotIndex = (tower.shotIndex + 1) % 2;
+
+        if (typeof spawnFxMuzzleLayers === 'function') {
+          spawnFxMuzzleLayers(mx, my, 'gun', gunColor, tower.angle);
+        }
+        previewProjectiles.push({
+          x: mx, y: my, prevX: mx, prevY: my,
+          target, speed: 460, damage: tower.damage, color: gunColor
+        });
+      }
+    }
+
+    for (let i = previewProjectiles.length - 1; i >= 0; i--) {
+      const p = previewProjectiles[i];
+      p.prevX = p.x;
+      p.prevY = p.y;
+      if (!p.target || p.target.hp <= 0 || previewEnemies.indexOf(p.target) === -1) {
+        previewProjectiles.splice(i, 1);
+        continue;
+      }
+      const dx = p.target.x - p.x;
+      const dy = p.target.y - p.y;
+      const dist = Math.hypot(dx, dy);
+      const stepDist = p.speed * dt;
+      if (dist <= stepDist + p.target.radius * 0.7) {
+        const hitAng = Math.atan2(dy, dx);
+        p.target.hp -= p.damage;
+        p.target.hitTilt = (Math.random() > 0.5 ? 1 : -1) * 0.14;
+        p.target._fxKbX = Math.cos(hitAng) * 3.5;
+        p.target._fxKbY = Math.sin(hitAng) * 3.5;
+        p.target._fxJitT = 0.14;
+        const killed = p.target.hp <= 0;
+        if (typeof spawnFxHitLayers === 'function') {
+          spawnFxHitLayers(p.target.x, p.target.y, killed ? 'mortar' : 'gun', killed ? p.target.color : p.color, hitAng, p.target.radius);
+        }
+        if (killed) {
+          const idx = previewEnemies.indexOf(p.target);
+          if (idx !== -1) previewEnemies.splice(idx, 1);
+        }
+        previewProjectiles.splice(i, 1);
+      } else {
+        p.x += (dx / dist) * stepDist;
+        p.y += (dy / dist) * stepDist;
+      }
+    }
+  }
+
+  function render(now) {
+    const pCanvas = document.getElementById('modePreviewCanvas');
+    if (!pCanvas) return;
+    const rect = pCanvas.getBoundingClientRect();
+    if (rect.width < 10 || rect.height < 10) return;
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const pw = Math.round(rect.width * dpr);
+    const ph = Math.round(rect.height * dpr);
+    if (pCanvas.width !== pw || pCanvas.height !== ph) {
+      pCanvas.width = pw;
+      pCanvas.height = ph;
+    }
+
+    const pCtx = pCanvas.getContext('2d');
+    const th = (typeof getTheme === 'function') ? getTheme() : { id: 'default', c1: '#00e5ff', rgb1: { cssRgb: '0, 229, 255' } };
+    const palKey = th.id || 'default';
+    if (!_gridCache || _gridCachePalKey !== palKey) {
+      _gridCache = buildGridCache(th);
+      _gridCachePalKey = palKey;
+    }
+
+    const c1Rgb = th.rgb1 ? th.rgb1.cssRgb : '0, 229, 255';
+    const previewScale = Math.max(rect.width / VIEW_W, rect.height / VIEW_H);
+    const offsetX = (rect.width - VIEW_W * previewScale) * 0.5 - VIEW_X_MIN * previewScale;
+    const offsetY = (rect.height - VIEW_H * previewScale) * 0.5 - VIEW_Y_MIN * previewScale;
+
+    pCtx.save();
+    pCtx.scale(dpr, dpr);
+    pCtx.clearRect(0, 0, rect.width, rect.height);
+    pCtx.translate(offsetX, offsetY);
+    pCtx.scale(previewScale, previewScale);
+
+    // 1. Baked grid, rounded rails & spawn chevrons
+    pCtx.drawImage(_gridCache, 0, 0);
+
+    // Animated dashed rails matching drawPathRails(now)
+    pCtx.save();
+    pCtx.lineCap = 'round';
+    pCtx.lineJoin = 'round';
+    pCtx.strokeStyle = `rgba(${c1Rgb}, 0.85)`;
+    pCtx.lineWidth = 1.8;
+    pCtx.setLineDash([12, 10]);
+    pCtx.lineDashOffset = -(_simTime * 36);
+    tracePreviewRails(pCtx);
+    pCtx.restore();
+
+    const gunColor = (typeof TOWER_CONFIGS !== 'undefined' && TOWER_CONFIGS.gun && TOWER_CONFIGS.gun.color) || '#00e5ff';
+    const gunGlow = (typeof TOWER_CONFIGS !== 'undefined' && TOWER_CONFIGS.gun && TOWER_CONFIGS.gun.glow) || '#00e5ff';
+    const target = findTarget();
+
+    // Subtle range circle
+    pCtx.save();
+    pCtx.beginPath();
+    pCtx.arc(tower.x, tower.y, tower.range, 0, Math.PI * 2);
+    pCtx.strokeStyle = `rgba(${c1Rgb}, 0.14)`;
+    pCtx.lineWidth = 1.2;
+    pCtx.stroke();
+    pCtx.restore();
+
+    // 2 & 3. Render tower, enemies & real combat FX layers via temporary ctx/camZoom swap
+    const prevCtx = ctx;
+    const prevZoom = (typeof camZoom !== 'undefined') ? camZoom : 1;
+    try {
+      ctx = pCtx;
+      if (typeof camZoom !== 'undefined') camZoom = previewScale;
+
+      if (typeof drawTowerModel === 'function') {
+        pCtx.save();
+        pCtx.translate(tower.x, tower.y);
+        drawTowerModel('gun', tower.angle, gunColor, 1, gunGlow, false, false, false, 0, {
+          x: tower.x, y: tower.y, target, time: _simTime, lastFire: tower.lastFire, shotIndex: tower.shotIndex
+        });
+        pCtx.restore();
+      }
+
+      for (let i = 0; i < previewEnemies.length; i++) {
+        const e = previewEnemies[i];
+        const jitX = e._fxJitT > 0 ? (Math.sin(_simTime * 80 + i) * 1.4) : 0;
+        const jitY = e._fxJitT > 0 ? (Math.cos(_simTime * 75 + i) * 1.4) : 0;
+        const renderEnemy = Object.assign({}, e, {
+          x: e.x + (e._fxKbX || 0) + jitX,
+          y: e.y + (e._fxKbY || 0) + jitY
+        });
+        if (typeof renderConfiguredEnemyModel === 'function') {
+          renderConfiguredEnemyModel(renderEnemy, false);
+        } else {
+          pCtx.beginPath();
+          pCtx.arc(renderEnemy.x, renderEnemy.y, renderEnemy.radius, 0, Math.PI * 2);
+          pCtx.fillStyle = renderEnemy.color;
+          pCtx.fill();
+        }
+      }
+
+      if (typeof updateAndDrawFxLayers === 'function') {
+        updateAndDrawFxLayers(_lastDt, _simTime);
+      }
+    } finally {
+      ctx = prevCtx;
+      if (typeof camZoom !== 'undefined') camZoom = prevZoom;
+    }
+
+    // 4. Bullets with gradient tracers
+    pCtx.save();
+    pCtx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < previewProjectiles.length; i++) {
+      const p = previewProjectiles[i];
+      const ang = Math.atan2(p.y - p.prevY, p.x - p.prevX);
+      const tailX = p.x - Math.cos(ang) * 16;
+      const tailY = p.y - Math.sin(ang) * 16;
+      const tg = pCtx.createLinearGradient(tailX, tailY, p.x, p.y);
+      tg.addColorStop(0, 'rgba(0, 229, 255, 0)');
+      tg.addColorStop(1, p.color);
+      pCtx.strokeStyle = tg;
+      pCtx.lineWidth = 3;
+      pCtx.lineCap = 'round';
+      pCtx.beginPath();
+      pCtx.moveTo(tailX, tailY);
+      pCtx.lineTo(p.x, p.y);
+      pCtx.stroke();
+
+      pCtx.fillStyle = '#ffffff';
+      pCtx.beginPath();
+      pCtx.arc(p.x, p.y, 2.2, 0, Math.PI * 2);
+      pCtx.fill();
+    }
+    pCtx.restore();
+    pCtx.restore();
+  }
+
+  function tick(now) {
+    const lvlSc = document.getElementById('levelsScreen');
+    if (!lvlSc || lvlSc.classList.contains('hidden') || (typeof currentLevelMode !== 'undefined' && currentLevelMode !== 'normal')) {
+      stop();
+      return;
+    }
+    if (!_lastTs) _lastTs = now;
+    const dt = Math.min(0.05, Math.max(0.001, (now - _lastTs) / 1000));
+    _lastTs = now;
+    step(dt);
+    render(now);
+    _rafId = requestAnimationFrame(tick);
+  }
+
+  function isActive() {
+    return _rafId !== null;
+  }
+
+  function start() {
+    if (_rafId !== null) return;
+    if (typeof clearFxLayerState === 'function') clearFxLayerState();
+    _lastTs = 0;
+    _lastDt = 0.016;
+    _simTime = 0;
+    _waveTimer = 2.4;
+    _burstRemaining = 0;
+    _burstTimer = 0;
+    previewEnemies = [];
+    previewProjectiles = [];
+    tower.angle = -Math.PI / 2;
+    tower.fireCooldown = 0.1;
+    tower.lastFire = -10;
+    tower.shotIndex = 0;
+
+    spawnGrunt(240);
+    spawnGrunt(200);
+    spawnGrunt(160);
+
+    _rafId = requestAnimationFrame(tick);
+  }
+
+  function stop() {
+    if (_rafId !== null) {
+      cancelAnimationFrame(_rafId);
+      _rafId = null;
+    }
+    previewEnemies = [];
+    previewProjectiles = [];
+    if (typeof clearFxLayerState === 'function') clearFxLayerState();
+  }
+
+  return { start, stop, isActive };
+})();
+
+function startNormalModePreview() { NormalModePreview.start(); }
+function stopNormalModePreview() { NormalModePreview.stop(); }
+
 // [UI.CG]
 function updateModeSwitcherUI() {
   const tabNormal = document.getElementById('tabNormal');
@@ -1942,12 +2437,17 @@ function updateModeSwitcherUI() {
     if (endlessView) endlessView.classList.add('hidden');
   }
 
-  const artDisplay = document.getElementById('modeArtDisplay');
+  const svgSlot = document.getElementById('modeArtSvgSlot');
+  const previewStage = document.getElementById('modePreviewStage');
   const isHyperion = (typeof activePalette !== 'undefined' && activePalette === 'matrix_green');
 
-  if (artDisplay) {
+  if (svgSlot || previewStage) {
     if (currentLevelMode === 'overdrive') {
-      artDisplay.innerHTML = `
+      stopNormalModePreview();
+      if (previewStage) previewStage.classList.add('hidden');
+      if (svgSlot) {
+        svgSlot.classList.remove('hidden');
+        svgSlot.innerHTML = `
         <svg viewBox="0 0 240 100" class="mode-art-svg" fill="none" preserveAspectRatio="xMidYMid meet">
           <defs>
             <filter id="hcArtBlur" x="-40%" y="-40%" width="180%" height="180%">
@@ -1992,8 +2492,13 @@ function updateModeSwitcherUI() {
           </g>
         </svg>
       `;
+      }
     } else if (currentLevelMode === 'endless') {
-      artDisplay.innerHTML = `
+      stopNormalModePreview();
+      if (previewStage) previewStage.classList.add('hidden');
+      if (svgSlot) {
+        svgSlot.classList.remove('hidden');
+        svgSlot.innerHTML = `
         <svg viewBox="0 0 240 100" class="mode-art-svg" fill="none" preserveAspectRatio="xMidYMid meet">
           <defs>
             <filter id="endlessArtBlur" x="-40%" y="-40%" width="180%" height="180%">
@@ -2030,45 +2535,11 @@ function updateModeSwitcherUI() {
           </g>
         </svg>
       `;
+      }
     } else {
-      const normCol = isHyperion ? '#ff9100' : '#00e5ff';
-      const normTriCol = isHyperion ? '#ffb700' : '#00e5ff';
-      artDisplay.innerHTML = `
-        <svg viewBox="0 0 240 100" class="mode-art-svg" fill="none" preserveAspectRatio="xMidYMid meet">
-          <defs>
-            <filter id="normArtBlur" x="-40%" y="-40%" width="180%" height="180%">
-              <feGaussianBlur stdDeviation="10" />
-            </filter>
-            <mask id="normArtMask">
-              <rect x="25" y="10" width="190" height="80" rx="16" fill="#ffffff" filter="url(#normArtBlur)" />
-            </mask>
-            <linearGradient id="normArtGridFade" x1="0" y1="62" x2="0" y2="100" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="${normCol}" stop-opacity="0.2" />
-              <stop offset="100%" stop-color="${normCol}" stop-opacity="0.85" />
-            </linearGradient>
-          </defs>
-          <rect x="0" y="0" width="240" height="100" fill="#000000" mask="url(#normArtMask)" />
-          <g stroke="url(#normArtGridFade)">
-            <line x1="120" y1="62" x2="16" y2="100" stroke-width="1" />
-            <line x1="120" y1="62" x2="62" y2="100" stroke-width="1" />
-            <line x1="120" y1="62" x2="94" y2="100" stroke-width="1" />
-            <line x1="120" y1="62" x2="120" y2="100" stroke-width="1.3" stroke-opacity="0.9" />
-            <line x1="120" y1="62" x2="146" y2="100" stroke-width="1" />
-            <line x1="120" y1="62" x2="178" y2="100" stroke-width="1" />
-            <line x1="120" y1="62" x2="224" y2="100" stroke-width="1" />
-            <line x1="84" y1="70" x2="156" y2="70" stroke-width="1" stroke-opacity="0.35" />
-            <line x1="58" y1="79" x2="182" y2="79" stroke-width="1" stroke-opacity="0.55" />
-            <line x1="28" y1="90" x2="212" y2="90" stroke-width="1" stroke-opacity="0.75" />
-          </g>
-          <line x1="20" y1="62" x2="220" y2="62" stroke="${normCol}" stroke-width="1.2" stroke-opacity="0.45" />
-          <g stroke="${normTriCol}">
-            <polygon points="120,56 80,10 160,10" stroke-width="1.6" stroke-linejoin="round" stroke-opacity="0.85" />
-            <line x1="91" y1="23" x2="149" y2="23" stroke-width="1.1" stroke-opacity="0.5" />
-            <line x1="98" y1="33" x2="142" y2="33" stroke-width="1.2" stroke-opacity="0.65" />
-            <line x1="106" y1="43" x2="134" y2="43" stroke-width="1.3" stroke-opacity="0.8" />
-          </g>
-        </svg>
-      `;
+      if (svgSlot) svgSlot.classList.add('hidden');
+      if (previewStage) previewStage.classList.remove('hidden');
+      startNormalModePreview();
     }
   }
 
@@ -2668,6 +3139,7 @@ function updateDailyBonusBtnVisibility() {
 
 // [UI.DR]
 function showStartScreen() {
+  stopNormalModePreview();
   isEndlessMode = false;
   music('menu');
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
@@ -3731,6 +4203,7 @@ function devToggleBpPremium() {}
 
 // [UI.ER]
 function closeSettings() {
+  if (settingsPreviousSource !== 'levels') stopNormalModePreview();
   const settingsSc = document.getElementById('settingsScreen');
   if (settingsSc) settingsSc.classList.add('hidden');
 
@@ -3756,6 +4229,7 @@ function closeSettings() {
     const scr = document.getElementById('levelsScreen');
     if (scr) scr.classList.remove('hidden');
     gameState = 'LEVELS';
+    if (currentLevelMode === 'normal') startNormalModePreview();
   } else if (settingsPreviousSource === 'upgrades') {
     const scr = document.getElementById('upgradesScreen');
     if (scr) scr.classList.remove('hidden');
@@ -4004,6 +4478,7 @@ function toggleSettingPerf(isChecked) {
 
 // [UI.FI]
 function showLevelSelect() {
+  stopNormalModePreview();
   music('menu');
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
   document.getElementById('startScreen').classList.add('hidden');
@@ -4077,6 +4552,7 @@ function confirmGiveUp() {
 
 // [UI.FM]
 function showLevelSelectFromGame() {
+  stopNormalModePreview();
   const curCat = (typeof MusicManager !== 'undefined' && MusicManager.current) ? MusicManager.current() : null;
   if (curCat !== 'win' && curCat !== 'lose') {
     music('menu');
@@ -4617,6 +5093,7 @@ function showUpgradesScreen(fromSource) {
     else fromSource = 'main';
   }
   upgradesPreviousSource = fromSource;
+  stopNormalModePreview();
 
   const bgScreenId = fromSource === 'victory' ? 'victoryScreen'
     : (fromSource === 'defeat' ? 'defeatScreen'
@@ -4678,6 +5155,7 @@ function closeUpgradesScreen() {
   } else if (upgradesPreviousSource === 'levels') {
     document.getElementById('levelsScreen').classList.remove('hidden');
     gameState = 'LEVELS';
+    if (currentLevelMode === 'normal') startNormalModePreview();
   } else {
     document.getElementById('startScreen').classList.remove('hidden');
     gameState = 'START';
@@ -9884,10 +10362,14 @@ function render(now) {
   }
 
   if (isMenuSceneActive()) {
-    clearFxLayerState();
+    if (!NormalModePreview.isActive()) {
+      clearFxLayerState();
+    }
     _lastFxRenderNow = now;
     drawSynthWavePerspectiveScene(now);
     return;
+  } else if (NormalModePreview.isActive()) {
+    stopNormalModePreview();
   }
 
   let fxDt = _lastFxRenderNow > 0 ? (now - _lastFxRenderNow) * 0.001 : 0.016;
