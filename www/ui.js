@@ -4185,8 +4185,7 @@ function renderLoadoutWidgetBody() {
     const canonicalOrder = Object.keys(TOWER_CONFIGS);
     const orderedLoadout = canonicalOrder.filter(t => selectedLoadout.includes(t));
     miniIcons.innerHTML = orderedLoadout.map(t => {
-      const col = (TOWER_CONFIGS[t] && TOWER_CONFIGS[t].color) || '#00e5ff';
-      return `<span class="loadout-mini-icon" style="border-color:${col};">${TOWER_ICONS[t] || ''}</span>`;
+      return `<span class="loadout-mini-icon">${TOWER_ICONS[t] || ''}</span>`;
     }).join('');
     expandedBox.classList.add('hidden');
   }
@@ -5741,9 +5740,7 @@ function updateInspectUI() {
 
   const iconBox = document.getElementById('inspectIconBox');
   if (iconBox) {
-    iconBox.innerHTML = buildTowerIconSvg(t.type, t.level || 1, 18) || '';
-    iconBox.style.borderColor = t.color || '#00e5ff';
-    iconBox.style.boxShadow = `0 0 10px ${t.color || '#00e5ff'}55`;
+    iconBox.innerHTML = buildTowerIconSvg(t.type, t.level || 1, 38) || '';
   }
 
   const nameEl = document.getElementById('inspectName');
@@ -5887,6 +5884,13 @@ function updateWaveCircle(dt) {
     progEl.style.strokeDashoffset = circumference.toFixed(2);
   }
   progEl.classList.toggle('counting-down', isCountdown);
+  // [UI.HTM]
+  const isAccelerated = isCountdown && (typeof isWaveTimerAccelerated !== 'undefined' && isWaveTimerAccelerated);
+  progEl.classList.toggle('accelerated', isAccelerated);
+  const bonusElForAcc = el('waveGoBonus');
+  if (bonusElForAcc) {
+    bonusElForAcc.classList.toggle('accelerated', isAccelerated);
+  }
 
   const bonusEl = el('waveGoBonus');
   const bonusValEl = el('waveGoBonusVal');

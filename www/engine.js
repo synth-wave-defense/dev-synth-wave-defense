@@ -444,6 +444,8 @@ let wave = 1;
 let waveInProgress = false;
 let autoWaveTimeRemaining = 0;
 let waveTimerActive = false;
+let fieldClearDelayTimer = 0;
+let isWaveTimerAccelerated = false;
 let waveTotalSpawnTime = 1.0;
 let waveSpawnElapsedTime = 0;
 let victoryDelayTimer = 0;
@@ -2426,6 +2428,8 @@ function resetLevelState() {
   finalWaveSpawned = false;
   autoWaveTimeRemaining = 0;
   waveTimerActive = false;
+  fieldClearDelayTimer = 0;
+  isWaveTimerAccelerated = false;
   victoryDelayTimer = 0;
   towers = [];
   enemies = [];
@@ -3820,6 +3824,8 @@ function triggerManualWave() {
     const secondsSaved = autoWaveTimeRemaining;
     waveTimerActive = false;
     autoWaveTimeRemaining = 0;
+    fieldClearDelayTimer = 0;
+    isWaveTimerAccelerated = false;
     if (isEndlessMode || wave < maxW) {
       let totalDelay = 5.0;
       let currentWaveObj = null;
@@ -3868,6 +3874,8 @@ function startWave() {
     waveInProgress = true;
     waveTimerActive = false;
     autoWaveTimeRemaining = 0;
+    fieldClearDelayTimer = 0;
+    isWaveTimerAccelerated = false;
     spawnQueue = [];
 
     const waveData = generateEndlessWaveData(wave);
@@ -3958,6 +3966,8 @@ function startWave() {
   waveInProgress = true;
   waveTimerActive = false;
   autoWaveTimeRemaining = 0;
+  fieldClearDelayTimer = 0;
+  isWaveTimerAccelerated = false;
   spawnQueue = [];
 
   const waveData = lvlConfig ? lvlConfig.waves.find(w => w.wave === wave) : null;
@@ -4518,12 +4528,24 @@ function update(dt) {
 
   // [ENG.EB] Кнопка Go и таймер между волнами
   const goLabel = (typeof t === 'function' ? t('go') : 'Go');
-
   if (waveTimerActive && autoWaveTimeRemaining > 0) {
-    autoWaveTimeRemaining -= dt;
+    if (enemies.length === 0 && spawnQueue.length === 0) {
+      fieldClearDelayTimer += dt;
+    } else {
+      fieldClearDelayTimer = 0;
+    }
+
+    const canAccelerate = (fieldClearDelayTimer >= 0.30) && (autoWaveTimeRemaining > 0.75);
+    isWaveTimerAccelerated = canAccelerate;
+
+    const timerSpeedMult = canAccelerate ? 2.0 : 1.0;
+    autoWaveTimeRemaining -= dt * timerSpeedMult;
+
     if (autoWaveTimeRemaining <= 0) {
       autoWaveTimeRemaining = 0;
       waveTimerActive = false;
+      isWaveTimerAccelerated = false;
+      fieldClearDelayTimer = 0;
       if (isEndlessMode || wave < maxW) {
         if (isEndlessMode) {
           addBpXp(5);
@@ -4535,6 +4557,9 @@ function update(dt) {
       if (btn) btn.disabled = false;
       if (btnText) btnText.textContent = goLabel;
     }
+  } else {
+    isWaveTimerAccelerated = false;
+    fieldClearDelayTimer = 0;
   }
 
   // Спавн мобов из очереди на карту
