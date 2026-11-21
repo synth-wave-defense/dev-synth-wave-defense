@@ -5,7 +5,7 @@
 <head>
   <meta charset="UTF-8">
   <script>
-    window.APP_VERSION = '1.38.55';
+    window.APP_VERSION = '1.38.54';
     window.__APP_STAGE__ = 'development';
     if (window.__APP_STAGE__ === 'development' && window.location.hostname !== 'synth-wave-defense.github.io') {
       const s = document.createElement("script");
@@ -950,9 +950,9 @@
   <!-- Dynamic Mode Art Banner -->
   <!-- [HTM.BNM] -->
   <div class="mode-art-display" id="modeArtDisplay">
-    <div class="mode-art-svg-slot" id="modeArtSvgSlot"></div>
-    <div class="mode-preview-stage hidden" id="modePreviewStage">
+    <div class="mode-preview-stage" id="modePreviewStage">
       <canvas id="modePreviewCanvas"></canvas>
+      <div class="mode-preview-tint" id="modePreviewTint"></div>
       <div class="mode-preview-dimmer"></div>
     </div>
   </div>
