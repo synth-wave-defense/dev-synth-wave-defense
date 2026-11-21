@@ -113,6 +113,35 @@ function invalidateGridCache() {
   if (typeof clearFxSpriteCaches === 'function') clearFxSpriteCaches();
 }
 
+// [UI.FM_CHEV] Shared neon portal chevron renderer (used by map grid & battle previews).
+function drawNeonChevron(targetCtx, cx, cy, ang, size, col) {
+  targetCtx.save();
+  targetCtx.translate(cx, cy);
+  targetCtx.rotate(ang);
+  targetCtx.lineCap = 'round';
+  targetCtx.lineJoin = 'round';
+
+  targetCtx.beginPath();
+  targetCtx.moveTo(-size * 0.8, -size);
+  targetCtx.lineTo(size * 0.9, 0);
+  targetCtx.lineTo(-size * 0.8, size);
+
+  targetCtx.strokeStyle = col;
+  targetCtx.globalAlpha = 0.30;
+  targetCtx.lineWidth = 7.5;
+  targetCtx.stroke();
+
+  targetCtx.globalAlpha = 1.0;
+  targetCtx.lineWidth = 3.0;
+  targetCtx.stroke();
+
+  targetCtx.strokeStyle = '#ffffff';
+  targetCtx.globalAlpha = 0.55;
+  targetCtx.lineWidth = 1.2;
+  targetCtx.stroke();
+  targetCtx.restore();
+}
+
 // [UI.G]
 function updateOffscreenGrid() {
   if (!offscreenGridCanvas) {
@@ -180,33 +209,6 @@ function updateOffscreenGrid() {
 
   // Static spawn & base portal chevrons baked directly into offscreenGridCanvas
   if (typeof activePathTiles !== 'undefined' && activePathTiles && activePathTiles.length >= 2) {
-    const drawBakedChevron = (cx, cy, ang, size, col) => {
-      oCtx.save();
-      oCtx.translate(cx, cy);
-      oCtx.rotate(ang);
-      oCtx.lineCap = 'round';
-      oCtx.lineJoin = 'round';
-
-      oCtx.beginPath();
-      oCtx.moveTo(-size * 0.8, -size);
-      oCtx.lineTo(size * 0.9, 0);
-      oCtx.lineTo(-size * 0.8, size);
-
-      oCtx.strokeStyle = col;
-      oCtx.globalAlpha = 0.30;
-      oCtx.lineWidth = 7.5;
-      oCtx.stroke();
-
-      oCtx.globalAlpha = 1.0;
-      oCtx.lineWidth = 3.0;
-      oCtx.stroke();
-
-      oCtx.strokeStyle = '#ffffff';
-      oCtx.globalAlpha = 0.55;
-      oCtx.lineWidth = 1.1;
-      oCtx.stroke();
-      oCtx.restore();
-    };
 
     const startTile = activePathTiles[0];
     const nextTile = activePathTiles[1];
@@ -217,7 +219,7 @@ function updateOffscreenGrid() {
 
     for (let i = 0; i < 3; i++) {
       const off = offsets[i];
-      drawBakedChevron(spawnX + 35 + Math.cos(spawnAngle) * off, spawnY + 35 + Math.sin(spawnAngle) * off, spawnAngle, 13, th.c1);
+      drawNeonChevron(oCtx, spawnX + 35 + Math.cos(spawnAngle) * off, spawnY + 35 + Math.sin(spawnAngle) * off, spawnAngle, 13, th.c1);
     }
 
     const prevTile = activePathTiles[activePathTiles.length - 2];
@@ -228,7 +230,7 @@ function updateOffscreenGrid() {
 
     for (let i = 0; i < 3; i++) {
       const off = offsets[i];
-      drawBakedChevron(baseX + 35 + Math.cos(baseAngle) * off, baseY + 35 + Math.sin(baseAngle) * off, baseAngle, 13, th.c3);
+      drawNeonChevron(oCtx, baseX + 35 + Math.cos(baseAngle) * off, baseY + 35 + Math.sin(baseAngle) * off, baseAngle, 13, th.c3);
     }
   }
 
@@ -257,112 +259,6 @@ function getNeonDiscSprite(color) {
   gCtx.fill();
   NEON_DISC_SPRITES[color] = c;
   return c;
-}
-
-//  Offscreen sprite cache for enemy geometry rendering.
-const ENEMY_SPRITE_CACHE = Object.create(null);
-
-// [UI.I]
-function getEnemyShapeSprite(shape, color, radius, glowColor) {
-  const safeShape = shape || 'circle';
-  const safeColor = color || '#00e5ff';
-  const safeGlow = glowColor || safeColor;
-  const safeR = Math.max(4, Math.round(radius || 12));
-  const key = `${safeShape}_${safeColor}_${safeGlow}_${safeR}`;
-
-  if (ENEMY_SPRITE_CACHE[key]) return ENEMY_SPRITE_CACHE[key];
-
-  const padding = 10;
-  const size = Math.ceil((safeR * 1.5 + padding) * 2);
-  const c = document.createElement('canvas');
-  c.width = size;
-  c.height = size;
-  const sCtx = c.getContext('2d');
-  const cx = size / 2;
-  const cy = size / 2;
-
-  sCtx.save();
-  sCtx.translate(cx, cy);
-
-  //  Diffuse neon glow lighting pass.
-  const outerR = Math.max(3, safeR * 2.2);
-  const grad = sCtx.createRadialGradient(0, 0, Math.min(2, outerR - 1), 0, 0, outerR);
-  grad.addColorStop(0, safeGlow + '66');
-  grad.addColorStop(0.5, safeGlow + '20');
-  grad.addColorStop(1, 'transparent');
-  sCtx.fillStyle = grad;
-  sCtx.beginPath();
-  sCtx.arc(0, 0, safeR * 2.2, 0, Math.PI * 2);
-  sCtx.fill();
-
-  //  Primary geometry body and neon outline pass.
-  sCtx.fillStyle = safeGlow + '33';
-  sCtx.strokeStyle = safeColor;
-  sCtx.lineWidth = 2.4;
-
-  sCtx.beginPath();
-  if (safeShape === 'circle') {
-    sCtx.arc(0, 0, safeR, 0, Math.PI * 2);
-  } else if (safeShape === 'triangle') {
-    const R = safeR * 1.2;
-    sCtx.moveTo(R, 0);
-    sCtx.lineTo(-R * 0.5, R * 0.866);
-    sCtx.lineTo(-R * 0.5, -R * 0.866);
-    sCtx.closePath();
-  } else if (safeShape === 'trapezoid' || safeShape === 'triangle_inverted') {
-    sCtx.moveTo(safeR * 1.2, -safeR * 0.4);
-    sCtx.lineTo(safeR * 1.2, safeR * 0.4);
-    sCtx.lineTo(-safeR * 0.8, safeR * 0.9);
-    sCtx.lineTo(-safeR * 0.8, -safeR * 0.9);
-    sCtx.closePath();
-  } else if (safeShape === 'kite') {
-    sCtx.moveTo(safeR * 1.4, 0);
-    sCtx.lineTo(0, -safeR * 0.9);
-    sCtx.lineTo(-safeR * 1.1, 0);
-    sCtx.lineTo(0, safeR * 0.9);
-    sCtx.closePath();
-  } else if (safeShape === 'square') {
-    const s = safeR * 1.5;
-    if (typeof sCtx.roundRect === 'function') {
-      sCtx.roundRect(-s/2, -s/2, s, s, 3);
-    } else {
-      sCtx.rect(-s/2, -s/2, s, s);
-    }
-  } else if (safeShape === 'diamond') {
-    sCtx.moveTo(0, -safeR * 1.3);
-    sCtx.lineTo(safeR * 1.1, 0);
-    sCtx.lineTo(0, safeR * 1.3);
-    sCtx.lineTo(-safeR * 1.1, 0);
-    sCtx.closePath();
-  } else if (safeShape === 'hexagon') {
-    for (let hx = 0; hx < 6; hx++) {
-      const a = (hx * Math.PI) / 3;
-      const hxX = Math.cos(a) * safeR * 1.15;
-      const hxY = Math.sin(a) * safeR * 1.15;
-      if (hx === 0) sCtx.moveTo(hxX, hxY); else sCtx.lineTo(hxX, hxY);
-    }
-    sCtx.closePath();
-  } else if (safeShape === 'octagon') {
-    for (let oc = 0; oc < 8; oc++) {
-      const a = (oc * Math.PI) / 4;
-      const ocX = Math.cos(a) * safeR * 1.2;
-      const ocY = Math.sin(a) * safeR * 1.2;
-      if (oc === 0) sCtx.moveTo(ocX, ocY); else sCtx.lineTo(ocX, ocY);
-    }
-    sCtx.closePath();
-  } else {
-    sCtx.arc(0, 0, safeR, 0, Math.PI * 2);
-  }
-
-  sCtx.fill();
-  sCtx.stroke();
-  sCtx.restore();
-
-  ENEMY_SPRITE_CACHE[key] = {
-    canvas: c,
-    half: cx
-  };
-  return ENEMY_SPRITE_CACHE[key];
 }
 
 //  Offscreen concentric smoke sprite cache.
@@ -2024,33 +1920,6 @@ const ModeBattlePreview = (() => {
     angle: Math.PI, fireCooldown: 0.15, lastFire: -10, shotIndex: 0
   };
 
-  function drawPreviewChevron(targetCtx, cx, cy, ang, size, col) {
-    targetCtx.save();
-    targetCtx.translate(cx, cy);
-    targetCtx.rotate(ang);
-    targetCtx.lineCap = 'round';
-    targetCtx.lineJoin = 'round';
-    targetCtx.beginPath();
-    targetCtx.moveTo(-size * 0.8, -size);
-    targetCtx.lineTo(size * 0.9, 0);
-    targetCtx.lineTo(-size * 0.8, size);
-
-    targetCtx.strokeStyle = col;
-    targetCtx.globalAlpha = 0.30;
-    targetCtx.lineWidth = 7.5;
-    targetCtx.stroke();
-
-    targetCtx.globalAlpha = 1.0;
-    targetCtx.lineWidth = 3.0;
-    targetCtx.stroke();
-
-    targetCtx.strokeStyle = '#ffffff';
-    targetCtx.globalAlpha = 0.55;
-    targetCtx.lineWidth = 1.2;
-    targetCtx.stroke();
-    targetCtx.restore();
-  }
-
   function traceNormalRails(tCtx) {
     const hr = 18, rIn = 18, rOut = 52;
     const p0 = N_WAYPOINTS[0], p1 = N_WAYPOINTS[1], p2 = N_WAYPOINTS[2], p3 = N_WAYPOINTS[3], p4 = N_WAYPOINTS[4];
@@ -2129,7 +1998,7 @@ const ModeBattlePreview = (() => {
     const spawnX = 3.5 * T_SIZE, spawnY = 4.35 * T_SIZE, spawnAng = -Math.PI / 2;
     const offsets = [-14, 0, 14];
     for (let i = 0; i < 3; i++) {
-      drawPreviewChevron(oCtx, spawnX + Math.cos(spawnAng) * offsets[i], spawnY + Math.sin(spawnAng) * offsets[i], spawnAng, 13, th.c1 || '#00e5ff');
+      drawNeonChevron(oCtx, spawnX + Math.cos(spawnAng) * offsets[i], spawnY + Math.sin(spawnAng) * offsets[i], spawnAng, 13, th.c1 || '#00e5ff');
     }
     return off;
   }
@@ -2163,7 +2032,7 @@ const ModeBattlePreview = (() => {
     const chevFracs = [0.125, 0.375, 0.625, 0.875];
     for (let i = 0; i < chevFracs.length; i++) {
       const pt = sampleLemniscate(chevFracs[i] * E_TOTAL_LEN);
-      drawPreviewChevron(oCtx, pt.x, pt.y, pt.angle, 12, '#d946ef');
+      drawNeonChevron(oCtx, pt.x, pt.y, pt.angle, 12, '#d946ef');
     }
     return off;
   }
@@ -2196,7 +2065,7 @@ const ModeBattlePreview = (() => {
     // 3 base portal chevrons centered inside tile (c=5, r=1)
     const offsets = [-14, 0, 14];
     for (let i = 0; i < 3; i++) {
-      drawPreviewChevron(oCtx, O_BASE_X + offsets[i], O_BASE_Y, 0, 12, '#f05f9f');
+      drawNeonChevron(oCtx, O_BASE_X + offsets[i], O_BASE_Y, 0, 12, '#f05f9f');
     }
     return off;
   }
@@ -4880,14 +4749,10 @@ function toggleSettingPerf(isChecked) {
   }
 })();
 
-// [UI.FI]
-function showLevelSelect() {
-  stopNormalModePreview();
-  music('menu');
+// [UI.FIM] Shared HUD & screen transition helper for entering #levelsScreen.
+function _enterLevelSelectView() {
   if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
-  document.getElementById('startScreen').classList.add('hidden');
   document.getElementById('levelsScreen').classList.remove('hidden');
-
   document.getElementById('econHpSplitBadge').classList.add('hidden');
   document.getElementById('levelWaveSplitBadge').classList.add('hidden');
   document.getElementById('hudRightGroup').classList.remove('hidden');
@@ -4911,6 +4776,14 @@ function showLevelSelect() {
 
   syncTopHudVisibility();
   updateDailyBonusBtnVisibility();
+}
+
+// [UI.FI]
+function showLevelSelect() {
+  stopNormalModePreview();
+  music('menu');
+  document.getElementById('startScreen').classList.add('hidden');
+  _enterLevelSelectView();
 }
 
 // [UI.FJ]
@@ -4961,51 +4834,18 @@ function showLevelSelectFromGame() {
   if (curCat !== 'win' && curCat !== 'lose') {
     music('menu');
   }
-  if (reviveTimerInterval) { clearInterval(reviveTimerInterval); reviveTimerInterval = null; }
-
-  const settingsSc = document.getElementById('settingsScreen');
-  if (settingsSc) settingsSc.classList.add('hidden');
 
   ['startScreen', 'victoryScreen', 'defeatScreen'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('screen-bg-only');
   });
 
-  const pauseSc = document.getElementById('pauseScreen');
-  if (pauseSc) pauseSc.classList.add('hidden');
-  const vicSc = document.getElementById('victoryScreen');
-  if (vicSc) vicSc.classList.add('hidden');
-  const defSc = document.getElementById('defeatScreen');
-  if (defSc) defSc.classList.add('hidden');
-  const upgSc = document.getElementById('upgradesScreen');
-  if (upgSc) upgSc.classList.add('hidden');
-  const revSc = document.getElementById('reviveScreen');
-  if (revSc) revSc.classList.add('hidden');
+  ['settingsScreen', 'pauseScreen', 'victoryScreen', 'defeatScreen', 'upgradesScreen', 'reviveScreen'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  });
 
-  document.getElementById('levelsScreen').classList.remove('hidden');
-  document.getElementById('econHpSplitBadge').classList.add('hidden');
-  document.getElementById('levelWaveSplitBadge').classList.add('hidden');
-  document.getElementById('hudRightGroup').classList.remove('hidden');
-  updateStartChapterLabel(false);
-  document.getElementById('controlsWrapper').classList.add('hidden');
-
-  const waveBtn = document.getElementById('waveBtn');
-  if (waveBtn) waveBtn.classList.add('hidden');
-
-  const customSpawner = document.getElementById('devCustomSpawner');
-  if (customSpawner) customSpawner.classList.add('hidden');
-
-  currentLevelSection = Math.min(TOTAL_SECTIONS, Math.max(1, Math.ceil(currentLevel / LEVELS_PER_SECTION)));
-  if (typeof modeLevelSections !== 'undefined' && currentLevelMode) {
-    modeLevelSections[currentLevelMode] = currentLevelSection;
-  }
-  gameState = 'LEVELS';
-  renderLevelsGrid();
-  showLoadoutWidgetIn('loadoutAnchor-levels');
-  updateHudSpeedWidget();
-
-  syncTopHudVisibility();
-  updateDailyBonusBtnVisibility();
+  _enterLevelSelectView();
 }
 
 // [UI.FN]
@@ -5190,33 +5030,6 @@ const MilestoneTowerPreview = (() => {
     }
   }
 
-  function drawChevron(oCtx, cx, cy, ang, size, col) {
-    oCtx.save();
-    oCtx.translate(cx, cy);
-    oCtx.rotate(ang);
-    oCtx.lineCap = 'round';
-    oCtx.lineJoin = 'round';
-    oCtx.beginPath();
-    oCtx.moveTo(-size * 0.8, -size);
-    oCtx.lineTo(size * 0.9, 0);
-    oCtx.lineTo(-size * 0.8, size);
-
-    oCtx.strokeStyle = col;
-    oCtx.globalAlpha = 0.28;
-    oCtx.lineWidth = 7.0;
-    oCtx.stroke();
-
-    oCtx.globalAlpha = 0.95;
-    oCtx.lineWidth = 2.6;
-    oCtx.stroke();
-
-    oCtx.strokeStyle = '#ffffff';
-    oCtx.globalAlpha = 0.52;
-    oCtx.lineWidth = 1.1;
-    oCtx.stroke();
-    oCtx.restore();
-  }
-
   function buildGridCache(isRail, th) {
     const c1Rgb = th.rgb1 ? th.rgb1.cssRgb : '0, 229, 255';
     const off = document.createElement('canvas');
@@ -5251,11 +5064,11 @@ const MilestoneTowerPreview = (() => {
     const chevCol = th.c1 || '#00e5ff';
     if (isRail) {
       for (let i = 0; i < 3; i++) {
-        drawChevron(oCtx, VIEW_W - 22 - i * 13, py, Math.PI, 10, chevCol);
+        drawNeonChevron(oCtx, VIEW_W - 22 - i * 13, py, Math.PI, 10, chevCol);
       }
     } else {
       for (let i = 0; i < 3; i++) {
-        drawChevron(oCtx, 18 + i * 13, py, 0, 10, chevCol);
+        drawNeonChevron(oCtx, 18 + i * 13, py, 0, 10, chevCol);
       }
     }
     return off;
@@ -8977,126 +8790,10 @@ function createHitImpactFx(x, y, color, kind = 'bullet', dirAngle = null) {
     return;
   }
 
-  if (kind === 'tesla') {
-    // Электрический разряд в точке удара молнии
-    pushParticle({
-      x, y, vx: 0, vy: 0,
-      color: col,
-      radius: 16,
-      life: 0.14, maxLife: 0.14,
-      isFlash: true
-    });
-    pushParticle({
-      x, y, vx: 0, vy: 0,
-      color: col,
-      radius: 18,
-      life: 0.20, maxLife: 0.20,
-      isRing: true,
-      lineWidth: 2.0
-    });
-    const cnt = isLow ? 3 : 6;
-    for (let i = 0; i < cnt; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const spd = 55 + Math.random() * 95;
-      pushParticle({
-        x, y,
-        vx: Math.cos(a) * spd,
-        vy: Math.sin(a) * spd,
-        drag: 0.88,
-        color: i % 2 === 0 ? '#ffffff' : col,
-        radius: 2.4 + Math.random() * 1.4,
-        life: 0.22 + Math.random() * 0.1,
-        maxLife: 0.32,
-        isStreak: true
-      });
-    }
-    return;
-  }
-
-  if (kind === 'railgun') {
-    // Мощный пробивной импульс со звёздочкой и конусом искр по ходу луча
-    pushParticle({
-      x, y, vx: 0, vy: 0,
-      color: col,
-      radius: 24,
-      life: 0.22, maxLife: 0.22,
-      isCrossFlash: true,
-      angle: dirAngle || 0
-    });
-    pushParticle({
-      x, y, vx: 0, vy: 0,
-      color: '#ffffff',
-      radius: 26,
-      life: 0.24, maxLife: 0.24,
-      isRing: true,
-      lineWidth: 2.6
-    });
-    const baseA = (typeof dirAngle === 'number') ? dirAngle : 0;
-    const cnt = isLow ? 5 : 10;
-    for (let i = 0; i < cnt; i++) {
-      const spread = (Math.random() - 0.5) * 1.3;
-      const a = baseA + spread;
-      const spd = 90 + Math.random() * 160;
-      pushParticle({
-        x, y,
-        vx: Math.cos(a) * spd,
-        vy: Math.sin(a) * spd,
-        drag: 0.91,
-        color: i % 3 === 0 ? '#ffffff' : col,
-        radius: 3.0 + Math.random() * 2.0,
-        life: 0.26 + Math.random() * 0.14,
-        maxLife: 0.40,
-        isStreak: true
-      });
-    }
-    return;
-  }
-
-  // Кинетическое попадание (Gun)
-  pushParticle({
-    x, y, vx: 0, vy: 0,
-    color: col,
-    radius: 12,
-    life: 0.12, maxLife: 0.12,
-    isFlash: true
-  });
-  const baseA = (typeof dirAngle === 'number') ? (dirAngle + Math.PI) : (Math.random() * Math.PI * 2);
-  const cnt = isLow ? 2 : 4;
-  for (let i = 0; i < cnt; i++) {
-    const a = baseA + (Math.random() - 0.5) * 1.6;
-    const spd = 45 + Math.random() * 85;
-    pushParticle({
-      x, y,
-      vx: Math.cos(a) * spd,
-      vy: Math.sin(a) * spd,
-      drag: 0.90,
-      color: i === 0 ? '#ffffff' : col,
-      radius: 2.2 + Math.random() * 1.2,
-      life: 0.18 + Math.random() * 0.08,
-      maxLife: 0.26,
-      isStreak: true
-    });
-  }
 }
 
-// [UI.HX]
-function createImpactSmoke(x, y, size = 10) {
-  if (typeof TOWER_FX !== 'undefined') return;
-  if (perfMode === 'low' && Math.random() < 0.45) return;
-  const sAngle = Math.random() * Math.PI * 2;
-  const sSpeed = 8 + Math.random() * 14;
-  pushParticle({
-    x: x + (Math.random() - 0.5) * 6,
-    y: y + (Math.random() - 0.5) * 6,
-    vx: Math.cos(sAngle) * sSpeed,
-    vy: Math.sin(sAngle) * sSpeed - 8,
-    radius: size * (0.8 + Math.random() * 0.4),
-    color: '#ffffff',
-    life: 0.35 + Math.random() * 0.15,
-    maxLife: 0.5,
-    isSmoke: true
-  });
-}
+// [UI.HX] No-op stub (kept for legacy call sites in engine.js)
+function createImpactSmoke() {}
 
 // [UI.HY]
 function createSparks(x, y, color1, count = 6, color2 = null) {
@@ -9130,106 +8827,6 @@ function createExplosion(x, y, radius, color1 = '#ff9100', color2 = null, kind =
 
   if (isMortar) {
     spawnFxHitLayers(x, y, 'mortar', c1, null, 13);
-    return;
-    // 1. Яркий внешний ореол + горячее бело-золотое ядро детонации
-    pushParticle({
-      x, y, vx: 0, vy: 0,
-      color: c1,
-      radius: radius * 1.05,
-      life: 0.22, maxLife: 0.22,
-      isGlowHalo: true,
-      alphaMult: 0.62
-    });
-    pushParticle({
-      x, y, vx: 0, vy: 0,
-      color: '#ffffff',
-      radius: radius * 0.45,
-      life: 0.14, maxLife: 0.14,
-      isFlash: true
-    });
-    // 2. Крестообразная вспышка в эпицентре
-    pushParticle({
-      x, y, vx: 0, vy: 0,
-      color: c1,
-      radius: radius * 0.65,
-      life: 0.20, maxLife: 0.20,
-      isCrossFlash: true,
-      angle: Math.random() * Math.PI
-    });
-
-    // 3. Двойная ударная волна (внешняя оранжевая + быстрая внутренняя белая)
-    createShockwave(x, y, radius * 1.12, c1);
-    pushParticle({
-      x, y, vx: 0, vy: 0,
-      color: '#ffffff',
-      radius: radius * 0.72,
-      life: 0.22, maxLife: 0.22,
-      isRing: true,
-      lineWidth: 2.8
-    });
-
-    // 4. Веер раскалённых трассирующих искр с торможением в воздухе
-    const count = isLow ? 9 : 18;
-    for (let i = 0; i < count; i++) {
-      const angle = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.35;
-      const speed = 85 + Math.random() * 210;
-      pushParticle({
-        x, y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        drag: 0.90,
-        color: i % 4 === 0 ? '#ffffff' : (i % 2 === 0 ? c1 : c2),
-        radius: 3.2 + Math.random() * 2.6,
-        life: 0.30 + Math.random() * 0.20,
-        maxLife: 0.50,
-        isStreak: true
-      });
-    }
-
-    // 5. Разлетающиеся осколки снаряда
-    const shardCount = isLow ? 3 : 6;
-    for (let k = 0; k < shardCount; k++) {
-      const a = Math.random() * Math.PI * 2;
-      const spd = 60 + Math.random() * 140;
-      const sz = 4.2 + Math.random() * 3.0;
-      pushParticle({
-        x, y,
-        vx: Math.cos(a) * spd,
-        vy: Math.sin(a) * spd,
-        drag: 0.93,
-        color: k % 2 === 0 ? c1 : c2,
-        radius: sz,
-        pts: [
-          { x: -sz * 0.7, y: -sz * 0.25 },
-          { x: sz * 0.8, y: 0 },
-          { x: -sz * 0.4, y: sz * 0.45 }
-        ],
-        angle: a,
-        vRot: (Math.random() - 0.5) * 18,
-        life: 0.32 + Math.random() * 0.16,
-        maxLife: 0.48,
-        isShard: true
-      });
-    }
-
-    // 6. Объёмное дымное облако
-    const smokeCount = isLow ? 4 : 8;
-    for (let s = 0; s < smokeCount; s++) {
-      const sAngle = Math.random() * Math.PI * 2;
-      const sDist = Math.random() * radius * 0.55;
-      const sSpeed = 12 + Math.random() * 28;
-      pushParticle({
-        x: x + Math.cos(sAngle) * sDist,
-        y: y + Math.sin(sAngle) * sDist,
-        vx: Math.cos(sAngle) * sSpeed,
-        vy: Math.sin(sAngle) * sSpeed - (10 + Math.random() * 15),
-        radius: 16 + Math.random() * 14,
-        color: '#ffffff',
-        life: 0.65 + Math.random() * 0.35,
-        maxLife: 1.0,
-        isSmoke: true
-      });
-    }
     return;
   }
 
@@ -9434,22 +9031,6 @@ const NEBULA_CLUSTERS = [
   // Bottom-right cluster (muted cyan background).
   { cx: 0.80, cy: 0.74, scale: 0.44, angle: 0.32, aspect: 0.70, intensity: 0.52,
     base: [0.04, 0.32, 0.50], hot: [0.20, 0.85, 0.88] }
-];
-
-// Hyperion Sunburst nebula clusters: Deep Cobalt Blue (left) & Solar Orange-Gold (right)
-const HYPERION_NEBULA_CLUSTERS = [
-  // Top-left cluster (Cobalt Blue).
-  { cx: 0.22, cy: 0.22, scale: 0.44, angle: 0.38, aspect: 0.66, intensity: 1.15,
-    base: [0.06, 0.24, 0.72], hot: [0.25, 0.58, 1.00] },
-  // Top-right cluster (Solar Orange / Gold).
-  { cx: 0.78, cy: 0.20, scale: 0.44, angle: -0.38, aspect: 0.66, intensity: 1.18,
-    base: [0.72, 0.26, 0.02], hot: [1.00, 0.68, 0.12] },
-  // Bottom-left cluster (Muted Cobalt).
-  { cx: 0.20, cy: 0.76, scale: 0.45, angle: -0.28, aspect: 0.70, intensity: 0.52,
-    base: [0.05, 0.18, 0.55], hot: [0.20, 0.48, 0.90] },
-  // Bottom-right cluster (Muted Amber/Orange).
-  { cx: 0.80, cy: 0.74, scale: 0.44, angle: 0.32, aspect: 0.70, intensity: 0.55,
-    base: [0.58, 0.20, 0.02], hot: [0.95, 0.55, 0.08] }
 ];
 
 // [UI.IJ]
@@ -10495,9 +10076,6 @@ function getModeOverlayCanvas(w, h, modeName) {
   return off;
 }
 
-// [UI.JK] Порталы теперь запекаются 1 раз в offscreenGridCanvas (оставлено для обратной совместимости)
-function drawPathPortals() {}
-
 // [UI.JKM] Offscreen-спрайт индикатора оглушения EMP над башней (3x разрешение)
 let _empDisabledSprite = null;
 function getEmpDisabledSprite() {
@@ -10613,54 +10191,6 @@ function drawPathRails(now) {
   }
 
   ctx.restore();
-}
-
-//  Tower vector glyph sprite and model geometry renderer.
-// [UI.JN]
-function drawTowerGlyphOps(ops, color, isDisabled, isCooling) {
-  // [UI.JO]
-  const fillOf = (f) => {
-    if (f === 'd') return TOWER_GLYPH_DARK;
-    return isDisabled ? '#475569' : color;
-  };
-  ops.forEach(op => {
-    if (op.t === 'rect') {
-      ctx.beginPath();
-      if (op.r) ctx.roundRect(op.x, op.y, op.w, op.h, op.r);
-      else ctx.rect(op.x, op.y, op.w, op.h);
-      ctx.fillStyle = fillOf(op.f);
-      ctx.fill();
-      if (op.s) { ctx.strokeStyle = fillOf(op.s); ctx.lineWidth = op.sw || 1; ctx.stroke(); }
-    } else if (op.t === 'poly' || op.t === 'bolt') {
-      ctx.save();
-      if (op.t === 'bolt') {
-        ctx.translate(op.cx, 0);
-        ctx.rotate(op.rot * Math.PI / 180);
-        ctx.scale(op.scale, op.scale);
-      }
-      ctx.beginPath();
-      ctx.moveTo(op.pts[0], op.pts[1]);
-      for (let i = 2; i < op.pts.length; i += 2) ctx.lineTo(op.pts[i], op.pts[i + 1]);
-      ctx.closePath();
-      ctx.fillStyle = fillOf(op.f);
-      ctx.fill();
-      ctx.restore();
-    } else if (op.t === 'circle') {
-      ctx.beginPath();
-      ctx.arc(op.cx, op.cy, op.r, 0, Math.PI * 2);
-      ctx.fillStyle = fillOf(op.f);
-      ctx.fill();
-    } else if (op.t === 'pline') {
-      ctx.beginPath();
-      ctx.moveTo(op.pts[0], op.pts[1]);
-      for (let i = 2; i < op.pts.length; i += 2) ctx.lineTo(op.pts[i], op.pts[i + 1]);
-      ctx.strokeStyle = isDisabled ? '#475569' : (isCooling ? '#64748b' : color);
-      ctx.lineWidth = op.sw;
-      ctx.lineJoin = 'round';
-      ctx.lineCap = 'round';
-      ctx.stroke();
-    }
-  });
 }
 
 // [UI.JP] Tower Beautification Renderer V8 (3x Retina Offscreen Base Cache + Zero-Blur Dynamic Turrets)
@@ -10996,7 +10526,7 @@ function drawStasisSnowflake(c, lvl, time, col, isDisabled) {
       c.fill();
     }
 
-    ctx.restore();
+    c.restore();
   }
 
   if (lvl >= 2) {
@@ -11511,7 +11041,7 @@ function render(now) {
   if (fxDt < 0 || fxDt > 0.05) fxDt = 0.016;
   if (typeof gameState !== 'undefined' && gameState !== 'PLAYING') fxDt = 0;
   else if (typeof isSimulationPaused !== 'undefined' && isSimulationPaused) fxDt = 0;
-  else if (typeof gameSpeed !== 'undefined' && gameSpeed > 0) fxDt *= gameSpeed;
+  else if (typeof gameTimeScale !== 'undefined' && gameTimeScale > 0) fxDt *= gameTimeScale;
 
   const w = window.innerWidth;
   const h = window.innerHeight;

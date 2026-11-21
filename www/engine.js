@@ -487,14 +487,6 @@ function resetEndlessDailyRunsIfNeeded() {
   }
 }
 
-// [ENG.W]
-function isEndlessUnlocked() {
-  if (typeof devMode !== 'undefined' && devMode) return true;
-  if (typeof maxUnlockedLevel === 'number' && maxUnlockedLevel > 15) return true;
-  if (Array.isArray(clearedLevels) && clearedLevels.includes(15)) return true;
-  return false;
-}
-
 // [ENG.X]
 function getEndlessEntryStatus() {
   resetEndlessDailyRunsIfNeeded();
@@ -4866,27 +4858,6 @@ function update(dt) {
     const targetWp = WAYPOINTS[e.wpIndex];
     if (!targetWp) continue;
 
-    let targetX = targetWp.x;
-    let targetY = targetWp.y;
-    if (e.laneOffset) {
-      const prevWp = WAYPOINTS[e.wpIndex - 1] || WAYPOINTS[0];
-      const nextWp = WAYPOINTS[e.wpIndex + 1];
-      const segDx = targetWp.x - prevWp.x;
-      const segDy = targetWp.y - prevWp.y;
-      const segLen = Math.hypot(segDx, segDy) || 1;
-      let offX = -segDy / segLen;
-      let offY = segDx / segLen;
-      if (nextWp) {
-        const seg2Dx = nextWp.x - targetWp.x;
-        const seg2Dy = nextWp.y - targetWp.y;
-        const seg2Len = Math.hypot(seg2Dx, seg2Dy) || 1;
-        offX += -seg2Dy / seg2Len;
-        offY += seg2Dx / seg2Len;
-      }
-      targetX += offX * e.laneOffset;
-      targetY += offY * e.laneOffset;
-    }
-
     const effectiveSpeed = e.speed * (isOverdriveMode ? 1.2 : 1.0) * thawMult;
     let remainingStep = effectiveSpeed * dt;
     let reachedBase = false;
@@ -5077,9 +5048,6 @@ function update(dt) {
         const sinA = Math.sin(t.angle);
         const mx = t.x + cosA * 24 - sinA * barrelSide;
         const my = t.y + sinA * 24 + cosA * barrelSide;
-        if (typeof spawnTowerMuzzleFx === 'function') {
-          spawnTowerMuzzleFx('gun', mx, my, t.angle, t.color);
-        }
         projectiles.push({
           type: 'bullet',
           x: mx,
@@ -5129,16 +5097,12 @@ function update(dt) {
         if (t.fxAccum >= 0.10) {
           t.fxAccum -= 0.10;
           if (t.fxAccum >= 0.10) t.fxAccum = 0;
-          if (typeof spawnTowerHitFx === 'function') {
-            spawnTowerHitFx('laser', target.x, target.y, t.angle, t.color, target.radius);
+          if (typeof createHitImpactFx === 'function') {
+            createHitImpactFx(target.x, target.y, t.color || '#f05f9f', 'bullet', t.angle);
           } else {
-            if (typeof createHitImpactFx === 'function') {
-              createHitImpactFx(target.x, target.y, t.color || '#f05f9f', 'bullet', t.angle);
-            } else {
-              createDamageShards(target.x, target.y, target.color, dDmg * 4, false);
-            }
-            if (Math.random() < 0.5) createImpactSmoke(target.x, target.y, 8);
+            createDamageShards(target.x, target.y, target.color, dDmg * 4, false);
           }
+          if (Math.random() < 0.5) createImpactSmoke(target.x, target.y, 8);
         }
       } else {
         t.accumTarget = null;
@@ -5157,9 +5121,6 @@ function update(dt) {
         const launchX = t.x + Math.cos(t.angle) * muzzleDist;
         const launchY = t.y + Math.sin(t.angle) * muzzleDist;
         const range = Math.hypot(target.x - launchX, target.y - launchY);
-        if (typeof spawnTowerMuzzleFx === 'function') {
-          spawnTowerMuzzleFx('mortar', launchX, launchY, t.angle, t.color);
-        }
         projectiles.push({
           type: 'mortar_shell',
           x: launchX,
@@ -5231,11 +5192,7 @@ function update(dt) {
       if (t.lastFire >= t.fireRate) {
         t.lastFire = 0;
         sfx('stasis');
-        if (typeof spawnTowerHitFx === 'function') {
-          spawnTowerHitFx('stasis', t.x, t.y, null, t.color, t.range);
-        } else {
-          createShockwave(t.x, t.y, t.range, t.color);
-        }
+        createShockwave(t.x, t.y, t.range, t.color);
         enemies.forEach(e => {
           const dxS = e.x - t.x;
           const dyS = e.y - t.y;
@@ -5306,17 +5263,13 @@ function update(dt) {
           if (t.fxAccum >= 0.10) {
             t.fxAccum -= 0.10;
             if (t.fxAccum >= 0.10) t.fxAccum = 0;
-            if (typeof spawnTowerHitFx === 'function') {
-              spawnTowerHitFx('melter', target.x, target.y, t.angle, t.color, target.radius);
+            const sparkCol = rampProgress > 0.7 ? '#ffffff' : (rampProgress > 0.35 ? '#fb923c' : (t.color || '#e85268'));
+            if (typeof createHitImpactFx === 'function') {
+              createHitImpactFx(target.x, target.y, sparkCol, 'bullet', t.angle);
             } else {
-              const sparkCol = rampProgress > 0.7 ? '#ffffff' : (rampProgress > 0.35 ? '#fb923c' : (t.color || '#e85268'));
-              if (typeof createHitImpactFx === 'function') {
-                createHitImpactFx(target.x, target.y, sparkCol, 'bullet', t.angle);
-              } else {
-                createDamageShards(target.x, target.y, target.color, dDmg * 3, false);
-              }
-              createImpactSmoke(target.x, target.y, 9 + rampProgress * 6);
+              createDamageShards(target.x, target.y, target.color, dDmg * 3, false);
             }
+            createImpactSmoke(target.x, target.y, 9 + rampProgress * 6);
           }
         } else {
           t.fxAccum = 0;
@@ -5353,9 +5306,6 @@ function update(dt) {
           ? TOWER_GLYPH_SPECS.railgun.muzzle.atX : 26;
         const rMx = t.x + Math.cos(t.angle) * rMuzzleDist;
         const rMy = t.y + Math.sin(t.angle) * rMuzzleDist;
-        if (typeof spawnTowerMuzzleFx === 'function') {
-          spawnTowerMuzzleFx('railgun', rMx, rMy, t.angle, t.color);
-        }
 
         const beamLength = 3500;
         const beamEndX = t.x + Math.cos(t.angle) * beamLength;
@@ -5388,17 +5338,13 @@ function update(dt) {
             if (typeof createFloatingDamage === 'function') {
               createFloatingDamage(e.x, e.y, t.damage, t.color || '#a275df');
             }
-            if (typeof spawnTowerHitFx === 'function') {
-              spawnTowerHitFx('railgun', e.x, e.y, t.angle, t.color, e.radius);
-            } else {
-              if (typeof createHitImpactFx === 'function') {
-                createHitImpactFx(e.x, e.y, t.color || '#a275df', 'railgun', t.angle);
-              }
-              if (railShardCount < 4) {
-                createDamageShards(e.x, e.y, e.color, t.damage, false);
-                if (typeof createImpactSmoke === 'function') createImpactSmoke(e.x, e.y, 12);
-                railShardCount++;
-              }
+            if (typeof createHitImpactFx === 'function') {
+              createHitImpactFx(e.x, e.y, t.color || '#a275df', 'railgun', t.angle);
+            }
+            if (railShardCount < 4) {
+              createDamageShards(e.x, e.y, e.color, t.damage, false);
+              if (typeof createImpactSmoke === 'function') createImpactSmoke(e.x, e.y, 12);
+              railShardCount++;
             }
           }
         }
@@ -5435,17 +5381,13 @@ function update(dt) {
             createFloatingDamage(p.target.x, p.target.y, p.damage, p.color || '#00e5ff');
           }
           applyEnemyHitReaction(p.target, hitAngle, false);
-          if (typeof spawnTowerHitFx === 'function') {
-            spawnTowerHitFx('gun', p.target.x, p.target.y, hitAngle, p.color, p.target.radius);
+          if (typeof createHitImpactFx === 'function') {
+            createHitImpactFx(p.target.x, p.target.y, p.color || '#00e5ff', 'bullet', hitAngle);
           } else {
-            if (typeof createHitImpactFx === 'function') {
-              createHitImpactFx(p.target.x, p.target.y, p.color || '#00e5ff', 'bullet', hitAngle);
-            } else {
-              createShockwave(p.target.x, p.target.y, 14, p.color || '#00e5ff');
-            }
-            createDamageShards(p.target.x, p.target.y, p.target.color, p.damage, false);
-            createImpactSmoke(p.target.x, p.target.y, 11);
+            createShockwave(p.target.x, p.target.y, 14, p.color || '#00e5ff');
           }
+          createDamageShards(p.target.x, p.target.y, p.target.color, p.damage, false);
+          createImpactSmoke(p.target.x, p.target.y, 11);
         } else {
           if (typeof createHitImpactFx === 'function') {
             createHitImpactFx(p.target.x, p.target.y, '#60a5fa', 'shield', hitAngle);
@@ -5494,7 +5436,7 @@ function update(dt) {
               createFloatingDamage(e.x, e.y, splashDmg, p.color || '#ff9100');
             }
 
-            if (typeof spawnTowerHitFx !== 'function' && shardSpawnCount < 3) {
+            if (shardSpawnCount < 3) {
               createDamageShards(e.x, e.y, e.color, splashDmg, false);
               if (typeof createImpactSmoke === 'function') createImpactSmoke(e.x, e.y, 10);
               shardSpawnCount++;
@@ -5508,11 +5450,7 @@ function update(dt) {
         } else if (hitCount > 0) {
           triggerImpactFeedback('light', 'light', { isSplash: true });
         }
-        if (typeof spawnTowerHitFx === 'function') {
-          spawnTowerHitFx('mortar', p.targetX, p.targetY, null, p.color, p.splash);
-        } else {
-          createExplosion(p.targetX, p.targetY, p.splash, p.color || '#ff9100', '#f05f9f', 'mortar');
-        }
+        createExplosion(p.targetX, p.targetY, p.splash, p.color || '#ff9100', '#f05f9f', 'mortar');
         projectiles.splice(i, 1);
       }
     }
@@ -5608,19 +5546,15 @@ function update(dt) {
 
       const chainDir = Math.atan2(lb.targetRef.y - lb.y1, lb.targetRef.x - lb.x1);
       applyEnemyHitReaction(lb.targetRef, chainDir, false);
-      if (typeof spawnTowerHitFx === 'function') {
-        spawnTowerHitFx('tesla', lb.targetRef.x, lb.targetRef.y, chainDir, lb.towerColor || lb.color || '#00ffcc', lb.targetRef.radius);
-      } else {
-        if (typeof createHitImpactFx === 'function') {
-          createHitImpactFx(lb.x2, lb.y2, lb.towerColor || lb.color || '#00ffcc', 'tesla');
-        }
+      if (typeof createHitImpactFx === 'function') {
+        createHitImpactFx(lb.x2, lb.y2, lb.towerColor || lb.color || '#00ffcc', 'tesla');
+      }
 
-        if (Math.random() < 0.6) {
-          if (typeof createDamageShards === 'function') {
-            createDamageShards(lb.x2, lb.y2, lb.targetRef.color, lb.damage, false);
-          } else {
-            createSparks(lb.x2, lb.y2, lb.towerColor || lb.color || '#00ffcc', 3, lb.targetRef.color);
-          }
+      if (Math.random() < 0.6) {
+        if (typeof createDamageShards === 'function') {
+          createDamageShards(lb.x2, lb.y2, lb.targetRef.color, lb.damage, false);
+        } else {
+          createSparks(lb.x2, lb.y2, lb.towerColor || lb.color || '#00ffcc', 3, lb.targetRef.color);
         }
       }
     }
