@@ -46,7 +46,8 @@ let cameraShakeMaxDur = 0;
 let cameraShakeIntensity = 0;
 
 // [ENG.A]
-function triggerCameraShake(dur = 0.5, intensity = 15) {
+function triggerCameraShake(dur = 0.5, intensity = 15, force = false) {
+  if (!force && typeof settings !== 'undefined' && settings.screenShakeEnabled === false) return;
   if (dur <= 0 || intensity <= 0) return;
   const currentRemaining = (cameraShakeTimer > 0 && cameraShakeMaxDur > 0)
     ? cameraShakeIntensity * (cameraShakeTimer / cameraShakeMaxDur)
@@ -79,7 +80,7 @@ function triggerImpactFeedback(shakeTier, hapticTier = 'none', options = {}) {
   }
 
   if (effectiveShakeTier && effectiveShakeTier !== 'none' && dur > 0 && intensity > 0) {
-    triggerCameraShake(dur, intensity);
+    triggerCameraShake(dur, intensity, !!opts.forceShake);
   }
   if (hapticTier && hapticTier !== 'none') {
     vibrate(hapticTier);
@@ -307,6 +308,7 @@ let settings = {
   showEnemyHp: true,
   showDamage: true,
   vibrationEnabled: true,
+  screenShakeEnabled: true,
   perfModeOverride: null,
   sfxEnabled: true, musicEnabled: true,
   sfxVolume: 100, musicVolume: 70,
@@ -1777,6 +1779,7 @@ function applyParsedSaveData(data) {
   }
   if (data.settings && typeof data.settings === 'object') {
     Object.assign(settings, data.settings);
+    settings.screenShakeEnabled = settings.screenShakeEnabled !== false;
     if (typeof sfxSetEnabled === 'function') sfxSetEnabled(settings.sfxEnabled !== false);
   }
   if (data.tutorialSeen && typeof data.tutorialSeen === 'object') {
@@ -3504,7 +3507,7 @@ function acceptEmergencyRevive() {
       createShockwave(basePt.x, basePt.y, fw * 0.3, '#38bdf8');
       if (typeof createExplosion === 'function') createExplosion(basePt.x, basePt.y, 100);
       if (typeof createDamageShards === 'function') createDamageShards(basePt.x, basePt.y, '#00e5ff', 50, false);
-      triggerImpactFeedback('heavy', 'heavy', { dur: 0.5, intensity: 16 });
+      triggerImpactFeedback('heavy', 'heavy', { dur: 0.5, intensity: 16, forceShake: true });
       sfx('bossIncoming');
       sfx('revive');
 

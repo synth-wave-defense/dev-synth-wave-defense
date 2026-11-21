@@ -3951,6 +3951,9 @@ function showSettings(fromSource = 'start') {
   const vibCheckbox = document.getElementById('settingVibration');
   if (vibCheckbox) vibCheckbox.checked = settings.vibrationEnabled !== false;
 
+  const shakeCheckbox = document.getElementById('settingScreenShake');
+  if (shakeCheckbox) shakeCheckbox.checked = settings.screenShakeEnabled !== false;
+
   updatePaletteSelectDropdown('settingPaletteSelect');
 
   applySfxVolume(settings.sfxVolume != null ? settings.sfxVolume : 100, false);
@@ -4653,6 +4656,15 @@ function toggleSettingVibration(isChecked) {
   if (isChecked) {
     if (typeof vibrate === 'function') vibrate('medium');
     else if (navigator.vibrate) { try { navigator.vibrate(30); } catch(e){} }
+  }
+  saveGameSoon();
+}
+
+// [UI.EUM]
+function toggleSettingScreenShake(isChecked) {
+  settings.screenShakeEnabled = isChecked;
+  if (!isChecked && typeof cameraShakeTimer !== 'undefined') {
+    cameraShakeTimer = 0;
   }
   saveGameSoon();
 }
