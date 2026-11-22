@@ -227,66 +227,86 @@ const TOWER_GLYPH_SPECS = {
                        { t: 'rect', x: 10.7, y: -5.0, w: 2.2, h: 10.0, f: 'w' } ] }
 };
 
-const TOWER_GLYPH_RINGS = { 1: [], 2: [21.5], 3: [21.5, 26.0] };
+const TOWER_GLYPH_RINGS = { 1: [], 2: [], 3: [21.5], 4: [21.5, 26.0] };
 const TOWER_GLYPH_CORES = {
-  1: [{ cx: 0, cy: 0, r: 3.2 }],
-  2: [{ cx: 0, cy: -4.2, r: 3 }, { cx: 0, cy: 4.2, r: 3 }],
-  3: [{ cx: -3.4, cy: -4.2, r: 3 }, { cx: -3.4, cy: 4.2, r: 3 }, { cx: 4.2, cy: 0, r: 3 }]
+  1: [],
+  2: [{ cx: 0, cy: 0, r: 3.2 }],
+  3: [{ cx: 0, cy: -4.2, r: 3 }, { cx: 0, cy: 4.2, r: 3 }],
+  4: [{ cx: -3.4, cy: -4.2, r: 3 }, { cx: -3.4, cy: 4.2, r: 3 }, { cx: 4.2, cy: 0, r: 3 }]
 };
 
 const TOWER_GLYPH_FLAKES = {
-  1: [{ cx: 0, cy: 0, scale: 1.0, sw: 1.9 }],
-  2: [{ cx: 0, cy: -4.5, scale: 0.95, sw: 2.0 }, { cx: 0, cy: 5, scale: 0.95, sw: 2.0 }],
-  3: [{ cx: -3.5, cy: -5, scale: 0.85, sw: 2.24 }, { cx: -4, cy: 5.5, scale: 0.85, sw: 2.24 },
+  1: [],
+  2: [{ cx: 0, cy: 0, scale: 1.0, sw: 1.9 }],
+  3: [{ cx: 0, cy: -4.5, scale: 0.95, sw: 2.0 }, { cx: 0, cy: 5, scale: 0.95, sw: 2.0 }],
+  4: [{ cx: -3.5, cy: -5, scale: 0.85, sw: 2.24 }, { cx: -4, cy: 5.5, scale: 0.85, sw: 2.24 },
       { cx: 5.5, cy: 0.5, scale: 0.85, sw: 2.24 }]
 };
 
-// Tower SVG Generator: Generates standalone SVG strings aligned with V8 Round Tower Design & Level Evolution.
+// Tower SVG Generator: Generates standalone SVG strings aligned with 4-Level Round Tower Design & Level Evolution.
 // [DAT.B]
 function buildTowerIconSvg(type, level = 1, size = 28, angleDeg = 0) {
   const conf = TOWER_CONFIGS[type];
   if (!conf) return '';
   const c = conf.color;
-  const lvl = Math.max(1, Math.min(3, level));
+  const lvl = Math.max(1, Math.min(MAX_TOWER_LEVEL, level));
+  const ext = lvl - 1;
 
   let out = `<svg width="${size}" height="${size}" viewBox="-32 -32 64 64">`;
 
-  // 1. 4 широкие диагональные опоры (эволюция Lv.1 -> Lv.2 -> Lv.3)
-  [45, 135, 225, 315].forEach(deg => {
-    out += `<g transform="rotate(${deg})">`;
-    if (lvl === 1) {
-      out += `<polygon points="13.0,-5.6 20.2,-4.6 20.2,4.6 13.0,5.6" fill="${c}" fill-opacity="0.35" stroke="${c}" stroke-width="1.4" stroke-linejoin="round"/>`;
-    } else if (lvl === 2) {
-      out += `<polygon points="13.0,-5.6 20.2,-4.6 20.2,4.6 13.0,5.6" fill="#080d1e" stroke="${c}" stroke-width="1.45" stroke-linejoin="round"/>`;
-      out += `<rect x="15.2" y="-2.3" width="3.8" height="4.6" fill="${c}" fill-opacity="0.6"/>`;
-      out += `<polygon points="20.2,-4.3 25.2,-3.1 26.4,-1.8 26.4,1.8 25.2,3.1 20.2,4.3" fill="${c}" fill-opacity="0.32" stroke="${c}" stroke-width="1.45" stroke-linejoin="round"/>`;
-    } else {
-      out += `<polygon points="13.0,-5.6 20.2,-4.6 20.2,4.6 13.0,5.6" fill="#070b19" stroke="#ffffff" stroke-width="1.65" stroke-linejoin="round"/>`;
-      out += `<rect x="15.2" y="-2.4" width="3.8" height="4.8" fill="${c}"/>`;
-      out += `<polygon points="20.2,-4.3 25.2,-3.1 26.4,-1.8 26.4,1.8 25.2,3.1 20.2,4.3" fill="${c}" fill-opacity="0.88" stroke="#ffffff" stroke-width="1.65" stroke-linejoin="round"/>`;
-    }
-    out += `</g>`;
-  });
-
-  // 2. Внешние кольца эволюции Lv.2 (r=21.5) и Lv.3 (r=26.0 с белым сердечником)
+  // 1. 4 широкие диагональные опоры (Lv.1 — без опор; эволюция Lv.2 -> Lv.3 -> Lv.4)
   if (lvl >= 2) {
+    [45, 135, 225, 315].forEach(deg => {
+      out += `<g transform="rotate(${deg})">`;
+      if (lvl === 2) {
+        out += `<polygon points="13.0,-5.6 20.2,-4.6 20.2,4.6 13.0,5.6" fill="${c}" fill-opacity="0.35" stroke="${c}" stroke-width="1.4" stroke-linejoin="round"/>`;
+      } else if (lvl === 3) {
+        out += `<polygon points="13.0,-5.6 20.2,-4.6 20.2,4.6 13.0,5.6" fill="#080d1e" stroke="${c}" stroke-width="1.45" stroke-linejoin="round"/>`;
+        out += `<rect x="15.2" y="-2.3" width="3.8" height="4.6" fill="${c}" fill-opacity="0.6"/>`;
+        out += `<polygon points="20.2,-4.3 25.2,-3.1 26.4,-1.8 26.4,1.8 25.2,3.1 20.2,4.3" fill="${c}" fill-opacity="0.32" stroke="${c}" stroke-width="1.45" stroke-linejoin="round"/>`;
+      } else {
+        out += `<polygon points="13.0,-5.6 20.2,-4.6 20.2,4.6 13.0,5.6" fill="#070b19" stroke="#ffffff" stroke-width="1.65" stroke-linejoin="round"/>`;
+        out += `<rect x="15.2" y="-2.4" width="3.8" height="4.8" fill="${c}"/>`;
+        out += `<polygon points="20.2,-4.3 25.2,-3.1 26.4,-1.8 26.4,1.8 25.2,3.1 20.2,4.3" fill="${c}" fill-opacity="0.88" stroke="#ffffff" stroke-width="1.65" stroke-linejoin="round"/>`;
+      }
+      out += `</g>`;
+    });
+  }
+
+  // 2. Внешние кольца эволюции Lv.3 (r=21.5) и Lv.4 (r=26.0 с белым сердечником)
+  if (lvl >= 3) {
     out += `<circle cx="0" cy="0" r="21.5" fill="none" stroke="${c}" stroke-width="1.7" stroke-opacity="0.72"/>`;
   }
-  if (lvl >= 3) {
+  if (lvl >= 4) {
     out += `<circle cx="0" cy="0" r="26.0" fill="none" stroke="${c}" stroke-width="3.2" stroke-opacity="0.95"/>`;
     out += `<circle cx="0" cy="0" r="26.0" fill="none" stroke="#ffffff" stroke-width="0.9" stroke-opacity="0.72"/>`;
   }
 
-  // 3. Круглый корпус + Outrun-полосы + белый неоновый обод
+  // 3. Круглый корпус: Lv.1 (Вариант 2 — без полос, приглушённое кольцо + 4 ярких 20° края) | Lv.2–4 (Outrun-полосы + полный неоновый обод)
   out += `<circle cx="0" cy="0" r="16.8" fill="${TOWER_GLYPH_DARK}"/>`;
-  [-11.4, -7.6, -3.8, 0, 3.8, 7.6, 11.4].forEach(sy => {
-    const halfChord = Math.sqrt(Math.max(0, 14.8 * 14.8 - sy * sy));
-    if (halfChord > 2) {
-      out += `<line x1="${(-halfChord).toFixed(1)}" y1="${sy}" x2="${halfChord.toFixed(1)}" y2="${sy}" stroke="${c}" stroke-width="1.2" stroke-opacity="0.24"/>`;
-    }
-  });
-  out += `<circle cx="0" cy="0" r="16.8" fill="none" stroke="${c}" stroke-width="3.2" stroke-opacity="0.95"/>`;
-  out += `<circle cx="0" cy="0" r="16.8" fill="none" stroke="#ffffff" stroke-width="0.9" stroke-opacity="0.72"/>`;
+  if (lvl === 1) {
+    out += `<circle cx="0" cy="0" r="16.8" fill="none" stroke="${c}" stroke-width="2.1" stroke-opacity="0.46"/>`;
+    const halfRad = (20 * Math.PI / 180) * 0.5;
+    const r = 16.8;
+    [45, 135, 225, 315].forEach(deg => {
+      const rad = deg * Math.PI / 180;
+      const x1 = (Math.cos(rad - halfRad) * r).toFixed(2);
+      const y1 = (Math.sin(rad - halfRad) * r).toFixed(2);
+      const x2 = (Math.cos(rad + halfRad) * r).toFixed(2);
+      const y2 = (Math.sin(rad + halfRad) * r).toFixed(2);
+      out += `<path d="M ${x1},${y1} A ${r},${r} 0 0,1 ${x2},${y2}" fill="none" stroke="${c}" stroke-width="3.6" stroke-linecap="round"/>`;
+      out += `<path d="M ${x1},${y1} A ${r},${r} 0 0,1 ${x2},${y2}" fill="none" stroke="#ffffff" stroke-width="1.0" stroke-opacity="0.82" stroke-linecap="round"/>`;
+    });
+  } else {
+    [-11.4, -7.6, -3.8, 0, 3.8, 7.6, 11.4].forEach(sy => {
+      const halfChord = Math.sqrt(Math.max(0, 14.8 * 14.8 - sy * sy));
+      if (halfChord > 2) {
+        out += `<line x1="${(-halfChord).toFixed(1)}" y1="${sy}" x2="${halfChord.toFixed(1)}" y2="${sy}" stroke="${c}" stroke-width="1.2" stroke-opacity="0.24"/>`;
+      }
+    });
+    out += `<circle cx="0" cy="0" r="16.8" fill="none" stroke="${c}" stroke-width="3.2" stroke-opacity="0.95"/>`;
+    out += `<circle cx="0" cy="0" r="16.8" fill="none" stroke="#ffffff" stroke-width="0.9" stroke-opacity="0.72"/>`;
+  }
 
   // Декоративная дуга перегрева для Melter
   if (type === 'melter') {
@@ -300,23 +320,23 @@ function buildTowerIconSvg(type, level = 1, size = 28, angleDeg = 0) {
 
   if (type === 'gun') {
     out += `<rect x="7" y="-6.2" width="8.5" height="12.4" fill="${TOWER_GLYPH_DARK}" stroke="${c}" stroke-width="1.4"/>`;
-    out += `<rect x="11.5" y="-5.0" width="${14 + lvl}" height="2.7" fill="${c}"/>`;
-    out += `<rect x="11.5" y="2.3" width="${14 + lvl}" height="2.7" fill="${c}"/>`;
-    out += `<rect x="${23.2 + lvl}" y="-4.6" width="2.4" height="1.9" fill="#ffffff"/>`;
-    out += `<rect x="${23.2 + lvl}" y="2.7" width="2.4" height="1.9" fill="#ffffff"/>`;
+    out += `<rect x="11.5" y="-5.0" width="${14 + ext}" height="2.7" fill="${c}"/>`;
+    out += `<rect x="11.5" y="2.3" width="${14 + ext}" height="2.7" fill="${c}"/>`;
+    out += `<rect x="${23.2 + ext}" y="-4.6" width="2.4" height="1.9" fill="#ffffff"/>`;
+    out += `<rect x="${23.2 + ext}" y="2.7" width="2.4" height="1.9" fill="#ffffff"/>`;
   } else if (type === 'laser') {
-    const tipX = 24 + lvl;
+    const tipX = 24 + ext;
     out += `<polygon points="8,-6.5 ${tipX},-2.0 ${tipX},2.0 8,6.5" fill="${TOWER_GLYPH_DARK}" stroke="${c}" stroke-width="1.6" stroke-linejoin="round"/>`;
     out += `<line x1="10" y1="0" x2="${tipX - 1}" y2="0" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round"/>`;
     out += `<circle cx="${tipX}" cy="0" r="2.2" fill="${c}"/>`;
   } else if (type === 'mortar' || type === 'splash') {
     const fore = Math.cos(55 * Math.PI / 180);
-    const len = 16 + lvl;
+    const len = 16 + ext;
     out += `<g transform="scale(${fore.toFixed(3)},1)">`;
     out += `<rect x="7" y="-7.2" width="${len}" height="14.4" rx="3" fill="${TOWER_GLYPH_DARK}" stroke="${c}" stroke-width="2"/>`;
-    out += `<rect x="11" y="-5.2" width="${9 + lvl}" height="10.4" fill="${c}"/>`;
+    out += `<rect x="11" y="-5.2" width="${9 + ext}" height="10.4" fill="${c}"/>`;
     out += `</g>`;
-    const mx = (23 + lvl) * fore;
+    const mx = (23 + ext) * fore;
     out += `<ellipse cx="${mx.toFixed(2)}" cy="0" rx="3.2" ry="5.5" fill="${TOWER_GLYPH_DARK}" stroke="${c}" stroke-width="1.8"/>`;
   } else if (type === 'tesla') {
     out += `<polygon points="8.5,-6.8 22.5,-5.8 24.5,-3.6 24.5,3.6 22.5,5.8 8.5,6.8" fill="${TOWER_GLYPH_DARK}" stroke="${c}" stroke-width="1.6" stroke-linejoin="round"/>`;
@@ -331,7 +351,7 @@ function buildTowerIconSvg(type, level = 1, size = 28, angleDeg = 0) {
     out += `<rect x="19.0" y="-4.5" width="3.6" height="9.0" rx="1.2" fill="${TOWER_GLYPH_DARK}" stroke="#ffffff" stroke-width="1.3"/>`;
     out += `<polygon points="22.6,-2.5 28.2,0 22.6,2.5" fill="#fb923c"/>`;
   } else if (type === 'railgun') {
-    const railLen = 13.5 + lvl * 0.8;
+    const railLen = 13.5 + ext * 0.8;
     const endX = 8.5 + railLen;
     out += `<rect x="10.0" y="-1.3" width="${(railLen - 2.0).toFixed(1)}" height="2.6" fill="${c}" fill-opacity="0.68"/>`;
     out += `<polygon points="8.5,-4.4 ${endX.toFixed(1)},-3.6 ${(endX - 2.0).toFixed(1)},-1.8 8.5,-1.8" fill="${TOWER_GLYPH_DARK}" stroke="${c}" stroke-width="1.45" stroke-linejoin="round"/>`;
@@ -339,27 +359,27 @@ function buildTowerIconSvg(type, level = 1, size = 28, angleDeg = 0) {
     out += `<rect x="10.7" y="-5.0" width="2.2" height="10.0" fill="#ffffff"/>`;
   }
 
-  // 5. Ядро (снежинка для Stasis или 1/2/3 энерго-ячейки с белым центром)
+  // 5. Ядро (снежинка для Stasis с 4 ступенями или 0/1/2/3 энерго-ячейки с белым центром)
   if (type === 'stasis') {
-    const mainR = lvl === 1 ? 10.2 : (lvl === 2 ? 11.4 : 12.6);
-    const sw = lvl === 1 ? 1.65 : 1.85;
+    const mainR = lvl === 1 ? 9.5 : (lvl === 2 ? 10.6 : (lvl === 3 ? 11.6 : 12.6));
+    const sw = lvl === 1 ? 1.35 : (lvl === 2 ? 1.7 : 1.85);
     for (let i = 0; i < 6; i++) {
       const deg = i * 60;
-      const tipPos = mainR * 0.62;
-      const tipLen = lvl === 1 ? 3.5 : 4.2;
       out += `<g transform="rotate(${deg})" stroke="#ffffff" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" fill="none">`;
       out += `<line x1="0" y1="0" x2="${mainR}" y2="0"/>`;
+      const tipPos = lvl === 1 ? (mainR * 0.70) : (mainR * 0.58);
+      const tipLen = lvl === 1 ? 2.25 : (lvl === 2 ? 3.8 : 4.2);
       out += `<polyline points="${(tipPos + tipLen * 0.68).toFixed(1)},${(-tipLen * 0.75).toFixed(1)} ${tipPos.toFixed(1)},0 ${(tipPos + tipLen * 0.68).toFixed(1)},${(tipLen * 0.75).toFixed(1)}"/>`;
-      if (lvl >= 2) {
-        const midPos = mainR * 0.36;
+      if (lvl >= 3) {
+        const midPos = mainR * 0.35;
         out += `<polyline points="${(midPos + 1.95).toFixed(1)},-2.16 ${midPos.toFixed(1)},0 ${(midPos + 1.95).toFixed(1)},2.16"/>`;
       }
-      if (lvl >= 3) {
+      if (lvl >= 4) {
         out += `<circle cx="${(mainR + 1.1).toFixed(1)}" cy="0" r="1.25" fill="#ffffff" stroke="none"/>`;
       }
       out += `</g>`;
     }
-    if (lvl >= 2) {
+    if (lvl >= 3) {
       const hr = mainR * 0.44;
       const hexPts = [0, 1, 2, 3, 4, 5].map(k => {
         const a = Math.PI / 6 + (k * Math.PI) / 3;
@@ -367,16 +387,17 @@ function buildTowerIconSvg(type, level = 1, size = 28, angleDeg = 0) {
       }).join(' ');
       out += `<polygon points="${hexPts}" fill="none" stroke="${c}" stroke-width="1.25"/>`;
     }
-    if (lvl >= 3) {
+    if (lvl >= 4) {
       for (let i = 0; i < 6; i++) {
         out += `<g transform="rotate(${30 + i * 60})" stroke="${c}" stroke-width="1.35" stroke-linecap="round" fill="none">`;
         out += `<line x1="3.2" y1="0" x2="8.4" y2="0"/><polyline points="8.0,-2.0 6.2,0 8.0,2.0"/>`;
         out += `</g>`;
       }
     }
-    out += `<circle cx="0" cy="0" r="2.8" fill="${c}"/><circle cx="0" cy="0" r="0.95" fill="#ffffff"/>`;
+    const coreR = lvl === 1 ? 2.0 : 2.8;
+    out += `<circle cx="0" cy="0" r="${coreR}" fill="${c}"/><circle cx="0" cy="0" r="0.95" fill="#ffffff"/>`;
   } else {
-    TOWER_GLYPH_CORES[lvl].forEach(d => {
+    (TOWER_GLYPH_CORES[lvl] || []).forEach(d => {
       out += `<circle cx="${d.cx}" cy="${d.cy}" r="${(d.r + 0.5).toFixed(1)}" fill="${c}"/>`;
       out += `<circle cx="${d.cx}" cy="${d.cy}" r="${(d.r * 0.30).toFixed(2)}" fill="#ffffff"/>`;
     });
@@ -386,41 +407,134 @@ function buildTowerIconSvg(type, level = 1, size = 28, angleDeg = 0) {
   return out;
 }
 
-// Tower Configurations: Base costs, range, attack metrics, upgrade multipliers, and milestone unlocked blurbs.
+// [DAT.BM]
+// 4-Level Tower Progression Single Source of Truth (Lv.1 Base + 3 Upgrades)
+const MAX_TOWER_LEVEL = 4;
+const TOWER_UPGRADE_COST_MULTS = [0.75, 1.35, 2.30]; // Lv.1->2, Lv.2->3, Lv.3->4 (от базовой cost, округление до 5)
+const TOWER_DPS_MULTS = [1.0, 1.8, 3.3, 6.0]; // Целевой множитель DPS для Lv.1..Lv.4
+
+// Tower Configurations: Base costs, range, attack metrics, upgrade multipliers, 4-level stat tables, and milestone unlocked blurbs.
 const TOWER_CONFIGS = {
-  gun: { cost: 50, range: 165, damage: 16, fireRate: 0.52, color: '#00e5ff', glow: '#00e5ff', type: 'projectile', costMultiplier: 1.3, damageMultiplier: 1.7, rateMultiplier: 0.8, rangeMultiplier: 1.1, powerDmg: 0.08, powerRate: 0.06, powerRange: 0.04 },
-  laser: { cost: 70, range: 150, dps: 48, color: '#f05f9f', glow: '#f05f9f', type: 'beam', costMultiplier: 1.3, damageMultiplier: 1.85, rangeMultiplier: 1.1, powerDmg: 0.08, powerRate: 0.06, powerRange: 0.04 },
-  mortar: { cost: 85, range: 195, damage: 32, splash: 80, fireRate: 1.5, color: '#ff9100', glow: '#ff9100', type: 'mortar', costMultiplier: 1.3, damageMultiplier: 1.6, rateMultiplier: 0.9, rangeMultiplier: 1.1, powerDmg: 0.08, powerRate: 0.06, powerRange: 0.04 },
-  tesla: { cost: 75, range: 145, damage: 22, chainTargets: 3, jumpRadius: 90, fireRate: 0.85, color: '#00ffcc', glow: '#00ffcc', type: 'chain', costMultiplier: 1.3, damageMultiplier: 1.55, rateMultiplier: 0.85, rangeMultiplier: 1.1, powerDmg: 0.05, powerRate: 0.04, powerRange: 0.03 },
-  stasis: { 
-    cost: 65, 
-    range: 115, 
-    damage: 0, 
-    fireRate: 1.6, 
-    slowFactor: 0.30, 
-    slowDuration: 1.4, 
-    color: '#38bdf8', glow: '#38bdf8', type: 'stasis', 
-    costMultiplier: 1.3, 
-    damageMultiplier: 1.0, 
-    rateMultiplier: 0.88, 
-    rangeMultiplier: 1.15, 
-    powerRange: 0.05, powerSlow: 0.04, powerDuration: 0.06 
+  gun: {
+    cost: 50, range: 165, damage: 16, fireRate: 0.52,
+    color: '#00e5ff', glow: '#00e5ff', type: 'projectile',
+    costMultiplier: 1.3, damageMultiplier: 1.7, rateMultiplier: 0.8, rangeMultiplier: 1.1,
+    powerDmg: 0.08, powerRate: 0.06, powerRange: 0.04,
+    levels: [
+      { level: 1, damageMult: 1.00, fireRateMult: 1.00, rangeMult: 1.000 },
+      { level: 2, damageMult: 1.62, fireRateMult: 0.90, rangeMult: 1.065 },
+      { level: 3, damageMult: 2.67, fireRateMult: 0.81, rangeMult: 1.135 },
+      { level: 4, damageMult: 4.32, fireRateMult: 0.72, rangeMult: 1.210 }
+    ]
   },
-  melter: { 
-    cost: 95, 
-    range: 140, 
-    baseDps: 10, 
-    rampCap: 40, 
-    rampTime: 4.0, 
-    cooldownTime: 4.0, 
-    color: '#e85268', glow: '#e477a3', type: 'melter', 
-    costMultiplier: 1.35, 
-    damageMultiplier: 1.55, 
-    rangeMultiplier: 1.1, 
-    powerDmg: 0.05, powerRate: 0.05, powerRange: 0.03 
+  laser: {
+    cost: 70, range: 150, dps: 48,
+    color: '#f05f9f', glow: '#f05f9f', type: 'beam',
+    costMultiplier: 1.3, damageMultiplier: 1.85, rangeMultiplier: 1.1,
+    powerDmg: 0.08, powerRate: 0.06, powerRange: 0.04,
+    levels: [
+      { level: 1, damageMult: 1.00, fireRateMult: 1.00, rangeMult: 1.000 },
+      { level: 2, damageMult: 1.80, fireRateMult: 1.00, rangeMult: 1.065 },
+      { level: 3, damageMult: 3.30, fireRateMult: 1.00, rangeMult: 1.135 },
+      { level: 4, damageMult: 6.00, fireRateMult: 1.00, rangeMult: 1.210 }
+    ]
   },
-  railgun: { cost: 115, range: 220, damage: 120, fireRate: 2.2, color: '#a275df', glow: '#b57fdd', type: 'railgun', costMultiplier: 1.35, damageMultiplier: 1.5, rangeMultiplier: 1.1, powerDmg: 0.10, powerRate: 0.06, powerRange: 0.04 }
+  mortar: {
+    cost: 85, range: 195, damage: 32, splash: 80, fireRate: 1.5,
+    color: '#ff9100', glow: '#ff9100', type: 'mortar',
+    costMultiplier: 1.3, damageMultiplier: 1.6, rateMultiplier: 0.9, rangeMultiplier: 1.1,
+    powerDmg: 0.08, powerRate: 0.06, powerRange: 0.04,
+    levels: [
+      { level: 1, damageMult: 1.00, fireRateMult: 1.00, rangeMult: 1.000, blastRadius: 80,  splash: 80 },
+      { level: 2, damageMult: 1.69, fireRateMult: 0.94, rangeMult: 1.065, blastRadius: 88,  splash: 88 },
+      { level: 3, damageMult: 2.90, fireRateMult: 0.88, rangeMult: 1.135, blastRadius: 96,  splash: 96 },
+      { level: 4, damageMult: 4.92, fireRateMult: 0.82, rangeMult: 1.210, blastRadius: 104, splash: 104 }
+    ]
+  },
+  tesla: {
+    cost: 75, range: 145, damage: 22, chainTargets: 3, jumpRadius: 90, fireRate: 0.85,
+    color: '#00ffcc', glow: '#00ffcc', type: 'chain',
+    costMultiplier: 1.3, damageMultiplier: 1.55, rateMultiplier: 0.85, rangeMultiplier: 1.1,
+    powerDmg: 0.05, powerRate: 0.04, powerRange: 0.03,
+    levels: [
+      { level: 1, damageMult: 1.00, fireRateMult: 1.00, rangeMult: 1.000, chainCount: 3, chainTargets: 3 },
+      { level: 2, damageMult: 1.66, fireRateMult: 0.92, rangeMult: 1.065, chainCount: 3, chainTargets: 3 },
+      { level: 3, damageMult: 2.77, fireRateMult: 0.84, rangeMult: 1.135, chainCount: 4, chainTargets: 4 },
+      { level: 4, damageMult: 4.56, fireRateMult: 0.76, rangeMult: 1.210, chainCount: 5, chainTargets: 5 }
+    ]
+  },
+  stasis: {
+    cost: 65,
+    range: 115,
+    damage: 0,
+    fireRate: 1.6,
+    slowFactor: 0.30,
+    slowDuration: 1.4,
+    color: '#38bdf8', glow: '#38bdf8', type: 'stasis',
+    costMultiplier: 1.3,
+    damageMultiplier: 1.0,
+    rateMultiplier: 0.88,
+    rangeMultiplier: 1.15,
+    powerRange: 0.05, powerSlow: 0.04, powerDuration: 0.06,
+    levels: [
+      { level: 1, damageMult: 1.00, fireRateMult: 1.00, rangeMult: 1.00, slowFactor: 0.30, slowDuration: 1.40 },
+      { level: 2, damageMult: 1.00, fireRateMult: 0.92, rangeMult: 1.10, slowFactor: 0.37, slowDuration: 1.55 },
+      { level: 3, damageMult: 1.00, fireRateMult: 0.85, rangeMult: 1.21, slowFactor: 0.44, slowDuration: 1.70 },
+      { level: 4, damageMult: 1.00, fireRateMult: 0.78, rangeMult: 1.32, slowFactor: 0.50, slowDuration: 1.85 }
+    ]
+  },
+  melter: {
+    cost: 95,
+    range: 140,
+    baseDps: 10,
+    rampCap: 40,
+    rampTime: 4.0,
+    cooldownTime: 4.0,
+    color: '#e85268', glow: '#e477a3', type: 'melter',
+    costMultiplier: 1.35,
+    damageMultiplier: 1.55,
+    rangeMultiplier: 1.1,
+    powerDmg: 0.05, powerRate: 0.05, powerRange: 0.03,
+    levels: [
+      { level: 1, damageMult: 1.00, fireRateMult: 1.00, rangeMult: 1.000, rampCap: 40, rampTime: 4.00, cooldownTime: 4.00 },
+      { level: 2, damageMult: 1.80, fireRateMult: 1.00, rangeMult: 1.065, rampCap: 40, rampTime: 4.25, cooldownTime: 3.75 },
+      { level: 3, damageMult: 3.30, fireRateMult: 1.00, rangeMult: 1.135, rampCap: 40, rampTime: 4.55, cooldownTime: 3.45 },
+      { level: 4, damageMult: 6.00, fireRateMult: 1.00, rangeMult: 1.210, rampCap: 40, rampTime: 4.80, cooldownTime: 3.20 }
+    ]
+  },
+  railgun: {
+    cost: 115, range: 220, damage: 120, fireRate: 2.2,
+    color: '#a275df', glow: '#b57fdd', type: 'railgun',
+    costMultiplier: 1.35, damageMultiplier: 1.5, rangeMultiplier: 1.1,
+    powerDmg: 0.10, powerRate: 0.06, powerRange: 0.04,
+    levels: [
+      { level: 1, damageMult: 1.00, fireRateMult: 1.00, rangeMult: 1.000 },
+      { level: 2, damageMult: 1.80, fireRateMult: 1.00, rangeMult: 1.065 },
+      { level: 3, damageMult: 3.30, fireRateMult: 1.00, rangeMult: 1.135 },
+      { level: 4, damageMult: 6.00, fireRateMult: 1.00, rangeMult: 1.210 }
+    ]
+  }
 };
+
+// [DAT.BN]
+function getTowerLevelSpec(type, level) {
+  const conf = TOWER_CONFIGS[type];
+  if (!conf || !Array.isArray(conf.levels) || !conf.levels.length) return null;
+  const maxLvl = typeof MAX_TOWER_LEVEL === 'number' ? MAX_TOWER_LEVEL : conf.levels.length;
+  const idx = Math.max(1, Math.min(maxLvl, level || 1)) - 1;
+  return conf.levels[idx] || conf.levels[0];
+}
+
+// [DAT.BO]
+function getTowerUpgradeCostByLevel(type, currentLevel) {
+  const conf = TOWER_CONFIGS[type];
+  if (!conf) return 0;
+  const lvl = Math.max(1, Math.floor(currentLevel || 1));
+  if (lvl >= MAX_TOWER_LEVEL) return 0;
+  const mult = TOWER_UPGRADE_COST_MULTS[lvl - 1];
+  if (typeof mult !== 'number') return 0;
+  return Math.round((conf.cost * mult) / 5) * 5;
+}
 
 const TOWER_ICONS = {
   gun: buildTowerIconSvg('gun'),

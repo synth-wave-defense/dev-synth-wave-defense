@@ -5,7 +5,7 @@
 <head>
   <meta charset="UTF-8">
   <script>
-    window.APP_VERSION = '1.38.56';
+    window.APP_VERSION = '1.38.55';
     window.__APP_STAGE__ = 'development';
     if (window.__APP_STAGE__ === 'development' && window.location.hostname !== 'synth-wave-defense.github.io') {
       const s = document.createElement("script");
@@ -18,7 +18,9 @@
   <title>Synth Wave Defense</title>
   <link rel="icon" href="./favicon.ico">
   <link rel="stylesheet" href="fonts.css">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles_core.css">
+  <link rel="stylesheet" href="styles_ui.css">
+  <link rel="stylesheet" href="styles_themes.css">
 </head>
 
 <body>
@@ -1464,9 +1466,17 @@
 <script src="i18n.js"></script>
 <script src="data.js"></script>
 <script src="levels_data.js"></script>
-<script src="engine.js"></script>
+<script src="engine_state.js"></script>
+<script src="engine_meta.js"></script>
+<script src="engine_combat.js"></script>
 <script src="mob_renderer.js"></script>
-<script src="ui.js"></script>
+<script src="ui_core.js"></script>
+<script src="ui_bg.js"></script>
+<script src="ui_fx.js"></script>
+<script src="ui_previews.js"></script>
+<script src="ui_screens_nav.js"></script>
+<script src="ui_screens_meta.js"></script>
+<script src="ui_render.js"></script>
 
 <script>
 // Application Bootstrap: Loads save data, configures audio systems, initializes build panel, and launches game loop.

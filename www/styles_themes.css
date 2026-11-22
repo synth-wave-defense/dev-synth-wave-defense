@@ -1,0 +1,565 @@
+/* [STY.FL] */
+
+/* ============================================================================
+ UNIVERSAL DYNAMIC THEME SYSTEM (Variables --c1 .. --c5)
+ Автоматически применяется ко всем цветовым схемам из NEON_PALETTES
+ ============================================================================ */
+
+:root {
+  --c1: #00e5ff;
+  --c2: #d946ef;
+  --c3: #f05f9f;
+  --c4: #ff9100;
+  --c5: #38bdf8;
+  --bg-dark: #03050d;
+
+  --c1-rgb: 0, 229, 255;
+  --c2-rgb: 217, 70, 239;
+  --c3-rgb: 240, 95, 159;
+  --c4-rgb: 255, 145, 0;
+  --c5-rgb: 56, 189, 248;
+
+  --c1-light: #8ef3ff;
+  --c2-light: #f0abfc;
+  --c3-light: #ff8fb0;
+  --c4-light: #ffc166;
+  --c5-light: #93c5fd;
+}
+
+/* 1. БАЗОВЫЕ ОБВОДКИ И ПАНЕЛИ (Слот 1: --c1) */
+.hud-top-bar,
+.upgrades-top-bar,
+.controls-wrapper,
+.menu-btn-glass-capsule,
+.result-btn:not(.result-btn-primary):not(.victory-claim-btn):not(.result-btn-grunt),
+.result-btn-pill:not(.result-btn-resume),
+.upgrade-row-card,
+.shop-card:not(.shop-card-prism),
+.bp-header-card,
+.bp-tier-row,
+.bp-cell-free,
+.bp-btn-buy-tier,
+.bp-xp-bar-container,
+.settings-box,
+.loadout-tower-btn:not(.selected) {
+  border-color: rgba(var(--c1-rgb), 0.32) !important;
+}
+
+.hud-top-bar,
+.upgrades-top-bar {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.58), 0 0 14px rgba(var(--c1-rgb), 0.14);
+}
+
+/* В дефолтной схеме текст на кнопках чисто белый */
+.menu-btn-glass-capsule,
+.result-btn:not(.result-btn-primary):not(.victory-claim-btn):not(.result-btn-grunt),
+.result-btn-pill:not(.result-btn-resume):not(.result-btn-giveup),
+.bp-btn-buy-tier {
+  color: #ffffff;
+}
+
+/* В остальных цветовых схемах текст кнопок слегка тонируется под тему */
+body:not([data-theme="default"]) .menu-btn-glass-capsule,
+body:not([data-theme="default"]) .result-btn:not(.result-btn-primary):not(.victory-claim-btn):not(.result-btn-grunt),
+body:not([data-theme="default"]) .result-btn-pill:not(.result-btn-resume):not(.result-btn-giveup),
+body:not([data-theme="default"]) .bp-btn-buy-tier {
+  color: var(--c1-light);
+}
+/* [STY.FM] */
+
+.menu-btn-glass-capsule:active:not(:disabled):not(.no-press-feedback),
+.result-btn:active:not(:disabled):not(.no-press-feedback):not(.btn-locked),
+.result-btn-pill:active:not(.result-btn-giveup) {
+  border-color: var(--c1) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 24px rgba(var(--c1-rgb), 0.65), inset 0 0 10px rgba(var(--c1-rgb), 0.28) !important;
+  background: rgba(14, 24, 48, 0.88) !important;
+}
+
+.upgrades-top-label,
+.match-val-text,
+.setting-slider-val:not(.is-muted),
+.hud-select-dropdown,
+.start-sub-title {
+  color: var(--c1-light) !important;
+}
+
+.hud-gear-btn,
+.daily-bonus-quick-btn {
+  border-color: rgba(var(--c1-rgb), 0.45);
+  color: var(--c1-light);
+  box-shadow: 0 0 12px rgba(var(--c1-rgb), 0.18), inset 0 0 8px rgba(var(--c1-rgb), 0.06);
+}
+.hud-gear-svg,
+.daily-btn-svg {
+  filter: drop-shadow(0 0 4px rgba(var(--c1-rgb), 0.6));
+}
+/* [STY.FN] */
+
+/* 2. ГЛАВНОЕ МЕНЮ: КНОПКА PLAY И ВИДЖЕТ SYNTH PASS */
+.menu-btn-primary-capsule {
+  background: linear-gradient(rgba(var(--c1-rgb), 0.26), rgba(var(--c1-rgb), 0.06)), rgba(8, 12, 24, 0.92) !important;
+  border: 1.5px solid var(--c1) !important;
+  box-shadow: 0 0 28px rgba(var(--c1-rgb), 0.48) !important;
+}
+.menu-btn-primary-capsule:active:not(:disabled) {
+  background: linear-gradient(rgba(var(--c1-rgb), 0.52), rgba(var(--c1-rgb), 0.18)), rgba(10, 18, 36, 0.98) !important;
+  border-color: var(--c1-light) !important;
+  box-shadow: 0 0 40px rgba(var(--c1-rgb), 0.9), inset 0 0 15px rgba(var(--c1-rgb), 0.4) !important;
+}
+.menu-btn-resume-capsule {
+  border-color: var(--c4) !important;
+  box-shadow: 0 0 22px rgba(var(--c4-rgb), 0.45), inset 0 0 12px rgba(var(--c4-rgb), 0.22) !important;
+}
+
+.synth-pass-widget {
+  border-color: rgba(var(--c1-rgb), 0.32);
+  box-shadow: 0 0 16px rgba(var(--c1-rgb), 0.15);
+}
+/* [STY.FO] */
+
+/* 3. CLAIM X2 И ВСЕ РЕКЛАМНЫЕ КНОПКИ (Градиент --c1 -> --c2 -> --c3) */
+.victory-claim-btn,
+#reviveBtn,
+.revive-btn,
+#defeatScreen.endless-result-active #endlessDoubleBtn,
+.daily-claim-double,
+.shop-btn-ad,
+.bp-cell-btn.ad-btn {
+  background: linear-gradient(135deg, rgba(var(--c1-rgb), 0.48) 0%, rgba(var(--c2-rgb), 0.48) 52%, rgba(var(--c3-rgb), 0.48) 100%) !important;
+  border: 1.6px solid var(--c1) !important;
+  box-shadow: 0 0 24px rgba(var(--c1-rgb), 0.42), 0 0 14px rgba(var(--c2-rgb), 0.3) !important;
+  color: #ffffff !important;
+}
+
+.victory-claim-btn:active:not(:disabled),
+#reviveBtn:active,
+.revive-btn:active,
+#defeatScreen.endless-result-active #endlessDoubleBtn:active,
+.daily-claim-double:active:not(:disabled),
+.shop-btn-ad:active:not(:disabled),
+.bp-cell-btn.ad-btn:active {
+  background: linear-gradient(135deg, rgba(var(--c1-rgb), 0.68) 0%, rgba(var(--c2-rgb), 0.68) 52%, rgba(var(--c3-rgb), 0.68) 100%) !important;
+  border-color: var(--c1-light) !important;
+  box-shadow: 0 0 32px rgba(var(--c1-rgb), 0.8) !important;
+}
+/* [STY.FP] */
+
+/* 4. ПОБЕДНЫЙ ЛУТБОКС И ЗВЕЗДА ХАРДКОРА */
+#victoryRewardBox {
+  --chip-border: var(--c1);
+  --chip-label: var(--c1-light);
+  border-color: var(--c1);
+  box-shadow: 0 0 18px rgba(var(--c1-rgb), 0.38), inset 0 0 10px rgba(var(--c1-rgb), 0.1);
+}
+.star-slot.overdrive-victory-badge.filled::before {
+  border-color: rgba(var(--c1-rgb), 0.95) !important;
+}
+
+/* 5. DAILY BONUS MODAL */
+/* [STY.FQ] */
+/* [STY.FR] */
+.daily-check-pill svg {
+  stroke: var(--c1) !important;
+}
+/* [STY.FS] */
+.daily-claim-normal {
+  background: #0a152e;
+  border-color: rgba(var(--c1-rgb), 0.62);
+  color: #ffffff;
+}
+
+/* 6. ИНДИВИДУАЛЬНЫЕ ЦВЕТА РАМОК И ЛЕГКОЙ ЗАЛИВКИ КНОПОК ПОСТРОЙКИ БАШЕН */
+.tower-btn[data-type="gun"] {
+  background: linear-gradient(180deg, rgba(var(--tower-gun-rgb, 0, 229, 255), 0.06) 0%, rgba(15, 19, 34, 0.92) 100%) !important;
+  border-color: rgba(var(--tower-gun-rgb, 0, 229, 255), 0.34) !important;
+}
+.tower-btn[data-type="laser"] {
+  background: linear-gradient(180deg, rgba(var(--tower-laser-rgb, 240, 95, 159), 0.06) 0%, rgba(15, 19, 34, 0.92) 100%) !important;
+  border-color: rgba(var(--tower-laser-rgb, 240, 95, 159), 0.34) !important;
+}
+.tower-btn[data-type="mortar"] {
+  background: linear-gradient(180deg, rgba(var(--tower-mortar-rgb, 255, 145, 0), 0.06) 0%, rgba(15, 19, 34, 0.92) 100%) !important;
+  border-color: rgba(var(--tower-mortar-rgb, 255, 145, 0), 0.34) !important;
+}
+.tower-btn[data-type="tesla"] {
+  background: linear-gradient(180deg, rgba(var(--tower-tesla-rgb, 0, 255, 204), 0.06) 0%, rgba(15, 19, 34, 0.92) 100%) !important;
+  border-color: rgba(var(--tower-tesla-rgb, 0, 255, 204), 0.34) !important;
+}
+.tower-btn[data-type="stasis"] {
+  background: linear-gradient(180deg, rgba(var(--tower-stasis-rgb, 56, 189, 248), 0.06) 0%, rgba(15, 19, 34, 0.92) 100%) !important;
+  border-color: rgba(var(--tower-stasis-rgb, 56, 189, 248), 0.34) !important;
+}
+.tower-btn[data-type="melter"] {
+  background: linear-gradient(180deg, rgba(var(--tower-melter-rgb, 232, 82, 104), 0.06) 0%, rgba(15, 19, 34, 0.92) 100%) !important;
+  border-color: rgba(var(--tower-melter-rgb, 232, 82, 104), 0.34) !important;
+}
+.tower-btn[data-type="railgun"] {
+  background: linear-gradient(180deg, rgba(var(--tower-railgun-rgb, 162, 117, 223), 0.06) 0%, rgba(15, 19, 34, 0.92) 100%) !important;
+  border-color: rgba(var(--tower-railgun-rgb, 162, 117, 223), 0.34) !important;
+}
+
+/* 7. ИКОНКИ АЛМАЗОВ (--c1) И ПРИЗМ (--c2) ВЕЗДЕ В UI */
+#hudDiamondBadge svg,
+.levels-top-diamonds svg,
+.shop-card-icon.diamond-glow svg,
+.upgrade-row-buy svg[stroke="#00e5ff"],
+.bp-btn-buy-tier svg,
+.bp-cell-title svg[stroke="#00e5ff"],
+.mode-rules-banner svg[stroke="#00e5ff"],
+.loot-pill.diamond-pill svg,
+#synthPrismBtn svg,
+#timeModT1Btn svg,
+#timeModT2Btn svg,
+.shop-card-theme svg[stroke="#00e5ff"] {
+  stroke: var(--c1) !important;
+  filter: drop-shadow(0 0 6px rgba(var(--c1-rgb), 0.78)) !important;
+}
+/* [STY.FT] */
+#hudDiamondBadge svg polygon,
+.levels-top-diamonds svg polygon,
+.shop-card-icon.diamond-glow svg polygon,
+.upgrade-row-buy svg[stroke="#00e5ff"] polygon,
+.shop-card-theme svg[stroke="#00e5ff"] polygon {
+  fill: rgba(var(--c1-rgb), 0.28) !important;
+}
+.shop-card-icon.diamond-glow {
+  border-color: var(--c1) !important;
+  box-shadow: 0 0 12px rgba(var(--c1-rgb), 0.38) !important;
+}
+
+#hudPrismBadge svg,
+.levels-top-prisms svg,
+.shop-card-icon.prism-glow svg,
+.upgrade-row-buy svg[stroke="#d946ef"],
+.bp-cell-title svg[stroke="#d946ef"],
+.mode-rules-banner svg[stroke="#d946ef"],
+.loot-pill.prism-pill svg,
+.highway-reward-badge svg,
+.level-card-overdrive-badge svg,
+#deconstructPrismBtn svg {
+  stroke: var(--c2) !important;
+  filter: drop-shadow(0 0 6px rgba(var(--c2-rgb), 0.8)) !important;
+}
+#hudPrismBadge svg polygon,
+.levels-top-prisms svg polygon,
+.shop-card-icon.prism-glow svg polygon,
+.upgrade-row-buy svg[stroke="#d946ef"] polygon {
+  fill: rgba(var(--c2-rgb), 0.3) !important;
+}
+.shop-card-icon.prism-glow {
+  border-color: var(--c2) !important;
+  box-shadow: 0 0 12px rgba(var(--c2-rgb), 0.38) !important;
+}
+
+/* [STY.FU] */
+
+/* 8. АККОРДЕОНЫ SETTINGS И LOADOUT (нейтральный темный обсидиан без бирюзовой заливки) */
+.loadout-widget-label,
+.settings-collapsible-label,
+.loadout-widget-arrow,
+.settings-collapsible-arrow {
+  color: var(--c1-light) !important;
+}
+
+/* [STY.FV] */
+.loadout-widget-expanded,
+.settings-collapsible-body {
+  border-top-color: rgba(var(--c1-rgb), 0.2);
+}
+
+/* 9. КНОПКА ВОЛНЫ GO, ИНСПЕКТОР И КАРТОЧКИ УРОВНЕЙ */
+.wave-circle-wrap::before {
+  background: radial-gradient(circle at 50% 50%, rgba(var(--c1-rgb), 0.35), rgba(var(--c1-rgb), 0.08));
+  border-color: var(--c1);
+  box-shadow: 0 0 28px rgba(var(--c1-rgb), 0.55);
+}
+.wave-circle-prog {
+  stroke: var(--c1);
+  filter: drop-shadow(0 0 5px var(--c1));
+}
+/* [STY.FW] */
+.wave-circle-prog.counting-down {
+  stroke: var(--c4);
+  filter: drop-shadow(0 0 5px var(--c4));
+}
+.wave-btn-label {
+  text-shadow: 0 0 14px var(--c1);
+}
+.btn-upgrade {
+  background: linear-gradient(rgba(var(--c1-rgb), 0.3), rgba(var(--c1-rgb), 0.06)), rgba(8, 12, 24, 0.92);
+  border-color: var(--c1);
+  box-shadow: 0 0 22px rgba(var(--c1-rgb), 0.35);
+}
+.level-card-btn {
+  border-color: rgba(var(--c1-rgb), 0.45);
+}
+.level-card-btn.current {
+  background: linear-gradient(rgba(var(--c1-rgb), 0.3), rgba(var(--c1-rgb), 0.06)), rgba(8, 12, 24, 0.92);
+  border-color: var(--c1);
+  box-shadow: 0 0 24px rgba(var(--c1-rgb), 0.45);
+}
+/* [STY.FX] */
+.upgrade-row-buy:not(.locked-buy):not(.max-buy) {
+  background: linear-gradient(rgba(var(--c1-rgb), 0.28), rgba(var(--c1-rgb), 0.08)), rgba(8, 12, 24, 0.92);
+  border-color: var(--c1);
+}
+
+/* 10. КНОПКА GO НА ЛОАДЕРЕ И .shop-btn-free ПОД ЦВЕТ ТЕМЫ (--c1) */
+.shop-btn-free:active:not(:disabled),
+.shop-btn-free.btn-pushed:not(:disabled) {
+  transform: scale(0.92) translateY(2px) !important;
+  border-color: var(--c1-light) !important;
+  box-shadow: 0 0 36px rgba(var(--c1-rgb), 0.9), inset 0 0 14px rgba(var(--c1-rgb), 0.4) !important;
+  background: linear-gradient(180deg, rgba(var(--c1-rgb), 0.56) 0%, rgba(var(--c1-rgb), 0.24) 100%) !important;
+}
+
+#initialLoadingScreen .shop-btn-free:active,
+#initialLoadingScreen .shop-btn-free.btn-pushed {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: translateX(-50%) scale(0.92) translateY(2px) !important;
+}
+
+@keyframes goBtnPulse {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(var(--c1-rgb, 0, 229, 255), 0.38);
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(var(--c1-rgb, 0, 229, 255), 0.88);
+    transform: translateX(-50%) scale(1.02);
+  }
+}
+
+/* [STY.FY] */
+/* 11. КАСТОМНАЯ ВЫПАДАШКА VISUAL В СТИЛЕ ИГРЫ */
+.bp-header-card,
+.bp-header-top,
+.bp-palette-picker-wrap {
+  overflow: visible !important;
+}
+
+.custom-palette-dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  z-index: 50;
+}
+
+.custom-palette-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(10, 16, 32, 0.85);
+  border: 1px solid rgba(var(--c1-rgb), 0.42);
+  border-radius: 10px;
+  padding: 4px 9px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--c1-light);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.custom-palette-trigger.open {
+  border-color: var(--c1);
+  box-shadow: 0 0 12px rgba(var(--c1-rgb), 0.4);
+  color: #ffffff;
+}
+
+/* [STY.FZ] */
+
+.custom-palette-trigger.is-disabled {
+  background: rgba(8, 12, 24, 0.5);
+  border-color: rgba(140, 200, 255, 0.16);
+  color: #64748b;
+  opacity: 0.8;
+}
+
+.pal-lock-icon {
+  display: inline-flex;
+  align-items: center;
+  color: #64748b;
+}
+
+.pal-trigger-arrow {
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+.custom-palette-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  bottom: auto;
+  right: 0;
+  min-width: 180px;
+  max-height: 220px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  touch-action: pan-y !important;
+  -webkit-overflow-scrolling: touch;
+  background: linear-gradient(180deg, rgba(12, 18, 36, 0.98) 0%, rgba(6, 10, 22, 0.99) 100%);
+  border: 1.4px solid var(--c1);
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.85), 0 0 18px rgba(var(--c1-rgb), 0.35);
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 9999;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.custom-palette-menu::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-palette-menu::-webkit-scrollbar-thumb {
+  background: rgba(var(--c1-rgb), 0.35);
+  border-radius: 4px;
+}
+
+.custom-palette-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  touch-action: pan-y !important;
+}
+/* [STY.GA] */
+
+.custom-palette-option:hover,
+.custom-palette-option:active {
+  background: rgba(var(--c1-rgb), 0.16);
+  color: #ffffff;
+}
+
+.custom-palette-option.selected {
+  background: rgba(var(--c1-rgb), 0.22);
+  color: #ffffff;
+}
+
+.custom-palette-option.locked {
+  color: #64748b;
+  background: rgba(8, 12, 22, 0.4);
+}
+
+.pal-opt-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.pal-opt-bars {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 3px 4px;
+  border-radius: 5px;
+  background: #070a14;
+  border: 1px solid rgba(140, 200, 255, 0.28);
+  flex: none;
+}
+
+.pal-opt-bars span {
+  display: block;
+  width: 3.5px;
+  height: 12px;
+  border-radius: 1.5px;
+}
+
+.pal-opt-bars.is-mini {
+  padding: 2px 3px;
+  gap: 1.5px;
+}
+
+.pal-opt-bars.is-mini span {
+  width: 3px;
+  height: 10px;
+}
+
+.custom-palette-option.locked .pal-opt-dot,
+.custom-palette-option.locked .pal-opt-bars {
+  opacity: 0.45;
+}
+
+/* [STY.GB] */
+.pal-opt-name {
+  flex: 1;
+  text-align: left;
+}
+
+.pal-opt-lock {
+  display: inline-flex;
+  align-items: center;
+  color: #64748b;
+}
+
+.pal-opt-check {
+  font-size: 9px;
+  color: var(--c1);
+}
+
+.lang-opt-code {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  padding: 2px 4px;
+  border-radius: 5px;
+  background: rgba(var(--c1-rgb), 0.14);
+  border: 1px solid rgba(var(--c1-rgb), 0.32);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  color: var(--c1-light);
+  text-transform: uppercase;
+  flex: none;
+}
+
+.custom-palette-option.selected .lang-opt-code {
+  background: rgba(var(--c1-rgb), 0.28);
+  border-color: var(--c1);
+  color: #ffffff;
+}
+
+/* [STY.GC] */
+#levelsScreen,
+.upgrades-row-list,
+.overlay-screen {
+  overscroll-behavior: none;
+}
+
+#levelsCampaignView,
+#endlessDashboardView {
+  touch-action: pan-y;
+}
+
+button,
+.interactive-btn,
+.levels-main-menu-btn,
+.part-nav-btn,
+.level-card-btn,
+.mode-3way-tab,
+.level-btn,
+.synth-pass-widget,
+.loadout-widget-header,
+.settings-collapsible-header,
+.tactical-tips-widget {
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: transparent;
+}
